@@ -1,10 +1,14 @@
 ---
 name: tikin-tiktok
-version: 1.0.0
-description: v1.0.0｜Work with TikTok URLs and data via tikin — fetch videos, user profiles and post lists, run search, pull trends/ads insights, creator analytics, comment keywords, and shop search. Use when the user provides a TikTok URL or the task targets TikTok. Covers the App-V3, Ads, Creator, Analytics, and Shop APIs.
+version: 1.1.0
+description: v1.1.0｜Work with TikTok URLs and data via tikin — fetch videos, user profiles and post lists, run search, pull trends/ads insights, creator analytics, comment keywords, and shop search. Use when the user provides a TikTok URL or the task targets TikTok. Covers the App-V3, Ads, Creator, Analytics, and Shop APIs.
 ---
 
 # TikTok (via tikin)
+
+## 默认 Skill 检查
+
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 Deep coverage of TikTok. For exhaustive endpoints use `tikin-endpoint-discovery`
 (`tikin-find-endpoint "<goal>" --platform tiktok`). For outcomes (download, analyze a creator,

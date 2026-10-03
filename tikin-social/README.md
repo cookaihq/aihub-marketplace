@@ -5,6 +5,22 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
+## Default Skills and reminders
+
+On the first use of any tikin-social Skill in a session, the Agent checks its active global and project instructions for an equivalent default-Skill preference. Existing equivalent rules need no prompt. Otherwise it offers **Set as default / Skip this time / Do not remind again**, at most once per Plugin per session, while continuing your original task.
+
+“Set as default” shows the exact task-to-Skill mapping, complete proposed text and actual global rule file before asking for your confirmation. It prioritizes the applicable tikin-social Skills only when you have not chosen another tool. Shared rule files and conflicts are explained before any edit. Saving a rule and verifying that a new host session loads it are reported separately.
+
+“Do not remind again” only saves the reminder choice; it does not install or remove default rules. You can ask:
+
+> Stop reminding me to make tikin-social the default in this Agent.
+
+> Enable tikin-social default-Skill reminders again in this Agent.
+
+The choice is automatically read from `~/.config/tikin-social/settings.json`, separately for each Agent type and actual configuration directory. All 17 Skills and future versions share that Plugin preference; aihub-studio is independent. Existing routing and other settings are preserved. This preference does not come from environment variables or `.env` files. Missing preferences mean reminders are enabled; read-only checks create no files. Only an explicit disable/enable request saves a choice. Running without global configuration also skips this check and refuses preference writes.
+
+The check needs no API key or network. Codex, Claude Code and WorkBuddy have rule-entry guidance; unknown hosts or failed checks are reported without blocking the task. Existing runtime limits still apply: native Windows remains unsupported by the tikin bootstrap; Linux/WSL use their own runtime user directory and do not read Windows preferences. Real host-session loading is a separate validation step.
+
 ## Install through your agent
 
 Paste this into your agent:

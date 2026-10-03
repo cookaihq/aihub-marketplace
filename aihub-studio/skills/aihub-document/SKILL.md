@@ -1,10 +1,14 @@
 ---
 name: aihub-document
-version: 1.0.0
-description: v1.0.0｜Convert PDFs with AIhub doc2x-v3 into Markdown, LaTeX, or DOCX ZIP results and validate the downloaded document package.
+version: 1.1.0
+description: v1.1.0｜Convert PDFs with AIhub doc2x-v3 into Markdown, LaTeX, or DOCX ZIP results and validate the downloaded document package.
 ---
 
 # AIhub Document
+
+## 默认 Skill 检查
+
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../../references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。E2 转换 PDF；用户本次指定型号时固定执行，否则读取 `AIHUB_DOCUMENT_MODELS`。未配置时用 `doc2x-v3`，当前只有这一型号完成自动参数转换，不能把任意已配置 ID 当成已接入。
 

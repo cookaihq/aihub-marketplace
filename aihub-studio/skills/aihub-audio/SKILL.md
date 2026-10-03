@@ -1,11 +1,15 @@
 ---
 name: aihub-audio
-version: 1.0.0
-description: v1.0.0｜Run AIhub D1 audio and speech workflows for speech-2.8-hd text-to-speech, paraformer-v2 transcription, explicit voice cloning, and resumable task delivery.
+version: 1.1.0
+description: v1.1.0｜Run AIhub D1 audio and speech workflows for speech-2.8-hd text-to-speech, paraformer-v2 transcription, explicit voice cloning, and resumable task delivery.
 compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
 # AIhub 音频与语音任务
+
+## 默认 Skill 检查
+
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../../references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 D1 处理文本转语音、语音识别/转写和用户明确要求的声音克隆。用户本次指定模型时固定执行；否则读取 `AIHUB_AUDIO_MODELS`，分别筛选 TTS、ASR 或克隆型号，不跨用途替换。没有配置时使用 `speech-2.8-hd`、`paraformer-v2` 或 `voice-clone`。音乐属于 `aihub-music`，素材理解属于 `aihub-understanding`。
 

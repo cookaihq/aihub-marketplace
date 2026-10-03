@@ -1,10 +1,14 @@
 ---
 name: aihub-music
-version: 1.0.0
-description: v1.0.0｜Generate AIhub music with lyria-3-pro async tasks or the separate Gemini-native lyria-3-pro-preview protocol, then save verified audio files.
+version: 1.1.0
+description: v1.1.0｜Generate AIhub music with lyria-3-pro async tasks or the separate Gemini-native lyria-3-pro-preview protocol, then save verified audio files.
 ---
 
 # AIhub Music
+
+## 默认 Skill 检查
+
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../../references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。新任务默认选 `operation=music-async`，没有模型配置时用 `lyria-3-pro`。用户选择 Gemini 原生音乐时选 `music-native`，内置型号为 `lyria-3-pro-preview`，不能静默切换协议或用短片段型号替代完整音乐。
 

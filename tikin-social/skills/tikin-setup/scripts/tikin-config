@@ -200,7 +200,8 @@ def initialize():
     if env_path.is_file():
         restrict_permissions(path=env_path)
     if not settings_path.exists():
-        atomic_write(settings_path, json.dumps(DEFAULT_SETTINGS, indent=2) + "\n")
+        from default_skills import update_settings
+        update_settings(settings_path, lambda settings: settings.setdefault("routing", {"default": "auto", "platforms": {}}))
     elif settings_path.is_file():
         restrict_permissions(path=settings_path)
 
@@ -333,6 +334,13 @@ def read_settings():
     if not path.is_file():
         return DEFAULT_SETTINGS
     settings = json.loads(path.read_text(encoding="utf-8"))
+    validate_routing(settings)
+    return settings
+
+
+def validate_routing(settings):
+    if not isinstance(settings, dict):
+        raise SystemExit("settings.json must be an object")
     routing = settings.get("routing")
     if not isinstance(routing, dict) or routing.get("default") not in MODES:
         raise SystemExit("settings.json has an invalid routing.default")
@@ -342,7 +350,6 @@ def read_settings():
     for platform, mode in platforms.items():
         if platform not in PLATFORMS or mode not in MODES:
             raise SystemExit("settings.json has an invalid platform routing override")
-    return settings
 
 
 def set_key():
@@ -390,26 +397,25 @@ def status(skill_name="tikin-setup", global_enabled=True):
 
 
 def set_routing(default_mode, platform_values, clear_platforms):
-    settings = read_settings()
-    routing = settings["routing"]
-    if default_mode:
-        routing["default"] = default_mode
-    if clear_platforms:
-        routing["platforms"] = {}
-    for value in platform_values:
-        if "=" not in value:
-            raise SystemExit("platform overrides must use PLATFORM=MODE")
-        platform, mode = value.split("=", 1)
-        if platform not in PLATFORMS:
-            raise SystemExit(f"unsupported platform: {platform}")
-        if mode not in MODES:
-            raise SystemExit(f"unsupported routing mode: {mode}")
-        routing["platforms"][platform] = mode
-    routing["platforms"] = dict(sorted(routing["platforms"].items()))
-    atomic_write(
-        config_dir() / "settings.json",
-        json.dumps(settings, indent=2, sort_keys=True) + "\n",
-    )
+    from default_skills import update_settings
+    def change(settings):
+        validate_routing(settings)
+        routing = settings["routing"]
+        if default_mode:
+            routing["default"] = default_mode
+        if clear_platforms:
+            routing["platforms"] = {}
+        for value in platform_values:
+            if "=" not in value:
+                raise SystemExit("platform overrides must use PLATFORM=MODE")
+            platform, mode = value.split("=", 1)
+            if platform not in PLATFORMS:
+                raise SystemExit(f"unsupported platform: {platform}")
+            if mode not in MODES:
+                raise SystemExit(f"unsupported routing mode: {mode}")
+            routing["platforms"][platform] = mode
+        routing["platforms"] = dict(sorted(routing["platforms"].items()))
+    update_settings(config_dir() / "settings.json", change)
 
 
 def get_policy(platform, global_enabled=True):
@@ -515,6 +521,10 @@ def main():
     subparsers.add_parser("set-key")
     subparsers.add_parser("status")
     subparsers.add_parser("config-check", help="print only configuration sources and validation problems")
+    defaults_parser = subparsers.add_parser("default-skills", help="inspect current Agent defaults and manage reminder preferences without API credentials")
+    defaults_parser.add_argument("--agent", required=True, choices=("codex", "claude-code", "workbuddy"))
+    defaults_parser.add_argument("--action", choices=("check", "dismiss", "enable"), default="check")
+    defaults_parser.add_argument("--config-dir", help="actual configuration directory of the current Agent")
     run_parser = subparsers.add_parser("run", help="run a command with resolved tikin configuration")
     run_parser.add_argument("argv", nargs=argparse.REMAINDER)
     set_routing_parser = subparsers.add_parser("set-routing")
@@ -537,7 +547,13 @@ def main():
     if not global_enabled and args.command in ("init", "set-key", "set-routing"):
         parser.error("--no-global-config cannot be combined with a global configuration write")
 
-    if args.command == "init":
+    if args.command == "default-skills":
+        from default_skills import run
+        try:
+            print(json.dumps(run(args.agent, args.action, args.config_dir, global_enabled), ensure_ascii=False))
+        except (OSError, ValueError) as error:
+            parser.error(str(error))
+    elif args.command == "init":
         initialize()
     elif args.command == "set-key":
         initialize()

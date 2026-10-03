@@ -1,11 +1,15 @@
 ---
 name: aihub-image
-version: 1.0.0
-description: v1.0.0｜Generate or edit images through AIhub with configured model priorities and recoverable fallback. Without configuration, use GPT Image 2.5 Flare for speed or Sunburst for detail. Resume existing image tasks and deliver checked files.
+version: 1.1.0
+description: v1.1.0｜Generate or edit images through AIhub with configured model priorities and recoverable fallback. Without configuration, use GPT Image 2.5 Flare for speed or Sunburst for detail. Resume existing image tasks and deliver checked files.
 compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
 # AIhub 图片任务
+
+## 默认 Skill 检查
+
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../../references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 本 Skill 只处理 A1 文生图和 A2 图片编辑/参考图生成。图片增强、材质与 PBR 贴图、Profile 创建不属于本版入口。Gemini 原生图片协议如账号提供，按对应图片任务处理，不归入通用语言模型接口。
 

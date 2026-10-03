@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 — 2026-10-03
+
+- Check the current Agent's applicable global/project instructions once per Plugin per session, with explicit task-to-Skill mappings for Codex, Claude Code and WorkBuddy.
+- Offer set-as-default, skip-once or stop-reminding without blocking the original task. Rule writes require the user's approval of the exact text and target; existing equivalent rules, overrides and shared files are reviewed before editing.
+- Add the offline `default-skills` helper and per-Agent/configuration-directory preferences in the Plugin's `settings.json`. Preserve other settings and routing, support re-enabling, and skip the workflow when global configuration is disabled.
+- Keep business APIs, credentials and runtime support unchanged. File checks do not establish actual host-session loading.
+
 ## 1.0.0 — 2026-10-02
 
 - Move the Plugin to `cookaihq/aihub-marketplace` and its CNB mirror, under the new installation identity `aihub-studio@aihub-marketplace`.

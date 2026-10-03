@@ -193,18 +193,24 @@ for path in roots:
 PY
 check $? "no legacy skill identifiers or old dotenv path remain"
 
-# 5. Each reference path mentioned in a SKILL.md exists.
-for sk in "${skill_files[@]}"; do
-  skdir="$(dirname "$sk")"
-  while IFS= read -r ref; do
-    [ -z "$ref" ] && continue
-    if [ -e "$skdir/$ref" ]; then
-      check 0 "$sk -> $ref exists"
-    else
-      check 1 "$sk -> $ref exists"
-    fi
-  done < <(grep -oE 'references/[A-Za-z0-9._/-]+' "$sk" | sort -u)
-done
+# 5. Markdown references resolve relative to the actual calling Skill.
+python3 - <<'PYREF'
+from pathlib import Path
+import re
+for skill in Path('skills').glob('*/SKILL.md'):
+    text = skill.read_text()
+    targets = re.findall(r'\]\(([^)]+)\)', text)
+    for target in targets:
+        if '://' in target or target.startswith('#'):
+            continue
+        path = skill.parent / target.split('#', 1)[0]
+        assert path.exists(), f'{skill}: missing {target}'
+    # Preserve validation of bare reference paths from the original validator.
+    outside_links = re.sub(r'\]\([^)]+\)', '', text)
+    for target in re.findall(r'(?<![\w/.-])references/[A-Za-z0-9._/-]+', outside_links):
+        assert (skill.parent / target).exists(), f'{skill}: missing {target}'
+PYREF
+check $? "all Skill Markdown references resolve, including the shared default-Skill workflow"
 
 # 6. The setup helper is executable and its public file contracts pass.
 if [ -x skills/tikin-setup/scripts/tikin-config ]; then
@@ -216,7 +222,7 @@ fi
 # uv if absent) — python3 here only drives unittest, it never runs tikin-config.
 # Missing runtimes are reported with a build command. A skipped behavior suite
 # is incomplete verification and therefore fails this release validator.
-unittest_out="$(python3 -m unittest tests/test_tikin_config.py 2>&1)"
+unittest_out="$(python3 -m unittest discover -s tests 2>&1)"
 unittest_rc=$?
 if [ "$unittest_rc" -eq 0 ] && printf '%s' "$unittest_out" | grep -q 'skipped='; then
   check 1 "tikin-config behavior tests unavailable — build the required runtime"

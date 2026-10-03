@@ -8,9 +8,11 @@ import { selectionPlan } from './selection.js';
 import { startRun, continueRun } from './runs.js';
 import { collectRequestErrors, feedback } from './diagnostics.js';
 import { reviewTask, DISABLE_CHECK_HINT } from './review.js';
+import { agentDefaults } from './agentDefaults.js';
 const SKILLS = ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document'];
 const FLAGS = {
     doctor: [], 'config-check': [], models: ['media', 'keyword'], describe: ['model'],
+    'default-skills': ['agent', 'action', 'config-dir'],
     generate: ['media', 'model', 'params-file', 'output-dir', 'wait-seconds'],
     understand: ['model', 'params-file', 'output-dir', 'wait-seconds'],
     'native-music': ['model', 'params-file', 'output-dir'],
@@ -27,6 +29,7 @@ const HELP = `AIhub media Plugin CLI
 Usage: node <plugin>/scripts/aihub.mjs COMMAND --skill NAME [options]
 Skills: ${SKILLS.join(', ')}
 Commands:
+  default-skills --agent codex|claude-code|workbuddy [--action check|dismiss|enable] [--config-dir DIR]
   config-check (local configuration sources; no network or media tools)
   doctor
   plan --request-file JSON
@@ -130,7 +133,11 @@ async function mainWithDiagnostics(argv, events) {
         if (!SKILLS.includes(skill))
             throw new Error(`--skill must be one of ${SKILLS.join(', ')}.`);
         // describe reads only bundled data; it can run before credentials are configured.
-        if (command === 'config-check')
+        if (command === 'default-skills')
+            output = agentDefaults({ agent: required(flags, 'agent'),
+                action: flags.action, configDir: flags['config-dir'],
+                globalEnabled: flags['no-global-config'] !== true });
+        else if (command === 'config-check')
             output = { ...inspectConfig({ skill, useGlobalConfig: flags['no-global-config'] !== true }) };
         else if (command === 'describe')
             output = { schema_version: 1, ...describe(required(flags, 'model')) };
@@ -232,6 +239,8 @@ async function mainWithDiagnostics(argv, events) {
             next_step: 'Check the key and its service/account. Offer to edit the effective local file or use secret-book to repair it. Do not replay a business request automatically.' };
     }
     process.stdout.write(JSON.stringify(output, null, 2) + '\n');
+    if (parsed?.command === 'default-skills' && ['review_required', 'dismissed', 'enabled', 'skipped'].includes(String(output.status)))
+        return 0;
     if (output.status === 'configuration_required')
         return 3;
     if (['ok', 'delivered', 'submitted', 'waiting', 'matched', 'mismatched', 'inconclusive', 'unavailable', 'disabled', 'pending', 'checking'].includes(String(output.status)))
