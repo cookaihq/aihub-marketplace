@@ -1,7 +1,7 @@
 ---
 name: aihub-document
-version: 0.9.2
-description: v0.9.2｜Convert PDFs with AIhub doc2x-v3 into Markdown, LaTeX, or DOCX ZIP results and validate the downloaded document package.
+version: 1.0.0
+description: v1.0.0｜Convert PDFs with AIhub doc2x-v3 into Markdown, LaTeX, or DOCX ZIP results and validate the downloaded document package.
 ---
 
 # AIhub Document

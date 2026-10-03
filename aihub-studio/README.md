@@ -1,4 +1,4 @@
-# AIhub Plugin 0.9.2
+# AIhub Studio Plugin 1.0.0
 
 让 Codex 或 WorkBuddy 通过 AIhub 帮你生成和编辑图片、制作视频与音频、理解素材内容，或把 PDF 转成可编辑文档。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
 
@@ -33,7 +33,7 @@
 复制下面这段话到 Codex 或 WorkBuddy：
 
 ```text
-请安装 AIhub Plugin：优先用 https://github.com/cookaihq/plugin-marketplace，网络故障时改用 https://cnb.cool/zhidateam/tannt/plugin-marketplace.git。先阅读 aihub/README.md；在 WorkBuddy 中还须先读 aihub/references/workbuddy-install.md，使用当前应用的原生套件管理，不另起 CodeBuddy CLI。需要我操作界面时，请在回复中展示随包的添加市场截图，并指明“技能 → 套件 → 市场名称右侧的＋”。安装完整的 aihub@plugin-marketplace，保留已有设置，并确认 Skill 可发现和调用。
+请安装 AIhub Studio Plugin：优先用 https://github.com/cookaihq/aihub-marketplace，网络故障时改用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。先阅读 aihub-studio/README.md；在 WorkBuddy 中还须先读 aihub-studio/references/workbuddy-install.md，使用当前应用的原生套件管理，不另起 CodeBuddy CLI。需要我操作界面时，请在回复中展示随包的添加市场截图，并指明“技能 → 套件 → 市场名称右侧的＋”。安装完整的 aihub-studio@aihub-marketplace，保留已有设置，并确认 Skill 可发现和调用。
 ```
 
 AIhub 通过上述 GitHub 与 CNB 来源分发。WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套件” → 市场名称一行最右侧的圆形“＋”**；点击后才会出现“添加市场”窗口。下图由用户提供并确认 Windows 入口，本机 macOS 5.6.2 也已核对；入口可见不代表完整安装或 Skill 调用已验收。具体步骤见 [WorkBuddy 安装说明](references/workbuddy-install.md)。Agent 有界面操作能力时可代为完成，需要你操作时会同时展示截图和步骤。安装过程沿用 WorkBuddy 已有配置，不应为此新建 `.codebuddy`；无需手动执行终端命令。
@@ -41,6 +41,18 @@ AIhub 通过上述 GitHub 与 CNB 来源分发。WorkBuddy 使用 **专家·技�
 ![WorkBuddy 添加市场入口：顶部技能 → 套件 → 市场名称右侧的圆形＋](references/images/workbuddy-add-marketplace.png)
 
 “套件”在“SkillHub”右侧；添加市场使用市场名称右侧的“＋”。
+
+## 从旧 AIhub Plugin 迁移
+
+1.0.0 将安装对象从 `aihub@plugin-marketplace` 改为 **`aihub-studio@aihub-marketplace`**。新市场与旧市场是两个独立安装来源；只更新旧市场中的 `aihub` 不会换成新名称。先核对并准备下文的新配置，再按上面的安装提示词安装 AIhub Studio；随后停用旧 `aihub`，打开新会话，核对实际加载的 Plugin 身份、版本与六个 Skill 的来源，再验证调用。确认新版本可用后才卸载旧对象，不自动删除其配置。保留旧市场中的其他 Plugin；不能在两份同名 Skill 都启用时，把调用成功认定为新版通过。
+
+六个 `aihub-*` Skill 名、`AIHUB_*` 配置字段、项目配置与既有任务记录保持兼容。**Plugin 个人全局配置目录由 `~/.config/aihub/` 改为 `~/.config/aihub-studio/`；新版本不自动读取或搬迁旧 Plugin 目录。** 如果密钥只保存在旧目录，需要确认迁移或重新配置后才能使用新版本。当前 Skill 的 `~/.config/aihub-image/.env` 等普通 Skill 文件仍可作为末层来源。
+
+需要迁移旧 Plugin 配置时，可以说：
+
+> 请把旧 AIhub Plugin 的配置迁到 AIhub Studio：先只报告 `~/.config/aihub/` 中实际使用的共享文件、当前 Skill 专用文件和来源，将相同相对路径映射到 `~/.config/aihub-studio/`。核对新位置和环境变量、项目配置是否已有覆盖，列出将新增或替换的文件和字段，隐藏密钥，等我确认后再保存。保留旧文件，不合并不同账号；写完只检查本机配置来源，不提交业务请求。
+
+映射只包含 `.env`、`.env.local`、`.env.<skill-name>`、`<skill-name>/.env.local` 与 `<skill-name>/.env`，保留相对位置与优先级，不扫描备份文件，也不把各 Skill 的不同配置任选一份合并到共享文件。Windows 原生与 WSL 仍分别使用各自用户目录，不跨环境复制。安装、配置迁移和真实业务验证分别报告，旧目录在迁移确认前保持原状。
 
 ## 完成首次配置
 
@@ -54,8 +66,8 @@ AIhub 通过上述 GitHub 与 CNB 来源分发。WorkBuddy 使用 **专家·技�
 请帮我配置 AIhub，沿用已有选择，或让我选择 secret-book / 自填 .env。首次新增使用个人全局配置，已有错误则修复实际生效的原文件；选择 secret-book 时按它的流程取值保存。告诉我写入路径和实际来源，隐藏密钥，只做本机检查。
 ```
 
-- **选择 secret-book：**Agent 按它的流程检查当前 Agent 规则、飞书身份和令牌表，展示实际 key、记录和目标文件供你确认，再把配置保存到 AIhub 的本机文件。首次新增默认使用 `~/.config/aihub/.env`；修复已有错误则写回实际生效的原文件。需要 secret-book 2.3.0 或更新版本，当前支持 macOS / Linux；Windows 原生环境可自行填写文件。
-- **选择自行填写文件：**首次新增使用已选的**个人全局配置**，默认 `~/.config/aihub/.env`。Agent 告诉你完整路径，你在本机填写并保存。**AIhub 自动读取上述全局目录**，六个 Skill 跨项目共用；已明确只供某个项目或 Skill 使用时沿用该位置。
+- **选择 secret-book：**Agent 按它的流程检查当前 Agent 规则、飞书身份和令牌表，展示实际 key、记录和目标文件供你确认，再把配置保存到 AIhub 的本机文件。首次新增默认使用 `~/.config/aihub-studio/.env`；修复已有错误则写回实际生效的原文件。需要 secret-book 2.3.0 或更新版本，当前支持 macOS / Linux；Windows 原生环境可自行填写文件。
+- **选择自行填写文件：**首次新增使用已选的**个人全局配置**，默认 `~/.config/aihub-studio/.env`。Agent 告诉你完整路径，你在本机填写并保存。**AIhub 自动读取上述全局目录**，六个 Skill 跨项目共用；已明确只供某个项目或 Skill 使用时沿用该位置。
 
 配置保存后，AIhub 直接读取本机文件，正常使用无需 Secret Book 查表。表中轮换密钥不会自动修改本机配置；需要更新时让 Agent 再次核对和保存。需要只在项目使用，可以让 Agent 检查项目 `.env.local` 的忽略规则与覆盖关系，再确认迁移。
 
@@ -65,7 +77,7 @@ AIhub 通过上述 GitHub 与 CNB 来源分发。WorkBuddy 使用 **专家·技�
 
 从 secret-book 保存的配置和自行填写的配置，使用同一套文件读取顺序。修复时根据每个字段的实际来源确定原文件，不按默认保存位置另写一份；来源是进程环境变量时，先查清启动或注入位置。
 
-下面以图片 Skill `aihub-image` 为例，越靠前越优先。视频、音频、音乐、素材理解和文档分别将文件名或子目录名中的 `aihub-image` 换成 `aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding`、`aihub-document`；Plugin 目录始终叫 `aihub`。
+下面以图片 Skill `aihub-image` 为例，越靠前越优先。视频、音频、音乐、素材理解和文档分别将文件名或子目录名中的 `aihub-image` 换成 `aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding`、`aihub-document`；Plugin 目录始终叫 `aihub-studio`。
 
 | 顺序 | 位置 | 作用 |
 | --- | --- | --- |
@@ -73,11 +85,11 @@ AIhub 通过上述 GitHub 与 CNB 来源分发。WorkBuddy 使用 **专家·技�
 | 2 | 工作文件夹的 `.env.aihub-image` | 当前项目内仅供图片 Skill 使用 |
 | 3 | 工作文件夹的 `.env.local` | 当前项目内共用 |
 | 4 | 工作文件夹的 `.env` | 当前项目的补充配置 |
-| 5 | `~/.config/aihub/aihub-image/.env.local` | 图片 Skill 子目录中的优先覆盖 |
-| 6 | `~/.config/aihub/aihub-image/.env` | 图片 Skill 子目录中的配置 |
-| 7 | `~/.config/aihub/.env.aihub-image` | 在 Plugin 根目录直接设置图片 Skill 专用配置 |
-| 8 | `~/.config/aihub/.env.local` | 六个 Skill 共用的优先覆盖 |
-| 9 | `~/.config/aihub/.env` | 首次新增配置的默认保存位置，六个 Skill 共用 |
+| 5 | `~/.config/aihub-studio/aihub-image/.env.local` | 图片 Skill 子目录中的优先覆盖 |
+| 6 | `~/.config/aihub-studio/aihub-image/.env` | 图片 Skill 子目录中的配置 |
+| 7 | `~/.config/aihub-studio/.env.aihub-image` | 在 Plugin 根目录直接设置图片 Skill 专用配置 |
+| 8 | `~/.config/aihub-studio/.env.local` | 六个 Skill 共用的优先覆盖 |
+| 9 | `~/.config/aihub-studio/.env` | 首次新增配置的默认保存位置，六个 Skill 共用 |
 | 10 | `~/.config/aihub-image/.env` | 普通图片 Skill 的配置，仅补齐前面各层缺失或为空的项 |
 
 只需要图片 Skill 使用不同设置时，可让 Agent 协助创建 `.env.aihub-image`；需要独立子目录时再使用 `aihub-image/`。无需预先创建六个子目录或复制相同密钥。每次只读取当前 Skill 的专用文件、Plugin 共享文件和当前 Skill 的普通全局 `.env`，不读取普通 Skill 目录的 `.env.local`，也不扫描其他 Skill、旧产品别名目录或 `.env.backup` 等文件。
@@ -88,11 +100,11 @@ AIhub 通过上述 GitHub 与 CNB 来源分发。WorkBuddy 使用 **专家·技�
 
 | 实际运行环境 | Plugin 共用全局配置文件 | 普通 Skill 回退文件，以图片为例 |
 | --- | --- | --- |
-| macOS / Linux | `~/.config/aihub/.env`，`~` 表示运行程序的用户个人文件夹 | `~/.config/aihub-image/.env` |
-| Windows 原生环境 | `%USERPROFILE%\.config\aihub\.env`，通常如 `C:\Users\你的用户名\.config\aihub\.env` | `%USERPROFILE%\.config\aihub-image\.env` |
-| WSL（Windows 上的 Linux 环境） | WSL 用户的 `~/.config/aihub/.env`，通常如 `/home/你的Linux用户名/.config/aihub/.env` | WSL 用户的 `~/.config/aihub-image/.env` |
+| macOS / Linux | `~/.config/aihub-studio/.env`，`~` 表示运行程序的用户个人文件夹 | `~/.config/aihub-image/.env` |
+| Windows 原生环境 | `%USERPROFILE%\.config\aihub-studio\.env`，通常如 `C:\Users\你的用户名\.config\aihub-studio\.env` | `%USERPROFILE%\.config\aihub-image\.env` |
+| WSL（Windows 上的 Linux 环境） | WSL 用户的 `~/.config/aihub-studio/.env`，通常如 `/home/你的Linux用户名/.config/aihub-studio/.env` | WSL 用户的 `~/.config/aihub-image/.env` |
 
-表中的 `aihub/` 内也可以保存 `.env.local`、当前 Skill 的专用文件及可选子目录。个人文件夹由实际运行程序的环境决定：macOS、Linux 和 WSL 优先使用 `HOME`，Windows 原生环境优先使用 `USERPROFILE`；未设置时使用系统提供的当前用户目录。WSL 不会自动读取 Windows 用户配置。可让 Agent 确认完整路径；**路径说明不代表对应平台已完成兼容性验证。**
+表中的 `aihub-studio/` 内也可以保存 `.env.local`、当前 Skill 的专用文件及可选子目录。个人文件夹由实际运行程序的环境决定：macOS、Linux 和 WSL 优先使用 `HOME`，Windows 原生环境优先使用 `USERPROFILE`；未设置时使用系统提供的当前用户目录。WSL 不会自动读取 Windows 用户配置。可让 Agent 确认完整路径；**路径说明不代表对应平台已完成兼容性验证。**
 
 两类全局目录默认都会读取。若某次任务只应使用环境变量和项目配置，可以说：
 
@@ -100,9 +112,9 @@ AIhub 通过上述 GitHub 与 CNB 来源分发。WorkBuddy 使用 **专家·技�
 
 也可以明确要求 Agent 将新配置仅保存到项目的 `.env.local`；位于 Git 项目内时，写入密钥前须确认该文件未被跟踪且已被忽略。仅选择项目保存不会自动关闭全局读取，需要时使用上面的请求。
 
-已有的 `~/.config/aihub-image/.env` 等当前 Skill 配置无需迁移，即可作为末层来源。同一用户下，同名 Skill 的独立安装和 Plugin 安装可能共用该文件，Plugin 中的非空值始终优先。默认保存位置仍是 `~/.config/aihub/.env`，程序不会创建、复制或搬迁已有配置。若希望主动整理这些文件，可以说：
+已有的 `~/.config/aihub-image/.env` 等当前 Skill 配置无需迁移，即可作为末层来源。同一用户下，同名 Skill 的独立安装和 Plugin 安装可能共用该文件，Plugin 中的非空值始终优先。默认保存位置仍是 `~/.config/aihub-studio/.env`，程序不会创建、复制或搬迁已有配置。若希望主动整理这些文件，可以说：
 
-> 请检查我以前按 Skill 保存的 AIhub 配置，隐藏密钥，列出准确的源路径和目标路径，等我确认后再迁移。相同配置可放入 AIhub Plugin 的共用文件，不同账号保留为各 Skill 的专用配置，保留已有文件，不自行覆盖。迁移是可选操作。
+> 请检查我以前按 Skill 保存的 AIhub 配置，隐藏密钥，列出准确的源路径和目标路径，等我确认后再迁移。相同配置可放入 AIhub Studio Plugin 的共用文件，不同账号保留为各 Skill 的专用配置，保留已有文件，不自行覆盖。迁移是可选操作。
 
 配置未生效时可以说：
 
@@ -168,7 +180,7 @@ AIhub 检查需要上传实际产物，单个产物沿用 20 MiB 限制，超过
 
 同一任务默认累计 3 次独立上游错误时，Agent 会提供反馈入口；最终失败时即使不足 3 次也会提示。重复查询同一个失败任务不重复计数。鉴权、额度或权限问题会立即给出建议，后续成功的任务仍正常交付。
 
-程序在任务文件夹保存公开 Issue 草稿和供服务管理员私下定位的诊断报告，不会自动发送。公开草稿排除密钥、原始任务/请求 ID、提示词和素材链接。Plugin 问题可提交 [仓库 Issue](https://github.com/cookaihq/plugin-marketplace/issues/new)，服务问题联系当前 AIhub 管理员。可选 `AIHUB_ERROR_REPORT_THRESHOLD` 修改正整数阈值，`AIHUB_SUPPORT_URL` 指定服务的支持入口。
+程序在任务文件夹保存公开 Issue 草稿和供服务管理员私下定位的诊断报告，不会自动发送。公开草稿排除密钥、原始任务/请求 ID、提示词和素材链接。Plugin 问题可提交 [仓库 Issue](https://github.com/cookaihq/aihub-marketplace/issues/new)，服务问题联系当前 AIhub 管理员。可选 `AIHUB_ERROR_REPORT_THRESHOLD` 修改正整数阈值，`AIHUB_SUPPORT_URL` 指定服务的支持入口。
 
 ## 第一次使用
 
@@ -218,10 +230,10 @@ AIhub 检查需要上传实际产物，单个产物沿用 20 MiB 限制，超过
 
 | 遇到的问题 | 发给 Agent 的话 |
 | --- | --- |
-| 插件市场找不到 AIhub，或安装后找不到 Skill | 请先确认使用的是 GitHub 还是 CNB，核对该来源是否已发布 aihub、是否安装到当前 Agent、六个 Skill 是否完整，以及是否需要新会话；区分尚未发布或同步与本机安装问题。 |
+| 插件市场找不到 AIhub，或安装后找不到 Skill | 请先确认使用的是 GitHub 还是 CNB，核对该来源是否已发布 aihub-studio、是否安装到当前 Agent、六个 Skill 是否完整，以及是否需要新会话；区分尚未发布或同步与本机安装问题。 |
 | WorkBuddy 找不到“添加市场”按钮 | 请在回复中展示随包的添加市场截图，指明“技能 → 套件 → 市场名称右侧的＋”；“添加市场”是点击后的窗口标题。界面不同时先核对当前页面和版本。 |
 | WorkBuddy 查询到空插件列表，或出现新的 `.codebuddy` 目录 | 停止另起 CodeBuddy CLI，按随包的 WorkBuddy 安装说明从原生套件管理查看市场和安装结果；保留已有目录及配置。仅补配置目录环境变量不能阻止旧版 CLI 创建诊断目录。 |
-| 想用 CNB，但已添加 GitHub 的同名插件市场 | 请检查 plugin-marketplace 当前来源，说明切换到 CNB 的方式及对已安装插件的影响，保留我的插件和设置。 |
+| 想用 CNB，但已添加 GitHub 的同名插件市场 | 请检查 aihub-marketplace 当前来源，说明切换到 CNB 的方式及对已安装插件的影响，保留我的插件和设置。 |
 | 提示缺少 Node.js 或 ffprobe | 请检查当前运行环境中这两个工具是否能执行，并给出适合我的系统的安装或修复步骤。 |
 | 缺少密钥，或修改配置后未生效 | 请报告缺失或错误字段的实际来源和依据，让我选择修改本机文件或用 secret-book 修复；已有明确选择则沿用，修复原文件并重新检查，隐藏密钥值。 |
 | 密钥被拒绝或查不到模型 | 请核对密钥与服务地址的实际来源，区分认证被拒绝、网络异常、额度和权限问题。需要修复配置时让我选择手填或 secret-book，修复后先验证，不自动重发原任务。 |
@@ -232,7 +244,7 @@ AIhub 检查需要上传实际产物，单个产物沿用 20 MiB 限制，超过
 
 ## 更新
 
-AIhub 按完整 Plugin 更新，六个 Skill 会一起更新。更新通过你当前使用的 Agent 的插件管理功能进行，读取当前已配置的 GitHub 或 CNB 来源；WorkBuddy 的查询和更新继续遵循 [WorkBuddy 安装说明](references/workbuddy-install.md)，沿用同一宿主配置目录。从 CNB 安装时，需要该版本已同步到 CNB 才能取得。本 Plugin 不带独立 Skill 的自动检查更新脚本，也不读取 `AUTO_UPDATE_CHECK` 开关。是否自动更新取决于宿主提供的功能和设置。
+AIhub Studio 按完整 Plugin 更新，六个 Skill 会一起更新。更新对象是 `aihub-studio@aihub-marketplace`；从旧 `aihub@plugin-marketplace` 切换时按上面的迁移步骤操作。更新通过你当前使用的 Agent 的插件管理功能进行，读取当前已配置的 GitHub 或 CNB 来源；WorkBuddy 的查询和更新继续遵循 [WorkBuddy 安装说明](references/workbuddy-install.md)，沿用同一宿主配置目录。从 CNB 安装时，需要该版本已同步到 CNB 才能取得。本 Plugin 不带独立 Skill 的自动检查更新脚本，也不读取 `AUTO_UPDATE_CHECK` 开关。是否自动更新取决于宿主提供的功能和设置。
 
 想了解新版时可以说：
 
@@ -240,7 +252,7 @@ AIhub 按完整 Plugin 更新，六个 Skill 会一起更新。更新通过你�
 
 决定更新后可以说：
 
-> 请把完整 AIhub Plugin 更新到当前可用版本，保留我的个人全局配置、项目配置、任务记录和结果文件。完成后检查六个 Skill 能否发现和调用；如需新会话，请指导我操作。
+> 请把完整 AIhub Studio Plugin 更新到当前可用版本，保留我的个人全局配置、项目配置、任务记录和结果文件。完成后检查六个 Skill 能否发现和调用；如需新会话，请指导我操作。
 
 检查更新与提交生成请求是两件事，不需要为检查更新生成图片或其他素材。版本变更见随包的 [更新记录](CHANGELOG.md)；需要进一步诊断时，可让 Agent 参考 [配置与任务恢复说明](references/cli.md)。
 

@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 const exec = promisify(execFile);
 
 test('published Plugin runs outside the checkout without node_modules or original MCP', async () => {
   const temp = await mkdtemp(join(tmpdir(), 'aihub-package-'));
-  const plugin = join(temp, 'aihub');
+  const plugin = join(temp, 'relocated-aihub-studio');
   try {
     for (const part of ['package.json', 'scripts', 'dist', 'catalog', 'skills', 'references', '.codex-plugin', '.claude-plugin', '.codebuddy-plugin', 'LICENSE']) {
       await cp(resolve(part), join(plugin, part), { recursive: true });
@@ -44,16 +44,19 @@ test('published Plugin runs outside the checkout without node_modules or origina
       }
     }
     const fixtureHome = join(temp, 'user');
-    const config = join(fixtureHome, '.config', 'aihub');
+    const config = join(fixtureHome, '.config', 'aihub-studio');
+    const legacy = join(fixtureHome, '.config', 'aihub');
     const ordinary = join(fixtureHome, '.config', 'aihub-image', '.env');
     await mkdir(join(config, 'aihub-image'), { recursive: true });
+    await mkdir(legacy, { recursive: true });
+    await writeFile(join(legacy, '.env'), 'AIHUB_API_KEY=fixture-legacy-key');
     await mkdir(join(fixtureHome, '.config', 'aihub-image'), { recursive: true });
     await writeFile(join(config, '.env'), 'AIHUB_API_KEY=fixture-shared-key\nAIHUB_BASE_URL=https://fixture.invalid');
     await writeFile(join(config, '.env.aihub-image'), 'AIHUB_API_KEY=fixture-image-key');
     await writeFile(ordinary, 'AIHUB_API_KEY=fixture-ordinary-key\nAIHUB_BASE_URL=https://ordinary.invalid');
     // Only the child process uses this isolated user directory; never read the tester's credentials.
     const env = { ...process.env, HOME: fixtureHome, USERPROFILE: fixtureHome, AIHUB_API_KEY: '', AIHUB_BASE_URL: '' };
-    const fixtureKeys = ['fixture-shared-key', 'fixture-image-key', 'fixture-directory-key', 'fixture-ordinary-key', 'fixture-project-key'];
+    const fixtureKeys = ['fixture-shared-key', 'fixture-image-key', 'fixture-directory-key', 'fixture-ordinary-key', 'fixture-project-key', 'fixture-legacy-key'];
     const checkNoKeys = (output: string) => {
       for (const key of fixtureKeys) assert.ok(!output.includes(key), 'CLI output must not expose fixture credentials');
     };
@@ -69,6 +72,11 @@ test('published Plugin runs outside the checkout without node_modules or origina
       }
     };
     const doctor = (skill: string, ...flags: string[]) => command('doctor', '--skill', skill, ...flags);
+    const manifest = JSON.parse(await readFile(join(plugin, '.claude-plugin/plugin.json'), 'utf8'));
+    const inspection = await command('config-check', '--skill', 'aihub-image');
+    assert.deepEqual(inspection.consumer, { kind: 'plugin', name: manifest.name });
+    assert.equal(inspection.fields.AIHUB_API_KEY.source, join(config, '.env.aihub-image'));
+    assert.ok(inspection.layers.every((layer: { path: string }) => !layer.path.startsWith(`${legacy}${sep}`)));
     assert.equal((await doctor('aihub-video')).config_sources.AIHUB_API_KEY, join(config, '.env'));
     assert.equal((await doctor('aihub-image')).config_sources.AIHUB_API_KEY, join(config, '.env.aihub-image'));
     assert.equal((await doctor('aihub-image', '--use-global-config')).config_sources.AIHUB_API_KEY, join(config, '.env.aihub-image'));
@@ -105,6 +113,10 @@ test('published Plugin runs outside the checkout without node_modules or origina
 
     // The packaged CLI must skip unreadable files in both global directory forms.
     await rm(ordinary);
+    await assert.rejects(doctor('aihub-image'), (error: unknown) => {
+      assert.match(JSON.parse((error as { stdout: string }).stdout).error, /Missing AIHUB_API_KEY/);
+      return true;
+    });
     await mkdir(ordinary);
     const unreadablePlugin = join(config, '.env');
     await mkdir(unreadablePlugin, { recursive: true });

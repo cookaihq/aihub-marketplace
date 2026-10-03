@@ -12,8 +12,8 @@ const cfg = (skill: string, models?: string[]): LoadedConfig => ({ skill, apiKey
 test('model lists use caller-specific layering, replace lower lists and disclose sources', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'aihub-selection-'));
   const home = join(dir, 'user'); const project = join(dir, 'project');
-  await mkdir(project); await mkdir(join(home, '.config', 'aihub'), { recursive: true });
-  const shared = join(home, '.config', 'aihub', '.env');
+  await mkdir(project); await mkdir(join(home, '.config', 'aihub-studio'), { recursive: true });
+  const shared = join(home, '.config', 'aihub-studio', '.env');
   const image = join(project, '.env.aihub-image');
   try {
     await writeFile(shared, 'AIHUB_API_KEY=fixture\nAIHUB_IMAGE_MODELS=a,b\nAIHUB_VIDEO_MODELS=c,d\nAIHUB_MODEL_FALLBACK_POLICY=confirm');

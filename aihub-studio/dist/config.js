@@ -13,7 +13,7 @@ export const MODEL_KEYS = Object.fromEntries(['image', 'video', 'audio', 'music'
 const SELECTION_KEYS = ['AIHUB_MODEL_FALLBACK_POLICY', 'AIHUB_MODEL_MAX_ATTEMPTS'];
 const DECLARED_KEYS = new Set([...KEYS, ...Object.values(MODEL_KEYS), ...SELECTION_KEYS, ...BEHAVIOR_KEYS]);
 // Stable Plugin manifest name; independent of the installation directory or host Agent.
-const PLUGIN_NAME = 'aihub';
+const PLUGIN_NAME = 'aihub-studio';
 // Retained from the source client's configuration. This is the API root, not /v1.
 const DEFAULT_BASE_URL = 'https://api.aihubmax.com';
 export function parseEnv(text) {

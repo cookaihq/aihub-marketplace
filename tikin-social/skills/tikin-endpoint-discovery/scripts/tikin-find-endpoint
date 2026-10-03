@@ -87,7 +87,7 @@ else:
             _sync = subprocess.run(
                 # --no-dev: the runtime only ever needs the shipping deps; dev
                 # extras must not be pulled onto a user machine at first run.
-                ["uv", "sync", "--no-dev", "--project", SKILL_DIR],
+                ["uv", "sync", "--locked", "--no-dev", "--project", SKILL_DIR],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 timeout=600,  # every network call needs a budget (ADR 0006)

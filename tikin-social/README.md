@@ -1,170 +1,159 @@
-# tikin Plugin
+# tikin Social
 
-Social-media data for AI coding agents — download media and fetch posts, profiles, comments,
-search, trends, and analytics across **TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads,
-Xiaohongshu**, and more, powered by [tikin](https://tikin.net).
+tikin Social helps Claude Code, Codex and compatible Agent Skills clients retrieve social-media
+posts, profiles, comments, search results and trends, download media, and analyze accounts across
+TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
+[tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Built on the [Agent Skills](https://agentskills.io) open standard — works in **Claude Code**,
-**Codex**, and any skills-compatible agent. The plugin contains 17 consistently named
-`tikin-*` skills across setup, REST integration, platform coverage, and task workflows.
+## Install through your agent
 
-## Quick start
+Paste this into your agent:
 
-1. **Install** the plugin or skills for your agent — see [Install](#install).
-2. Start a new agent session and invoke `tikin-setup`.
-3. Follow the setup flow. It verifies the installation and API key, creates the default routing
-   settings, and configures local credentials without asking you to paste a key into chat.
-4. Ask your agent something like *"Download this TikTok video"* or *"Analyze @nasa on Instagram"*.
+> Install the complete tikin-social Plugin from the aihub-marketplace repository,
+> https://github.com/cookaihq/aihub-marketplace.git, in its tikin-social/ directory.
+> Prefer GitHub; if it fails because of a network problem, try
+> https://cnb.cool/zhidateam/tannt/aihub-marketplace.git with the same Plugin and version.
+> Preserve my existing settings, then verify that this agent can discover and invoke its Skills.
 
-If no valid key exists, `tikin-setup` prefers an available browser-control MCP or CLI. It opens
-<https://console.tikin.net>, waits while you complete login, CAPTCHA, or 2FA, and then helps create
-and configure a key. Authentication remains user-controlled. If the environment cannot transfer
-the key safely, setup falls back to a hidden local input instead of exposing it in chat or logs.
+Claude Code and Codex have native Plugin installations. WorkBuddy uses the **套件** market:
+**专家·技能·连接器 → 技能 → 套件 → circular ＋ beside the marketplace names**. This opens the
+**添加市场** dialog. After adding the repository, click the ＋ on the **tikin-social** card to
+install it. Adding the market and installing its Plugin are separate steps.
 
-## Install
+Agent Skills clients can also install the Skills from this repository’s `tikin-social/` directory.
+Include `tikin-setup` with the operational Skills; its helper loads their API configuration.
+Start a new session after installation so the agent can discover the newly installed Skills.
+The agent should report installation, Skill invocation and a real API request as separate checks.
 
-The plugin bundles [Agent Skills](https://agentskills.io) folders, so any compatible agent can
-use them. Install `tikin-setup` together with the operational skills: its configuration helper
-loads credentials for their API commands. The endpoint-search tool remains inside
-`tikin-endpoint-discovery`. There is no SDK to add and no build step.
+API workflows require `curl`, a POSIX shell and `uv` 0.8 or newer. The two bundled Python helpers
+need an initial runtime setup with network access; endpoint search then works offline. Your
+agent can check these tools. The helpers currently use a POSIX `bin/python` runtime path:
+**native Windows execution is not supported yet**. A WorkBuddy marketplace card does not prove
+Windows runtime compatibility. Development verification runs on macOS; Linux and WSL still need
+runtime validation, and a Windows host cannot be assumed to execute its tools inside WSL.
 
-- **Every API workflow** needs `curl` and the installed `tikin-setup` helper. The helper injects
-  the owning Skill's resolved configuration into each API command without printing secrets.
-- **The two skills that ship a CLI** — `tikin-setup` (`scripts/tikin-config`) and
-  `tikin-endpoint-discovery` (`scripts/tikin-find-endpoint`) — additionally need
-  [`uv`](https://docs.astral.sh/uv/) **0.8 or newer**. Each is a pinned uv project
-  (`pyproject.toml` + `uv.lock` + `.python-version`), and the CLI re-executes itself on that
-  project's own `.venv`. The **first** run builds that `.venv` and needs network access; every run
-  afterwards is offline. Both CLIs are standard-library only — the pinned interpreter, not any
-  third-party dependency, is what the project file exists for. Without `uv` they stop with an
-  install command instead of silently running on some other interpreter.
+## Configure API access
 
-### Any agent — skills CLI
+Get your own API key from <https://console.tikin.net>. Never paste a complete key into chat.
+`tikin-setup` can help with browser-based setup while you control login and authentication, or
+help you enter the key locally without displaying it.
 
-[`npx skills`](https://github.com/vercel-labs/skills) installs into every agent it detects
-(Claude Code, Codex, Cursor, and more):
+> Help me configure tikin-social. Keep any configuration method I already chose, or let me
+> choose secret-book or a local .env file. Save new shared configuration in my personal
+> ~/.config/tikin-social/.env; repair existing errors in their actual source file. Tell me the
+> written file and effective sources without showing secret values.
 
-```bash
-npx skills add https://github.com/cookaihq/plugin-marketplace/tree/main/tikin-plugin
-```
+| Field | What to provide |
+| --- | --- |
+| `TIKIN_API_KEY` | Required for API requests; the key from your tikin account. Offline endpoint search needs no key. |
+| `TIKIN_BASE_URL` | Optional API service root, default `https://console.tikin.net`; it must belong to the same service as your key. |
 
-To run setup before a full install, invoke just the bootstrap skill:
-
-```bash
-npx skills use https://github.com/cookaihq/plugin-marketplace/tree/main/tikin-plugin@tikin-setup --agent codex
-```
-
-### Claude Code — plugin marketplace
-
-```bash
-claude plugin marketplace add cookaihq/plugin-marketplace
-claude plugin install tikin-plugin@plugin-marketplace
-```
-
-Or test a local checkout: `claude --plugin-dir /path/to/tikin-plugin`.
-
-### Codex — plugin marketplace
-
-Codex can install the native plugin directly from the marketplace that hosts it:
-
-```bash
-codex plugin marketplace add cookaihq/plugin-marketplace
-codex plugin add tikin-plugin@plugin-marketplace
-```
-
-Start a new Codex session after installation so the bundled skills are discovered.
-
-### Verify & update
-
-- **skills CLI installs:** check with `npx skills list`, update with `npx skills update`.
-- **Claude Code marketplace installs:** manage via the `/plugin` interface inside Claude Code.
-- **Codex marketplace installs:** inspect with `codex plugin list`; refresh with `codex plugin
-  marketplace upgrade plugin-marketplace`, then reinstall/update with `codex plugin add
-  tikin-plugin@plugin-marketplace`.
-
-On the first tikin use in each agent session, the skills perform a best-effort, non-blocking
-version check. When an update is available, only tikin's installed plugin or skills are updated;
-the current task continues with the loaded version and the update takes effect in the next
-session. Offline checks, update failures, and insufficient permissions do not block the task or
-modify local credentials and settings.
-
-Sanity check in any agent: ask *"Find the tikin endpoint for one TikTok video"* — the
-`tikin-endpoint-discovery` skill should search the bundled index and return
-`GET /api/v1/tiktok/app/v3/fetch_one_video`.
-
-## Configuration
-
-tikin keeps credentials and behavior settings separate. Both paths honor `XDG_CONFIG_HOME`:
-
-| File | Purpose |
-|------|---------|
-| `~/.config/tikin/.env` | Secrets such as `TIKIN_API_KEY`, plus `TIKIN_BASE_URL` when needed |
-| `~/.config/tikin/settings.json` | Non-secret routing behavior |
-
-For `TIKIN_API_KEY` and `TIKIN_BASE_URL`, each Skill uses the first nonempty value from:
+The confirmed default for new shared credentials is the Plugin’s personal `.env` file. Existing
+project or Skill-specific choices remain valid. Each field independently uses the first nonempty
+value below. For example, when `tikin-douyin` makes a request:
 
 1. The process environment.
-2. `$PWD/.env.<skill-name>`, using the exact `name` in that Skill's `SKILL.md`.
-3. `$PWD/.env.local`.
-4. `$PWD/.env`.
-5. The existing `~/.config/tikin/.env` fallback, honoring `XDG_CONFIG_HOME`.
+2. `.env.tikin-douyin` in the command’s working folder.
+3. `.env.local` in that folder.
+4. `.env` in that folder.
+5. `~/.config/tikin-social/tikin-douyin/.env.local`.
+6. `~/.config/tikin-social/tikin-douyin/.env`.
+7. `~/.config/tikin-social/.env.tikin-douyin`.
+8. `~/.config/tikin-social/.env.local`.
+9. `~/.config/tikin-social/.env`.
+10. `~/.config/tikin-douyin/.env`.
 
-For example, `tikin-douyin` reads `.env.tikin-douyin`; it does not read `.env.tikin-tiktok`.
-Project files are read only in the command's working directory, without parent-directory
-search. Dotenv contents are parsed as literal values, never executed as shell code. The
-`tikin-config --skill <skill-name> run -- <command>` helper passes resolved configuration only
-to the child command. Configuration loading does not write or move credential files.
+Other Skills replace `tikin-douyin` with their own exact `tikin-*` name. The working folder is
+where the agent executes the command, not the installation directory; parent folders and other
+Skills’ files are not searched. Empty fields or empty Plugin directories continue to lower
+sources. Existing unreadable files report an error instead of silently selecting another account.
+Files contain literal values; they are never executed as shell programs.
 
-The default routing configuration is:
+The six global sources are read automatically. Ask “Run this task without global configuration”
+to disable both Plugin and ordinary Skill global files for that invocation; the helper’s
+`--no-global-config` option also uses default routing without reading saved settings. A helper
+call explicitly made without a caller Skill uses only project shared and Plugin shared files.
+The default save location remains the Plugin shared `.env`; do not create 17 separate directories
+unless some Skills actually need different settings. The ordinary Skill `.env` fallback can be
+shared by the same Skill installed through another distribution, with Plugin configuration taking
+priority. Reading a configuration never creates or migrates it.
 
-```json
-{
-  "routing": {
-    "default": "auto",
-    "platforms": {}
-  }
-}
-```
+The user folder is the home directory resolved by the helper’s Python runtime:
 
-`routing.default` and each entry in `routing.platforms` accept only `auto` or `confirm`:
+| Runtime | Plugin shared file and limits |
+| --- | --- |
+| macOS / Linux | The runtime user’s `~/.config/tikin-social/.env`; macOS has local test coverage, Linux is not yet verified. |
+| Native Windows | The present POSIX helper does not support this runtime; no working native Windows configuration path is claimed. |
+| WSL | A Linux process uses its own Linux user folder’s `.config/tikin-social/.env`; it does not automatically read the Windows user folder. WSL remains unverified. |
 
-- `auto` routes a supported platform URL through tikin immediately.
-- `confirm` asks once per user task before tikin is used.
+Skill overrides and fallback files use that same runtime user folder. `XDG_CONFIG_HOME` and
+old `tikin` / `tikin-plugin` directories are not configuration sources for the new Plugin.
 
-Platform overrides take precedence over `routing.default`; a newly supported platform inherits
-the default. This supports all-platform automatic routing, selected automatic platforms, or
-confirmation for every platform. An explicit instruction in the current user request always
-overrides the saved setting. Run `tikin-setup` again to change these choices.
+To diagnose an unexpected account or missing key, ask:
 
-Example: confirm before Xiaohongshu requests while other supported platforms remain automatic.
+> Check tikin-social’s configuration for tikin-douyin. Report the working folder, which file or
+> environment variable supplies each field, whether fields are missing, and any read errors.
+> Do not print values or call a business API.
 
-```json
-{
-  "routing": {
-    "default": "auto",
-    "platforms": {
-      "xiaohongshu": "confirm"
-    }
-  }
-}
-```
+The agent uses the actual loader’s local source report. After saving or repairing settings it
+checks those sources again. Local configuration checks do not prove API authentication;
+network failures, quota errors and permission errors do not automatically mean a bad key.
+Configuration repair does not automatically resend your previous business request.
 
-## How it connects
+## Migrate an existing installation
 
-tikin exposes a single **REST API** at `https://console.tikin.net`. You call it with your tikin
-API key; tikin authenticates, meters usage (per-call, prepaid balance), and returns the data. One
-key, one base URL, standard HTTP — no SDK required.
+This release replaces `tikin-plugin` with `tikin-social` in **aihub-marketplace**. The 17 Skill
+names and API field names stay unchanged. Install `tikin-social` and prepare its configuration,
+then disable the old `tikin-plugin@plugin-marketplace` or `tikin-plugin@tikin-plugins` instance.
+Open a new session and verify that the Plugin identity and actual `tikin-*` Skill sources belong
+to `tikin-social`. After validation succeeds, uninstall the old instance. The Skills retain the
+same names, so do not test with both Plugin copies active in the same agent.
 
-| Path | Owned by skill |
-|------|----------------|
-| REST best practices (auth, paths, pagination, cost) | `tikin-rest-api` |
-| Find the right endpoint among 1,000+ | `tikin-endpoint-discovery` |
+Old `~/.config/tikin/.env`, `~/.config/tikin/settings.json`, or files under a custom
+`XDG_CONFIG_HOME/tikin/` are not read or moved automatically. You can ask:
 
-Supported TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, and Xiaohongshu URLs are routed
-to the matching `tikin-*` platform or task skill. Skills must not use `curl`, WebFetch, or a
-similar generic fetcher directly against the user-provided social-media page URL. They may call
-the tikin API and may download a final media URL returned by tikin. If the user declines tikin,
-the agent reports the limitation instead of silently fetching the source platform directly.
+> Show me the source and target paths for migrating my old tikin configuration to
+> ~/.config/tikin-social/.env and ~/.config/tikin-social/settings.json. Preserve existing
+> settings, report conflicts without showing secrets, and get my confirmation before writing.
+
+The existing ordinary `~/.config/<skill-name>/.env` fallback needs no migration. Do not combine
+several accounts into one shared file without choosing which account each Skill should use.
+
+## First use
+
+Start with this offline check in a new session:
+
+> Find the tikin endpoint for retrieving one TikTok video. Search the bundled index without
+> calling the API.
+
+`tikin-endpoint-discovery` should return `GET /api/v1/tiktok/app/v3/fetch_one_video` and its
+required parameters. This proves local endpoint search, not access to your account.
+
+After API configuration, requests to tikin send the URL, account identifier or query needed for
+your task and can consume prepaid API balance. For a first real request, provide your own post:
+
+> Retrieve the details of this TikTok video: <my video URL>. Make only the request needed for
+> this post and tell me whether the API returned data.
+
+## Routing and common tasks
+
+Routing preferences live separately at `~/.config/tikin-social/settings.json`. The default is
+`auto`, which uses tikin for supported social URLs. `confirm` asks once for the user task; a
+platform-specific setting overrides the default and an explicit instruction in your request
+overrides both. Ask `tikin-setup` to change the policy, for example “Ask before Xiaohongshu
+requests; use tikin automatically for the other supported platforms.”
+
+| Request | Result |
+| --- | --- |
+| “Download the media from this post: <URL>” | Media files, with their saved paths and any unavailable items. |
+| “Analyze this creator’s recent posts: <profile URL>” | Profile details, recent performance and top content. |
+| “Summarize the comments on this post: <URL>” | Recurring themes, questions and sentiment from retrieved comments. |
+| “Compare these two creators: <profile URLs>” | A comparison based on the returned profile and post data. |
+
+Supported source-platform pages are accessed through tikin. The agent can download final media
+URLs returned by tikin; it should not silently fetch a source social page through a generic
+HTTP tool when you decline tikin. Large pulls use explicit pagination and request budgets and
+may return a partial result with a resume cursor.
 
 ## Skills
 
@@ -197,37 +186,23 @@ the agent reports the limitation instead of silently fetching the source platfor
 | `tikin-comments-analysis` | Comment sentiment, themes, top comments for a post |
 | `tikin-bulk-data-export` | Paginate large lists → dedup → CSV/JSON, with cost estimate |
 
-## Examples
+## Troubleshooting and updates
 
-```text
-You: Download https://www.tiktok.com/@nasa/video/7372484719365098283 without watermark
-→ tikin-social-media-downloader routes the URL through tikin and saves the no-watermark MP4.
+If the market shows `tikin-social` but no Skills are available, ask the agent to verify that the
+Plugin itself was installed and then start a new session. On Windows, check which runtime actually
+executes the tools; marketplace visibility alone cannot validate the current POSIX helpers.
 
-You: How is @nasa doing on Instagram?
-→ tikin-creator-analytics pulls the profile + recent posts,
-  then reports engagement rate & top content.
+For API errors, ask the agent to inspect local sources and distinguish authentication, permission,
+quota and network failures. For an update, say “Update only my tikin-social installation, keep
+my configuration, and tell me which version will load in the next session.” Plugins use the
+owning host’s update channel; Agent Skills installations use their source-aware updater. The
+first tikin use in a session performs the existing best-effort check through that channel;
+network or update failures do not block the current task. Credentials and routing preferences
+are kept outside the installation directory.
 
-You: What's trending on TikTok in the US right now?
-→ tikin-trend-research pulls popular trends, hashtags, and hot sounds for the US.
-```
-
-## Notes
-
-- tikin bills per API call against your prepaid balance. Task skills warn before large pulls and
-  cap pagination. Check your balance/usage anytime:
-  ```bash
-  uv run --project <tikin-setup-dir> <tikin-setup-dir>/scripts/tikin-config \
-    --skill tikin-rest-api run -- sh -c \
-    'curl -s --max-time 30 "${TIKIN_BASE_URL}/api/usage/token/" -H "Authorization: Bearer ${TIKIN_API_KEY}"'
-  ```
-- Override the base URL with `TIKIN_BASE_URL` if you use a private deployment.
-
-## Links
-
-- Website <https://tikin.net> · Console <https://console.tikin.net> ·
-  GitHub <https://github.com/cookaihq/plugin-marketplace/tree/main/tikin-plugin>
 - [Changelog](CHANGELOG.md)
-
-## License
+- [tikin website](https://tikin.net) · [Console](https://console.tikin.net)
+- [GitHub source](https://github.com/cookaihq/aihub-marketplace/tree/main/tikin-social)
+  · [CNB mirror](https://cnb.cool/zhidateam/tannt/aihub-marketplace)
 
 MIT — see [LICENSE](LICENSE).

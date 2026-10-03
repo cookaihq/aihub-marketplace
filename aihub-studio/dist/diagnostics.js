@@ -33,7 +33,7 @@ export function observeTerminalTask(task) {
     context.getStore()?.push({ id, at: new Date().toISOString(), stage: 'remote_execution', http_status: 200,
         code: code(task.error?.code), ambiguous: false, ...(identifier(task.id) ? { task_id: identifier(task.id) } : {}) });
 }
-export const ISSUE_URL = 'https://github.com/cookaihq/plugin-marketplace/issues/new';
+export const ISSUE_URL = 'https://github.com/cookaihq/aihub-marketplace/issues/new';
 /** All fields sent to the public draft are constructed explicitly; raw logs are never copied. */
 export async function feedback(cfg, output, events) {
     const record = [output.run_record, output.source_record, output.record].find(value => typeof value === 'string');

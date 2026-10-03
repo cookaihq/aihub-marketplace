@@ -11,6 +11,6 @@ try {
   const { main } = await import('../dist/cli.js');
   process.exitCode = await main(process.argv.slice(2));
 } catch (error) {
-  console.error(JSON.stringify({ schema_version: 1, status: 'not_submitted', error: `AIhub installation is incomplete: ${error.code || error.name}. Reinstall the complete Plugin; maintainers can run npm ci && npm run build in the Plugin source directory.` }));
+  console.error(JSON.stringify({ schema_version: 1, status: 'not_submitted', error: `AIhub Studio installation is incomplete: ${error.code || error.name}. Reinstall the complete Plugin; maintainers can run npm ci && npm run build in the Plugin source directory.` }));
   process.exitCode = 1;
 }

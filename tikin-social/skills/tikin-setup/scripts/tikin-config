@@ -79,7 +79,7 @@ else:
             _sync = subprocess.run(
                 # --no-dev: the runtime only ever needs the shipping deps; dev
                 # extras must not be pulled onto a user machine at first run.
-                ["uv", "sync", "--no-dev", "--project", SKILL_DIR],
+                ["uv", "sync", "--locked", "--no-dev", "--project", SKILL_DIR],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 timeout=600,  # every network call needs a budget (ADR 0006)
@@ -103,6 +103,7 @@ else:
 
 import argparse
 import getpass
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -110,6 +111,7 @@ import tempfile
 import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
 
 
 DEFAULT_SETTINGS = {"routing": {"default": "auto", "platforms": {}}}
@@ -120,6 +122,17 @@ VALIDATE_BACKOFF_SECONDS = (1.0, 2.0)
 VALIDATE_RETRY_AFTER_CAP_SECONDS = 60.0
 ENV_ASSIGNMENT = re.compile(r"^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$")
 CONFIG_KEYS = ("TIKIN_API_KEY", "TIKIN_BASE_URL")
+# Stable identity, checked against manifests in a full Plugin distribution. This
+# remains available when an Agent Skills client installs only Skill directories.
+PLUGIN_NAME = "tikin-social"
+DEFAULT_BASE_URL = "https://console.tikin.net"
+SKILL_NAMES = frozenset({
+    "tikin-bulk-data-export", "tikin-comments-analysis", "tikin-competitor-analysis",
+    "tikin-creator-analytics", "tikin-douyin", "tikin-endpoint-discovery",
+    "tikin-hashtag-research", "tikin-instagram", "tikin-rest-api", "tikin-setup",
+    "tikin-social-listening", "tikin-social-media-downloader", "tikin-tiktok",
+    "tikin-trend-research", "tikin-twitter-threads", "tikin-xiaohongshu", "tikin-youtube",
+})
 MODES = ("auto", "confirm")
 PLATFORMS = (
     "douyin",
@@ -133,8 +146,17 @@ PLATFORMS = (
 
 
 def config_dir():
-    root = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
-    return root / "tikin"
+    return Path.home() / ".config" / PLUGIN_NAME
+
+
+def check_plugin_identity():
+    plugin_root = Path(SKILL_DIR).parent.parent
+    for directory in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
+        path = plugin_root / directory / "plugin.json"
+        if path.is_file():
+            manifest = json.loads(path.read_text(encoding="utf-8"))
+            if manifest.get("name") != PLUGIN_NAME:
+                raise SystemExit("Plugin manifest identity disagrees with bundled configuration helper")
 
 
 def restrict_permissions(path=None, fd=None):
@@ -170,30 +192,22 @@ def atomic_write(path, content):
 def initialize():
     directory = config_dir()
     directory.mkdir(parents=True, exist_ok=True)
-    legacy_env_path = directory / "env"
     env_path = directory / ".env"
     settings_path = directory / "settings.json"
-    for path in (legacy_env_path, env_path, settings_path):
+    for path in (env_path, settings_path):
         if path.is_symlink():
             raise SystemExit(f"refusing symbolic link at {path}")
-    if not env_path.exists() and legacy_env_path.is_file():
-        os.replace(legacy_env_path, env_path)
-    if legacy_env_path.is_file():
-        restrict_permissions(path=legacy_env_path)
     if env_path.is_file():
         restrict_permissions(path=env_path)
-
     if not settings_path.exists():
         atomic_write(settings_path, json.dumps(DEFAULT_SETTINGS, indent=2) + "\n")
     elif settings_path.is_file():
         restrict_permissions(path=settings_path)
 
 
-def parse_env_file(path):
+def parse_env(text):
     values = {}
-    if not path.is_file():
-        return values
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
+    for raw_line in text.splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -208,40 +222,106 @@ def parse_env_file(path):
     return values
 
 
-def load_config(skill_name="tikin-setup"):
-    """Resolve each supported key without modifying the caller's environment."""
-    if not re.fullmatch(r"tikin-[a-z0-9]+(?:-[a-z0-9]+)*", skill_name):
-        raise SystemExit("--skill must be a tikin Skill name")
+def configuration_paths(skill_name, global_enabled):
+    if skill_name is not None and skill_name not in SKILL_NAMES:
+        raise SystemExit("--skill must name one of the 17 bundled tikin Skills")
     cwd = Path.cwd()
-    layers = [
-        ("environment", os.environ),
-        (".env." + skill_name, parse_env_file(cwd / (".env." + skill_name))),
-        (".env.local", parse_env_file(cwd / ".env.local")),
-        (".env", parse_env_file(cwd / ".env")),
-        ("file", parse_env_file(config_dir() / ".env")),
-    ]
+    paths = [cwd / (".env." + skill_name)] if skill_name else []
+    paths += [cwd / ".env.local", cwd / ".env"]
+    if global_enabled:
+        root = config_dir()
+        if skill_name:
+            paths += [root / skill_name / ".env.local", root / skill_name / ".env",
+                      root / (".env." + skill_name)]
+        paths += [root / ".env.local", root / ".env"]
+        if skill_name:
+            paths.append(Path.home() / ".config" / skill_name / ".env")
+    return paths
+
+
+def resolve_config(skill_name="tikin-setup", global_enabled=True):
+    """Read only fixed sources. Report each file revision and field source, never values."""
+    check_plugin_identity()
+    layers = [("environment", os.environ)]
+    files, problems = [], []
+    for path in configuration_paths(skill_name, global_enabled):
+        source = str(path)
+        try:
+            content = path.read_bytes()
+            parsed = parse_env(content.decode("utf-8"))
+        except FileNotFoundError:
+            files.append({"path": source, "revision": None})
+            continue
+        except (OSError, UnicodeError):
+            files.append({"path": source, "revision": None, "error": "unreadable"})
+            problems.append({"source": source, "reason": "unreadable"})
+            continue
+        files.append({"path": source, "revision": hashlib.sha256(content).hexdigest()})
+        layers.append((source, parsed))
     values, sources = {}, {}
     for key in CONFIG_KEYS:
         for source, layer in layers:
             value = layer.get(key)
-            if value:
-                values[key] = value
-                sources[key] = source
+            if value and value.strip():
+                values[key], sources[key] = value, source
                 break
+    if not values.get("TIKIN_BASE_URL"):
+        values["TIKIN_BASE_URL"] = DEFAULT_BASE_URL
+        sources["TIKIN_BASE_URL"] = "built-in default"
+    fields = {key: {"source": sources.get(key, "missing"), "present": bool(values.get(key))}
+              for key in CONFIG_KEYS}
+    if not values.get("TIKIN_API_KEY"):
+        fields["TIKIN_API_KEY"]["problem"] = "missing"
+        problems.append({"key": "TIKIN_API_KEY", "source": "missing", "reason": "missing"})
+    try:
+        url = urlsplit(values["TIKIN_BASE_URL"])
+        valid_url = (url.scheme in ("http", "https") and bool(url.hostname)
+                     and not url.username and not url.password and not url.query and not url.fragment)
+        _ = url.port
+    except ValueError:
+        valid_url = False
+    if not valid_url:
+        fields["TIKIN_BASE_URL"]["problem"] = "invalid_url"
+        problems.append({"key": "TIKIN_BASE_URL", "source": sources["TIKIN_BASE_URL"],
+                         "reason": "invalid_url"})
+    inspection = {
+        "schema": "secret-book.config-inspection/v1",
+        "status": "configuration_required" if problems else "ok",
+        "consumer": {"kind": "plugin", "name": PLUGIN_NAME},
+        "skill": skill_name, "cwd": str(Path.cwd()), "global_enabled": global_enabled,
+        "layers": files, "fields": fields, "problems": problems,
+        "environment": {key: hashlib.sha256(os.environ[key].encode()).hexdigest()
+                        if os.environ.get(key, "").strip() else None for key in CONFIG_KEYS},
+    }
+    return values, sources, inspection
+
+
+def load_config(skill_name="tikin-setup", global_enabled=True):
+    values, sources, inspection = resolve_config(skill_name, global_enabled)
+    for problem in inspection["problems"]:
+        if problem["reason"] != "missing":
+            raise SystemExit(f"configuration {problem['reason']}: {problem['source']}; run config-check")
     return values, sources
 
 
-def run_with_config(skill_name, command):
+def config_check(skill_name="tikin-setup", global_enabled=True):
+    _, _, inspection = resolve_config(skill_name, global_enabled)
+    print(json.dumps(inspection, sort_keys=True))
+    if inspection["problems"]:
+        raise SystemExit(3)
+
+
+def run_with_config(skill_name, command, global_enabled=True):
     if command and command[0] == "--":
         command = command[1:]
     if not command:
         raise SystemExit("run requires a command after --")
-    values, _ = load_config(skill_name)
+    values, _ = load_config(skill_name, global_enabled)
     if not values.get("TIKIN_API_KEY"):
         raise SystemExit("missing TIKIN_API_KEY; use tikin-setup to configure it")
     environment = dict(os.environ)
     environment.update(values)
-    environment["TIKIN_BASE_URL"] = values.get("TIKIN_BASE_URL") or "https://console.tikin.net"
+    environment["TIKIN_BASE_URL"] = values.get("TIKIN_BASE_URL") or DEFAULT_BASE_URL
     try:
         os.execvpe(command[0], command, environment)
     except OSError as error:
@@ -296,20 +376,17 @@ def set_key():
     atomic_write(path, "\n".join(updated) + "\n")
 
 
-def status(skill_name="tikin-setup"):
-    _, sources = load_config(skill_name)
-    settings = read_settings()
-    key_source = sources.get("TIKIN_API_KEY", "missing")
-    print(
-        json.dumps(
-            {
-                "key_configured": key_source != "missing",
-                "key_source": key_source,
-                "settings": {"routing": settings["routing"]},
-            },
-            sort_keys=True,
-        )
-    )
+def status(skill_name="tikin-setup", global_enabled=True):
+    _, sources = load_config(skill_name, global_enabled)
+    settings = read_settings() if global_enabled else DEFAULT_SETTINGS
+    print(json.dumps({
+        "key_configured": "TIKIN_API_KEY" in sources,
+        "key_source": sources.get("TIKIN_API_KEY", "missing"),
+        "sources": sources,
+        "plugin": PLUGIN_NAME, "skill": skill_name, "cwd": str(Path.cwd()),
+        "global_enabled": global_enabled,
+        "settings": {"routing": settings["routing"]},
+    }, sort_keys=True))
 
 
 def set_routing(default_mode, platform_values, clear_platforms):
@@ -335,10 +412,10 @@ def set_routing(default_mode, platform_values, clear_platforms):
     )
 
 
-def get_policy(platform):
+def get_policy(platform, global_enabled=True):
     if platform not in PLATFORMS:
         raise SystemExit(f"unsupported platform: {platform}")
-    routing = read_settings()["routing"]
+    routing = (read_settings() if global_enabled else DEFAULT_SETTINGS)["routing"]
     print(routing["platforms"].get(platform, routing["default"]))
 
 
@@ -378,7 +455,7 @@ def validate_once(request, timeout):
         return ("fatal", "key validation returned an unexpected response", None)
     except HTTPError as error:
         if error.code in (401, 403):
-            return ("fatal", "invalid TIKIN_API_KEY", None)
+            return ("fatal", f"authentication or permission rejected (HTTP {error.code}); check the configured key and service URL", None)
         if error.code == 429 or error.code >= 500:
             return ("transient", f"HTTP {error.code}", retry_after_seconds(error))
         return ("fatal", f"key validation failed with HTTP {error.code}", None)
@@ -389,14 +466,14 @@ def validate_once(request, timeout):
         return ("transient", f"connection failed: {error}", None)
 
 
-def validate_key(timeout, skill_name="tikin-setup"):
-    values, _ = load_config(skill_name)
+def validate_key(timeout, skill_name="tikin-setup", global_enabled=True):
+    values, _ = load_config(skill_name, global_enabled)
     key = values.get("TIKIN_API_KEY")
     if not key:
         raise SystemExit("missing TIKIN_API_KEY")
     base_url = (
         values.get("TIKIN_BASE_URL")
-        or "https://console.tikin.net"
+        or DEFAULT_BASE_URL
     )
     request = Request(
         f"{base_url.rstrip('/')}/api/usage/token/",
@@ -427,11 +504,17 @@ def validate_key(timeout, skill_name="tikin-setup"):
 
 def main():
     parser = argparse.ArgumentParser(description="Manage local tikin configuration safely.")
-    parser.add_argument("--skill", default="tikin-setup", help="owning SKILL.md name for project config")
+    identity = parser.add_mutually_exclusive_group()
+    identity.add_argument("--skill", default="tikin-setup", help="calling SKILL.md name")
+    identity.add_argument("--plugin-only", action="store_true", help="use shared Plugin config without a caller Skill")
+    global_options = parser.add_mutually_exclusive_group()
+    global_options.add_argument("--no-global-config", action="store_true", help="skip all global config and routing files this call")
+    global_options.add_argument("--use-global-config", action="store_true", help="compatibility option; global config is already enabled")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("init")
     subparsers.add_parser("set-key")
     subparsers.add_parser("status")
+    subparsers.add_parser("config-check", help="print only configuration sources and validation problems")
     run_parser = subparsers.add_parser("run", help="run a command with resolved tikin configuration")
     run_parser.add_argument("argv", nargs=argparse.REMAINDER)
     set_routing_parser = subparsers.add_parser("set-routing")
@@ -448,6 +531,11 @@ def main():
     # failure" retries.
     validate_parser.add_argument("--timeout", type=float, default=30.0)
     args = parser.parse_args()
+    check_plugin_identity()
+    skill_name = None if args.plugin_only else args.skill
+    global_enabled = not args.no_global_config
+    if not global_enabled and args.command in ("init", "set-key", "set-routing"):
+        parser.error("--no-global-config cannot be combined with a global configuration write")
 
     if args.command == "init":
         initialize()
@@ -455,19 +543,18 @@ def main():
         initialize()
         set_key()
     elif args.command == "status":
-        initialize()
-        status(args.skill)
+        status(skill_name, global_enabled)
+    elif args.command == "config-check":
+        config_check(skill_name, global_enabled)
     elif args.command == "run":
-        run_with_config(args.skill, args.argv)
+        run_with_config(skill_name, args.argv, global_enabled)
     elif args.command == "set-routing":
         initialize()
         set_routing(args.default, args.platform, args.clear_platforms)
     elif args.command == "get-policy":
-        initialize()
-        get_policy(args.platform)
+        get_policy(args.platform, global_enabled)
     elif args.command == "validate":
-        initialize()
-        validate_key(args.timeout, args.skill)
+        validate_key(args.timeout, skill_name, global_enabled)
 
 
 if __name__ == "__main__":

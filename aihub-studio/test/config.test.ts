@@ -1,16 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 import { tmpdir } from 'node:os';
-import { loadConfig, parseEnv, sanitized } from '../src/config.js';
+import { inspectConfig, loadConfig, parseEnv, sanitized } from '../src/config.js';
 
 test('Plugin global files are automatic, with project, Skill and process overrides', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'aihub-config-'));
   const project = join(dir, 'project');
   const home = join(dir, 'user');
   await mkdir(project);
-  const plugin = join(home, '.config', 'aihub');
+  const plugin = join(home, '.config', 'aihub-studio');
   const ordinary = join(home, '.config', 'aihub-image');
   await mkdir(join(plugin, 'aihub-image'), { recursive: true });
   await mkdir(ordinary, { recursive: true });
@@ -57,7 +57,7 @@ test('ordinary Skill globals fill missing fields when Plugin files are absent, p
   const dir = await mkdtemp(join(tmpdir(), 'aihub-config-fallback-'));
   const project = join(dir, 'project');
   const home = join(dir, 'user');
-  const plugin = join(home, '.config', 'aihub');
+  const plugin = join(home, '.config', 'aihub-studio');
   const ordinary = join(home, '.config', 'aihub-image', '.env');
   await mkdir(project);
   await mkdir(join(home, '.config', 'aihub-image'), { recursive: true });
@@ -96,7 +96,7 @@ test('Skill globals ignore other files, sibling Skills, aliases, Plugin names an
   const dir = await mkdtemp(join(tmpdir(), 'aihub-config-isolation-'));
   const project = join(dir, 'project');
   const home = join(dir, 'user');
-  const plugin = join(home, '.config', 'aihub');
+  const plugin = join(home, '.config', 'aihub-studio');
   await mkdir(project);
   await mkdir(join(plugin, 'aihub-image'), { recursive: true });
   await mkdir(join(home, '.config', 'aihub-image'), { recursive: true });
@@ -129,7 +129,7 @@ test('Skill globals ignore other files, sibling Skills, aliases, Plugin names an
 test('unreadable global files fail clearly, and disabling globals skips them entirely', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'aihub-config-errors-'));
   const home = join(dir, 'user');
-  const paths = [join(home, '.config', 'aihub', '.env'), join(home, '.config', 'aihub-image', '.env')];
+  const paths = [join(home, '.config', 'aihub-studio', '.env'), join(home, '.config', 'aihub-image', '.env')];
   // A directory at a file path is an actual read failure in either global directory.
   for (const path of paths) await mkdir(path, { recursive: true });
   try {
@@ -139,6 +139,33 @@ test('unreadable global files fail clearly, and disabling globals skips them ent
       assert.equal(loadConfig({ ...options, useGlobalConfig: false }).apiKey, 'process-key');
       await rm(path, { recursive: true });
     }
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('renamed Plugin ignores the old Plugin configuration and reports its new identity', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aihub-studio-migration-'));
+  const home = join(dir, 'user');
+  const legacy = join(home, '.config', 'aihub');
+  const current = join(home, '.config', 'aihub-studio');
+  const ordinary = join(home, '.config', 'aihub-image');
+  const options = { skill: 'aihub-image', cwd: dir, homeDirectory: home, env: {} };
+  try {
+    await mkdir(join(legacy, 'aihub-image'), { recursive: true });
+    for (const relative of ['.env', '.env.local', '.env.aihub-image', 'aihub-image/.env', 'aihub-image/.env.local']) {
+      await writeFile(join(legacy, relative), 'AIHUB_API_KEY=legacy-plugin-key');
+    }
+    assert.throws(() => loadConfig(options), /Missing AIHUB_API_KEY/);
+    const report = inspectConfig(options);
+    assert.deepEqual(report.consumer, { kind: 'plugin', name: 'aihub-studio' });
+    assert.ok(report.layers.every(layer => !layer.path.startsWith(`${legacy}${sep}`)));
+
+    await mkdir(ordinary, { recursive: true });
+    await writeFile(join(ordinary, '.env'), 'AIHUB_API_KEY=ordinary-skill-key');
+    assert.equal(loadConfig(options).apiKey, 'ordinary-skill-key');
+    await mkdir(current, { recursive: true });
+    await writeFile(join(current, '.env'), 'AIHUB_API_KEY=new-plugin-key');
+    assert.equal(loadConfig(options).apiKey, 'new-plugin-key');
+    assert.equal(loadConfig(options).sources.AIHUB_API_KEY, join(current, '.env'));
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 

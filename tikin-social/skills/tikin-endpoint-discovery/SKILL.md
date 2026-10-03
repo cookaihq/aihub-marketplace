@@ -1,7 +1,7 @@
 ---
 name: tikin-endpoint-discovery
-version: 0.3.0
-description: v0.3.0｜Find the right tikin endpoint among 1,000+ across 16+ platforms. Use when you know the goal (e.g. "get a user's posts on Douyin") but not the exact API path, or when a platform has no dedicated skill (LinkedIn, Reddit, Bilibili, Weibo, WeChat, Kuaishou, Zhihu, Lemon8, etc.). Searches a bundled index and maps results to REST calls.
+version: 1.0.0
+description: v1.0.0｜Find the right tikin endpoint among 1,000+ across 16+ platforms. Use when you know the goal (e.g. "get a user's posts on Douyin") but not the exact API path, or when a platform has no dedicated skill (LinkedIn, Reddit, Bilibili, Weibo, WeChat, Kuaishou, Zhihu, Lemon8, etc.). Searches a bundled index and maps results to REST calls.
 ---
 
 # tikin — Endpoint Discovery
@@ -13,10 +13,14 @@ tikin has 1,000+ endpoints. This skill finds the one you need, then hands off to
 On the first tikin use in each Agent session, follow the `tikin-setup` session update gate once
 without blocking endpoint discovery. The bundled index remains searchable offline without a key.
 
-When the user supplies a supported social-media URL, identify its platform and apply
-`${XDG_CONFIG_HOME:-$HOME/.config}/tikin/settings.json` before making a tikin call. An explicit
-user instruction wins over the stored platform override and global default. Ask once per task for
-`confirm` platforms.
+When the user supplies a supported social-media URL, identify its platform before making a
+call. If this task disables global configuration, do not read
+`~/.config/tikin-social/settings.json`; use the built-in routing
+`{"routing":{"default":"auto","platforms":{}}}` and pass `--no-global-config` before every
+helper subcommand. Otherwise read that file as JSON from the runtime user’s home directory
+(no XDG or legacy alias lookup), using the same built-in routing when the file is absent.
+An explicit user instruction wins over the platform override and routing default. Ask once per
+task for `confirm` platforms.
 
 Never request the user-provided social-media content page with `curl`, WebFetch, or a generic
 browser fetch. Parse identifiers locally or pass the original URL/share text to the selected tikin
@@ -33,8 +37,11 @@ tikin_run() {
 Resolve `TIKIN_SETUP_DIR` from the installed `tikin-setup` Skill before using the command.
 Run API examples through `tikin_run` in the same shell as this definition. The helper reads
 `TIKIN_API_KEY` and `TIKIN_BASE_URL` independently from process environment →
-`$PWD/.env.tikin-endpoint-discovery` → `$PWD/.env.local` → `$PWD/.env` → the existing
-`${XDG_CONFIG_HOME:-$HOME/.config}/tikin/.env` fallback. Empty values fall through. Project files are read only in the
+`$PWD/.env.tikin-endpoint-discovery` → `$PWD/.env.local` → `$PWD/.env` →
+`~/.config/tikin-social/<skill-name>/.env.local` → that directory’s `.env` →
+`~/.config/tikin-social/.env.<skill-name>` → the Plugin root’s `.env.local` → `.env` →
+`~/.config/<skill-name>/.env`. Global sources are automatic; add `--no-global-config`
+before `run` to skip all six for this call and use default routing without reading saved settings. Empty values fall through. Project files are read only in the
 invocation directory; other Skills' dedicated files are not read. File contents are literal, never
 sourced as shell code. Resolved values are passed only to the child command and are not printed.
 

@@ -40,7 +40,7 @@ export function observeTerminalTask(task: TaskResponse): void {
     code: code(task.error?.code), ambiguous: false, ...(identifier(task.id) ? { task_id: identifier(task.id) } : {}) });
 }
 
-export const ISSUE_URL = 'https://github.com/cookaihq/plugin-marketplace/issues/new';
+export const ISSUE_URL = 'https://github.com/cookaihq/aihub-marketplace/issues/new';
 interface Diagnostic {
   schema_version: 1; kind: 'aihub-diagnostic'; events: FailureEvent[]; notice_at?: string;
   context?: { plugin_version: string; skill: string; task_status: string; models: string[];

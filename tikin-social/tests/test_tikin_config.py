@@ -77,9 +77,11 @@ class TikinConfigTests(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
         self.addCleanup(self.tempdir.cleanup)
-        self.xdg_home = Path(self.tempdir.name) / "config"
+        self.user_home = Path(self.tempdir.name) / "home"
+        self.config_home = self.user_home / ".config"
         self.env = os.environ.copy()
-        self.env["XDG_CONFIG_HOME"] = str(self.xdg_home)
+        self.env["HOME"] = str(self.user_home)
+        self.env["XDG_CONFIG_HOME"] = str(Path(self.tempdir.name) / "ignored-xdg")
         self.env.pop("TIKIN_API_KEY", None)
         self.env.pop("TIKIN_BASE_URL", None)
 
@@ -101,7 +103,7 @@ class TikinConfigTests(unittest.TestCase):
 
     def test_each_skill_reads_its_own_file_before_shared_and_home_values(self):
         project = Path(self.tempdir.name)
-        config_dir = self.xdg_home / "tikin"
+        config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True)
         (config_dir / ".env").write_text("TIKIN_API_KEY=home-value\n")
         (project / ".env.local").write_text("TIKIN_API_KEY=local-value\n")
@@ -112,7 +114,7 @@ class TikinConfigTests(unittest.TestCase):
         for name in names:
             with self.subTest(skill=name):
                 result = self.run_config("--skill", name, "status")
-                self.assertEqual(json.loads(result.stdout)["key_source"], ".env." + name)
+                self.assertEqual(json.loads(result.stdout)["key_source"], str(project / (".env." + name)))
                 child = self.run_config(
                     "--skill", name, "run", "--", INTERPRETER, "-c",
                     "import os,sys; sys.exit(os.environ['TIKIN_API_KEY'] != sys.argv[1])",
@@ -138,12 +140,12 @@ class TikinConfigTests(unittest.TestCase):
         skill_file.write_text('TIKIN_API_KEY=first\nTIKIN_API_KEY=""\n')
         self.assertEqual(
             json.loads(self.run_config("--skill", "tikin-douyin", "status", env=env).stdout)["key_source"],
-            ".env.local",
+            str(project / ".env.local"),
         )
         local.write_text("TIKIN_API_KEY=\n")
         self.assertEqual(
             json.loads(self.run_config("--skill", "tikin-douyin", "status", env=env).stdout)["key_source"],
-            ".env",
+            str(project / ".env"),
         )
         literal = "${MISSING}/$(touch should-not-exist)`touch neither`"
         skill_file.write_text('TIKIN_API_KEY = "' + literal + '"\nUNSUPPORTED=ignored\n')
@@ -182,7 +184,7 @@ class TikinConfigTests(unittest.TestCase):
             "assert os.environ['TIKIN_BASE_URL'] == 'https://selected.example'",
         )
         self.assertEqual(result.stdout, "")
-        self.assertFalse(self.xdg_home.exists())
+        self.assertFalse(self.config_home.exists())
 
     def test_run_rejects_missing_key_and_invalid_skill_before_child_execution(self):
         for args in (("run", "--", INTERPRETER, "-c", "raise AssertionError('executed')"),
@@ -203,7 +205,10 @@ class TikinConfigTests(unittest.TestCase):
 
     def test_plugin_skill_and_runtime_versions_are_consistent(self):
         version = json.loads((ROOT / ".claude-plugin/plugin.json").read_text())["version"]
-        self.assertEqual(json.loads((ROOT / ".codex-plugin/plugin.json").read_text())["version"], version)
+        for directory in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
+            manifest = json.loads((ROOT / directory / "plugin.json").read_text())
+            self.assertEqual(manifest["version"], version)
+            self.assertEqual(manifest["name"], "tikin-social")
         for skill in (ROOT / "skills").glob("*/SKILL.md"):
             text = skill.read_text()
             self.assertEqual(re.search(r'^version: (\S+)', text, re.M).group(1), version)
@@ -215,7 +220,7 @@ class TikinConfigTests(unittest.TestCase):
     def test_init_creates_default_settings_with_private_permissions(self):
         self.run_config("init")
 
-        settings_path = self.xdg_home / "tikin" / "settings.json"
+        settings_path = self.config_home / "tikin-social" / "settings.json"
         self.assertEqual(
             json.loads(settings_path.read_text()),
             {"routing": {"default": "auto", "platforms": {}}},
@@ -230,25 +235,21 @@ class TikinConfigTests(unittest.TestCase):
 
         self.run_config("init", env=process_env)
 
-        self.assertTrue((home / ".config" / "tikin" / "settings.json").is_file())
-        self.assertFalse((Path(self.tempdir.name) / "tikin").exists())
+        self.assertTrue((home / ".config" / "tikin-social" / "settings.json").is_file())
+        self.assertFalse((Path(self.tempdir.name) / "tikin-social").exists())
 
-    def test_init_migrates_legacy_env_without_echoing_the_key(self):
-        config_dir = self.xdg_home / "tikin"
-        config_dir.mkdir(parents=True)
-        legacy_path = config_dir / "env"
-        secret = "secret-from-legacy"
-        legacy_path.write_text(f"TIKIN_API_KEY={secret}\n")
-        legacy_path.chmod(0o644)
-
+    def test_init_does_not_read_or_migrate_legacy_alias(self):
+        legacy = self.config_home / "tikin"
+        legacy.mkdir(parents=True)
+        legacy_env = legacy / ".env"
+        legacy_env.write_text("TIKIN_API_KEY=legacy-secret\n")
+        legacy_settings = legacy / "settings.json"
+        legacy_settings.write_text('{"routing":{"default":"confirm","platforms":{}}}')
         result = self.run_config("init")
-
-        env_path = config_dir / ".env"
-        self.assertFalse(legacy_path.exists())
-        self.assertEqual(env_path.read_text(), f"TIKIN_API_KEY={secret}\n")
-        self.assertEqual(stat.S_IMODE(env_path.stat().st_mode), 0o600)
-        self.assertNotIn(secret, result.stdout)
-        self.assertNotIn(secret, result.stderr)
+        self.assertEqual(legacy_env.read_text(), "TIKIN_API_KEY=legacy-secret\n")
+        self.assertFalse((self.config_home / "tikin-social" / ".env").exists())
+        self.assertEqual(self.run_config("get-policy", "youtube").stdout.strip(), "auto")
+        self.assertNotIn("legacy-secret", result.stdout + result.stderr)
 
     def test_set_key_writes_private_env_and_status_never_echoes_secrets(self):
         secret = "secret-from-stdin"
@@ -257,22 +258,20 @@ class TikinConfigTests(unittest.TestCase):
         set_result = self.run_config("set-key", input_text=f"{secret}\n")
         status_result = self.run_config("status")
 
-        env_path = self.xdg_home / "tikin" / ".env"
+        env_path = self.config_home / "tikin-social" / ".env"
         self.assertIn("TIKIN_API_KEY=secret-from-stdin", env_path.read_text())
         self.assertEqual(stat.S_IMODE(env_path.stat().st_mode), 0o600)
-        self.assertEqual(
-            json.loads(status_result.stdout),
-            {
-                "key_configured": True,
-                "key_source": "file",
-                "settings": {"routing": {"default": "auto", "platforms": {}}},
-            },
-        )
+        report = json.loads(status_result.stdout)
+        self.assertTrue(report["key_configured"])
+        self.assertEqual(report["key_source"], str(env_path))
+        self.assertEqual(report["sources"]["TIKIN_API_KEY"], str(env_path))
+        self.assertEqual(report["sources"]["TIKIN_BASE_URL"], "built-in default")
+        self.assertEqual(report["settings"], {"routing": {"default": "auto", "platforms": {}}})
         for output in (set_result.stdout, set_result.stderr, status_result.stdout):
             self.assertNotIn(secret, output)
 
     def test_status_only_returns_known_non_secret_settings(self):
-        config_dir = self.xdg_home / "tikin"
+        config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True)
         settings_path = config_dir / "settings.json"
         settings_path.write_text(
@@ -293,7 +292,7 @@ class TikinConfigTests(unittest.TestCase):
         )
 
     def test_environment_key_wins_and_set_key_preserves_other_env_values(self):
-        config_dir = self.xdg_home / "tikin"
+        config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True)
         env_path = config_dir / ".env"
         env_path.write_text(
@@ -312,7 +311,7 @@ class TikinConfigTests(unittest.TestCase):
         self.assertIn("TIKIN_API_KEY=replacement-secret", env_path.read_text())
 
     def test_init_repairs_existing_env_file_permissions_without_echoing_it(self):
-        config_dir = self.xdg_home / "tikin"
+        config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True)
         env_path = config_dir / ".env"
         secret = "existing-secret"
@@ -325,8 +324,8 @@ class TikinConfigTests(unittest.TestCase):
         self.assertNotIn(secret, result.stdout)
         self.assertNotIn(secret, result.stderr)
 
-    def test_init_restricts_legacy_env_when_dotenv_already_exists(self):
-        config_dir = self.xdg_home / "tikin"
+    def test_init_does_not_touch_legacy_unhidden_env(self):
+        config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True)
         legacy_path = config_dir / "env"
         env_path = config_dir / ".env"
@@ -337,7 +336,7 @@ class TikinConfigTests(unittest.TestCase):
         self.run_config("init")
 
         self.assertEqual(env_path.read_text(), "TIKIN_API_KEY=current-secret\n")
-        self.assertEqual(stat.S_IMODE(legacy_path.stat().st_mode), 0o600)
+        self.assertEqual(stat.S_IMODE(legacy_path.stat().st_mode), 0o644)
 
     def test_routing_supports_global_defaults_and_platform_overrides(self):
         self.run_config("init")
@@ -356,7 +355,7 @@ class TikinConfigTests(unittest.TestCase):
         self.assertEqual(self.run_config("get-policy", "xiaohongshu").stdout.strip(), "auto")
         self.assertEqual(self.run_config("get-policy", "instagram").stdout.strip(), "auto")
         self.assertEqual(self.run_config("get-policy", "youtube").stdout.strip(), "confirm")
-        settings_path = self.xdg_home / "tikin" / "settings.json"
+        settings_path = self.config_home / "tikin-social" / "settings.json"
         self.assertEqual(
             json.loads(settings_path.read_text()),
             {
@@ -367,20 +366,195 @@ class TikinConfigTests(unittest.TestCase):
             },
         )
 
-    def test_init_refuses_to_migrate_a_legacy_env_symlink(self):
-        config_dir = self.xdg_home / "tikin"
+    def test_init_refuses_current_env_symlink(self):
+        config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True)
         outside = Path(self.tempdir.name) / "outside-secret"
         outside.write_text("TIKIN_API_KEY=outside-secret\n")
-        (config_dir / "env").symlink_to(outside)
+        (config_dir / ".env").symlink_to(outside)
 
         result = self.run_config("init", check=False)
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertFalse((config_dir / ".env").exists())
+        self.assertTrue((config_dir / ".env").is_symlink())
         self.assertEqual(outside.read_text(), "TIKIN_API_KEY=outside-secret\n")
         self.assertNotIn("outside-secret", result.stdout)
         self.assertNotIn("outside-secret", result.stderr)
+
+    def write_config(self, path, text):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+    def global_files(self, skill="tikin-douyin"):
+        root = self.config_home / "tikin-social"
+        return [root / skill / ".env.local", root / skill / ".env",
+                root / (".env." + skill), root / ".env.local", root / ".env",
+                self.config_home / skill / ".env"]
+
+    def test_all_global_layers_precede_the_current_skill_fallback(self):
+        files = self.global_files()
+        for index, path in enumerate(files):
+            self.write_config(path, f"TIKIN_API_KEY=layer-{index}\n")
+        for index, path in enumerate(files):
+            with self.subTest(layer=path):
+                report = json.loads(self.run_config("--skill", "tikin-douyin", "config-check").stdout)
+                self.assertEqual(report["fields"]["TIKIN_API_KEY"]["source"], str(path))
+                child = self.run_config("--skill", "tikin-douyin", "run", "--", INTERPRETER, "-c",
+                    "import os,sys; assert os.environ['TIKIN_API_KEY'] == sys.argv[1]", f"layer-{index}")
+                self.assertEqual(child.stdout, "")
+                path.write_text('TIKIN_API_KEY=""\n')
+
+    def test_plugin_partial_values_and_empty_directory_fall_back_per_field(self):
+        root = self.config_home / "tikin-social"
+        (root / "tikin-douyin").mkdir(parents=True)
+        self.write_config(root / ".env", "TIKIN_API_KEY=\nTIKIN_BASE_URL=https://plugin.example\n")
+        fallback = self.config_home / "tikin-douyin" / ".env"
+        self.write_config(fallback, "TIKIN_API_KEY=skill-secret\nTIKIN_BASE_URL=https://ignored.example\n")
+        report = json.loads(self.run_config("--skill", "tikin-douyin", "config-check").stdout)
+        self.assertEqual(report["fields"]["TIKIN_API_KEY"]["source"], str(fallback))
+        self.assertEqual(report["fields"]["TIKIN_BASE_URL"]["source"], str(root / ".env"))
+        self.assertNotIn("skill-secret", json.dumps(report))
+
+    def test_all_17_skills_use_plugin_shared_configuration(self):
+        shared = self.config_home / "tikin-social" / ".env"
+        self.write_config(shared, "TIKIN_API_KEY=shared-secret\n")
+        for path in (ROOT / "skills").glob("*/SKILL.md"):
+            with self.subTest(skill=path.parent.name):
+                report = json.loads(self.run_config("--skill", path.parent.name, "status").stdout)
+                self.assertEqual(report["key_source"], str(shared))
+
+    def test_global_files_are_isolated_from_other_skills_and_legacy_aliases(self):
+        for path in (self.config_home / "tikin" / ".env",
+                     self.config_home / "tikin-plugin" / ".env",
+                     self.config_home / "tikin-social" / ".env.tikin-tiktok",
+                     self.config_home / "tikin-social" / "tikin-tiktok" / ".env",
+                     self.config_home / "tikin-tiktok" / ".env",
+                     self.config_home / "tikin-douyin" / ".env.local",
+                     Path(self.env["XDG_CONFIG_HOME"]) / "tikin-social" / ".env"):
+            self.write_config(path, "TIKIN_API_KEY=must-not-be-read\n")
+        report = json.loads(self.run_config("--skill", "tikin-douyin", "status").stdout)
+        self.assertFalse(report["key_configured"])
+        result = self.run_config("--skill", "tikin-not-a-real-skill", "status", check=False)
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_no_global_option_skips_both_kinds_of_config_and_saved_routing(self):
+        for path in self.global_files():
+            self.write_config(path, "TIKIN_API_KEY=global-secret\n")
+        self.write_config(self.config_home / "tikin-social" / "settings.json",
+                          '{"routing":{"default":"confirm","platforms":{}}}')
+        args = ("--skill", "tikin-douyin", "--no-global-config")
+        report = json.loads(self.run_config(*args, "status").stdout)
+        self.assertFalse(report["key_configured"])
+        self.assertFalse(report["global_enabled"])
+        self.assertEqual(report["settings"]["routing"]["default"], "auto")
+        env = self.env.copy()
+        env["TIKIN_API_KEY"] = "explicit-secret"
+        self.assertEqual(json.loads(self.run_config(*args, "status", env=env).stdout)["key_source"], "environment")
+        self.assertEqual(self.run_config(*args, "get-policy", "youtube").stdout.strip(), "auto")
+        compatible = json.loads(self.run_config("--skill", "tikin-douyin", "--use-global-config", "status").stdout)
+        self.assertTrue(compatible["key_configured"])
+        rejected = self.run_config("--use-global-config", "--no-global-config", "status", check=False)
+        self.assertNotEqual(rejected.returncode, 0)
+
+    def test_no_caller_reads_only_shared_files(self):
+        self.write_config(self.config_home / "tikin-social" / ".env.tikin-setup", "TIKIN_API_KEY=not-selected\n")
+        self.write_config(self.config_home / "tikin-setup" / ".env", "TIKIN_API_KEY=not-selected\n")
+        self.write_config(Path(self.tempdir.name) / ".env.tikin-setup", "TIKIN_API_KEY=not-selected\n")
+        result = self.run_config("--plugin-only", "config-check", check=False)
+        self.assertEqual(result.returncode, 3)
+        report = json.loads(result.stdout)
+        self.assertIsNone(report["skill"])
+        self.assertEqual(len(report["layers"]), 4)
+        shared = self.config_home / "tikin-social" / ".env"
+        self.write_config(shared, "TIKIN_API_KEY=shared-secret\n")
+        self.assertEqual(json.loads(self.run_config("--plugin-only", "status").stdout)["key_source"], str(shared))
+
+    def test_each_unreadable_global_file_is_reported_and_blocks_commands(self):
+        for path in self.global_files():
+            with self.subTest(path=path):
+                path.mkdir(parents=True)
+                env = self.env.copy()
+                env["TIKIN_API_KEY"] = "valid-test-key"
+                result = self.run_config("--skill", "tikin-douyin", "config-check", env=env, check=False)
+                self.assertEqual(result.returncode, 3)
+                report = json.loads(result.stdout)
+                self.assertIn({"source": str(path), "reason": "unreadable"}, report["problems"])
+                result = self.run_config("--skill", "tikin-douyin", "run", "--", INTERPRETER,
+                                         "-c", "raise AssertionError('executed')", env=env, check=False)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("unreadable", result.stderr)
+                self.assertNotIn("executed", result.stderr)
+                path.rmdir()
+
+    def test_inspection_is_secret_free_reports_sources_and_never_writes_files(self):
+        result = self.run_config("config-check", check=False)
+        self.assertEqual(result.returncode, 3)
+        self.assertFalse(self.user_home.exists())
+        self.run_config("status")
+        self.run_config("get-policy", "youtube")
+        self.assertFalse(self.user_home.exists())
+        env = self.env.copy()
+        env["TIKIN_API_KEY"] = "source-report-secret"
+        env["TIKIN_BASE_URL"] = "https://user:password@example.invalid"
+        result = self.run_config("config-check", env=env, check=False)
+        self.assertEqual(result.returncode, 3)
+        for value in ("source-report-secret", "password", env["TIKIN_BASE_URL"]):
+            self.assertNotIn(value, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["schema"], "secret-book.config-inspection/v1")
+        self.assertEqual(report["consumer"], {"kind": "plugin", "name": "tikin-social"})
+        self.assertEqual(report["fields"]["TIKIN_BASE_URL"]["problem"], "invalid_url")
+        self.assertEqual(len(report["environment"]["TIKIN_API_KEY"]), 64)
+
+    def test_distribution_and_skills_only_entrypoints_preserve_identity_and_loading(self):
+        for mode in ("plugin", "skills-only"):
+            with self.subTest(mode=mode):
+                install = Path(self.tempdir.name) / ("installed " + mode)
+                setup = install / "skills" / "tikin-setup"
+                shutil.copytree(SKILL_DIR, setup, ignore=shutil.ignore_patterns(".venv", "__pycache__"))
+                if mode == "plugin":
+                    shutil.copytree(ROOT / ".claude-plugin", install / ".claude-plugin")
+                env = self.env.copy()
+                env["UV_PROJECT_ENVIRONMENT"] = str(VENV_DIR)
+                shared = self.config_home / "tikin-social" / ".env"
+                self.write_config(shared, "TIKIN_API_KEY=installed-secret\n")
+                result = subprocess.run([INTERPRETER, str(setup / "scripts" / "tikin-config"),
+                                         "--skill", "tikin-douyin", "config-check"],
+                                        cwd=self.tempdir.name, env=env, text=True, capture_output=True, timeout=30)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                report = json.loads(result.stdout)
+                self.assertEqual(report["fields"]["TIKIN_API_KEY"]["source"], str(shared))
+                declaration = json.loads((setup / "references" / "credentials.json").read_text())
+                self.assertEqual(declaration["consumer"]["name"], "tikin-social")
+                self.assertEqual(set(declaration["consumer"]["skills"]),
+                                 {path.parent.name for path in (ROOT / "skills").glob("*/SKILL.md")})
+                self.assertNotIn("installed-secret", result.stdout + result.stderr)
+
+    def test_mismatched_manifest_blocks_every_command_before_side_effects(self):
+        commands = [
+            ("init",), ("set-key",), ("set-routing", "--default", "confirm"),
+            ("get-policy", "youtube"), ("status",), ("config-check",), ("validate",),
+            ("run", "--", INTERPRETER, "-c", "raise AssertionError('child-executed')"),
+        ]
+        for directory in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
+            install = Path(self.tempdir.name) / ("wrong identity " + directory)
+            setup = install / "skills" / "tikin-setup"
+            shutil.copytree(SKILL_DIR, setup, ignore=shutil.ignore_patterns(".venv", "__pycache__"))
+            manifest = install / directory / "plugin.json"
+            manifest.parent.mkdir()
+            manifest.write_text(json.dumps({"name": "tikin-plugin", "version": "1.0.0"}))
+            env = self.env.copy()
+            env["UV_PROJECT_ENVIRONMENT"] = str(VENV_DIR)
+            for command in commands:
+                with self.subTest(manifest=directory, command=command[0]):
+                    result = subprocess.run([INTERPRETER, str(setup / "scripts" / "tikin-config"), *command],
+                                            cwd=self.tempdir.name, env=env, input="fixture-input-secret\n",
+                                            text=True, capture_output=True, timeout=30)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("Plugin manifest identity disagrees", result.stderr)
+                    self.assertNotIn("fixture-input-secret", result.stdout + result.stderr)
+                    self.assertNotIn("child-executed", result.stdout + result.stderr)
+                    self.assertFalse(self.user_home.exists(), "rejected commands must not initialize configuration")
 
     def start_stub_tikin(self, responder):
         """Serve /api/usage/token/ locally. No request ever leaves the machine.
@@ -414,7 +588,7 @@ class TikinConfigTests(unittest.TestCase):
         return server, calls
 
     def write_env_pointing_at(self, server, secret):
-        config_dir = self.xdg_home / "tikin"
+        config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True, exist_ok=True)
         (config_dir / ".env").write_text(
             f"TIKIN_API_KEY={secret}\n"
@@ -447,7 +621,7 @@ class TikinConfigTests(unittest.TestCase):
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
 
-        config_dir = self.xdg_home / "tikin"
+        config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True)
         (config_dir / ".env").write_text(
             "TIKIN_API_KEY=wrong-home-key\n"
@@ -516,7 +690,7 @@ class TikinConfigTests(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(len(calls), 1)
-        self.assertIn("invalid TIKIN_API_KEY", result.stderr)
+        self.assertIn("authentication or permission rejected (HTTP 401)", result.stderr)
         self.assertNotIn("attempt", result.stderr)
         self.assertNotIn(secret, result.stdout)
         self.assertNotIn(secret, result.stderr)
@@ -547,7 +721,7 @@ class TikinConfigTests(unittest.TestCase):
         dead_port = probe.getsockname()[1]
         probe.close()
 
-        config_dir = self.xdg_home / "tikin"
+        config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True, exist_ok=True)
         (config_dir / ".env").write_text(
             "TIKIN_API_KEY=unreachable-secret\n"

@@ -1,0 +1,18 @@
+# Local dependencies, build/test caches and runtime outputs.
+node_modules/
+.test-build/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.worktrees/
+tmp/
+data/
+.DS_Store
+Thumbs.db
+
+# Per-Skill and shared project configuration; examples ship with the Plugin.
+.env
+.env.*
+!.env.example
+!.env.*.example

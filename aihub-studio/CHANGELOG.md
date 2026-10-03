@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 — 2026-10-02
+
+- Move the Plugin to `cookaihq/aihub-marketplace` and its CNB mirror, under the new installation identity `aihub-studio@aihub-marketplace`.
+- Rename the shared global configuration root to `~/.config/aihub-studio/`; report the new consumer identity and document explicit migration from `~/.config/aihub/`. Old Plugin configuration is never read or moved automatically.
+- Preserve all six `aihub-*` Skill names, `AIHUB_*` configuration fields, task records, business CLI and result-check behavior.
+- Update bundled installation instructions, manifests and Issue links; retain the WorkBuddy screenshot and the existing limits on host and Windows validation.
+
 ## 0.9.2 — 2026-10-02
 
 - Include the user-provided Windows screenshot in the Plugin and installation README, and require Agents to show it alongside manual WorkBuddy installation steps.

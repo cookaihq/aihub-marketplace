@@ -4,6 +4,21 @@ All notable changes to the tikin plugin are documented here.
 
 ## Unreleased
 
+## 1.0.0
+
+- Moved the Plugin to `cookaihq/aihub-marketplace/tikin-social`, mirrored at
+  `cnb.cool/zhidateam/tannt/aihub-marketplace`. The Plugin identity is now `tikin-social`;
+  all 17 `tikin-*` Skill names and `TIKIN_*` API configuration fields are unchanged.
+- Added a WorkBuddy Plugin manifest and native marketplace installation guidance. Native
+  Windows execution is not yet supported by the POSIX helpers; marketplace visibility does
+  not establish runtime compatibility.
+- Configuration now uses `~/.config/tikin-social/`: current Skill overrides, Plugin shared
+  files, then the current Skill’s `~/.config/<skill-name>/.env` fallback. Added per-call
+  global disabling, exact field-source inspection, and read-only diagnostics. Old
+  `~/.config/tikin/` or XDG locations are not read or migrated automatically.
+- Updated both Python runtime versions and all Skill descriptions to 1.0.0. Installation,
+  update and optional migration instructions now reference the new marketplace.
+
 ## 0.3.0
 
 - Added per-Skill project configuration: process environment → `.env.<skill-name>` →

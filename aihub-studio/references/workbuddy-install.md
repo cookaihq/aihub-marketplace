@@ -1,6 +1,6 @@
 # WorkBuddy 安装、更新与排障（给 Agent）
 
-在 WorkBuddy 中安装、更新或查询 AIhub Plugin 前阅读本文件。使用 **WorkBuddy 当前运行实例的原生套件管理入口**。不要在终端另起 `codebuddy`、`cbc` 或 WorkBuddy 安装目录中的 CLI；这个限制也包含帮助、列表、校验和更新命令。Codex 使用自己的 Plugin 入口。
+在 WorkBuddy 中安装、更新或查询 AIhub Studio Plugin 前阅读本文件。使用 **WorkBuddy 当前运行实例的原生套件管理入口**。不要在终端另起 `codebuddy`、`cbc` 或 WorkBuddy 安装目录中的 CLI；这个限制也包含帮助、列表、校验和更新命令。Codex 使用自己的 Plugin 入口。
 
 ## 为什么不能另起 CLI
 
@@ -10,11 +10,13 @@ WorkBuddy 5.6.2 附带的 CLI 2.147.0 有两条不同的路径：插件配置读
 
 ## 安装步骤
 
-1. 先阅读下载来源中的 `aihub/README.md` 和本说明；无需先安装 Plugin，也无需运行宿主 CLI 探测环境。
+1. 先阅读下载来源中的 `aihub-studio/README.md` 和本说明；无需先安装 Plugin，也无需运行宿主 CLI 探测环境。
 2. 在 WorkBuddy 界面打开 **专家·技能·连接器 → 顶部“技能” → “套件”**。“套件”在“SkillHub”右侧。macOS 5.6.2 已实际核对，Windows 的同一入口已由用户截图确认；其他版本按实际可见界面定位，不臆造按钮或命令。
-3. 检查现有市场。若已有 `plugin-marketplace`，核对其来源并复用。没有时点击 **市场名称一行最右侧的圆形“＋”**（图中在 `codebuddy-plugins-official` 右侧），打开标题为“添加市场”的窗口。页面上的入口只显示“＋”，不要让用户寻找写着“添加市场”的按钮。填写 `https://github.com/cookaihq/plugin-marketplace`，由 WorkBuddy 原生管理器提交。仅在 GitHub 网络故障时改用 `https://cnb.cool/zhidateam/tannt/plugin-marketplace.git`；先检查上次是否已添加成功，避免重复注册。权限、登录和仓库不存在不当作网络故障。
-4. 从该市场选择 **aihub** 并安装完整 Plugin，安装对象为 `aihub@plugin-marketplace`。保留已有安装范围和设置；不要仅上传六个 `SKILL.md`，它们依赖同包的 `scripts/`、`dist/`、`catalog/` 和 `references/`。
+3. 检查现有市场。若已有 `aihub-marketplace`，核对其来源并复用。没有时点击 **市场名称一行最右侧的圆形“＋”**（图中在 `codebuddy-plugins-official` 右侧），打开标题为“添加市场”的窗口。页面上的入口只显示“＋”，不要让用户寻找写着“添加市场”的按钮。填写 `https://github.com/cookaihq/aihub-marketplace`，由 WorkBuddy 原生管理器提交。仅在 GitHub 网络故障时改用 `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git`；先检查上次是否已添加成功，避免重复注册。权限、登录和仓库不存在不当作网络故障。
+4. 从该市场选择 **aihub-studio** 并安装完整 Plugin，安装对象为 `aihub-studio@aihub-marketplace`。保留已有安装范围和设置；不要仅上传六个 `SKILL.md`，它们依赖同包的 `scripts/`、`dist/`、`catalog/` 和 `references/`。
 5. 通过同一原生入口检查安装结果，再在 WorkBuddy 新会话或其支持的刷新入口中检查 Skill 发现与调用。安装和业务验收分别报告，不能仅凭清单存在就说功能已验证。
+
+旧 `plugin-marketplace` 不是新 `aihub-marketplace`。若已有 `aihub@plugin-marketplace`，不要把旧对象的更新当成迁移完成。先按随包 README 的“从旧 AIhub Plugin 迁移”核对并准备新配置，安装新 `aihub-studio@aihub-marketplace`；随后按用户授权停用旧对象，打开新会话，核对实际加载的 Plugin 身份、版本与六个 Skill 的来源后再验证调用。验证成功才卸载旧对象，不自动删除配置，保留旧市场中的其他插件。两份同名 Skill 同时启用时的调用成功不能证明新版通过。
 
 ![WorkBuddy 添加市场入口：顶部技能 → 套件 → 市场名称右侧的圆形＋](images/workbuddy-add-marketplace.png)
 
@@ -26,7 +28,7 @@ Agent 有可用的原生插件管理工具或 UI 操作能力时直接执行上�
 
 当回复需要用户手动添加市场、定位入口，或解释“找不到添加市场”时，**最终回复必须同时展示上面的截图和操作路径**。不能只让用户打开本说明、只输出图片文件路径，或用文字“见截图”代替实际图片。
 
-- 图片随完整 Plugin 分发，位置是 `aihub/references/images/workbuddy-add-marketplace.png`；相对本说明为 `images/workbuddy-add-marketplace.png`。安装前已取得来源目录时也可使用其中的同一文件，无需先安装 AIhub。
+- 图片随完整 Plugin 分发，位置是 `aihub-studio/references/images/workbuddy-add-marketplace.png`；相对本说明为 `images/workbuddy-add-marketplace.png`。安装前已取得来源目录时也可使用其中的同一文件，无需先安装 AIhub。
 - 先确认图片可读取。在支持本地 Markdown 图片的宿主中，将已确认的实际绝对路径用于 `![WorkBuddy 添加市场入口：技能 → 套件 → 右侧＋](<图片绝对路径>)`，不要把文档相对路径或占位符直接复制到回复。
 - WorkBuddy 提供 `present_files` 时，读取当前工具 schema；按宿主的展示规则，把随包图片复制到当前任务允许展示的输出目录，再呈现为可预览的图片卡片，最终文字仍附下方路径说明。不要为截图新建网站或上传到其他服务。当前没有可用图片展示能力时，给出可打开的本地图片链接并明确说明未能内嵌展示。
 - 图片缺失或显示失败时明确报告，并保留准确的文字步骤；不要声称已经展示。不得编造图片公网 URL。
@@ -49,4 +51,4 @@ Agent 有可用的原生插件管理工具或 UI 操作能力时直接执行上�
 - 新会话能够发现并显式调用 `aihub-image`、`aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding`、`aihub-document`。未运行的业务请求明确标记未验证。
 - 比对安装前后目录状态，确认本次安装没有另建 `.codebuddy`。若宿主仍自行创建，记录 WorkBuddy 版本、操作入口和目录内容，作为上游问题报告；不要改用另一个 CLI 重装或删除目录掩盖结果。
 
-`.codebuddy-plugin/` 是仓库与 Plugin 的清单目录，与用户目录下 `.codebuddy/` 无关，保留原名。AIhub API Key 的个人配置仍是 `~/.config/aihub/.env`；业务程序 `scripts/aihub.mjs` 继续读取 AIhub 配置，不参与宿主插件安装。
+`.codebuddy-plugin/` 是仓库与 Plugin 的清单目录，与用户目录下 `.codebuddy/` 无关，保留原名。AIhub API Key 的个人配置是 `~/.config/aihub-studio/.env`；业务程序 `scripts/aihub.mjs` 继续读取 AIhub 配置，不参与宿主插件安装。

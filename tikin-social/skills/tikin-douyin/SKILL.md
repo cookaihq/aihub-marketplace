@@ -1,7 +1,7 @@
 ---
 name: tikin-douyin
-version: 0.3.0
-description: v0.3.0｜Work with Douyin (抖音) URLs and data via tikin — fetch videos, user profiles and post lists, video comments, and run video/user/general search via Douyin's dedicated search series. Use when the user provides a Douyin URL or the task targets Douyin. Covers App-V3 and the Douyin Search series.
+version: 1.0.0
+description: v1.0.0｜Work with Douyin (抖音) URLs and data via tikin — fetch videos, user profiles and post lists, video comments, and run video/user/general search via Douyin's dedicated search series. Use when the user provides a Douyin URL or the task targets Douyin. Covers App-V3 and the Douyin Search series.
 ---
 
 # Douyin / 抖音 (via tikin)
@@ -14,9 +14,11 @@ Deep coverage of Douyin. Exhaustive endpoints via the `tikin-endpoint-discovery`
 On the first tikin use in each Agent session, follow the `tikin-setup` session update gate once
 without blocking this task. Before the first tikin API call for the current user task:
 
-1. Determine every affected platform. Read
-   `${XDG_CONFIG_HOME:-$HOME/.config}/tikin/settings.json` as JSON, defaulting to
-   `{"routing":{"default":"auto","platforms":{}}}` when absent.
+1. Determine every affected platform. If this task disables global configuration, do not read
+   `~/.config/tikin-social/settings.json`; use the built-in routing
+   `{"routing":{"default":"auto","platforms":{}}}` and pass `--no-global-config` before every
+   helper subcommand. Otherwise read that file as JSON from the runtime user’s home directory
+   (no XDG or legacy alias lookup), using the same built-in routing when the file is absent.
 2. Resolve each policy from `routing.platforms[platform]`, then `routing.default`. An explicit
    instruction in the current user request wins over stored settings.
 3. For any `confirm` platform, ask once for the whole task and group the affected
@@ -38,8 +40,11 @@ tikin_run() {
 Resolve `TIKIN_SETUP_DIR` from the installed `tikin-setup` Skill before using the command.
 Run API examples through `tikin_run` in the same shell as this definition. The helper reads
 `TIKIN_API_KEY` and `TIKIN_BASE_URL` independently from process environment →
-`$PWD/.env.tikin-douyin` → `$PWD/.env.local` → `$PWD/.env` → the existing
-`${XDG_CONFIG_HOME:-$HOME/.config}/tikin/.env` fallback. Empty values fall through. Project files are read only in the
+`$PWD/.env.tikin-douyin` → `$PWD/.env.local` → `$PWD/.env` →
+`~/.config/tikin-social/<skill-name>/.env.local` → that directory’s `.env` →
+`~/.config/tikin-social/.env.<skill-name>` → the Plugin root’s `.env.local` → `.env` →
+`~/.config/<skill-name>/.env`. Global sources are automatic; add `--no-global-config`
+before `run` to skip all six for this call and use default routing without reading saved settings. Empty values fall through. Project files are read only in the
 invocation directory; other Skills' dedicated files are not read. File contents are literal, never
 sourced as shell code. Resolved values are passed only to the child command and are not printed.
 
