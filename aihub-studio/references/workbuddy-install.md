@@ -12,7 +12,7 @@ WorkBuddy 5.6.2 附带的 CLI 2.147.0 有两条不同的路径：插件配置读
 
 1. 先阅读下载来源中的 `aihub-studio/README.md` 和本说明；无需先安装 Plugin，也无需运行宿主 CLI 探测环境。
 2. 在 WorkBuddy 界面打开 **专家·技能·连接器 → 顶部“技能” → “套件”**。“套件”在“SkillHub”右侧。macOS 5.6.2 已实际核对，Windows 的同一入口已由用户截图确认；其他版本按实际可见界面定位，不臆造按钮或命令。
-3. 检查现有市场。若已有 `aihub-marketplace`，核对其来源并复用。没有时点击 **市场名称一行最右侧的圆形“＋”**（图中在 `codebuddy-plugins-official` 右侧），打开标题为“添加市场”的窗口。页面上的入口只显示“＋”，不要让用户寻找写着“添加市场”的按钮。填写 `https://github.com/cookaihq/aihub-marketplace`，由 WorkBuddy 原生管理器提交。仅在 GitHub 网络故障时改用 `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git`；先检查上次是否已添加成功，避免重复注册。权限、登录和仓库不存在不当作网络故障。
+3. 检查现有市场。若已有 `aihub-marketplace`，核对其来源并复用。没有时点击 **市场名称一行最右侧的圆形“＋”**（图中在 `codebuddy-plugins-official` 右侧），打开标题为“添加市场”的窗口。页面上的入口只显示“＋”，不要让用户寻找写着“添加市场”的按钮。优先填写 `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git`，由 WorkBuddy 原生管理器提交。仅在 CNB 网络故障时改用 `https://github.com/cookaihq/aihub-marketplace.git`，保持同一 Plugin 和版本；先检查上次是否已添加成功，避免重复注册。权限、登录和仓库不存在不当作网络故障。
 4. 从该市场选择 **aihub-studio** 并安装完整 Plugin，安装对象为 `aihub-studio@aihub-marketplace`。保留已有安装范围和设置；不要仅上传六个 `SKILL.md`，它们依赖同包的 `scripts/`、`dist/`、`catalog/` 和 `references/`。
 5. 通过同一原生入口检查安装结果，再在 WorkBuddy 新会话或其支持的刷新入口中检查 Skill 发现与调用。安装和业务验收分别报告，不能仅凭清单存在就说功能已验证。
 

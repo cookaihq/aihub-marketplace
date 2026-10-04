@@ -14,7 +14,7 @@
 将下面这段话复制给正在使用的 Agent，把安装对象保留为你需要的 Plugin：
 
 ```text
-请从 AIhub Marketplace 安装 aihub-studio 和 tikin-social：优先使用 https://github.com/cookaihq/aihub-marketplace，GitHub 网络故障时使用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。先阅读仓库 README 和对应 Plugin 的 README，使用当前宿主的插件管理入口安装完整 Plugin，保留已有设置。在 WorkBuddy 中使用原生套件管理，不另起 CodeBuddy CLI；需要我操作界面时，请展示随包的入口截图。分别报告市场添加、Plugin 安装、Skill 发现与调用的结果。
+请从 AIhub Marketplace 安装 aihub-studio 和 tikin-social：优先使用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，CNB 网络故障时改用 https://github.com/cookaihq/aihub-marketplace.git，保持同一 Plugin 和版本。先阅读仓库 README 和对应 Plugin 的 README，使用当前宿主的插件管理入口安装完整 Plugin，保留已有设置。在 WorkBuddy 中使用原生套件管理，不另起 CodeBuddy CLI；需要我操作界面时，请展示随包的入口截图。分别报告市场添加、Plugin 安装、Skill 发现与调用的结果。
 ```
 
 在 WorkBuddy 中，打开 **专家·技能·连接器 → 顶部“技能” → “套件” → 市场名称一行右侧的圆形“＋”**，填入来源地址。添加后选择 `aihub-marketplace`，应能看到 **aihub-studio** 和 **tikin-social** 两张套件卡片，再通过对应卡片上的“＋”安装。
@@ -39,6 +39,8 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 旧 `tikin-plugins` 转发市场固定在 `tikin-plugin` 0.3.0；新功能和维护版本在本市场的 `tikin-social` 发布。
 
 ## 版本与 Release
+
+版本标签随代码同步到 CNB；下表链接指向 GitHub 上发布的 Release 说明。
 
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |

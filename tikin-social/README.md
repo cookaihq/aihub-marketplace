@@ -26,9 +26,9 @@ The check needs no API key or network. Codex, Claude Code and WorkBuddy have rul
 Paste this into your agent:
 
 > Install the complete tikin-social Plugin from the aihub-marketplace repository,
-> https://github.com/cookaihq/aihub-marketplace.git, in its tikin-social/ directory.
-> Prefer GitHub; if it fails because of a network problem, try
-> https://cnb.cool/zhidateam/tannt/aihub-marketplace.git with the same Plugin and version.
+> https://cnb.cool/zhidateam/tannt/aihub-marketplace.git, in its tikin-social/ directory.
+> Prefer CNB; if it fails because of a network problem, try
+> https://github.com/cookaihq/aihub-marketplace.git with the same Plugin and version.
 > Preserve my existing settings, then verify that this agent can discover and invoke its Skills.
 
 Claude Code and Codex have native Plugin installations. WorkBuddy uses the **套件** market:
@@ -218,7 +218,7 @@ are kept outside the installation directory.
 
 - [Changelog](CHANGELOG.md)
 - [tikin website](https://tikin.net) · [Console](https://console.tikin.net)
-- [GitHub source](https://github.com/cookaihq/aihub-marketplace/tree/main/tikin-social)
-  · [CNB mirror](https://cnb.cool/zhidateam/tannt/aihub-marketplace)
+- [CNB mirror](https://cnb.cool/zhidateam/tannt/aihub-marketplace)
+  · [GitHub source](https://github.com/cookaihq/aihub-marketplace/tree/main/tikin-social)
 
 MIT — see [LICENSE](LICENSE).

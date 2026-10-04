@@ -49,10 +49,10 @@
 复制下面这段话到 Codex 或 WorkBuddy：
 
 ```text
-请安装 AIhub Studio Plugin：优先用 https://github.com/cookaihq/aihub-marketplace，网络故障时改用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。先阅读 aihub-studio/README.md；在 WorkBuddy 中还须先读 aihub-studio/references/workbuddy-install.md，使用当前应用的原生套件管理，不另起 CodeBuddy CLI。需要我操作界面时，请在回复中展示随包的添加市场截图，并指明“技能 → 套件 → 市场名称右侧的＋”。安装完整的 aihub-studio@aihub-marketplace，保留已有设置，并确认 Skill 可发现和调用。
+请安装 AIhub Studio Plugin：优先用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，CNB 网络故障时改用 https://github.com/cookaihq/aihub-marketplace.git，保持同一 Plugin 和版本。先阅读 aihub-studio/README.md；在 WorkBuddy 中还须先读 aihub-studio/references/workbuddy-install.md，使用当前应用的原生套件管理，不另起 CodeBuddy CLI。需要我操作界面时，请在回复中展示随包的添加市场截图，并指明“技能 → 套件 → 市场名称右侧的＋”。安装完整的 aihub-studio@aihub-marketplace，保留已有设置，并确认 Skill 可发现和调用。
 ```
 
-AIhub 通过上述 GitHub 与 CNB 来源分发。WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套件” → 市场名称一行最右侧的圆形“＋”**；点击后才会出现“添加市场”窗口。下图由用户提供并确认 Windows 入口，本机 macOS 5.6.2 也已核对；入口可见不代表完整安装或 Skill 调用已验收。具体步骤见 [WorkBuddy 安装说明](references/workbuddy-install.md)。Agent 有界面操作能力时可代为完成，需要你操作时会同时展示截图和步骤。安装过程沿用 WorkBuddy 已有配置，不应为此新建 `.codebuddy`；无需手动执行终端命令。
+AIhub 通过上述 CNB 与 GitHub 来源分发。WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套件” → 市场名称一行最右侧的圆形“＋”**；点击后才会出现“添加市场”窗口。下图由用户提供并确认 Windows 入口，本机 macOS 5.6.2 也已核对；入口可见不代表完整安装或 Skill 调用已验收。具体步骤见 [WorkBuddy 安装说明](references/workbuddy-install.md)。Agent 有界面操作能力时可代为完成，需要你操作时会同时展示截图和步骤。安装过程沿用 WorkBuddy 已有配置，不应为此新建 `.codebuddy`；无需手动执行终端命令。
 
 ![WorkBuddy 添加市场入口：顶部技能 → 套件 → 市场名称右侧的圆形＋](references/images/workbuddy-add-marketplace.png)
 
