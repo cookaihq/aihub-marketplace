@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.2 — 2026-10-06
+
+- Offer local file entry or secret-book whenever an API Key is missing or needs repair, including direct guidance in all six Skills and configuration errors. Preserve the user's chosen method.
+- Limit credential setup and the secret-book declaration to `AIHUB_API_KEY`; use the built-in service address for first setup. Existing service overrides and business settings remain compatible.
+- Add `config-check --credentials-only` for the exact single-key Secret Book contract while preserving source paths and file revision checks.
+- Follow secret-book's workflow directly when selected. Handle installation, invocation or compatibility problems only when encountered; remove the obsolete native Windows restriction for secret-book 2.4.0+.
+- Preserve the original request through configuration, then continue only within existing authorization and query uncertain submissions before any retry.
+
 ## 1.1.0 — 2026-10-03
 
 - Check the current Agent's applicable global/project instructions once per Plugin per session, with explicit task-to-Skill mappings for Codex, Claude Code and WorkBuddy.

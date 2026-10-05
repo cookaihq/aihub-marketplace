@@ -17,11 +17,21 @@ test('inspection reports missing, invalid and unreadable sources without credent
     assert.equal(missing.status, 'configuration_required');
     assert.deepEqual(missing.fields.AIHUB_API_KEY, { source: 'missing', present: false, problem: 'missing' });
     assert.equal(missing.fields.AIHUB_BASE_URL?.source, 'built-in default');
+    const credentialReport = inspectConfig(options, true);
+    assert.deepEqual(Object.keys(credentialReport.fields), ['AIHUB_API_KEY']);
+    assert.deepEqual(Object.keys(credentialReport.environment), ['AIHUB_API_KEY']);
+    assert.deepEqual(credentialReport.layers, missing.layers);
+    assert.equal(credentialReport.status, 'configuration_required');
     const path = join(root, '.env.local');
     await writeFile(path, 'AIHUB_API_KEY=synthetic-inspection-key\nAIHUB_BASE_URL=https://account:synthetic-url-secret@host.invalid');
     const invalid = inspectConfig(options);
     assert.deepEqual(invalid.fields.AIHUB_BASE_URL, { source: path, present: true, problem: 'invalid_url' });
     for (const value of ['synthetic-inspection-key', 'synthetic-url-secret', 'account:']) assert.ok(!JSON.stringify(invalid).includes(value));
+    const keyOnly = inspectConfig(options, true);
+    assert.equal(keyOnly.status, 'ok');
+    assert.equal(keyOnly.fields.AIHUB_API_KEY?.source, path);
+    assert.deepEqual(keyOnly.layers, invalid.layers);
+    assert.notDeepEqual(keyOnly.layers, credentialReport.layers);
     assert.throws(() => loadConfig(options), (error: unknown) => {
       assert.ok(error instanceof ConfigurationError);
       assert.deepEqual(error.inspection, invalid); return true;
@@ -32,6 +42,7 @@ test('inspection reports missing, invalid and unreadable sources without credent
     await rm(path); await mkdir(path);
     const unreadable = inspectConfig(options);
     assert.ok(unreadable.problems.some(p => p.reason === 'unreadable' && p.source === path));
+    assert.ok(inspectConfig(options, true).problems.some(p => p.reason === 'unreadable' && p.source === path));
     const disabled = inspectConfig({ ...options, useGlobalConfig: false });
     assert.equal(disabled.layers.length, 3);
   } finally { await rm(root, { recursive: true, force: true }); }
@@ -56,6 +67,13 @@ test('CLI distinguishes authentication rejection from balance, permissions and r
     // No media tools, credentials or network are needed for config-check itself.
     const inspected = await exec(process.execPath, [cli, 'config-check', '--skill', 'aihub-image'], { cwd: root, env: { ...env, PATH: '' } });
     assert.equal(JSON.parse(inspected.stdout).status, 'ok');
+    const credentialInspection = await exec(process.execPath, [cli, 'config-check', '--skill', 'aihub-image', '--credentials-only'], { cwd: root, env: { ...env, PATH: '' } });
+    const credentialOutput = JSON.parse(credentialInspection.stdout);
+    assert.deepEqual(Object.keys(credentialOutput.fields), ['AIHUB_API_KEY']);
+    assert.deepEqual(Object.keys(credentialOutput.environment), ['AIHUB_API_KEY']);
+    assert.equal(credentialOutput.fields.AIHUB_API_KEY.source, config);
+    assert.deepEqual(credentialOutput.layers, JSON.parse(inspected.stdout).layers);
+    assert.ok(!credentialInspection.stdout.includes('synthetic-cli-secret'));
     assert.equal(requests, 0);
     for (const code of [401, 402, 403, 429]) {
       status = code;
@@ -65,7 +83,9 @@ test('CLI distinguishes authentication rejection from balance, permissions and r
         const output = JSON.parse(stdout);
         if (code === 401) {
           assert.equal(output.configuration_issue.reason, 'authentication_rejected');
-          assert.deepEqual(output.configuration_issue.sources, { AIHUB_API_KEY: config, AIHUB_BASE_URL: config });
+          assert.deepEqual(output.configuration_issue.keys, ['AIHUB_API_KEY']);
+          assert.deepEqual(output.configuration_issue.sources, { AIHUB_API_KEY: config });
+          assert.equal(output.configuration_issue.service_url, `http://127.0.0.1:${port}`);
         } else assert.equal(output.configuration_issue, undefined);
         return true;
       });

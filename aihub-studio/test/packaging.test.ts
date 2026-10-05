@@ -157,6 +157,10 @@ test('package, lockfile, Plugin manifests, marketplace and every Skill share one
   assert.equal(requirements.consumer.kind, 'plugin');
   assert.equal(requirements.consumer.name, pkg.name);
   assert.deepEqual([...requirements.consumer.skills].sort(), (await readdir('skills')).sort());
+  assert.deepEqual(Object.keys(requirements.keys), ['AIHUB_API_KEY']);
+  assert.equal(requirements.keys.AIHUB_API_KEY.required, true);
+  assert.equal(requirements.keys.AIHUB_API_KEY.sensitive, true);
+  assert.deepEqual(requirements.groups ?? [], []);
   for (const name of await readdir('skills')) {
     const text = await readFile(join('skills', name, 'SKILL.md'), 'utf8');
     assert.equal(/^name: (.+)$/m.exec(text)?.[1], name);

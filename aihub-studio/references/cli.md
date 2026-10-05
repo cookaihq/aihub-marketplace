@@ -14,7 +14,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" doctor --skill "${AIHUB_CALLER}"
 
 ## 首次配置、缺项与配置修复
 
-业务声明见 [credentials.json](credentials.json)：`aihub-studio` 的六个 Skill 共用 Key 与服务地址，二者必须属于同一服务/账号。先直接运行配置检查，不安装或调用 Secret Book 就能检查：
+凭证声明见 [credentials.json](credentials.json)：六个 Skill 只需配置 `AIHUB_API_KEY`，服务地址使用内置默认值。手填和 secret-book 都只处理这个凭证字段，不将服务地址、模型或结果检查选项加入首次凭证配置。先直接运行配置检查，不安装或调用 secret-book 就能检查：
 
 ```bash
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" config-check --skill "${AIHUB_CALLER}"
@@ -22,17 +22,18 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" config-check --skill "${AIHUB_CALLE
 
 `config-check` 通过真实加载器输出 `secret-book.config-inspection/v1`：当前目录、每层文件、字段来源、缺项/格式问题和变化校验值，不输出配置值，不联网，也不要求 ffprobe。退出 `3` 表示需要配置，不能当作检查成功。普通命令缺 Key 或 URL 非法时也带 `configuration` 来源报告。`doctor` 进一步检查本机运行工具；它仍不验证线上鉴权。
 
-1. 正常任务已有可读配置时直接调用 AIhub。只有用户要求首次配置/更改，或缺配置、有依据发现配置错误时，报告字段、来源和依据，引导“修改本机配置 / 从 secret-book 选择配置并保存”。沿用用户明确选择；手填分支不依赖安装 Secret Book。
-2. 选择 secret-book 后读取实际安装的 Skill 及 [声明](credentials.json)。需要 2.3.0+；未安装、版本不足或平台不支持时说明具体情况，按其安装流程或用户选择改为手填。由它处理当前 Agent 规则检查、飞书登录、令牌表、候选记录、实际 key 和确认；这里不复制完整流程。
-3. 在同一工作目录和启动环境运行 `config-check`，把不含值的报告保存到任务临时目录，交给 Secret Book 的 `configure --requirements <Plugin>/references/credentials.json --inspection <报告> --agent <当前Agent> --key <需新增或修复字段> ...`。首次新增默认个人全局共享；已有项目/Skill 专用选择则沿用。修复已有文件字段必须原处替换；进程环境来源先定位实际注入配置，不能另写全局文件。声明将 Key 与 URL 关联，未经确认不覆盖另一项已有值。
-4. 确认并写入后，直接重新运行 `config-check` 和 `doctor`，报告完整写入路径、实际生效来源和本机验证范围。需要验证线上认证时可运行已有只读 `models`，明确这只检查模型查询接口；不得用生成任务换取“配置完成”。
-5. 后续所有 `node ...` 命令直接运行。密钥从本机文件读取，表中轮换不自动同步。临时令牌、仅本轮、不落盘等明确例外才允许显式临时注入；不使用已废弃的 `run --requirements` 启动 AIhub。
+1. 正常任务已有可读配置时直接调用 AIhub。首次配置、缺 Key 或有依据需要修复时，报告 `AIHUB_API_KEY` 的实际来源和问题，提供“自行填写本机文件 / 从 secret-book 选择凭证”。已有明确管理方式就沿用。“继续用 AIhub”只确定服务，不代表用户选择了手填；尚未选择时先展示两种方式，再展开对应步骤。
+2. 选择手填后，提供完整文件路径和 `AIHUB_API_KEY` 字段，让用户在本机填写并保存，不要求把完整值发到聊天。手填分支不查询令牌表、不依赖 secret-book。
+3. 选择 secret-book 后，读取其 Skill 说明并直接按它的配置流程执行。仅在实际发现未安装、无法调用或版本不兼容时提示并协助处理；不额外设置“先确认版本”的用户步骤，不强制更新到最新版，不静默改为手填。配置保存需要 2.3.0+，Windows 原生由 2.4.0+ 支持；这些是故障定位依据。宿主规则、飞书身份、令牌表、记录选择和写入确认均由 secret-book 处理。
+4. secret-book 分支在同一工作目录和启动环境运行 `config-check --skill <当前Skill> --credentials-only`，将不含值的报告保存到任务临时目录，交给 `configure --requirements <Plugin>/references/credentials.json --inspection <报告> --agent <当前Agent> --key AIHUB_API_KEY ...`。专用报告仅含 Key 的字段和环境来源，保留全部文件层与变化校验；它与凭证声明严格一致，不手工拼接或删改报告。仅映射并保存这个 Key；记录内的其他字段不自动带入。首次新增默认建议个人全局共享，写入前确认目标与替换项；已有项目/Skill 专用选择则沿用。修复必须写回实际来源文件；进程环境来源先定位注入配置，不能另写全局文件。沿用已有明确授权，不重复确认相同内容。
+5. 任一分支保存后，直接重新运行 `config-check` 和 `doctor`，报告完整路径、实际生效来源和本机验证范围。需要验证线上认证时可运行已有只读 `models`，明确这只检查模型查询接口；不得用生成任务换取“配置完成”。
+6. 保留原业务需求和参数。原任务尚未提交且已有明确执行授权时，在原有授权范围内继续；用户只要求配置时到此结束。已提交或结果不明时先查询原任务，配置修复不授权重发。后续业务直接读本机配置，表中轮换不自动同步；临时令牌、仅本轮、不落盘等明确例外才临时注入，不使用已废弃的 `run --requirements` 启动 AIhub。
 
 401 返回 `authentication_rejected` 提示核对 Key/服务/账号组合，**不等同于已证明 Key 文本错误**。402、403、429、网络异常分别核对额度、权限、限流和连接，不据此换 Key。配置修复不授权重发提交结果不明或有副作用的请求；恢复仍核对原服务和密钥指纹。已运行的进程需要重新加载配置时，明确检查加载是否完成。
 
 ## 配置来源
 
-`AIHUB_API_KEY` 唯一必填，`AIHUB_BASE_URL` 可选。另支持当前 Skill 的 `AIHUB_<类型>_MODELS`、`AIHUB_MODEL_FALLBACK_POLICY` 和 `AIHUB_MODEL_MAX_ATTEMPTS`，完整名称与语义见 [模型配置](model-selection.md#可选配置)。`AIHUB_RESULT_CHECK_*`、`AIHUB_ERROR_REPORT_THRESHOLD` 与 `AIHUB_SUPPORT_URL` 见 [结果检查与错误反馈](result-checks.md)。每个变量独立按以下顺序使用首个非空值，模型列表整体替换、不跨层合并：
+凭证配置只需 `AIHUB_API_KEY`。业务行为另支持当前 Skill 的 `AIHUB_<类型>_MODELS`、`AIHUB_MODEL_FALLBACK_POLICY` 和 `AIHUB_MODEL_MAX_ATTEMPTS`，完整名称与语义见 [模型配置](model-selection.md#可选配置)。`AIHUB_RESULT_CHECK_*`、`AIHUB_ERROR_REPORT_THRESHOLD` 与 `AIHUB_SUPPORT_URL` 见 [结果检查与错误反馈](result-checks.md)，不属于 secret-book 的凭证声明。每个变量独立按以下顺序使用首个非空值，模型列表整体替换、不跨层合并：
 
 1. 当前进程环境变量。
 2. 当前工作目录 `.env.<skill-name>`，其中名称取本次 `--skill` 值。
@@ -55,7 +56,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" config-check --skill "${AIHUB_CALLE
 
 从旧 `aihub` Plugin 迁移时另行处理 `~/.config/aihub/`：新加载器只认 manifest 的 `aihub-studio`，旧 Plugin 目录不会作为回退来源。用户确认迁移后，将实际选定的旧文件映射到 `~/.config/aihub-studio/` 下相同相对位置，保留共享与专用覆盖关系。先检查目标文件和更高优先级来源，列出新增或替换项；不得自动搬迁、覆盖新配置或将不同账号合并。普通 Skill 文件、项目文件及 `AIHUB_*` key 无需因 Plugin 改名而移动或改名。写完运行 `config-check` 核对新 consumer 与实际来源；配置迁移不授权重发业务请求。
 
-`AIHUB_BASE_URL` 是 API 根地址，默认 `https://api.aihubmax.com`。它不是某一生成 endpoint；不要追加 `/v1/images/generations` 等路径。配置缺失或鉴权失败时明确报告，不能换用其他服务或账号。
+服务默认地址为 `https://api.aihubmax.com`，首次凭证配置无需用户填写地址。加载器仍识别已有的 `AIHUB_BASE_URL` 覆盖以兼容既有任务；仅在来源诊断或旧任务恢复时核对实际服务，不将其列为手填或 secret-book 的配置选项，不自动新增、迁移或覆盖。配置缺失或鉴权失败时明确报告，不能换用其他服务或账号。
 
 `.env` 文件只解析 `KEY=value`、单引号或双引号包裹的值、整行注释和空行；同名项取最后一次，不执行 shell 展开或命令替换。不要用 `source` 加载配置，不把 API Key 放入命令行参数、参数 JSON、任务记录或聊天回复。
 

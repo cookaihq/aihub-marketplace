@@ -1,7 +1,7 @@
 ---
 name: aihub-video
-version: 1.1.0
-description: v1.1.0｜Generate videos through AIhub using Seedance 2.5 text, first-frame image, or multimodal reference inputs. Also handle C1 video lip sync and C2 image-and-audio digital humans. Check task-specific limits, resume existing tasks, and deliver checked video files.
+version: 1.1.2
+description: v1.1.2｜Generate videos through AIhub using Seedance 2.5 text, first-frame image, or multimodal reference inputs. Also handle C1 video lip sync and C2 image-and-audio digital humans. Check task-specific limits, resume existing tasks, and deliver checked video files.
 compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
@@ -10,6 +10,10 @@ compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub 
 ## 默认 Skill 检查
 
 每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../../references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
+
+## 凭证配置
+
+本 Skill 只需配置 `AIHUB_API_KEY`。首次配置、缺 Key 或需要修复时，按[共用配置流程](../../references/cli.md#首次配置缺项与配置修复)提供“自行填写本机文件 / 从 secret-book 选择凭证”，已有选择就沿用。选择 secret-book 后直接按它的流程配置；只有实际发现未安装、无法调用或版本不兼容时，才提示并协助处理。
 
 本 Skill 在没有模型配置时使用 Seedance 2.5 生成视频，并提供 C1/C2 音画同步数字人入口。B1–B9 是本期任务目标，不表示 Seedance 2.5 已通过这九类任务的真实验收。
 

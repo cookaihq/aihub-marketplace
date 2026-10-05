@@ -1,7 +1,7 @@
 ---
 name: aihub-audio
-version: 1.1.0
-description: v1.1.0｜Run AIhub D1 audio and speech workflows for speech-2.8-hd text-to-speech, paraformer-v2 transcription, explicit voice cloning, and resumable task delivery.
+version: 1.1.2
+description: v1.1.2｜Run AIhub D1 audio and speech workflows for speech-2.8-hd text-to-speech, paraformer-v2 transcription, explicit voice cloning, and resumable task delivery.
 compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
@@ -10,6 +10,10 @@ compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub 
 ## 默认 Skill 检查
 
 每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../../references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
+
+## 凭证配置
+
+本 Skill 只需配置 `AIHUB_API_KEY`。首次配置、缺 Key 或需要修复时，按[共用配置流程](../../references/cli.md#首次配置缺项与配置修复)提供“自行填写本机文件 / 从 secret-book 选择凭证”，已有选择就沿用。选择 secret-book 后直接按它的流程配置；只有实际发现未安装、无法调用或版本不兼容时，才提示并协助处理。
 
 D1 处理文本转语音、语音识别/转写和用户明确要求的声音克隆。用户本次指定模型时固定执行；否则读取 `AIHUB_AUDIO_MODELS`，分别筛选 TTS、ASR 或克隆型号，不跨用途替换。没有配置时使用 `speech-2.8-hd`、`paraformer-v2` 或 `voice-clone`。音乐属于 `aihub-music`，素材理解属于 `aihub-understanding`。
 

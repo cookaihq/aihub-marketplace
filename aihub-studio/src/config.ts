@@ -37,6 +37,7 @@ const DECLARED_KEYS = new Set<string>([...KEYS, ...Object.values(MODEL_KEYS), ..
 const PLUGIN_NAME = 'aihub-studio';
 // Retained from the source client's configuration. This is the API root, not /v1.
 const DEFAULT_BASE_URL = 'https://api.aihubmax.com';
+export const CREDENTIAL_SETUP_HINT = 'Offer to fill AIHUB_API_KEY in a local file or select a credential through secret-book; honor an existing choice. If secret-book is selected, follow its workflow directly. Only handle installation, invocation or compatibility problems when encountered.';
 
 export function parseEnv(text: string): Record<string, string> {
   const values: Record<string, string> = {};
@@ -63,6 +64,7 @@ export interface ConfigInspection {
   environment: Record<string, string | null>;
   fields: Record<string, { source: string; present: boolean; problem?: string }>;
   problems: Array<{ key?: string; source: string; reason: string }>;
+  next_step?: string;
 }
 export class ConfigurationError extends Error {
   constructor(message: string, public inspection: ConfigInspection) { super(message); }
@@ -155,19 +157,29 @@ function resolveConfiguration(options: ConfigOptions) {
     schema: 'secret-book.config-inspection/v1', status: problems.length ? 'configuration_required' : 'ok',
     consumer: { kind: 'plugin', name: PLUGIN_NAME }, skill, cwd, global_enabled: useGlobalConfig,
     layers: files, fields, problems,
+    ...(!values.AIHUB_API_KEY ? { next_step: CREDENTIAL_SETUP_HINT } : {}),
     environment: Object.fromEntries([...KEYS, ...BEHAVIOR_KEYS].map(key => [key, env[key]?.trim() ? credentialId(env[key]!) : null])),
   };
   return { values, sources, selectionSources, modelKey, url, inspection };
 }
 
 /** Read the same layers as loadConfig, including failures. Never returns credential values. */
-export function inspectConfig(options: ConfigOptions): ConfigInspection { return resolveConfiguration(options).inspection; }
+export function inspectConfig(options: ConfigOptions, credentialsOnly = false): ConfigInspection {
+  const inspection = resolveConfiguration(options).inspection;
+  if (!credentialsOnly) return inspection;
+  // Secret Book requires an exact match between the declared keys and the report.
+  // Preserve every layer revision so confirmation still detects concurrent edits.
+  const problems = inspection.problems.filter(problem => !problem.key || problem.key === 'AIHUB_API_KEY');
+  return { ...inspection, status: problems.length ? 'configuration_required' : 'ok', problems,
+    fields: { AIHUB_API_KEY: inspection.fields.AIHUB_API_KEY! },
+    environment: { AIHUB_API_KEY: inspection.environment.AIHUB_API_KEY ?? null } };
+}
 
 export function loadConfig(options: ConfigOptions): LoadedConfig {
   const { values, sources, selectionSources, modelKey, url, inspection } = resolveConfiguration(options);
   const unreadable = inspection.problems.find(problem => problem.reason === 'unreadable');
   if (unreadable) throw new ConfigurationError(`Cannot read configuration file: ${unreadable.source}`, inspection);
-  if (!values.AIHUB_API_KEY) throw new ConfigurationError(`Missing AIHUB_API_KEY. Global configuration is ${inspection.global_enabled ? 'enabled automatically' : 'disabled by --no-global-config'}. Run config-check to inspect the calling project's files and ~/.config/${PLUGIN_NAME}/.`, inspection);
+  if (!values.AIHUB_API_KEY) throw new ConfigurationError(`Missing AIHUB_API_KEY. ${CREDENTIAL_SETUP_HINT} Global configuration is ${inspection.global_enabled ? 'enabled automatically' : 'disabled by --no-global-config'}. Run config-check to inspect the calling project's files and ~/.config/${PLUGIN_NAME}/.`, inspection);
   if (inspection.problems.length) throw new ConfigurationError(inspection.problems.map(p => `${p.key}: ${p.reason}`).join('; '), inspection);
   const policy = (values.AIHUB_MODEL_FALLBACK_POLICY?.trim() || 'auto') as FallbackPolicy;
   if (!['auto', 'confirm', 'off', 'preflight_only'].includes(policy)) throw new Error('AIHUB_MODEL_FALLBACK_POLICY must be auto, confirm, off or preflight_only.');

@@ -4,7 +4,7 @@
 
 ## 可选配置
 
-只有 `AIHUB_API_KEY` 必填。`AIHUB_BASE_URL` 未配置时使用代码默认 `https://api.aihubmax.com`。下列变量沿用相同的环境变量、项目文件、Plugin 全局文件、当前 Skill 普通全局文件的读取顺序：
+凭证配置只需 `AIHUB_API_KEY`，服务地址已有内置默认值。下列业务选项独立于凭证配置，沿用相同的环境变量、项目文件、Plugin 全局文件、当前 Skill 普通全局文件的读取顺序：
 
 | Skill | 有序模型列表 |
 | --- | --- |

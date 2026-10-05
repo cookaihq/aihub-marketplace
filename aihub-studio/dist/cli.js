@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { loadConfig, inspectConfig, ConfigurationError, redact, sanitized, RESULT_CHECK_DEFAULTS } from './config.js';
+import { loadConfig, inspectConfig, ConfigurationError, CREDENTIAL_SETUP_HINT, redact, sanitized, RESULT_CHECK_DEFAULTS } from './config.js';
 import { checkMediaTools } from './download.js';
 import { models, describe } from './models.js';
 import { AihubmaxClient, ApiError } from './apiClient.js';
@@ -11,7 +11,7 @@ import { reviewTask, DISABLE_CHECK_HINT } from './review.js';
 import { agentDefaults } from './agentDefaults.js';
 const SKILLS = ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document'];
 const FLAGS = {
-    doctor: [], 'config-check': [], models: ['media', 'keyword'], describe: ['model'],
+    doctor: [], 'config-check': ['credentials-only'], models: ['media', 'keyword'], describe: ['model'],
     'default-skills': ['agent', 'action', 'config-dir'],
     generate: ['media', 'model', 'params-file', 'output-dir', 'wait-seconds'],
     understand: ['model', 'params-file', 'output-dir', 'wait-seconds'],
@@ -30,7 +30,7 @@ Usage: node <plugin>/scripts/aihub.mjs COMMAND --skill NAME [options]
 Skills: ${SKILLS.join(', ')}
 Commands:
   default-skills --agent codex|claude-code|workbuddy [--action check|dismiss|enable] [--config-dir DIR]
-  config-check (local configuration sources; no network or media tools)
+  config-check [--credentials-only] (local sources; key-only report for secret-book; no network or media tools)
   doctor
   plan --request-file JSON
   run --request-file JSON [--output-dir DIR] [--wait-seconds 0..600]
@@ -79,7 +79,7 @@ function parse(argv) {
         const key = token.slice(2);
         if (![...FLAGS[command], 'skill', 'use-global-config', 'no-global-config'].includes(key) || key in flags)
             throw new Error(`Unknown or duplicate option: --${key}`);
-        if (key === 'use-global-config' || key === 'no-global-config' || key === 'recheck')
+        if (key === 'use-global-config' || key === 'no-global-config' || key === 'recheck' || key === 'credentials-only')
             flags[key] = true;
         else {
             const value = argv[++i];
@@ -138,7 +138,7 @@ async function mainWithDiagnostics(argv, events) {
                 action: flags.action, configDir: flags['config-dir'],
                 globalEnabled: flags['no-global-config'] !== true });
         else if (command === 'config-check')
-            output = { ...inspectConfig({ skill, useGlobalConfig: flags['no-global-config'] !== true }) };
+            output = { ...inspectConfig({ skill, useGlobalConfig: flags['no-global-config'] !== true }, flags['credentials-only'] === true) };
         else if (command === 'describe')
             output = { schema_version: 1, ...describe(required(flags, 'model')) };
         else {
@@ -235,8 +235,8 @@ async function mainWithDiagnostics(argv, events) {
     const failure = output.failure ?? output.result?.failure;
     if (cfg && failure?.http_status === 401) {
         output.configuration_issue = { reason: 'authentication_rejected', http_status: 401,
-            keys: ['AIHUB_API_KEY', 'AIHUB_BASE_URL'], sources: cfg.sources,
-            next_step: 'Check the key and its service/account. Offer to edit the effective local file or use secret-book to repair it. Do not replay a business request automatically.' };
+            keys: ['AIHUB_API_KEY'], sources: { AIHUB_API_KEY: cfg.sources.AIHUB_API_KEY }, service_url: cfg.baseUrl,
+            next_step: `Check the key's account access to the reported service. ${CREDENTIAL_SETUP_HINT} Repair the effective source file. Do not replay a business request automatically.` };
     }
     process.stdout.write(JSON.stringify(output, null, 2) + '\n');
     if (parsed?.command === 'default-skills' && ['review_required', 'dismissed', 'enabled', 'skipped'].includes(String(output.status)))
