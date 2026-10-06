@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.3 — 2026-10-06
+
+- Keep the product name Secret Book untranslated in credential choices and guidance, including all six Skills, configuration errors, CLI help and the README. Preserve `secret-book` as the Skill identifier and the existing configuration inspection schema.
+
+- Require actual AIHub execution for applicable default tasks, including image generation within websites and presentations; expand task mappings to the six Skills' current scope.
+- Preserve host tools for prompt preparation, deterministic file processing and Skill-directed result checks. Other execution channels require the user's authorization for the task; unaffected subtasks continue.
+- Keep ordinary conversation, coding, search, charts, screenshots and general Office work outside forced routing. Future default routing applies only to available, verified Skills in aihub-studio.
+- Align all six Skill entrypoints and the shared default-rule workflow. Review existing older rules without treating them as entirely missing or rewriting them automatically; show differences when the user requests an upgrade.
+- Remove the generic permissions, privacy, fee-confirmation and request-budget clause from the proposed rule.
+
 ## 1.1.2 — 2026-10-06
 
 - Offer local file entry or secret-book whenever an API Key is missing or needs repair, including direct guidance in all six Skills and configuration errors. Preserve the user's chosen method.

@@ -32,7 +32,7 @@ Usage: node <plugin>/scripts/aihub.mjs COMMAND --skill NAME [options]
 Skills: ${SKILLS.join(', ')}
 Commands:
   default-skills --agent codex|claude-code|workbuddy [--action check|dismiss|enable] [--config-dir DIR]
-  config-check [--credentials-only] (local sources; key-only report for secret-book; no network or media tools)
+  config-check [--credentials-only] (local sources; key-only report for Secret Book; no network or media tools)
   doctor
   plan --request-file JSON
   run --request-file JSON [--output-dir DIR] [--wait-seconds 0..600]

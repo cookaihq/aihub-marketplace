@@ -37,7 +37,7 @@ const DECLARED_KEYS = new Set<string>([...KEYS, ...Object.values(MODEL_KEYS), ..
 const PLUGIN_NAME = 'aihub-studio';
 // Retained from the source client's configuration. This is the API root, not /v1.
 const DEFAULT_BASE_URL = 'https://api.aihubmax.com';
-export const CREDENTIAL_SETUP_HINT = 'Offer to fill AIHUB_API_KEY in a local file or select a credential through secret-book; honor an existing choice. If secret-book is selected, follow its workflow directly. Only handle installation, invocation or compatibility problems when encountered.';
+export const CREDENTIAL_SETUP_HINT = 'For AIHUB_API_KEY, offer "自行填写本机文件" or "从 Secret Book 选择凭证"; honor an existing choice. Keep the display name "Secret Book" untranslated in questions, choices and replies; the Skill identifier is secret-book. If Secret Book is selected, follow its workflow directly. Only handle installation, invocation or compatibility problems when encountered.';
 
 export function parseEnv(text: string): Record<string, string> {
   const values: Record<string, string> = {};
