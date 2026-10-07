@@ -1,6 +1,7 @@
 ---
 name: aihub-image
-version: 1.1.3
+metadata:
+  version: "1.1.3"
 description: v1.1.3｜Generate or edit images through AIhub with configured model priorities and recoverable fallback. Without configuration, use GPT Image 2.5 Flare for speed or Sunburst for detail. Resume existing image tasks and deliver checked files.
 compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---

@@ -1,6 +1,7 @@
 ---
 name: tikin-setup
-version: 1.1.0
+metadata:
+  version: "1.1.0"
 description: v1.1.0｜Install, update, and configure tikin social-media skills or plugins. Use when the user first mentions tikin, needs to install or repair the tikin package, has a missing or invalid TIKIN_API_KEY, wants browser-assisted API-key creation, or wants to change per-platform auto/confirm routing or default-Skill reminder preferences.
 ---
 

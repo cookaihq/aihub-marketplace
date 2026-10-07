@@ -1,6 +1,7 @@
 ---
 name: tikin-douyin
-version: 1.1.0
+metadata:
+  version: "1.1.0"
 description: v1.1.0｜Work with Douyin (抖音) URLs and data via tikin — fetch videos, user profiles and post lists, video comments, and run video/user/general search via Douyin's dedicated search series. Use when the user provides a Douyin URL or the task targets Douyin. Covers App-V3 and the Douyin Search series.
 ---
 

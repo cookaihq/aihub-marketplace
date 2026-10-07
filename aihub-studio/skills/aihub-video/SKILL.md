@@ -1,6 +1,7 @@
 ---
 name: aihub-video
-version: 1.1.3
+metadata:
+  version: "1.1.3"
 description: v1.1.3｜Generate videos through AIhub using Seedance 2.5 text, first-frame image, or multimodal reference inputs. Also handle C1 video lip sync and C2 image-and-audio digital humans. Check task-specific limits, resume existing tasks, and deliver checked video files.
 compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---

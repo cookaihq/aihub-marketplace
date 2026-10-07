@@ -164,7 +164,7 @@ test('package, lockfile, Plugin manifests, marketplace and every Skill share one
   for (const name of await readdir('skills')) {
     const text = await readFile(join('skills', name, 'SKILL.md'), 'utf8');
     assert.equal(/^name: (.+)$/m.exec(text)?.[1], name);
-    assert.equal(/^version: (.+)$/m.exec(text)?.[1], pkg.version);
+    assert.equal(/^metadata:\s*\n  version: "([^"\r\n]+)"$/m.exec(text)?.[1], pkg.version);
     assert.ok(text.includes(`description: v${pkg.version}｜`));
   }
 });

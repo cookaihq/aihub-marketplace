@@ -1,6 +1,7 @@
 ---
 name: tikin-comments-analysis
-version: 1.1.0
+metadata:
+  version: "1.1.0"
 description: v1.1.0｜Pull and analyze comments from a supported post or video URL via tikin — sentiment breakdown, recurring themes, top comments, and notable questions or complaints. Use when the user asks to analyze comments, summarize discussion, or provides a social-media post URL.
 ---
 

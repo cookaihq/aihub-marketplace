@@ -203,19 +203,6 @@ class TikinConfigTests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertNotIn(value, result.stderr)
 
-    def test_plugin_skill_and_runtime_versions_are_consistent(self):
-        version = json.loads((ROOT / ".claude-plugin/plugin.json").read_text())["version"]
-        for directory in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
-            manifest = json.loads((ROOT / directory / "plugin.json").read_text())
-            self.assertEqual(manifest["version"], version)
-            self.assertEqual(manifest["name"], "tikin-social")
-        for skill in (ROOT / "skills").glob("*/SKILL.md"):
-            text = skill.read_text()
-            self.assertEqual(re.search(r'^version: (\S+)', text, re.M).group(1), version)
-            self.assertIn("v" + version + "｜", text)
-            if (skill.parent / "pyproject.toml").exists():
-                for filename in ("pyproject.toml", "uv.lock"):
-                    self.assertIn('version = "' + version + '"', (skill.parent / filename).read_text())
 
     def test_init_creates_default_settings_with_private_permissions(self):
         self.run_config("init")

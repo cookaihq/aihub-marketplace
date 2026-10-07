@@ -1,6 +1,7 @@
 ---
 name: tikin-social-listening
-version: 1.1.0
+metadata:
+  version: "1.1.0"
 description: v1.1.0｜Monitor mentions across supported social platforms via tikin — collect posts, classify sentiment, cluster themes, and deliver a cited digest. Use for brand sentiment, keyword monitoring, social listening, or supported URLs that should seed a listening query.
 ---
 

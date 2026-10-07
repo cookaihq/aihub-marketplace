@@ -1,6 +1,7 @@
 ---
 name: tikin-youtube
-version: 1.1.0
+metadata:
+  version: "1.1.0"
 description: v1.1.0｜Work with YouTube URLs and data via tikin — fetch video info, downloadable stream URLs, captions/subtitles, comments and replies, channel info, and run general/shorts search. Use when the user provides a YouTube URL or the task targets YouTube. Covers the YouTube Web-V2 API.
 ---
 

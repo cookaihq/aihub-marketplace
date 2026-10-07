@@ -1,6 +1,7 @@
 ---
 name: tikin-competitor-analysis
-version: 1.1.0
+metadata:
+  version: "1.1.0"
 description: v1.1.0｜Benchmark multiple social-media accounts via tikin — followers, engagement rate, posting cadence, top content, and growth signals. Use when the user asks to compare accounts or supplies supported profile URLs for a competitive analysis.
 ---
 
