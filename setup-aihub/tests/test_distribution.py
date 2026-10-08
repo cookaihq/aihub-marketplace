@@ -27,7 +27,7 @@ class DistributionTests(unittest.TestCase):
                 self.assertEqual(lock["version"], version)
                 self.assertEqual(lock["packages"][""]["version"], version)
             else:
-                name = "tikin-setup" if plugin == "tikin-social" else plugin
+                name = {"tikin-social": "tikin-setup", "setup-aihub": "setup-api-key"}[plugin]
                 version = tomllib.loads((root / "skills" / name / "pyproject.toml").read_text())["project"]["version"]
             for folder in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
                 manifest = json.loads((root / folder / "plugin.json").read_text(encoding="utf-8"))
@@ -124,7 +124,7 @@ class DistributionTests(unittest.TestCase):
             shutil.copytree(SKILL, project, ignore=shutil.ignore_patterns(".venv", "__pycache__"))
             env = {k: v for k, v in os.environ.items() if not k.startswith(("AIHUB_", "TIKIN_", "SETUP_AIHUB_", "UV_PROJECT_ENVIRONMENT"))}
             env.update(HOME=str(user), USERPROFILE=str(user), UV_PYTHON=sys.executable, UV_PYTHON_DOWNLOADS="never", PYTHONUTF8="1")
-            command = [sys.executable, str(project / "scripts/setup_aihub.py"), "list", "--host", "codex", "--cwd", str(cwd)]
+            command = [sys.executable, str(project / "scripts/setup_api_key.py"), "list", "--host", "codex", "--cwd", str(cwd)]
             proc = subprocess.run(command, env=env, capture_output=True, timeout=40)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertTrue((project / ".venv/pyvenv.cfg").is_file())
@@ -145,7 +145,7 @@ class DistributionTests(unittest.TestCase):
             shutil.copytree(SKILL, project, ignore=shutil.ignore_patterns(".venv", "__pycache__"))
             env = {**os.environ, "UV_PROJECT_ENVIRONMENT": ".custom-runtime", "UV_PYTHON": sys.executable,
                    "UV_PYTHON_DOWNLOADS": "never", "HOME": str(root / "user"), "USERPROFILE": str(root / "user"), "PYTHONUTF8": "1"}
-            proc = subprocess.run([sys.executable, str(project / "scripts/setup_aihub.py"), "list", "--host", "codex", "--cwd", str(cwd)],
+            proc = subprocess.run([sys.executable, str(project / "scripts/setup_api_key.py"), "list", "--host", "codex", "--cwd", str(cwd)],
                                   cwd=cwd, env=env, capture_output=True, timeout=40)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertTrue((project / ".custom-runtime/pyvenv.cfg").is_file())

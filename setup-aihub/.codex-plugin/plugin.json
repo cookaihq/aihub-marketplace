@@ -1,6 +1,6 @@
 {
   "name": "setup-aihub",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "检查、配置和修复 AIhub Studio 与 tikin Social 的本机接口密钥。",
   "author": { "name": "cookaihq", "url": "https://github.com/cookaihq" },
   "repository": "https://github.com/cookaihq/aihub-marketplace",
@@ -14,6 +14,6 @@
     "developerName": "cookaihq",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],
-    "defaultPrompt": ["setup-aihub"]
+    "defaultPrompt": ["setup-api-key"]
   }
 }

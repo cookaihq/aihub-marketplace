@@ -14,13 +14,13 @@ uv run --locked --no-dev --project "<tikin-setup实体>" python "<tikin-setup实
 
 ## 转交与最小回退
 
-当前宿主可调用兼容的 `setup-aihub` 时，读取并实际进入其流程。传递 `tikin-social` 身份/版本/实体、真实 caller、cwd、全局开关、声明/无值报告、有效的来源/范围选择、原任务记录引用和提交状态。Setup 仅运行本 helper 配置检查，不调用整个 `tikin-setup`，不再相互转交。
+当前宿主可调用兼容的 `setup-aihub:setup-api-key` 时，读取并实际进入其流程。传递 `tikin-social` 身份/版本/实体、真实 caller、cwd、全局开关、声明/无值报告、有效的来源/范围选择、原任务记录引用和提交状态。Setup 仅运行本 helper 配置检查，不调用整个 `tikin-setup`，不再相互转交。
 
 Setup 不可用时如实说明并保留原任务；提供安装或最小本机配置，不阻断已配置业务：
 
-> 请安装完整 setup-aihub Plugin：优先从 https://github.com/cookaihq/aihub-marketplace.git 获取，网络故障时同版本回退 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，安装后继续 tikin 凭证配置。
+> 请安装完整 setup-aihub Plugin：优先从 https://github.com/cookaihq/aihub-marketplace.git 获取，网络故障时同版本回退 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，安装后用 setup-api-key 继续 tikin 凭证配置。
 
-核对当前源码所需版本已经发布再安装；不要把未发布的开发能力说成已可取得。WorkBuddy 走当前原生“专家·技能·连接器 → 技能 → 套件”，不能另起 `codebuddy/cbc`/内嵌 CLI（包括 help/list）、调用未公开 RPC 或手写注册表。
+核对 Setup AIHub 2.0.0 或更新的兼容版本已经发布再安装；不要把未发布的开发能力说成已可取得。WorkBuddy 走当前原生“专家·技能·连接器 → 技能 → 套件”，不能另起 `codebuddy/cbc`/内嵌 CLI（包括 help/list）、调用未公开 RPC 或手写注册表。
 
 回退沿用来源选择，未定时提供 **自行填写本机文件／从 Secret Book 选择配置并保存**。手填不依赖 Secret Book。首次共享已确定为 `~/.config/tikin-social/.env`，已有项目/Skill 范围沿用；错误修复实际来源，环境变量先找注入位置。展示完整路径、字段、范围、替换项与覆盖后按用户授权保存；项目文件须未跟踪且被忽略。用户本机填写，完整 Key 不进入聊天、argv、记录或备份。`set-key` 会初始化路由且只写共享文件，不能用于此通用修复流程。
 

@@ -2,9 +2,19 @@
 
 通过对话检查、配置、更换或清除 **AIhub 创作与文档服务**、**tikin 社交媒体数据服务**的本机接口密钥。你可以自行在本机填写，也可以选择 Secret Book；配置仍由原业务 Plugin 读取，Setup 不建立集中 Key 库。
 
-当前版本为 **1.0.0**，支持本机手填、清除和恢复；Secret Book 已接入 2.5.1 的共享配置与实际业务 Skill 流程，两个服务均已通过 2.5.2 的 Windows 原生真实表配置联调。
+当前版本为 **2.0.0**，唯一 Skill 改名为 **setup-api-key**，完整入口为 `setup-aihub:setup-api-key`。安装的 Plugin 仍叫 `setup-aihub`；更新后用新入口继续既有任务，业务密钥位置不变。旧的 `setup-aihub` Skill 调用名不再提供。
 
-Windows 原生的客户端验证范围如下；这里只说明凭证配置能力，不代表媒体生成或社交数据业务已完成验证。
+**2.0.0 的 Windows 原生验证：**三宿主均已通过完整 Plugin 安装和文件核对，当前调用范围如下；尚未完成三宿主全部验收。
+
+| 宿主 | 新入口验证结果 |
+| --- | --- |
+| Codex 0.161.0 | 发现、新名称调用及 tikin 自然请求触发通过；默认 Windows 沙箱初始化失败，本机配置闭环未完成 |
+| WorkBuddy 5.6.2 | 原生套件的新名称调用及 tikin 自然请求触发通过；AIhub 合成本机配置完成确认、手填与新会话恢复。菜单呈现和旧业务缓存提示存在偏差，仍需复核 |
+| Claude Code 2.1.293 | 安装通过；会话请求无输出超时，新名称发现、触发与配置闭环未完成 |
+
+脚本验证已覆盖新路径、冻结运行环境、原业务加载器和 1.0.0 待确认任务恢复；没有用真实密钥或业务请求验证本次改名。
+
+以下是 **1.0.0 旧调用名**的 Windows 原生验证记录。原有本机手填、清除、恢复和 Secret Book 契约保持不变；两个服务当时已通过 Secret Book 2.5.2 的真实表联调。这些历史结果不能代替 2.0.0 新入口验收。
 
 | 宿主 | 已验证范围 |
 | --- | --- |
@@ -14,11 +24,11 @@ Windows 原生的客户端验证范围如下；这里只说明凭证配置能力
 
 ## 让 Agent 帮你安装
 
-将下面一段复制到你使用的 Claude Code、Codex 或 WorkBuddy，让 Agent 核对来源和版本后安装。
+将下面一段复制到你使用的 Claude Code、Codex 或 WorkBuddy，让 Agent 核对来源和版本后安装。新入口需要 2.0.0 或更新版本；若仍加载旧版，先让 Agent 核对并更新实际安装。
 
-> 请安装完整的 setup-aihub Plugin：优先从 https://github.com/cookaihq/aihub-marketplace.git 的 setup-aihub/ 获取，网络故障时同版本回退到 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。保留已有设置，并按当前宿主的原生 Plugin 入口安装，告诉我实际来源、版本以及是否能发现和调用 setup-aihub。
+> 请安装完整的 setup-aihub Plugin：优先从 https://github.com/cookaihq/aihub-marketplace.git 的 setup-aihub/ 获取，网络故障时同版本回退到 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。保留已有设置，并按当前宿主的原生 Plugin 入口安装，告诉我实际来源、版本以及是否能发现和调用 setup-api-key。
 
-Claude Code 使用实际技能选择器，可能显示完整的 `/setup-aihub:setup-aihub`；Codex 输入 `$` 选择对应入口，完整 Plugin 在 CLI 0.160.1 中显示 `setup-aihub:setup-aihub`；WorkBuddy 在当前会话点名或选择 `setup-aihub`，具体控件以客户端为准。都不要求额外参数。WorkBuddy 安装完整套件使用“专家·技能·连接器 → 技能 → 套件 → 市场行右侧圆形＋”；需要手工操作时，Agent 会按[同包指引](skills/setup-aihub/references/hosts.md#workbuddy-原生套件)展示截图与步骤。
+Claude Code 使用实际技能选择器，可能显示完整的 `/setup-aihub:setup-api-key`；Codex 输入 `$` 选择对应入口，完整 Plugin 入口为 `setup-aihub:setup-api-key`；WorkBuddy 在当前会话点名或选择 `setup-api-key`，具体控件以客户端为准。都不要求额外参数。WorkBuddy 安装完整套件使用“专家·技能·连接器 → 技能 → 套件 → 市场行右侧圆形＋”；需要手工操作时，Agent 会按[同包指引](skills/setup-api-key/references/hosts.md#workbuddy-原生套件)展示截图与步骤。
 
 运行需要 uv 0.8 或更新版本，由 Agent 协助检查；首次准备 Python 环境可能联网下载。AIhub 本机配置检查还需要 Node.js 18+；tikin 使用自己的 Python 环境。配置检查不要求先安装媒体工具，不会调用图片、视频或数据业务来测试密钥。
 
@@ -28,7 +38,7 @@ Claude Code 使用实际技能选择器，可能显示完整的 `/setup-aihub:se
 
 在已加载 Skill 的会话中只输入：
 
-> setup-aihub
+> setup-api-key
 
 没有已有目标时，将看到以下三项；安装状态按当前宿主实际检查填写：
 
@@ -46,7 +56,7 @@ AIhub 首配仅需 `AIHUB_API_KEY`。tikin 需要 `TIKIN_API_KEY`；关联的 `T
 
 选择手填后，Agent 列出完整文件位置、字段、范围与替换项，经你授权后准备安全文件。你在本机编辑器填写，保存后说“继续”；无需把完整 Key 发到聊天。选择 Secret Book 后，由它核对本人身份、已有表、记录、映射与保存目标，Setup 再检查业务是否实际读到。Secret Book 未安装时可以选“安装并继续／自行填写本机文件／暂不配置”；没有连接时使用本人身份连接已有表，缺列、缺 ID 或无权限不会自动建表或切管理员。
 
-只做 Plugin 共享配置时，Secret Book 需要 2.5.1 或更新版本；已有具体业务 Skill 的路径仍兼容 2.5.0。Agent 会核对实际使用的安装版本；版本不兼容时可安装兼容版本、手填或暂缓，不会替你假定一个业务 Skill。AIhub 与 tikin 均已通过 Windows 原生真实表取用、临时保存、恢复和本机生效检查；线上鉴权、业务请求与三宿主完整验收不在该结果范围内。
+只做 Plugin 共享配置时，Secret Book 需要 2.5.1 或更新版本；已有具体业务 Skill 的路径仍兼容 2.5.0。Agent 会核对实际使用的安装版本；版本不兼容时可安装兼容版本、手填或暂缓，不会替你假定一个业务 Skill。1.0.0 时 AIhub 与 tikin 均已通过 Windows 原生真实表取用、临时保存、恢复和本机生效检查；线上鉴权、业务请求与三宿主完整验收不在该结果范围内。
 
 后续业务直接读取本机，不必每次运行 Setup 或查 Secret Book。表中轮换不会自动同步。仅本轮使用、不允许落盘时直接说明，Agent 按实际可用的安全输入方式处理。
 
@@ -86,7 +96,7 @@ tikin 例如 `tikin-douyin` 使用相同次序，将 Plugin 名换为 `tikin-soc
 
 Agent 先只读预览，再按你确认的文件和字段清除；同一字段的旧重复赋值也会删除。低优先级值可能重新生效，清除本机文件不等于平台撤销 Key。取消只关闭尚未执行的步骤，不自动回滚已保存配置。
 
-中断后说“继续刚才的配置”，或“请用 setup-aihub 继续任务〈编号〉”。编号来自上次回复。Setup 的进度文件位于 `~/.config/setup-aihub/tasks/`，Windows 为 `%USERPROFILE%\.config\setup-aihub\tasks\`，仅保存路径、选择、校验值和结果元数据，不保存业务密钥。可要求清理已结束任务的进度；卸载 Setup 不会清除业务凭证。
+中断后说“继续刚才的配置”，或“请用 setup-api-key 继续任务〈编号〉”。编号来自上次回复。Setup 的进度文件位于 `~/.config/setup-aihub/tasks/`，Windows 为 `%USERPROFILE%\.config\setup-aihub\tasks\`，仅保存路径、选择、校验值和结果元数据，不保存业务密钥。可要求清理已结束任务的进度；卸载 Setup 不会清除业务凭证。
 
 结果分别说明**已保存、当前生效、本机读取、线上鉴权、宿主加载和业务调用**。本版尚无已核实免费的线上鉴权入口，默认不执行；配置成功不代表业务已完成。已提交或状态未知的原任务先核对结果，修复 Key 不会自动重发。
 

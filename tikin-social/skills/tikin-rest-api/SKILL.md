@@ -1,8 +1,8 @@
 ---
 name: tikin-rest-api
 metadata:
-  version: "1.2.0"
-description: v1.2.0｜Call the tikin REST API directly with curl/HTTP. Covers base URL, Bearer auth, the /api/v1/{platform}/... path scheme, pagination, rate limits, retries, error handling, and per-call cost/balance awareness. Use for any direct data call against tikin.
+  version: "1.2.1"
+description: v1.2.1｜Call the tikin REST API directly with curl/HTTP. Covers base URL, Bearer auth, the /api/v1/{platform}/... path scheme, pagination, rate limits, retries, error handling, and per-call cost/balance awareness. Use for any direct data call against tikin.
 ---
 
 # tikin — REST API

@@ -3,7 +3,7 @@
 在实际业务工作文件夹运行，路径从已加载 Skill 定位并引用，Windows 原生不切 WSL。统一形式：
 
 ```text
-uv run --locked --no-dev --project "<setup-aihub Skill 实体目录>" python "<setup-aihub Skill 实体目录>/scripts/setup_aihub.py" <子命令> <参数>
+uv run --locked --no-dev --project "<setup-api-key Skill 实体目录>" python "<setup-api-key Skill 实体目录>/scripts/setup_api_key.py" <子命令> <参数>
 ```
 
 先核对 uv >= 0.8。Skill 自带 Python 3.13、锁文件和 Windows/POSIX bootstrap；自有环境缺失自动准备。系统 uv/Node 缺失时按实际报错给安装引导。`UV_PROJECT_ENVIRONMENT` 的相对值按每个 Skill 自己的目录解析；不要把 Setup 已解析的 venv 路径注入 tikin 或 Secret Book 子进程。业务检查在传入的真实 `--cwd` 中执行，不因 `--project` 改变 cwd。

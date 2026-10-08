@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1 — 2026-10-08
+
+- 凭证配置提示与转交改用 Setup AIHub 2.0.0 的 `setup-api-key` Skill；本机检查契约和最小回退流程保持兼容。
+
 ## 1.2.0 — 2026-10-08
 
 - 新增 Windows 原生 PowerShell 入口，自动核对 Node 版本并固定模块路径解析，修复 Codex 默认沙箱内安装包启动时的用户目录 `EPERM`，保留业务 cwd、参数与退出码。

@@ -28,7 +28,7 @@ class Parser(argparse.ArgumentParser):
 
 
 def arguments():
-    parser = Parser(description="Setup AIHub: 本机无值检查、手填准备、指定字段清除与进度恢复。")
+    parser = Parser(description="Setup API Key: 本机无值检查、手填准备、指定字段清除与进度恢复。")
     sub = parser.add_subparsers(dest="command", required=True, parser_class=Parser)
 
     def context(command, root_required=True):

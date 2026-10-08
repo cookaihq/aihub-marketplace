@@ -8,8 +8,8 @@
 
 | 宿主 | 操作与入口 |
 | --- | --- |
-| Claude Code | 原生 Plugin 管理：市场添加后安装完整 `<plugin>@aihub-marketplace`，保留实际 `user/project/local/managed` 范围。读取当前工具/CLI schema 再用。技能选择器显示的命名空间为准，例如 `/setup-aihub:setup-aihub`；不要求用户提供业务参数 |
-| Codex | 原生 Plugin 管理添加市场和安装完整 Plugin，核对实际目录/版本；输入 `$` 选择实际入口。CLI 0.160.1 的完整 Plugin 显示 `setup-aihub:setup-aihub`，独立 Skill 挂载显示短名称；不要求用户另填参数。CLI/IDE 可按实际版本查看 `/skills`。不把开发目录或当前执行 Codex 当作加载证据；真实最小闭环保留默认沙箱 |
+| Claude Code | 原生 Plugin 管理：市场添加后安装完整 `<plugin>@aihub-marketplace`，保留实际 `user/project/local/managed` 范围。读取当前工具/CLI schema 再用。技能选择器显示的命名空间为准，例如 `/setup-aihub:setup-api-key`；不要求用户提供业务参数 |
+| Codex | 原生 Plugin 管理添加市场和安装完整 Plugin，核对实际目录/版本；输入 `$` 选择实际入口。完整 Plugin 的入口为 `setup-aihub:setup-api-key`，独立 Skill 挂载显示短名称；不要求用户另填参数。CLI/IDE 可按实际版本查看 `/skills`。不把开发目录或当前执行 Codex 当作加载证据；真实最小闭环保留默认沙箱 |
 | WorkBuddy | 使用当前实例的原生“专家·技能·连接器 → 技能 → 套件”。Windows 5.6.2 的推荐市场 `workbuddy_marketplace_skill` 只装 BuiltinMarket 单 Skill，不能用于自定义 Git 市场的完整 Plugin。按下方步骤与截图指导；当前会话有已核实适用的原生工具/UI 能力时才代办 |
 
 安装完先核对完整组件，再分别验证启用、Skill 发现与调用。已安装但未启用或未加载时，能独立执行真实配置检查就继续；需要业务调用时引导实际刷新/新会话，不要求重装。来源冲突或旧版不兼容时确认实际加载对象，提供兼容版本选择，不强制更新。

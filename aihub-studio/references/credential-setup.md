@@ -18,15 +18,15 @@ node "<Plugin实体>/scripts/aihub.mjs" config-check --skill <实际业务Skill>
 
 ## Setup 可用时
 
-核对当前宿主已发现的 `setup-aihub` 来自正确完整 Plugin 且兼容，再进入其凭证流程。交付 consumer `aihub-studio`、实际版本/实体、caller、真实 cwd、全局开关、声明与无值报告、已有来源/范围选择，以及原业务记录引用和提交状态。只保留无密钥元数据。Setup 的配置检查不再次转回本流程，避免递归。
+核对当前宿主已发现的 `setup-aihub:setup-api-key` 来自正确完整 Plugin 且兼容，再进入其凭证流程。交付 consumer `aihub-studio`、实际版本/实体、caller、真实 cwd、全局开关、声明与无值报告、已有来源/范围选择，以及原业务记录引用和提交状态。只保留无密钥元数据。Setup 的配置检查不再次转回本流程，避免递归。
 
 实际读取 Setup 的 Skill 并执行流程；宿主没有跨 Skill 调用能力时按可用的文件读取/技能入口衔接，不能只声称“已转交”。一个配置操作只有一个当前负责人；Setup/Secret Book 完成后，AIhub 用真实加载器复查，不重复写文件或确认同一摘要。
 
 Setup 尚未发布、未安装、未加载或不可调用时，保留原任务，提供安装完整 Plugin 的请求或下面的最小回退。不能因为未安装的 Setup 没有 description，就声称用户中文请求必然能触发它。
 
-> 请从 https://github.com/cookaihq/aihub-marketplace.git 安装完整的 setup-aihub Plugin；网络故障时使用同版本 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，安装后继续刚才的 AIhub 凭证配置。
+> 请从 https://github.com/cookaihq/aihub-marketplace.git 安装完整的 setup-aihub Plugin；网络故障时使用同版本 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，安装后用 setup-api-key 继续刚才的 AIhub 凭证配置。
 
-先核对 Setup 1.0.0 或更新的兼容版本可取得，不以旧条目代替新功能。WorkBuddy 沿用[原生套件指引与截图](workbuddy-install.md)，只将安装对象换成获授权的完整 `setup-aihub`，不另起 CLI 或手写注册表。
+先核对 Setup AIHub 2.0.0 或更新的兼容版本可取得，不以旧条目代替新功能。WorkBuddy 沿用[原生套件指引与截图](workbuddy-install.md)，只将安装对象换成获授权的完整 `setup-aihub`，不另起 CLI 或手写注册表。
 
 ## Setup 不可用时的最小回退
 

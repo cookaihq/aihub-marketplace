@@ -15,8 +15,8 @@ import tomllib
 import unittest
 
 MARKET = Path(__file__).resolve().parents[2]
-SKILL = MARKET / "setup-aihub/skills/setup-aihub"
-SETUP = SKILL / "scripts/setup_aihub.py"
+SKILL = MARKET / "setup-aihub/skills/setup-api-key"
+SETUP = SKILL / "scripts/setup_api_key.py"
 SECRET_BOOK = os.environ.get("SETUP_AIHUB_TEST_SECRET_BOOK_ROOT")
 
 

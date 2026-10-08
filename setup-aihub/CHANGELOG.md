@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0 — 2026-10-08
+
+- 唯一 Skill 改名为 `setup-api-key`，完整入口为 `setup-aihub:setup-api-key`；旧 Skill 名不再提供。Plugin 安装身份仍为 `setup-aihub`。
+- 同步脚本入口、运行时项目、使用说明与业务转交。已有任务目录、恢复协议和业务配置位置保持兼容，旧任务可从新入口继续。
+- Windows 新入口在 Codex 与 WorkBuddy 中发现和触发通过，WorkBuddy 合成本机配置与跨会话恢复通过；Codex 配置闭环受沙箱文件占用阻塞，Claude Code 会话超时，WorkBuddy 菜单与旧业务缓存指引仍有偏差。三宿主完整验收尚未全部通过，具体范围见 README。
+
 ## 1.0.0 — 2026-10-08
 
 - Windows 下通过 AIhub 随包原生入口运行检查，避免 Node 在 Codex 默认沙箱中遍历安装路径祖先目录失败。

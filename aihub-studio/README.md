@@ -1,4 +1,6 @@
-# AIhub Studio Plugin 1.2.0
+# AIhub Studio Plugin 1.2.1
+
+当前版本为 1.2.1；凭证配置转交改用 Setup AIHub 2.0.0 内的 `setup-api-key`。
 
 让 Claude Code、Codex 或 WorkBuddy 通过 AIhub 帮你生成和编辑图片、制作视频与音频、理解素材内容，或把 PDF 转成可编辑文档。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
 
@@ -45,7 +47,7 @@
 - **Windows 文件保护：**保存私有任务、诊断或检查记录时需要系统自带的 Windows PowerShell 5.1 和支持访问权限的文件系统。程序在写入内容前限制为当前用户与 SYSTEM 可访问；无法设置或回读权限时停止保存并报告原因。只读配置检查不要求 FFmpeg 或这一步保存能力。
 - **输入素材：**需要参考图、录音、视频或 PDF 时，把文件放在 Agent 能访问的位置，或提供服务能访问的链接。本地上传的单个文件须非空且不超过 20 MiB；更大的素材需要所选模型支持的远程链接。
 
-**当前验证范围：**Windows 原生已通过三宿主完整 Plugin 安装与 Skill 发现；Codex 默认沙箱及 WorkBuddy 已通过凭证缺项转交、手填、恢复与最小回退，Claude Code 已通过自然请求触发，配置闭环未实测。Secret Book 2.5.2 真实表配置、恢复与清理已通过。这些结果只覆盖配置能力。历史版本在 macOS 上直接运行共用程序，已完成部分图片生成、语音、转写、音乐、图片理解和 PDF 转换请求；Seedance 2.5、音画同步与数字人、Gemini 原生音乐，以及三宿主中的完整媒体业务仍需各自验收。Linux、WSL 与本版 macOS 流程尚未验证。
+**历史 1.2.0 验证范围：**Windows 原生已通过三宿主完整 Plugin 安装与 Skill 发现；Codex 默认沙箱及 WorkBuddy 已通过凭证缺项转交、手填、恢复与最小回退，Claude Code 已通过自然请求触发，配置闭环未实测。Secret Book 2.5.2 真实表配置、恢复与清理已通过。这些结果只覆盖配置能力，不代表新的 `setup-api-key` 转交已完成宿主验收。历史版本在 macOS 上直接运行共用程序，已完成部分图片生成、语音、转写、音乐、图片理解和 PDF 转换请求；Seedance 2.5、音画同步与数字人、Gemini 原生音乐，以及三宿主中的完整媒体业务仍需各自验收。Linux、WSL 与本版 macOS 流程尚未验证。
 
 ## 让 Agent 帮你安装
 
@@ -75,7 +77,7 @@ AIhub 通过上述 CNB 与 GitHub 来源分发。WorkBuddy 使用 **专家·技�
 
 ## 完成首次配置
 
-现在可通过统一入口 **setup-aihub** 管理密钥；配置已经可读的业务仍直接执行。可以说“请用 setup-aihub 检查我这个项目的 AIhub 密钥”，无需提供英文 Plugin 名或字段名。Setup 不可用时保留本节的最小手填／Secret Book 流程；[随包衔接说明](references/credential-setup.md)给出完整安装请求。本版新增共享检查与删除预览契约，配合 Setup 1.0.0 或更新的兼容版本使用。
+现在可通过统一入口 **setup-api-key**（属于 setup-aihub Plugin）管理密钥；配置已经可读的业务仍直接执行。可以说“请用 setup-api-key 检查我这个项目的 AIhub 密钥”，无需提供英文 Plugin 名或字段名。Setup 不可用时保留本节的最小手填／Secret Book 流程；[随包衔接说明](references/credential-setup.md)给出完整安装请求。共享检查与删除预览契约保持兼容；新的 Skill 入口配合 Setup AIHub 2.0.0 或更新的兼容版本使用。
 
 首次配置、缺少密钥或需要修复配置时，Agent 会提供两种方式：**自行填写本机文件 / 从 Secret Book 选择凭证**。已经明确选择过时会沿用。仅说“继续用 AIhub”、尚未选择配置方式时，Agent 会先展示这两个选项，再展开所选方式的步骤。六个 Skill 默认共用一套设置，需要不同账号时再单独配置。
 

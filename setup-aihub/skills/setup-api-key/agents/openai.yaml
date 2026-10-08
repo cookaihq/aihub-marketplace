@@ -1,0 +1,4 @@
+interface:
+  display_name: "Setup API Key｜服务密钥设置"
+  short_description: "检查、配置或修复 AIhub 创作与 tikin 数据服务的本机密钥"
+  default_prompt: "使用 $setup-api-key 帮我检查和配置服务密钥。"

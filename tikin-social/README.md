@@ -5,7 +5,9 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Current version: **1.2.0**. Native Windows Plugin installation and Skill discovery are verified
+Current version: **1.2.1**. Credential handoff now uses the
+`setup-api-key` Skill in Setup AIHub 2.0.0. The following results apply to **1.2.0**:
+native Windows Plugin installation and Skill discovery are verified
 in Claude Code, Codex and WorkBuddy. Credential configuration passed in Codex's default sandbox
 and WorkBuddy; Claude Code natural invocation passed, while its configuration loop was not tested.
 Real social-data workflows require separate validation.
@@ -56,7 +58,7 @@ configuration task to WSL automatically.
 
 ## Configure API access
 
-可对当前 Agent 说“用 setup-aihub 帮我检查或更换刚才的 tikin 密钥”。Setup 统一入口不可用时，
+可对当前 Agent 说“用 setup-api-key 帮我检查或更换刚才的 tikin 密钥”。Setup 统一入口不可用时，
 沿用下面的最小手填／Secret Book 流程；正确配置的业务不依赖它。完整安装请求见同包的
 [凭证衔接说明](skills/tikin-setup/references/credential-setup.md)。本版新增配置契约，配合 Setup 1.0.0 或更新的兼容版本使用。
 

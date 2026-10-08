@@ -1,8 +1,8 @@
 ---
 name: tikin-hashtag-research
 metadata:
-  version: "1.2.0"
-description: v1.2.0｜Research a hashtag or keyword via tikin — popularity signals, top and recent content, and related hashtags across supported platforms. Use when the user asks about a hashtag, related tags, content ideas, or supplies a supported hashtag URL.
+  version: "1.2.1"
+description: v1.2.1｜Research a hashtag or keyword via tikin — popularity signals, top and recent content, and related hashtags across supported platforms. Use when the user asks about a hashtag, related tags, content ideas, or supplies a supported hashtag URL.
 ---
 
 # Hashtag Research

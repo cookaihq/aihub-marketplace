@@ -1,15 +1,15 @@
 ---
 name: tikin-setup
 metadata:
-  version: "1.2.0"
-description: v1.2.0｜安装、更新或修复 tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-aihub；其不可用时提供本机配置回退。Install or maintain tikin; delegate existing credential setup to setup-aihub.
+  version: "1.2.1"
+description: v1.2.1｜安装、更新或修复 tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。Install or maintain tikin; delegate existing credential setup to setup-api-key.
 ---
 
 # tikin Setup
 
 ## 先确定当前任务
 
-用户问“接口密钥怎么填”、配置既有 Key、首次配置或修复缺项时，**先读取[统一凭证流程](references/credential-setup.md)**。当前宿主能调用兼容的 `setup-aihub`，就实际调用该 Skill 并将来源/范围选择、原任务和真实 caller 交给它；没有业务 caller 时保持共享检查。只询问填写方法而尚未授权执行检查时，同样由该入口提供说明，不运行程序。
+用户问“接口密钥怎么填”、配置既有 Key、首次配置或修复缺项时，**先读取[统一凭证流程](references/credential-setup.md)**。当前宿主能调用兼容的 `setup-aihub:setup-api-key`，就实际调用该 Skill 并将来源/范围选择、原任务和真实 caller 交给它；没有业务 caller 时保持共享检查。只询问填写方法而尚未授权执行检查时，同样由该入口提供说明，不运行程序。
 
 Setup 不可用时，按同一引用的最小回退办理。此凭证分支以真实加载器的本机复查结束；下面的安装、更新、路由和远端 Key 管理是其他任务，只有用户明确请求对应动作时才进入。已有可读配置的正常业务直接返回原业务 Skill。
 
@@ -183,7 +183,7 @@ platforms/actions into that prompt, and do not ask again for pagination within t
 
 | User outcome | Owning skill |
 |---|---|
-| 既有接口密钥配置、更换、缺项或修复 | 当前发现的 `setup-aihub`；不可用时按[凭证回退](references/credential-setup.md) |
+| 既有接口密钥配置、更换、缺项或修复 | 当前发现的 `setup-aihub:setup-api-key`；不可用时按[凭证回退](references/credential-setup.md) |
 | Install, updates, routing settings; explicitly requested remote key creation or online validation | `tikin-setup` |
 | Find an endpoint among 1,000+ | `tikin-endpoint-discovery` |
 | Direct REST details | `tikin-rest-api` |

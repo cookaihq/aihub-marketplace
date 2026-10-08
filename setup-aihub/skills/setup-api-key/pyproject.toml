@@ -1,6 +1,6 @@
 [project]
-name = "setup-aihub"
-version = "1.0.0"
+name = "setup-api-key"
+version = "2.0.0"
 description = "Local credential setup and recovery for AIhub Marketplace"
 requires-python = ">=3.13,<3.14"
 dependencies = []

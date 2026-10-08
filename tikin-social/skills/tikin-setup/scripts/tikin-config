@@ -245,7 +245,7 @@ def run_with_config(skill_name, command, global_enabled=True):
         raise SystemExit("run requires a command after --")
     values, _ = load_config(skill_name, global_enabled)
     if not values.get("TIKIN_API_KEY"):
-        raise SystemExit("missing TIKIN_API_KEY; follow tikin-setup/references/credential-setup.md for setup-aihub or the minimal local fallback")
+        raise SystemExit("missing TIKIN_API_KEY; follow tikin-setup/references/credential-setup.md for setup-aihub:setup-api-key or the minimal local fallback")
     environment = dict(os.environ)
     environment.update(values)
     environment["TIKIN_BASE_URL"] = values.get("TIKIN_BASE_URL") or DEFAULT_BASE_URL

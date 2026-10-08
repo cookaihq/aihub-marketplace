@@ -13,8 +13,8 @@ from unittest.mock import patch
 
 PLUGIN = Path(__file__).resolve().parents[1]
 MARKET = PLUGIN.parent
-SKILL = PLUGIN / "skills/setup-aihub"
-SCRIPT = SKILL / "scripts/setup_aihub.py"
+SKILL = PLUGIN / "skills/setup-api-key"
+SCRIPT = SKILL / "scripts/setup_api_key.py"
 sys.path.insert(0, str(SKILL / "scripts"))
 from setup_core import local_config
 from setup_core.consumers import Consumer
