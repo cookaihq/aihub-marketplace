@@ -1,17 +1,23 @@
 ---
 name: tikin-setup
-version: 1.1.0
-description: v1.1.0｜Install, update, and configure tikin social-media skills or plugins. Use when the user first mentions tikin, needs to install or repair the tikin package, has a missing or invalid TIKIN_API_KEY, wants browser-assisted API-key creation, or wants to change per-platform auto/confirm routing or default-Skill reminder preferences.
+metadata:
+  version: "1.2.0"
+description: v1.2.0｜安装、更新或修复 tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-aihub；其不可用时提供本机配置回退。Install or maintain tikin; delegate existing credential setup to setup-aihub.
 ---
 
 # tikin Setup
+
+## 先确定当前任务
+
+用户问“接口密钥怎么填”、配置既有 Key、首次配置或修复缺项时，**先读取[统一凭证流程](references/credential-setup.md)**。当前宿主能调用兼容的 `setup-aihub`，就实际调用该 Skill 并将来源/范围选择、原任务和真实 caller 交给它；没有业务 caller 时保持共享检查。只询问填写方法而尚未授权执行检查时，同样由该入口提供说明，不运行程序。
+
+Setup 不可用时，按同一引用的最小回退办理。此凭证分支以真实加载器的本机复查结束；下面的安装、更新、路由和远端 Key 管理是其他任务，只有用户明确请求对应动作时才进入。已有可读配置的正常业务直接返回原业务 Skill。
 
 ## 默认 Skill 检查
 
 每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
-Use this skill as the bootstrap entry point. Complete installation, authentication, and routing
-configuration, then hand the user's task to the owning `tikin-*` skill.
+Use this entry for the specific installation, credential, routing or update task requested. A credential-only request follows the linked credential flow and returns without the other setup stages.
 
 ## Local state
 
@@ -22,8 +28,8 @@ routing is authorized. If this task disables global configuration, skip `init`, 
 `--no-global-config` before each read-only helper subcommand.
 
 ```bash
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-config init
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-config status
+uv run --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-config" init
+uv run --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-config" status
 ```
 
 (`<this-skill-dir>` = the directory containing this SKILL.md.)
@@ -61,29 +67,7 @@ Put these options before the subcommand. `status`, `config-check`, `get-policy`,
 `run` do not create, chmod or migrate configuration files. `init` only initializes routing and
 protects the current Plugin’s shared files; it does not migrate old `tikin` or XDG locations.
 
-[Credential requirements](references/credentials.json) declare the real fields, defaults and
-service/key relationship. Start with the actual loader’s local, secret-free inspection:
-
-```bash
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-config --skill tikin-setup config-check
-```
-
-It prints `secret-book.config-inspection/v1` with exact file/field sources and revision hashes;
-exit 3 means missing/invalid configuration or an unreadable file. No API call is made. Offer
-“edit local configuration / choose configuration through secret-book and save it”, respecting
-an existing choice. For secret-book use its installed 2.3.0+ flow with the bundled declaration
-and this inspection; do not duplicate its account, record-selection or confirmation protocol.
-For manual entry, do not require secret-book and never ask for a key in chat.
-
-Fix an existing problem in its actual source file; for environment values first locate their
-injection source. New shared global configuration uses `~/.config/tikin-social/.env` after
-explicit save authorization. A single Skill may use `.env.<skill-name>` in the Plugin root;
-project saving uses the caller’s `.env.local`. Confirm that a Secret target inside Git is
-untracked and ignored before writing. Do not add a lower-priority home value to mask a broken
-higher-priority setting. After saving, report the exact target and effective field sources,
-then distinguish local validation from online authentication. Configuration repair does not
-authorize replaying a business request. `set-key` writes only the Plugin shared `.env`; use it
-only when that is the confirmed target. It is not a generic source-file repair command.
+For credentials, read [the unified inspection, Setup handoff and fallback](references/credential-setup.md). That flow uses config-check, preserves the real caller and never initializes routing. `set-key` is reserved for an explicitly authorized shared-file write that also allows its routing initialization; it is not a generic repair command.
 
 Old `~/.config/tikin/.env`, `~/.config/tikin/settings.json` and custom XDG locations are not read.
 Migration is optional and requires an explicit source, target and overwrite decision; preserve
@@ -93,7 +77,7 @@ fallback needs no migration. Never expose credentials in chat, logs or commits.
 Run API commands with the selected configuration in a child process:
 
 ```bash
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-config \
+uv run --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-config" \
   --skill tikin-setup run -- sh -c \
   'curl -s --max-time 30 "${TIKIN_BASE_URL}/api/usage/token/" -H "Authorization: Bearer ${TIKIN_API_KEY}"'
 ```
@@ -119,10 +103,7 @@ If GitHub has a network failure, use the same marketplace and Plugin from
 `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git`. Keep the same requested version and
 scope; authentication, missing repository or missing version is not a network fallback trigger.
 Report which source succeeded. Do not guess a WorkBuddy CLI command or tool schema: inspect
-its available native tools and current UI. Native Windows execution is not supported by the
-current POSIX bootstrap (`bin/python`) and shell examples; do not label a visible or installed
-marketplace card as a working Windows runtime. macOS is the tested development environment;
-Linux/WSL need their own runtime validation.
+its available native tools and current UI. Do not start codebuddy/cbc or an embedded CLI, even for help/list. The configuration helper supports native Windows Scripts/python.exe and quoted paths; API shell examples and the endpoint helper have separate platform limits. Local configuration tests do not prove host loading or complete Windows business support; macOS/Linux/WSL and all three host sessions require their own evidence.
 
 Do not install through several channels in the same host. If an old manual copy contains
 unprefixed skill names, migrate to the managed channel and remove only obsolete tikin-owned
@@ -162,52 +143,9 @@ for later tikin calls in the same session and do not block the user's current ta
 Never send the API key, user URLs, or task data during a version check. Never update unrelated
 plugins or skills. Preserve `.env` and `settings.json` across updates.
 
-## Validate or create an API key
+## Remote key creation or online validation
 
-Run the helper instead of treating a non-empty value as valid:
-
-```bash
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-config validate
-```
-
-`validate` classifies its own failures the way `tikin-rest-api` describes under **Reliability**:
-401/403 fails immediately as authentication/permission rejection; check the selected key and
-service URL before attributing it to a bad key, while a transient failure (429, 5xx, timeout,
-connection error) is retried up to 3 attempts total with a 1s then 2s backoff — honouring
-`Retry-After` on a 429 — and logs each retry to stderr without the key. Each attempt uses a 30s
-timeout, matching the `--max-time 30` that **Reliability** mandates for JSON calls against
-`$BASE`; override it with `--timeout <seconds>` only when you have a reason to. Treat its exit
-status as final; do not wrap it in a retry loop of your own.
-
-If validation succeeds, continue. If configuration is missing or there is evidence of an invalid
-key, first follow the local-configuration/secret-book choice above. For the browser-assisted
-manual branch:
-
-1. Look for a browser-control MCP, an in-app browser, Chrome control, or a browser-opening CLI.
-2. Open `https://console.tikin.net` directly when one is available. Otherwise give the URL and
-   wait while the user opens it.
-3. Let the user complete sign-in, passwords, CAPTCHA, passkeys, and 2FA. Never enter, request, or
-   inspect those credentials.
-4. After the user is signed in, navigate through the visible UI to the API Keys page. Do not guess
-   an undocumented URL path.
-5. Explain that a new credential will be created and get confirmation once. Create the key with a
-   descriptive label that the user approves.
-6. Prefer the page's Copy action. Do not take a screenshot, DOM snapshot, or tool response that
-   reveals the secret. Use automatic transfer only when the browser/CLI can copy the value without
-   returning it to the model.
-7. Pipe the clipboard into the helper without command-line interpolation, for example on macOS:
-
-   ```bash
-   pbpaste | uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-config set-key
-   ```
-
-   Use the equivalent clipboard reader on other operating systems. If no secret-safe transfer is
-   available, ask the user to copy the key and provide it to `set-key` through a local hidden or
-   non-echoing stdin prompt. Do not ask the user to paste it into chat.
-8. Run `validate` again. Report only whether validation passed, not the key or response body.
-
-If an invalid key comes from the process environment or a project file, use `status` to identify
-that source; do not silently write a home key that the higher-priority value will override.
+Only when the user explicitly requests creation of a remote key or online authentication, read [remote key maintenance](references/remote-key-maintenance.md). Existing-key configuration uses the credential branch above; it ends with a local check.
 
 ## Configure routing
 
@@ -226,13 +164,13 @@ Offer these choices during first setup and when the user asks to change preferen
 
 ```bash
 # All supported platforms use tikin automatically (default).
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-config set-routing --default auto --clear-platforms
+uv run --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-config" set-routing --default auto --clear-platforms
 
 # Every supported platform requires confirmation.
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-config set-routing --default confirm --clear-platforms
+uv run --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-config" set-routing --default confirm --clear-platforms
 
 # Only selected platforms are automatic; all others require confirmation.
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-config set-routing --default confirm --clear-platforms \
+uv run --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-config" set-routing --default confirm --clear-platforms \
   --platform xiaohongshu=auto --platform douyin=auto
 ```
 
@@ -245,7 +183,8 @@ platforms/actions into that prompt, and do not ask again for pagination within t
 
 | User outcome | Owning skill |
 |---|---|
-| Install, authentication, updates, routing settings | `tikin-setup` |
+| 既有接口密钥配置、更换、缺项或修复 | 当前发现的 `setup-aihub`；不可用时按[凭证回退](references/credential-setup.md) |
+| Install, updates, routing settings; explicitly requested remote key creation or online validation | `tikin-setup` |
 | Find an endpoint among 1,000+ | `tikin-endpoint-discovery` |
 | Direct REST details | `tikin-rest-api` |
 | Platform-specific work | `tikin-tiktok`, `tikin-douyin`, `tikin-instagram`, `tikin-youtube`, `tikin-twitter-threads`, `tikin-xiaohongshu` |
@@ -262,6 +201,6 @@ the limitation and ask before choosing an alternative; do not silently fetch the
 Before handing off, confirm without revealing secrets that:
 
 1. The intended package is installed or already present.
-2. The key validates, or the task is stopped with a clear authentication next step.
+2. Local credential status and any separately requested online authentication result are reported independently.
 3. The task’s effective routing policy has been applied: saved settings when enabled, or built-in defaults when global configuration is disabled.
 4. Any update result and new-session requirement are clear.

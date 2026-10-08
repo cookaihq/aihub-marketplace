@@ -1,10 +1,15 @@
 ---
 name: aihub-understanding
-version: 1.1.3
-description: v1.1.3｜Understand image, audio, video, or file content through AIhub llm-custom models and return resumable text results.
+metadata:
+  version: "1.2.0"
+description: v1.2.0｜Understand image, audio, video, or file content through AIhub llm-custom models and return resumable text results.
 ---
 
 # AIhub Understanding
+
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)衔接 Setup 或最小回退；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+
+Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 
 ## 默认 Skill 检查
 
@@ -14,7 +19,6 @@ description: v1.1.3｜Understand image, audio, video, or file content through AI
 
 ## 凭证配置
 
-本 Skill 只需配置 `AIHUB_API_KEY`。首次配置、缺 Key 或需要修复时，按[共用配置流程](../../references/cli.md#首次配置缺项与配置修复)提供“自行填写本机文件 / 从 Secret Book 选择凭证”，已有选择就沿用。向用户展示时保留 **Secret Book** 原名，不翻译为中文；实际 Skill 标识为 `secret-book`。选择 Secret Book 后直接按它的流程配置；只有实际发现未安装、无法调用或版本不兼容时，才提示并协助处理。
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。E1 只接受图片、音频、视频或文件内容，不能提交纯文本请求。保存 `operation=understanding`、`original_request`、分析提示词 `prompt` 和媒体实际 URL 列表 `inputs`；本地文件先上传。`requirements` 可含 `system_prompt`、`max_tokens`、`temperature`。
 

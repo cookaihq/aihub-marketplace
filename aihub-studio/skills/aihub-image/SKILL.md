@@ -1,11 +1,16 @@
 ---
 name: aihub-image
-version: 1.1.3
-description: v1.1.3｜Generate or edit images through AIhub with configured model priorities and recoverable fallback. Without configuration, use GPT Image 2.5 Flare for speed or Sunburst for detail. Resume existing image tasks and deliver checked files.
-compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
+metadata:
+  version: "1.2.0"
+description: v1.2.0｜Generate or edit images through AIhub with configured model priorities and recoverable fallback. Without configuration, use GPT Image 2.5 Flare for speed or Sunburst for detail. Resume existing image tasks and deliver checked files.
+compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
 # AIhub 图片任务
+
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)衔接 Setup 或最小回退；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+
+Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 
 ## 默认 Skill 检查
 
@@ -15,7 +20,6 @@ compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub 
 
 ## 凭证配置
 
-本 Skill 只需配置 `AIHUB_API_KEY`。首次配置、缺 Key 或需要修复时，按[共用配置流程](../../references/cli.md#首次配置缺项与配置修复)提供“自行填写本机文件 / 从 Secret Book 选择凭证”，已有选择就沿用。向用户展示时保留 **Secret Book** 原名，不翻译为中文；实际 Skill 标识为 `secret-book`。选择 Secret Book 后直接按它的流程配置；只有实际发现未安装、无法调用或版本不兼容时，才提示并协助处理。
 
 本 Skill 只处理 A1 文生图和 A2 图片编辑/参考图生成。图片增强、材质与 PBR 贴图、Profile 创建不属于本版入口。Gemini 原生图片协议如账号提供，按对应图片任务处理，不归入通用语言模型接口。
 

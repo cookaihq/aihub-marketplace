@@ -1,11 +1,16 @@
 ---
 name: aihub-video
-version: 1.1.3
-description: v1.1.3｜Generate videos through AIhub using Seedance 2.5 text, first-frame image, or multimodal reference inputs. Also handle C1 video lip sync and C2 image-and-audio digital humans. Check task-specific limits, resume existing tasks, and deliver checked video files.
-compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
+metadata:
+  version: "1.2.0"
+description: v1.2.0｜Generate videos through AIhub using Seedance 2.5 text, first-frame image, or multimodal reference inputs. Also handle C1 video lip sync and C2 image-and-audio digital humans. Check task-specific limits, resume existing tasks, and deliver checked video files.
+compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
 # AIhub 视频与数字人任务
+
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)衔接 Setup 或最小回退；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+
+Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 
 ## 默认 Skill 检查
 
@@ -15,7 +20,6 @@ compatibility: Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub 
 
 ## 凭证配置
 
-本 Skill 只需配置 `AIHUB_API_KEY`。首次配置、缺 Key 或需要修复时，按[共用配置流程](../../references/cli.md#首次配置缺项与配置修复)提供“自行填写本机文件 / 从 Secret Book 选择凭证”，已有选择就沿用。向用户展示时保留 **Secret Book** 原名，不翻译为中文；实际 Skill 标识为 `secret-book`。选择 Secret Book 后直接按它的流程配置；只有实际发现未安装、无法调用或版本不兼容时，才提示并协助处理。
 
 本 Skill 在没有模型配置时使用 Seedance 2.5 生成视频，并提供 C1/C2 音画同步数字人入口。B1–B9 是本期任务目标，不表示 Seedance 2.5 已通过这九类任务的真实验收。
 

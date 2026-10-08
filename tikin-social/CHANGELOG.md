@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 — 2026-10-08
+
+- 将既有密钥的自然语言配置请求优先交给 Setup；远端 Key 创建说明按明确任务读取，避免与本机配置流程冲突。
+
+- 配置 helper 支持 Windows `Scripts/python.exe`、含中文/空格路径与锁文件环境恢复。
+- Windows 的配置子进程使用等待/转发退出码，避免 POSIX 风格进程替换在本机出现崩溃。
+- 新增通过真实加载器计算的只读删除投影，支持真实 caller、共享模式及关闭全局读取。
+- 凭证分支衔接 Setup AIHub 与最小回退，不执行路由初始化或完整 setup；其他业务的 Windows 适配另行验证。
+- Codex 默认 Windows 沙箱、WorkBuddy 本机配置闭环及 Secret Book 真实表联调通过；Claude Code 安装、发现和自然触发通过，配置闭环未实测。
+
 All notable changes to the tikin plugin are documented here.
 
 ## Unreleased

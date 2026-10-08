@@ -1,10 +1,13 @@
 ---
 name: tikin-rest-api
-version: 1.1.0
-description: v1.1.0｜Call the tikin REST API directly with curl/HTTP. Covers base URL, Bearer auth, the /api/v1/{platform}/... path scheme, pagination, rate limits, retries, error handling, and per-call cost/balance awareness. Use for any direct data call against tikin.
+metadata:
+  version: "1.2.0"
+description: v1.2.0｜Call the tikin REST API directly with curl/HTTP. Covers base URL, Bearer auth, the /api/v1/{platform}/... path scheme, pagination, rate limits, retries, error handling, and per-call cost/balance awareness. Use for any direct data call against tikin.
 ---
 
 # tikin — REST API
+
+纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并衔接 Setup 或最小回退；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
 
 ## 默认 Skill 检查
 
@@ -52,7 +55,7 @@ before `run` to skip all six for this call and use default routing without readi
 invocation directory; other Skills' dedicated files are not read. File contents are literal, never
 sourced as shell code. Resolved values are passed only to the child command and are not printed.
 
-If the key is missing or invalid, invoke `tikin-setup`. If the user declines tikin, explain the
+If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.
 
 ## Essentials
@@ -130,7 +133,7 @@ it is correct.
 
 - **Transient — retry:** HTTP 429, any HTTP 5xx, connection timeouts, connection resets, TLS
   handshake failures, DNS resolution failures (`curl` exit codes 6, 7, 28, 35, 52, 56).
-- **Deterministic — never retry, report and stop:** 401 / 403 (key missing, invalid, or not
+- **Deterministic — never retry, report and stop:** 401 / 403 (authentication rejected or not
   entitled → run `tikin-setup`), 404 (wrong path → re-run `tikin-find-endpoint`), 422 (bad
   parameters → fix them), and insufficient balance. Repeating these produces the same failure and
   burns time; give the user the concrete next step instead.

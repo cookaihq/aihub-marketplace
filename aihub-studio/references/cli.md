@@ -4,6 +4,12 @@ WorkBuddy 的 Plugin 安装、查询或更新按 [workbuddy-install.md](workbudd
 
 六个 Skill 共用 Plugin 根目录下的 `scripts/aihub.mjs`。每会话的默认选择检查先按 [default-skills.md](default-skills.md) 执行；该离线入口只需要 Node，不读取业务凭证、不要求 ffprobe。业务调用再按“首次配置、缺项与配置修复”核对来源。以下命令中的 `AIHUB_PLUGIN_DIR` 必须替换为实际安装目录，`AIHUB_CALLER` 固定为当前 Skill 的名称：`aihub-image`、`aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding` 或 `aihub-document`。当前工作目录是用户任务目录，决定项目配置从哪里读取。
 
+**Windows 原生统一使用 `scripts/aihub.ps1` 入口。** 它检查 Node.js 18+ 并固定入口/模块的路径解析选项，避免 Codex 默认沙箱中 Node 在启动前遍历不可列举的用户目录而报 `EPERM`；不修改沙箱、权限、环境配置或 cwd。下面及各 Skill 的 Bash 示例在 Windows 中将 `node ".../scripts/aihub.mjs"` 换为 `& ".../scripts/aihub.ps1"`，参数保持原样；无需由 Agent 每次补 Node 选项。纯凭证请求按下一节使用 `config-check --credentials-only`，不先跑 doctor。
+
+```powershell
+& "<实际 Plugin 目录>/scripts/aihub.ps1" config-check --skill aihub-image --credentials-only
+```
+
 ```bash
 AIHUB_PLUGIN_DIR="<实际 Plugin 目录>"
 AIHUB_CALLER="aihub-image"
@@ -14,22 +20,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" doctor --skill "${AIHUB_CALLER}"
 
 ## 首次配置、缺项与配置修复
 
-凭证声明见 [credentials.json](credentials.json)：六个 Skill 只需配置 `AIHUB_API_KEY`，服务地址使用内置默认值。手填和 Secret Book 都只处理这个凭证字段，不将服务地址、模型或结果检查选项加入首次凭证配置。先直接运行配置检查，不安装或调用 Secret Book 就能检查：
-
-```bash
-node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" config-check --skill "${AIHUB_CALLER}"
-```
-
-`config-check` 通过真实加载器输出 `secret-book.config-inspection/v1`：当前目录、每层文件、字段来源、缺项/格式问题和变化校验值，不输出配置值，不联网，也不要求 ffprobe。退出 `3` 表示需要配置，不能当作检查成功。普通命令缺 Key 或 URL 非法时也带 `configuration` 来源报告。`doctor` 进一步检查本机运行工具；它仍不验证线上鉴权。
-
-1. 正常任务已有可读配置时直接调用 AIhub。首次配置、缺 Key 或有依据需要修复时，报告 `AIHUB_API_KEY` 的实际来源和问题，提供“自行填写本机文件 / 从 Secret Book 选择凭证”。提问、选项和回复保留 **Secret Book** 原名，不翻译为中文；实际 Skill 标识仍为 `secret-book`。已有明确管理方式就沿用。“继续用 AIhub”只确定服务，不代表用户选择了手填；尚未选择时先展示两种方式，再展开对应步骤。
-2. 选择手填后，提供完整文件路径和 `AIHUB_API_KEY` 字段，让用户在本机填写并保存，不要求把完整值发到聊天。手填分支不查询令牌表、不依赖 Secret Book。
-3. 选择 Secret Book 后，读取其 Skill 说明并直接按它的配置流程执行。仅在实际发现未安装、无法调用或版本不兼容时提示并协助处理；不额外设置“先确认版本”的用户步骤，不强制更新到最新版，不静默改为手填。配置保存需要 2.3.0+，Windows 原生由 2.4.0+ 支持；这些是故障定位依据。宿主规则、飞书身份、令牌表、记录选择和写入确认均由 Secret Book 处理。
-4. Secret Book 分支在同一工作目录和启动环境运行 `config-check --skill <当前Skill> --credentials-only`，将不含值的报告保存到任务临时目录，交给 `configure --requirements <Plugin>/references/credentials.json --inspection <报告> --agent <当前Agent> --key AIHUB_API_KEY ...`。专用报告仅含 Key 的字段和环境来源，保留全部文件层与变化校验；它与凭证声明严格一致，不手工拼接或删改报告。仅映射并保存这个 Key；记录内的其他字段不自动带入。首次新增默认建议个人全局共享，写入前确认目标与替换项；已有项目/Skill 专用选择则沿用。修复必须写回实际来源文件；进程环境来源先定位注入配置，不能另写全局文件。沿用已有明确授权，不重复确认相同内容。
-5. 任一分支保存后，直接重新运行 `config-check` 和 `doctor`，报告完整路径、实际生效来源和本机验证范围。需要验证线上认证时可运行已有只读 `models`，明确这只检查模型查询接口；不得用生成任务换取“配置完成”。
-6. 保留原业务需求和参数。原任务尚未提交且已有明确执行授权时，在原有授权范围内继续；用户只要求配置时到此结束。已提交或结果不明时先查询原任务，配置修复不授权重发。后续业务直接读本机配置，表中轮换不自动同步；临时令牌、仅本轮、不落盘等明确例外才临时注入，不使用已废弃的 `run --requirements` 启动 AIhub。
-
-401 返回 `authentication_rejected` 提示核对 Key/服务/账号组合，**不等同于已证明 Key 文本错误**。402、403、429、网络异常分别核对额度、权限、限流和连接，不据此换 Key。配置修复不授权重发提交结果不明或有副作用的请求；恢复仍核对原服务和密钥指纹。已运行的进程需要重新加载配置时，明确检查加载是否完成。
+先按[统一凭证检查、Setup 衔接及最小回退](credential-setup.md)执行。保留真实业务 cwd、caller 与关闭全局的选择；检查无需媒体工具或线上请求。
 
 ## 配置来源
 
@@ -46,7 +37,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" config-check --skill "${AIHUB_CALLE
 9. `~/.config/aihub-studio/.env`。
 10. `~/.config/<skill-name>/.env`，只补齐以上来源中缺失或为空的字段。
 
-`<skill-name>` 必须是当前调用方的真实名称，与其 `SKILL.md` frontmatter `name` 一致。Plugin 名固定为 manifest 的 `aihub-studio`，不随安装目录、Agent 或版本变化。缺项、空值及空子目录继续回退；Plugin 目录存在或其中已有部分字段，也不阻断其他缺项读取第 10 层。文件存在但无法读取时明确报错。不向父目录搜索，不读取普通 Skill 目录的 `.env.local`，不扫描兄弟 Skill、旧产品别名目录、其他 Plugin 或任意 `.env.*`。普通字段分别取值，须确认最终密钥属于最终服务地址。所有配置命令都要求有效的 `--skill`，未提供调用方时在读取配置前报错。
+`<skill-name>` 必须是当前调用方的真实名称，与其 `SKILL.md` frontmatter `name` 一致。Plugin 名固定为 manifest 的 `aihub-studio`，不随安装目录、Agent 或版本变化。缺项、空值及空子目录继续回退；Plugin 目录存在或其中已有部分字段，也不阻断其他缺项读取第 10 层。文件存在但无法读取时明确报错。不向父目录搜索，不读取普通 Skill 目录的 `.env.local`，不扫描兄弟 Skill、旧产品别名目录、其他 Plugin 或任意 `.env.*`。普通字段分别取值，须确认最终密钥属于最终服务地址。业务命令要求有效的 `--skill`。无调用方的配置检查显式使用 `config-check --plugin-only`，只读项目和 Plugin 共享文件，跳过所有 Skill 专属层；与 `--skill` 互斥。
 
 首次新增配置时，个人全局配置是 AIhub 已确认的默认方案，共享配置保存到 `~/.config/aihub-studio/.env`。需要一个 Skill 使用不同值时可写根 `.env.<skill-name>`，只有明确需要时才创建对应子目录。写入前确认具体作用域并保留已有内容；仅提供凭证或允许读取不代表授权持久化。首次选择项目保存使用调用工作目录的 `.env.local`；修复已有字段写回其实际来源文件。写入 Secret 前检查未跟踪且被忽略。
 

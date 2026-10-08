@@ -1,9 +1,14 @@
 # tikin Social
 
-tikin Social helps Claude Code, Codex and compatible Agent Skills clients retrieve social-media
+tikin Social targets Claude Code, Codex and WorkBuddy to retrieve social-media
 posts, profiles, comments, search results and trends, download media, and analyze accounts across
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
+
+Current version: **1.2.0**. Native Windows Plugin installation and Skill discovery are verified
+in Claude Code, Codex and WorkBuddy. Credential configuration passed in Codex's default sandbox
+and WorkBuddy; Claude Code natural invocation passed, while its configuration loop was not tested.
+Real social-data workflows require separate validation.
 
 ## Default Skills and reminders
 
@@ -19,7 +24,7 @@ On the first use of any tikin-social Skill in a session, the Agent checks its ac
 
 The choice is automatically read from `~/.config/tikin-social/settings.json`, separately for each Agent type and actual configuration directory. All 17 Skills and future versions share that Plugin preference; aihub-studio is independent. Existing routing and other settings are preserved. This preference does not come from environment variables or `.env` files. Missing preferences mean reminders are enabled; read-only checks create no files. Only an explicit disable/enable request saves a choice. Running without global configuration also skips this check and refuses preference writes.
 
-The check needs no API key or network. Codex, Claude Code and WorkBuddy have rule-entry guidance; unknown hosts or failed checks are reported without blocking the task. Existing runtime limits still apply: native Windows remains unsupported by the tikin bootstrap; Linux/WSL use their own runtime user directory and do not read Windows preferences. Real host-session loading is a separate validation step.
+The check needs no API key or network. Codex, Claude Code and WorkBuddy have rule-entry guidance; unknown hosts or failed checks are reported without blocking the task. The configuration helper now selects Windows `Scripts/python.exe` or POSIX `bin/python`. Linux/WSL use their own runtime user directory and do not read Windows preferences. Real host-session loading and non-credential workflows require separate validation.
 
 ## Install through your agent
 
@@ -43,12 +48,24 @@ The agent should report installation, Skill invocation and a real API request as
 
 API workflows require `curl`, a POSIX shell and `uv` 0.8 or newer. The two bundled Python helpers
 need an initial runtime setup with network access; endpoint search then works offline. Your
-agent can check these tools. The helpers currently use a POSIX `bin/python` runtime path:
-**native Windows execution is not supported yet**. A WorkBuddy marketplace card does not prove
-Windows runtime compatibility. Development verification runs on macOS; Linux and WSL still need
-runtime validation, and a Windows host cannot be assumed to execute its tools inside WSL.
+agent can check these tools. Local credential inspection and deletion preview use the configuration
+helper on native Windows without a POSIX shell. The separate endpoint helper and API shell examples
+still have POSIX assumptions; complete Windows business support is not claimed. A WorkBuddy card
+does not prove runtime compatibility. Linux/WSL need their own validation; do not switch a Windows
+configuration task to WSL automatically.
 
 ## Configure API access
+
+可对当前 Agent 说“用 setup-aihub 帮我检查或更换刚才的 tikin 密钥”。Setup 统一入口不可用时，
+沿用下面的最小手填／Secret Book 流程；正确配置的业务不依赖它。完整安装请求见同包的
+[凭证衔接说明](skills/tikin-setup/references/credential-setup.md)。本版新增配置契约，配合 Setup 1.0.0 或更新的兼容版本使用。
+
+Secret Book 使用本人身份连接已有表，远端只读；缺列、缺 ID 或无权限不自动修复远端。
+未安装时可选安装并继续、手填或暂缓。有实际业务 Skill 的本机接入基线为 2.5.0，已通过
+Windows 合成数据测试；共享空 caller 需要 2.5.1 或更新版本。2.5.2 的 Windows 真实表配置、
+恢复及清理已通过；Codex 默认沙箱和 WorkBuddy 本机配置闭环通过，Claude Code 安装、发现
+及自然触发通过，配置闭环未实测。
+配置检查不会初始化路由、创建远端 Key 或发送业务请求。
 
 Get your own API key from <https://console.tikin.net>. Never paste a complete key into chat.
 `tikin-setup` can help with browser-based setup while you control login and authentication, or
@@ -99,7 +116,7 @@ The user folder is the home directory resolved by the helper’s Python runtime:
 | Runtime | Plugin shared file and limits |
 | --- | --- |
 | macOS / Linux | The runtime user’s `~/.config/tikin-social/.env`; macOS has local test coverage, Linux is not yet verified. |
-| Native Windows | The present POSIX helper does not support this runtime; no working native Windows configuration path is claimed. |
+| Native Windows | `%USERPROFILE%\.config\tikin-social\.env`, for example `C:\Users\your-name\.config\tikin-social\.env`. Python resolves the runtime user's home. Local synthetic configuration tests cover this path; complete business/host workflows remain unverified. |
 | WSL | A Linux process uses its own Linux user folder’s `.config/tikin-social/.env`; it does not automatically read the Windows user folder. WSL remains unverified. |
 
 Skill overrides and fallback files use that same runtime user folder. `XDG_CONFIG_HOME` and
@@ -115,6 +132,12 @@ The agent uses the actual loader’s local source report. After saving or repair
 checks those sources again. Local configuration checks do not prove API authentication;
 network failures, quota errors and permission errors do not automatically mean a bad key.
 Configuration repair does not automatically resend your previous business request.
+
+For removal, ask the Agent to preview the effective sources after deleting only your selected
+fields. Preview uses the same loader without touching the files; another source or the default
+service may become effective. Confirm the key/service relationship before using the result.
+`set-key` initializes routing and writes only the shared location; it is not used for general
+source-file repair by Setup.
 
 ## Migrate an existing installation
 
@@ -206,7 +229,7 @@ may return a partial result with a resume cursor.
 
 If the market shows `tikin-social` but no Skills are available, ask the agent to verify that the
 Plugin itself was installed and then start a new session. On Windows, check which runtime actually
-executes the tools; marketplace visibility alone cannot validate the current POSIX helpers.
+executes the tools; marketplace visibility alone cannot validate the configuration or business runtime.
 
 For API errors, ask the agent to inspect local sources and distinguish authentication, permission,
 quota and network failures. For an update, say “Update only my tikin-social installation, keep

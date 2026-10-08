@@ -1,0 +1,19 @@
+{
+  "name": "setup-aihub",
+  "version": "1.0.0",
+  "description": "检查、配置和修复 AIhub Studio 与 tikin Social 的本机接口密钥。",
+  "author": { "name": "cookaihq", "url": "https://github.com/cookaihq" },
+  "repository": "https://github.com/cookaihq/aihub-marketplace",
+  "license": "MIT",
+  "keywords": ["aihub", "tikin", "configuration"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Setup AIHub｜服务密钥设置",
+    "shortDescription": "检查、配置、更换和清除业务服务的本机密钥",
+    "longDescription": "管理 AIhub Studio 和 tikin Social 的既有凭证，保留实际配置来源与可恢复进度。",
+    "developerName": "cookaihq",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": ["setup-aihub"]
+  }
+}

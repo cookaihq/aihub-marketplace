@@ -1,10 +1,13 @@
 ---
 name: tikin-social-media-downloader
-version: 1.1.0
-description: v1.1.0｜Download video, audio, or images (no-watermark where available) from a social-media URL or list of URLs. Use when the user pastes a TikTok/Douyin/Instagram/YouTube/Twitter/Xiaohongshu link and wants the media file, or says "download this video", "save without watermark", "grab the audio". Dispatches to the right per-platform tikin endpoint.
+metadata:
+  version: "1.2.0"
+description: v1.2.0｜Download video, audio, or images (no-watermark where available) from a social-media URL or list of URLs. Use when the user pastes a TikTok/Douyin/Instagram/YouTube/Twitter/Xiaohongshu link and wants the media file, or says "download this video", "save without watermark", "grab the audio". Dispatches to the right per-platform tikin endpoint.
 ---
 
 # Social Media Downloader
+
+纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并衔接 Setup 或最小回退；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
 
 ## 默认 Skill 检查
 
@@ -52,7 +55,7 @@ before `run` to skip all six for this call and use default routing without readi
 invocation directory; other Skills' dedicated files are not read. File contents are literal, never
 sourced as shell code. Resolved values are passed only to the child command and are not printed.
 
-If the key is missing or invalid, invoke `tikin-setup`. If the user declines tikin, explain the
+If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.
 
 ## Step 1 — Detect the platform from the URL and pick the endpoint

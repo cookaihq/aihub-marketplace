@@ -11,7 +11,7 @@ import { reviewTask, DISABLE_CHECK_HINT } from './review.js';
 import { agentDefaults } from './agentDefaults.js';
 const SKILLS = ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document'];
 const FLAGS = {
-    doctor: [], 'config-check': ['credentials-only'], models: ['media', 'keyword'], describe: ['model'],
+    doctor: [], 'config-check': ['credentials-only', 'plugin-only', 'delete-from', 'delete-fields'], models: ['media', 'keyword'], describe: ['model'],
     'default-skills': ['agent', 'action', 'config-dir'],
     generate: ['media', 'model', 'params-file', 'output-dir', 'wait-seconds'],
     understand: ['model', 'params-file', 'output-dir', 'wait-seconds'],
@@ -30,7 +30,8 @@ Usage: node <plugin>/scripts/aihub.mjs COMMAND --skill NAME [options]
 Skills: ${SKILLS.join(', ')}
 Commands:
   default-skills --agent codex|claude-code|workbuddy [--action check|dismiss|enable] [--config-dir DIR]
-  config-check [--credentials-only] (local sources; key-only report for Secret Book; no network or media tools)
+  config-check (--skill NAME | --plugin-only) [--credentials-only] [--delete-from FILE --delete-fields AIHUB_API_KEY]
+    Local inspection or read-only deletion projection; no network or media tools.
   doctor
   plan --request-file JSON
   run --request-file JSON [--output-dir DIR] [--wait-seconds 0..600]
@@ -79,7 +80,7 @@ function parse(argv) {
         const key = token.slice(2);
         if (![...FLAGS[command], 'skill', 'use-global-config', 'no-global-config'].includes(key) || key in flags)
             throw new Error(`Unknown or duplicate option: --${key}`);
-        if (key === 'use-global-config' || key === 'no-global-config' || key === 'recheck' || key === 'credentials-only')
+        if (key === 'use-global-config' || key === 'no-global-config' || key === 'recheck' || key === 'credentials-only' || key === 'plugin-only')
             flags[key] = true;
         else {
             const value = argv[++i];
@@ -129,16 +130,27 @@ async function mainWithDiagnostics(argv, events) {
     try {
         parsed = parse(argv);
         const { command, flags } = parsed;
-        const skill = required(flags, 'skill');
-        if (!SKILLS.includes(skill))
+        if (flags['plugin-only'] && flags.skill)
+            throw new Error('--plugin-only and --skill are mutually exclusive.');
+        const skill = flags['plugin-only'] ? null : required(flags, 'skill');
+        if (skill !== null && !SKILLS.includes(skill))
             throw new Error(`--skill must be one of ${SKILLS.join(', ')}.`);
         // describe reads only bundled data; it can run before credentials are configured.
         if (command === 'default-skills')
             output = agentDefaults({ agent: required(flags, 'agent'),
                 action: flags.action, configDir: flags['config-dir'],
                 globalEnabled: flags['no-global-config'] !== true });
-        else if (command === 'config-check')
-            output = { ...inspectConfig({ skill, useGlobalConfig: flags['no-global-config'] !== true }, flags['credentials-only'] === true) };
+        else if (command === 'config-check') {
+            const options = { skill, useGlobalConfig: flags['no-global-config'] !== true };
+            const credentialsOnly = flags['credentials-only'] === true;
+            if (flags['delete-from'] || flags['delete-fields']) {
+                const deletion = { path: required(flags, 'delete-from'), fields: required(flags, 'delete-fields').split(',') };
+                output = { schema: 'config-deletion-preview/v1', operation: 'delete', target: deletion.path, fields: deletion.fields,
+                    before: inspectConfig(options, credentialsOnly), after: inspectConfig({ ...options, deletion }, credentialsOnly) };
+            }
+            else
+                output = { ...inspectConfig(options, credentialsOnly) };
+        }
         else if (command === 'describe')
             output = { schema_version: 1, ...describe(required(flags, 'model')) };
         else {
@@ -239,6 +251,8 @@ async function mainWithDiagnostics(argv, events) {
             next_step: `Check the key's account access to the reported service. ${CREDENTIAL_SETUP_HINT} Repair the effective source file. Do not replay a business request automatically.` };
     }
     process.stdout.write(JSON.stringify(output, null, 2) + '\n');
+    if (output.schema === 'config-deletion-preview/v1')
+        return 0;
     if (parsed?.command === 'default-skills' && ['review_required', 'dismissed', 'enabled', 'skipped'].includes(String(output.status)))
         return 0;
     if (output.status === 'configuration_required')

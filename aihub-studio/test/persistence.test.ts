@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { basename, relative } from 'node:path';
 
 const execute = promisify(execFile);
 const cliUrl = new URL('../src/cli.js', import.meta.url).href;
@@ -13,7 +14,7 @@ async function persistenceFailure(mode: 'resume' | 'task' | 'understand') {
   const script = `
 import fsp from 'node:fs/promises';
 import { syncBuiltinESMExports } from 'node:module';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { AihubmaxClient, PollBudgetExceededError } from ${JSON.stringify(apiUrl)};
 import { credentialId } from ${JSON.stringify(configUrl)};
@@ -30,7 +31,7 @@ if (mode === 'resume') await fsp.writeFile(record, JSON.stringify(job), { mode: 
 const originalRename = fsp.rename;
 let saveAttempts = 0;
 fsp.rename = async (from, to) => {
-  if (String(to).endsWith('/task.json')) {
+  if (basename(String(to)) === 'task.json') {
     saveAttempts++;
     if (mode !== 'understand' || saveAttempts > 1) throw Object.assign(new Error('simulated ENOSPC saving known task'), { code: 'ENOSPC' });
   }
@@ -83,8 +84,8 @@ test('adopting an existing task preserves its ID when the first record write fai
   assert.equal(output.status, 'persistence_failed');
   assert.equal(output.task_id, 'already-paid-task');
   assert.equal(output.remote_status, 'completed');
-  assert(String(output.record).startsWith(`${observed.directory}/aihub-`));
-  assert(String(output.record).endsWith('/task.json'));
+  assert(relative(observed.directory, String(output.record)).startsWith('aihub-'));
+  assert.equal(basename(String(output.record)), 'task.json');
   assert.match(String(output.error), /ENOSPC/);
   assert.equal(observed.code, 2);
   assert.equal(observed.posts, 0);

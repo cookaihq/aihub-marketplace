@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -37,7 +37,7 @@ const DECLARED_KEYS = new Set<string>([...KEYS, ...Object.values(MODEL_KEYS), ..
 const PLUGIN_NAME = 'aihub-studio';
 // Retained from the source client's configuration. This is the API root, not /v1.
 const DEFAULT_BASE_URL = 'https://api.aihubmax.com';
-export const CREDENTIAL_SETUP_HINT = 'For AIHUB_API_KEY, offer "自行填写本机文件" or "从 Secret Book 选择凭证"; honor an existing choice. Keep the display name "Secret Book" untranslated in questions, choices and replies; the Skill identifier is secret-book. If Secret Book is selected, follow its workflow directly. Only handle installation, invocation or compatibility problems when encountered.';
+export const CREDENTIAL_SETUP_HINT = 'Follow references/credential-setup.md: use compatible setup-aihub when available, otherwise the bundled minimal fallback. For AIHUB_API_KEY, offer "自行填写本机文件" or "从 Secret Book 选择凭证" and honor an existing choice. Keep Secret Book untranslated. Preserve caller, cwd, global option and business submission state; local inspection never authorizes a business retry.';
 
 export function parseEnv(text: string): Record<string, string> {
   const values: Record<string, string> = {};
@@ -52,13 +52,14 @@ export function parseEnv(text: string): Record<string, string> {
 }
 
 export interface ConfigOptions {
-  skill: string; useGlobalConfig?: boolean; cwd?: string;
+  skill: string | null; useGlobalConfig?: boolean; cwd?: string;
   env?: NodeJS.ProcessEnv; homeDirectory?: string;
+  deletion?: { path: string; fields: string[] };
 }
 export interface ConfigInspection {
   schema: 'secret-book.config-inspection/v1';
   status: 'ok' | 'configuration_required';
-  consumer: { kind: 'plugin'; name: string }; skill: string; cwd: string;
+  consumer: { kind: 'plugin'; name: string }; skill: string | null; cwd: string;
   global_enabled: boolean;
   layers: Array<{ path: string; revision: string | null; error?: string }>;
   environment: Record<string, string | null>;
@@ -74,7 +75,24 @@ function resolveConfiguration(options: ConfigOptions) {
   const { skill, useGlobalConfig = true, env = process.env } = options;
   const cwd = resolve(options.cwd ?? process.cwd());
   const homeDirectory = resolve(options.homeDirectory ?? homedir());
-  if (!/^[a-z][a-z0-9-]{0,63}$/.test(skill)) throw new Error('A valid caller Skill name is required.');
+  if (skill !== null && !Object.hasOwn(MODEL_KEYS, skill)) throw new Error('A valid caller Skill from the bundled Skills or explicit null is required.');
+  const paths = [...(skill ? [join(cwd, `.env.${skill}`)] : []), join(cwd, '.env.local'), join(cwd, '.env')];
+  if (useGlobalConfig) {
+    const root = join(homeDirectory, '.config', PLUGIN_NAME);
+    if (skill) paths.push(join(root, skill, '.env.local'), join(root, skill, '.env'), join(root, `.env.${skill}`));
+    paths.push(join(root, '.env.local'), join(root, '.env'));
+    if (skill) paths.push(join(homeDirectory, '.config', skill, '.env'));
+  }
+  const identity = (path: string) => {
+    let target = resolve(path);
+    try { target = realpathSync(target); } catch { /* Missing files still have a lexical identity. */ }
+    return process.platform === 'win32' ? target.toLowerCase() : target;
+  };
+  const deletion = options.deletion;
+  if (deletion && (!paths.some(path => identity(path) === identity(deletion.path)) || !deletion.fields.length ||
+      deletion.fields.some(key => key !== 'AIHUB_API_KEY') || new Set(deletion.fields).size !== deletion.fields.length)) {
+    throw new Error('Deletion preview requires a known configuration path and declared credential fields.');
+  }
   const layers: Array<{ name: string; values: Record<string, string | undefined> }> = [{ name: 'environment', values: env }];
   const files: ConfigInspection['layers'] = [];
   const problems: ConfigInspection['problems'] = [];
@@ -82,33 +100,20 @@ function resolveConfiguration(options: ConfigOptions) {
     try {
       const bytes = readFileSync(path);
       files.push({ path, revision: createHash('sha256').update(bytes).digest('hex') });
-      layers.push({ name: path, values: parseEnv(bytes.toString('utf8')) });
+      const parsed = parseEnv(bytes.toString('utf8'));
+      if (deletion && identity(path) === identity(deletion.path)) for (const key of deletion.fields) delete parsed[key];
+      layers.push({ name: path, values: parsed });
     } catch (error) {
       const missing = (error as NodeJS.ErrnoException).code === 'ENOENT';
       files.push({ path, revision: null, ...(!missing ? { error: 'unreadable' } : {}) });
       if (!missing) problems.push({ source: path, reason: 'unreadable' });
     }
   };
-  for (const name of [`.env.${skill}`, '.env.local', '.env']) {
-    addFile(join(cwd, name));
-  }
-  if (useGlobalConfig) {
-    const pluginDirectory = join(homeDirectory, '.config', PLUGIN_NAME);
-    const paths = [
-      join(pluginDirectory, skill, '.env.local'),
-      join(pluginDirectory, skill, '.env'),
-      join(pluginDirectory, `.env.${skill}`),
-      join(pluginDirectory, '.env.local'),
-      join(pluginDirectory, '.env'),
-      // Reuse the current Skill's standalone configuration only after all Plugin files.
-      join(homeDirectory, '.config', skill, '.env'),
-    ];
-    for (const path of paths) addFile(path);
-  }
+  for (const path of paths) addFile(path);
   const values: Record<string, string> = {};
   const sources = {} as LoadedConfig['sources'];
   const selectionSources: Record<string, string> = {};
-  const modelKey = MODEL_KEYS[skill];
+  const modelKey = skill ? MODEL_KEYS[skill] : undefined;
   for (const key of [...KEYS, ...(modelKey ? [modelKey] : []), ...SELECTION_KEYS, ...BEHAVIOR_KEYS]) {
     for (const layer of layers) {
       if (layer.values[key]?.trim()) {
@@ -176,6 +181,7 @@ export function inspectConfig(options: ConfigOptions, credentialsOnly = false): 
 }
 
 export function loadConfig(options: ConfigOptions): LoadedConfig {
+  if (!options.skill || options.deletion) throw new Error('Business calls require a real Skill and cannot use deletion projections.');
   const { values, sources, selectionSources, modelKey, url, inspection } = resolveConfiguration(options);
   const unreadable = inspection.problems.find(problem => problem.reason === 'unreadable');
   if (unreadable) throw new ConfigurationError(`Cannot read configuration file: ${unreadable.source}`, inspection);

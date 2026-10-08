@@ -77,7 +77,7 @@ test('public CLI has a working offline entry and every Skill names its shared wo
     const doc = readFileSync(resolve(`skills/aihub-${skill}/SKILL.md`), 'utf8');
     assert.match(doc, /默认 Skill 检查与提醒/);
     const version = JSON.parse(readFileSync(resolve('package.json'), 'utf8')).version;
-    assert.ok(doc.includes(`version: ${version}\n`));
+    assert.ok(doc.replace(/\r\n/g, '\n').includes(`metadata:\n  version: "${version}"\n`));
     assert.ok(doc.includes(`description: v${version}｜`));
   }
 }));

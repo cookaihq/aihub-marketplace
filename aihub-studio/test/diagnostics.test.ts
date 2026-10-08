@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { AihubmaxClient } from '../src/apiClient.js';
 import { collectRequestErrors, feedback } from '../src/diagnostics.js';
 import { credentialId, type LoadedConfig } from '../src/config.js';
+import { assertPrivateFile } from './private-permissions.js';
 
 test('actual HTTP retries accumulate to the threshold; later success preserves files and reports only once', async () => {
   const root = await mkdtemp(join(tmpdir(), 'aihub-diagnostic-'));
@@ -31,7 +32,7 @@ test('actual HTTP retries accumulate to the threshold; later success preserves f
     for (const value of ['test-private-key', credentialId(cfg.apiKey), 'private-request', '/private/path', 'user prompt', 'token=secret', cfg.baseUrl]) assert.ok(!draft.includes(value));
     const report = await readFile(String(first!.diagnostic), 'utf8');
     assert.ok(report.includes('private-request-1')); assert.ok(!report.includes('test-private-key'));
-    assert.equal((await stat(String(first!.diagnostic))).mode & 0o777, 0o600);
+    await assertPrivateFile(String(first!.diagnostic));
     const success = { status: 'delivered', run_record: join(root, 'run.json'), files: [{ path: 'already-saved.png' }] };
     const second = await feedback(cfg, success, []);
     assert.equal(second!.upstream_error_count, 3); assert.equal(second!.show_notice, false);

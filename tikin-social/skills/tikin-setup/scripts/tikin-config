@@ -1,105 +1,16 @@
 #!/usr/bin/env python3
-# --- runtime bootstrap (ADR 0007) -------------------------------------------
-# Runs before anything else so the process always ends up on this skill's own
-# pinned interpreter, no matter how the caller launched the script. Python 3.9
-# compatible syntax only: the system interpreter may execute this part.
+# Shared ADR 0007 bootstrap; this entry remains parseable by Python 3.9.
 import os
 import shlex
 import subprocess
 import sys
 
-REEXEC_ENV = "TIKIN_SETUP_BOOTSTRAP_REEXEC"
-
-# scripts/tikin-config -> skills/tikin-setup/
-SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# A relative UV_PROJECT_ENVIRONMENT resolves against the project root, the way uv
-# resolves it. An absolute value is returned unchanged by os.path.join.
-VENV_DIR = os.path.join(SKILL_DIR, os.environ.get("UV_PROJECT_ENVIRONMENT") or ".venv")
-VENV_PY = os.path.join(VENV_DIR, "bin", "python")
-
-
-def _bootstrap_fail(message):
-    sys.stderr.write(message + "\n")
-    raise SystemExit(1)
-
-
-def _bootstrap_manual_hint():
-    return "rm -rf %s && uv sync --no-dev --project %s" % (
-        shlex.quote(VENV_DIR),
-        shlex.quote(SKILL_DIR),
-    )
-
-
-def _bootstrap_venv_is_valid():
-    # bin/python alone is not enough: an interrupted sync, a same-named directory
-    # or a stale symlink all leave an interpreter behind without a real venv.
-    return os.path.exists(VENV_PY) and os.path.exists(
-        os.path.join(VENV_DIR, "pyvenv.cfg")
-    )
-
-
-_BOOTSTRAP_TARGET = os.path.realpath(VENV_DIR)
-
-if os.path.realpath(sys.prefix) == _BOOTSTRAP_TARGET:
-    if os.environ.get(REEXEC_ENV) == _BOOTSTRAP_TARGET:
-        os.environ.pop(REEXEC_ENV, None)
-else:
-    if os.environ.get(REEXEC_ENV) == _BOOTSTRAP_TARGET:
-        _bootstrap_fail(
-            "tikin-setup runtime is broken: restarted into %s but the interpreter is "
-            "still outside that venv.\nRebuild it manually: %s"
-            % (VENV_DIR, _bootstrap_manual_hint())
-        )
-    if not _bootstrap_venv_is_valid():
-        try:
-            _probe = subprocess.run(
-                ["uv", "--version"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                timeout=30,
-            )
-        except (OSError, subprocess.SubprocessError):
-            _bootstrap_fail(
-                "uv is not installed. Run: curl -LsSf https://astral.sh/uv/install.sh | sh"
-            )
-        _parts = _probe.stdout.decode("utf-8", "replace").split()  # "uv 0.8.11 (...)"
-        _found = _parts[1] if len(_parts) > 1 else "0"
-        try:
-            _numeric = tuple(int(x) for x in (_found.split(".") + ["0", "0"])[:2])
-        except ValueError:
-            _numeric = (0, 0)  # uv error output is "error: ...", not a version
-        if _numeric < (0, 8):
-            _bootstrap_fail(
-                "uv is too old (need >= 0.8, found %s). Run: uv self update" % _found
-            )
-        sys.stderr.write(
-            "[bootstrap] runtime missing, rebuilding %s from uv.lock ...\n" % VENV_DIR
-        )
-        try:
-            _sync = subprocess.run(
-                # --no-dev: the runtime only ever needs the shipping deps; dev
-                # extras must not be pulled onto a user machine at first run.
-                ["uv", "sync", "--locked", "--no-dev", "--project", SKILL_DIR],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                timeout=600,  # every network call needs a budget (ADR 0006)
-            )
-        except subprocess.TimeoutExpired:
-            _bootstrap_fail(
-                "uv sync did not finish within 600s, the network is likely down. "
-                "Run manually: " + _bootstrap_manual_hint()
-            )
-        if _sync.returncode != 0 or not _bootstrap_venv_is_valid():
-            _bootstrap_fail(
-                "uv sync failed, the runtime could not be rebuilt (run manually: %s):\n%s"
-                % (
-                    _bootstrap_manual_hint(),
-                    _sync.stdout.decode("utf-8", "replace"),
-                )
-            )
-    os.environ[REEXEC_ENV] = _BOOTSTRAP_TARGET
-    os.execv(VENV_PY, [VENV_PY] + sys.argv)
-# --- end runtime bootstrap ---------------------------------------------------
+for stream in (sys.stdin, sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8")
+from _runtime_bootstrap import ensure_runtime
+ensure_runtime("TIKIN_SETUP_BOOTSTRAP_REEXEC")
+SKILL_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 import argparse
 import getpass
@@ -240,16 +151,25 @@ def configuration_paths(skill_name, global_enabled):
     return paths
 
 
-def resolve_config(skill_name="tikin-setup", global_enabled=True):
+def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None):
     """Read only fixed sources. Report each file revision and field source, never values."""
     check_plugin_identity()
     layers = [("environment", os.environ)]
     files, problems = [], []
-    for path in configuration_paths(skill_name, global_enabled):
+    paths = configuration_paths(skill_name, global_enabled)
+    if deletion:
+        target, keys = deletion
+        if (not keys or len(set(keys)) != len(keys) or any(key not in CONFIG_KEYS for key in keys)
+                or Path(target).resolve() not in [path.resolve() for path in paths]):
+            raise SystemExit("Deletion preview requires a known configuration path and declared credential fields")
+    for path in paths:
         source = str(path)
         try:
             content = path.read_bytes()
-            parsed = parse_env(content.decode("utf-8"))
+            parsed = parse_env(content.decode("utf-8-sig"))
+            if deletion and path.resolve() == Path(deletion[0]).resolve():
+                for key in deletion[1]:
+                    parsed.pop(key, None)
         except FileNotFoundError:
             files.append({"path": source, "revision": None})
             continue
@@ -305,8 +225,14 @@ def load_config(skill_name="tikin-setup", global_enabled=True):
     return values, sources
 
 
-def config_check(skill_name="tikin-setup", global_enabled=True):
+def config_check(skill_name="tikin-setup", global_enabled=True, deletion=None):
     _, _, inspection = resolve_config(skill_name, global_enabled)
+    if deletion:
+        _, _, after = resolve_config(skill_name, global_enabled, deletion)
+        print(json.dumps({"schema": "config-deletion-preview/v1", "operation": "delete",
+                          "target": str(Path(deletion[0]).absolute()), "fields": deletion[1],
+                          "before": inspection, "after": after}, sort_keys=True))
+        return
     print(json.dumps(inspection, sort_keys=True))
     if inspection["problems"]:
         raise SystemExit(3)
@@ -319,11 +245,15 @@ def run_with_config(skill_name, command, global_enabled=True):
         raise SystemExit("run requires a command after --")
     values, _ = load_config(skill_name, global_enabled)
     if not values.get("TIKIN_API_KEY"):
-        raise SystemExit("missing TIKIN_API_KEY; use tikin-setup to configure it")
+        raise SystemExit("missing TIKIN_API_KEY; follow tikin-setup/references/credential-setup.md for setup-aihub or the minimal local fallback")
     environment = dict(os.environ)
     environment.update(values)
     environment["TIKIN_BASE_URL"] = values.get("TIKIN_BASE_URL") or DEFAULT_BASE_URL
     try:
+        if os.name == "nt":
+            # Windows has no POSIX process replacement. Forward the child's exit
+            # status without using the CRT overlay path (which can crash).
+            raise SystemExit(subprocess.run(command, env=environment).returncode)
         os.execvpe(command[0], command, environment)
     except OSError as error:
         raise SystemExit("could not execute configured command: " + error.strerror) from None
@@ -520,7 +450,9 @@ def main():
     subparsers.add_parser("init")
     subparsers.add_parser("set-key")
     subparsers.add_parser("status")
-    subparsers.add_parser("config-check", help="print only configuration sources and validation problems")
+    inspection_parser = subparsers.add_parser("config-check", help="print configuration sources or a read-only deletion projection")
+    inspection_parser.add_argument("--delete-from", help="known source file; never changes the file")
+    inspection_parser.add_argument("--delete-fields", help="comma-separated declared fields to project as absent")
     defaults_parser = subparsers.add_parser("default-skills", help="inspect current Agent defaults and manage reminder preferences without API credentials")
     defaults_parser.add_argument("--agent", required=True, choices=("codex", "claude-code", "workbuddy"))
     defaults_parser.add_argument("--action", choices=("check", "dismiss", "enable"), default="check")
@@ -561,7 +493,10 @@ def main():
     elif args.command == "status":
         status(skill_name, global_enabled)
     elif args.command == "config-check":
-        config_check(skill_name, global_enabled)
+        if bool(args.delete_from) != bool(args.delete_fields):
+            parser.error("--delete-from and --delete-fields must be provided together")
+        deletion = (args.delete_from, args.delete_fields.split(",")) if args.delete_from else None
+        config_check(skill_name, global_enabled, deletion)
     elif args.command == "run":
         run_with_config(skill_name, args.argv, global_enabled)
     elif args.command == "set-routing":

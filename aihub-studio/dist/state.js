@@ -1,9 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { realpathSync, statSync } from 'node:fs';
-import { mkdir, open, readFile, readdir, rename, unlink, rmdir, rm } from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, readdir, rename, unlink, rmdir, rm } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
+import { preparePrivateFile } from './privateFile.js';
 const INSTALL_ROOT = fileURLToPath(new URL('../', import.meta.url));
+const windowsFileBusy = (error) => process.platform === 'win32' &&
+    ['EPERM', 'EACCES', 'EBUSY'].includes(error.code || '');
 export function assertOutsideInstallation(path) {
     const install = statSync(INSTALL_ROOT);
     // Inspect filesystem identities: path strings alone miss symlinks and case-insensitive aliases.
@@ -44,6 +48,7 @@ export async function writePrivateText(path, value) {
     const temp = `${path}.${randomUUID()}.tmp`;
     const handle = await open(temp, 'wx', 0o600);
     try {
+        await preparePrivateFile(temp);
         await handle.writeFile(value);
         await handle.sync();
         await handle.close();
@@ -88,7 +93,21 @@ export async function withJobLock(path, run) {
                 break;
             }
             catch (error) {
-                if (!['EEXIST', 'ENOTEMPTY'].includes(error.code || ''))
+                const code = error.code;
+                if (process.platform === 'win32' && code === 'EPERM') {
+                    // Windows reports an existing destination directory as EPERM. Only
+                    // treat that concrete case as contention; preserve other ACL errors.
+                    try {
+                        if (!(await lstat(lockPath)).isDirectory())
+                            throw error;
+                    }
+                    catch (probe) {
+                        if (probe.code === 'ENOENT')
+                            continue;
+                        throw probe;
+                    }
+                }
+                else if (!['EEXIST', 'ENOTEMPTY'].includes(code || ''))
                     throw error;
                 let tokens;
                 try {
@@ -110,6 +129,12 @@ export async function withJobLock(path, run) {
                     catch (e) {
                         if (e.code === 'ENOENT')
                             continue;
+                        // Another recoverer can have this exact token open/delete-pending.
+                        // A denied read never authorizes deleting an unverified owner.
+                        if (windowsFileBusy(e)) {
+                            await delay(10);
+                            continue;
+                        }
                         throw e;
                     }
                     if (!Number.isSafeInteger(pid) || pid <= 0)
@@ -123,10 +148,24 @@ export async function withJobLock(path, run) {
                             throw probe;
                     }
                     // Delete this exact old token, never a newly acquired owner's token at the same path.
-                    await unlink(join(lockPath, staleToken)).catch((e) => { if (e.code !== 'ENOENT')
-                        throw e; });
+                    try {
+                        await unlink(join(lockPath, staleToken));
+                    }
+                    catch (e) {
+                        if (e.code !== 'ENOENT') {
+                            if (windowsFileBusy(e)) {
+                                await delay(10);
+                                continue;
+                            }
+                            throw e;
+                        }
+                    }
                 }
-                await rmdir(lockPath).catch((e) => {
+                await rmdir(lockPath).catch(async (e) => {
+                    if (windowsFileBusy(e)) {
+                        await delay(10);
+                        return;
+                    }
                     if (!['ENOENT', 'ENOTEMPTY', 'EEXIST'].includes(e.code || ''))
                         throw e;
                 });

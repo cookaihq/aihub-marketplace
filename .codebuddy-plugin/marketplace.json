@@ -1,23 +1,39 @@
 {
   "name": "aihub-marketplace",
   "description": "AIhub Studio 创作与文档处理、tikin Social 社交媒体数据与分析。",
-  "owner": { "name": "cookaihq" },
+  "owner": {
+    "name": "cookaihq"
+  },
   "plugins": [
     {
       "name": "aihub-studio",
       "source": "./aihub-studio",
-      "version": "1.1.3",
+      "version": "1.2.0",
       "description": "AIhub 图片、视频、音频、音乐、多模态理解和文档处理，包含 6 个 Skill。",
-      "author": { "name": "cookaihq" },
+      "author": {
+        "name": "cookaihq"
+      },
       "category": "productivity"
     },
     {
       "name": "tikin-social",
       "source": "./tikin-social",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "description": "通过 tikin 获取社交媒体数据、下载素材并分析账号、评论和趋势，包含 17 个 Skill。",
-      "author": { "name": "cookaihq" },
+      "author": {
+        "name": "cookaihq"
+      },
       "category": "web-integration"
+    },
+    {
+      "name": "setup-aihub",
+      "source": "./setup-aihub",
+      "version": "1.0.0",
+      "description": "检查、配置和修复 AIhub Studio 与 tikin Social 的本机接口密钥。",
+      "category": "productivity",
+      "author": {
+        "name": "cookaihq"
+      }
     }
   ]
 }

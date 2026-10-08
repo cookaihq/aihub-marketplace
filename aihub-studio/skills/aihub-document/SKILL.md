@@ -1,10 +1,15 @@
 ---
 name: aihub-document
-version: 1.1.3
-description: v1.1.3｜Convert PDFs with AIhub doc2x-v3 into Markdown, LaTeX, or DOCX ZIP results and validate the downloaded document package.
+metadata:
+  version: "1.2.0"
+description: v1.2.0｜Convert PDFs with AIhub doc2x-v3 into Markdown, LaTeX, or DOCX ZIP results and validate the downloaded document package.
 ---
 
 # AIhub Document
+
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)衔接 Setup 或最小回退；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+
+Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 
 ## 默认 Skill 检查
 
@@ -14,7 +19,6 @@ description: v1.1.3｜Convert PDFs with AIhub doc2x-v3 into Markdown, LaTeX, or 
 
 ## 凭证配置
 
-本 Skill 只需配置 `AIHUB_API_KEY`。首次配置、缺 Key 或需要修复时，按[共用配置流程](../../references/cli.md#首次配置缺项与配置修复)提供“自行填写本机文件 / 从 Secret Book 选择凭证”，已有选择就沿用。向用户展示时保留 **Secret Book** 原名，不翻译为中文；实际 Skill 标识为 `secret-book`。选择 Secret Book 后直接按它的流程配置；只有实际发现未安装、无法调用或版本不兼容时，才提示并协助处理。
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。E2 转换 PDF；用户本次指定型号时固定执行，否则读取 `AIHUB_DOCUMENT_MODELS`。未配置时用 `doc2x-v3`，当前只有这一型号完成自动参数转换，不能把任意已配置 ID 当成已接入。
 

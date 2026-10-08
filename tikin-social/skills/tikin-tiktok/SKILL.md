@@ -1,10 +1,13 @@
 ---
 name: tikin-tiktok
-version: 1.1.0
-description: v1.1.0｜Work with TikTok URLs and data via tikin — fetch videos, user profiles and post lists, run search, pull trends/ads insights, creator analytics, comment keywords, and shop search. Use when the user provides a TikTok URL or the task targets TikTok. Covers the App-V3, Ads, Creator, Analytics, and Shop APIs.
+metadata:
+  version: "1.2.0"
+description: v1.2.0｜Work with TikTok URLs and data via tikin — fetch videos, user profiles and post lists, run search, pull trends/ads insights, creator analytics, comment keywords, and shop search. Use when the user provides a TikTok URL or the task targets TikTok. Covers the App-V3, Ads, Creator, Analytics, and Shop APIs.
 ---
 
 # TikTok (via tikin)
+
+纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并衔接 Setup 或最小回退；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
 
 ## 默认 Skill 检查
 
@@ -53,7 +56,7 @@ before `run` to skip all six for this call and use default routing without readi
 invocation directory; other Skills' dedicated files are not read. File contents are literal, never
 sourced as shell code. Resolved values are passed only to the child command and are not printed.
 
-If the key is missing or invalid, invoke `tikin-setup`. If the user declines tikin, explain the
+If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.
 
 **Coverage:** App-V3, Ads, Creator, Analytics, Shop-Web. (TikTok-Web is de-scoped — reach it via discovery.)

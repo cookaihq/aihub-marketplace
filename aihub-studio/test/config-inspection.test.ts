@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createServer } from 'node:http';
@@ -8,6 +8,44 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { inspectConfig, loadConfig, ConfigurationError } from '../src/config.js';
 const exec = promisify(execFile);
+
+test('shared inspection and deletion projections use the real loader without modifying files', async () => {
+  const root = await mkdtemp(join(tmpdir(), '配置 preview '));
+  const home = join(root, '用户');
+  const shared = join(home, '.config/aihub-studio/.env');
+  const target = join(root, '.env.local');
+  const options = { skill: null, cwd: root, homeDirectory: home, env: {} };
+  try {
+    await mkdir(join(home, '.config/aihub-studio'), { recursive: true });
+    await writeFile(shared, 'AIHUB_API_KEY=synthetic-shared');
+    await writeFile(join(root, '.env.aihub-image'), 'AIHUB_API_KEY=synthetic-skill');
+    await writeFile(target, 'AIHUB_API_KEY=synthetic-old\r\nAIHUB_API_KEY=synthetic-new\r\nUNRELATED=keep\r\n');
+    const bytes = await readFile(target);
+    const before = inspectConfig(options, true);
+    assert.equal(before.skill, null);
+    assert.equal(before.layers.length, 4);
+    assert.equal(before.fields.AIHUB_API_KEY?.source, target);
+    const projected = inspectConfig({ ...options, deletion: { path: target, fields: ['AIHUB_API_KEY'] } }, true);
+    assert.equal(projected.fields.AIHUB_API_KEY?.source, shared);
+    assert.deepEqual(projected.layers, before.layers);
+    assert.deepEqual(await readFile(target), bytes);
+    const disabled = inspectConfig({ ...options, useGlobalConfig: false, deletion: { path: target, fields: ['AIHUB_API_KEY'] } }, true);
+    assert.equal(disabled.status, 'configuration_required');
+    assert.equal(disabled.layers.length, 2);
+    assert.throws(() => inspectConfig({ ...options, deletion: { path: target, fields: ['AIHUB_BASE_URL'] } }, true));
+    assert.throws(() => inspectConfig({ ...options, deletion: { path: join(root, '.env.aihub-image'), fields: ['AIHUB_API_KEY'] } }, true));
+    const childEnv = { ...process.env, HOME: home, USERPROFILE: home, AIHUB_API_KEY: '', AIHUB_BASE_URL: '' };
+    const cli = resolve('scripts/aihub.mjs');
+    const result = await exec(process.execPath, [cli, 'config-check', '--plugin-only', '--credentials-only', '--delete-from', target, '--delete-fields', 'AIHUB_API_KEY'], { cwd: root, env: childEnv });
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.schema, 'config-deletion-preview/v1');
+    assert.equal(report.before.skill, null);
+    assert.equal(report.after.fields.AIHUB_API_KEY.source, shared);
+    assert.ok(!result.stdout.includes('synthetic-new'));
+    await assert.rejects(exec(process.execPath, [cli, 'config-check', '--plugin-only', '--skill', 'aihub-image'], { cwd: root, env: childEnv }));
+    await assert.rejects(exec(process.execPath, [cli, 'models', '--plugin-only'], { cwd: root, env: childEnv }));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
 
 test('inspection reports missing, invalid and unreadable sources without credential values', async () => {
   const root = await mkdtemp(join(tmpdir(), 'aihub-inspection-'));
