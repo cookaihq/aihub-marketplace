@@ -1,8 +1,8 @@
 ---
 name: tikin-social-media-downloader
 metadata:
-  version: "1.2.1"
-description: v1.2.1｜Download video, audio, or images (no-watermark where available) from a social-media URL or list of URLs. Use when the user pastes a TikTok/Douyin/Instagram/YouTube/Twitter/Xiaohongshu link and wants the media file, or says "download this video", "save without watermark", "grab the audio". Dispatches to the right per-platform tikin endpoint.
+  version: "1.3.0"
+description: v1.3.0｜Download video, audio, or images (no-watermark where available) from a social-media URL or list of URLs. Use when the user pastes a TikTok/Douyin/Instagram/YouTube/Twitter/Xiaohongshu link and wants the media file, or says "download this video", "save without watermark", "grab the audio". Dispatches to the right per-platform tikin endpoint.
 ---
 
 # Social Media Downloader
@@ -34,26 +34,7 @@ without blocking this task. Before the first tikin API call for the current user
    generic browser fetch. Parse identifiers locally or pass the original URL/share text to tikin.
    Calls to the configured tikin base URL and downloads from final media URLs returned by tikin are
    allowed.
-5. Resolve and require the key:
-
-```bash
-TIKIN_SETUP_DIR="<installed tikin-setup directory>"
-tikin_run() {
-  uv run --project "${TIKIN_SETUP_DIR}" "${TIKIN_SETUP_DIR}/scripts/tikin-config" \
-    --skill tikin-social-media-downloader run -- "$@"
-}
-```
-
-Resolve `TIKIN_SETUP_DIR` from the installed `tikin-setup` Skill before using the command.
-Run API examples through `tikin_run` in the same shell as this definition. The helper reads
-`TIKIN_API_KEY` and `TIKIN_BASE_URL` independently from process environment →
-`$PWD/.env.tikin-social-media-downloader` → `$PWD/.env.local` → `$PWD/.env` →
-`~/.config/tikin-social/<skill-name>/.env.local` → that directory’s `.env` →
-`~/.config/tikin-social/.env.<skill-name>` → the Plugin root’s `.env.local` → `.env` →
-`~/.config/<skill-name>/.env`. Global sources are automatic; add `--no-global-config`
-before `run` to skip all six for this call and use default routing without reading saved settings. Empty values fall through. Project files are read only in the
-invocation directory; other Skills' dedicated files are not read. File contents are literal, never
-sourced as shell code. Resolved values are passed only to the child command and are not printed.
+5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
 
 If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.
@@ -76,21 +57,26 @@ id. For the others, pull the id/code from the URL (or resolve it via the platfor
 
 ## Step 2 — Call the endpoint
 
-```bash
-tikin_run sh <<'TIKIN_COMMAND'
-BASE="${TIKIN_BASE_URL:-https://console.tikin.net}"
-# TikTok by share URL (simplest — pass the URL straight through).
-# curl's own --data-urlencode does the escaping; -G turns the encoded pairs into the query string,
-# so no helper interpreter is involved.
-URL="https://www.tiktok.com/@nasa/video/7650608519288245534"
-curl -s --max-time 30 -G "$BASE/api/v1/tiktok/app/v3/fetch_one_video_by_share_url" \
-  --data-urlencode "share_url=$URL" \
-  -H "Authorization: Bearer $TIKIN_API_KEY" -o /tmp/media.json
+```json
+{
+  "original_request": "<用户原始需求原文>",
+  "method": "GET",
+  "path": "/api/v1/tiktok/app/v3/fetch_one_video_by_share_url",
+  "query": {
+    "share_url": "$URL"
+  }
+}
+```
 
-# YouTube streams
-curl -s --max-time 30 "$BASE/api/v1/youtube/web_v2/get_video_streams_v2?video_id=dQw4w9WgXcQ" \
-  -H "Authorization: Bearer $TIKIN_API_KEY" -o /tmp/media.json
-TIKIN_COMMAND
+```json
+{
+  "original_request": "<用户原始需求原文>",
+  "method": "GET",
+  "path": "/api/v1/youtube/web_v2/get_video_streams_v2",
+  "query": {
+    "video_id": "dQw4w9WgXcQ"
+  }
+}
 ```
 
 Timeouts, which failures to retry (and which never to): follow the **Reliability** section in

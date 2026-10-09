@@ -6,7 +6,7 @@ import { AihubmaxClient, ApiError } from './apiClient.js';
 import { generate, resume, adoptTask, upload, understand, nativeMusic, TaskPersistenceError } from './workflow.js';
 import { selectionPlan } from './selection.js';
 import { startRun, continueRun } from './runs.js';
-import { collectRequestErrors, feedback } from './diagnostics.js';
+import { collectRequestErrors, configureDiagnostics, existingFeedback, feedback } from './diagnostics.js';
 import { reviewTask, DISABLE_CHECK_HINT } from './review.js';
 import { agentDefaults } from './agentDefaults.js';
 const SKILLS = ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document'];
@@ -155,6 +155,7 @@ async function mainWithDiagnostics(argv, events) {
             output = { schema_version: 1, ...describe(required(flags, 'model')) };
         else {
             cfg = loadConfig({ skill, useGlobalConfig: flags['no-global-config'] !== true });
+            configureDiagnostics(cfg);
             if (command === 'doctor') {
                 await checkMediaTools();
                 output = { schema_version: 1, status: 'ok', skill, node: process.version, media_tools: 'available', service_url: cfg.baseUrl, config_sources: cfg.sources, model_selection: cfg.modelSelection,
@@ -241,6 +242,9 @@ async function mainWithDiagnostics(argv, events) {
         }
         catch {
             output.feedback_warning = '无法保存错误报告；保留原任务结果与已知任务 ID。';
+            const existing = await existingFeedback(output);
+            if (existing)
+                output.feedback = existing;
         }
         output = sanitized(output, [cfg.apiKey]);
     }

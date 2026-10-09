@@ -1,6 +1,8 @@
-# AIhub Studio Plugin 1.2.1
+# AIhub Studio Plugin 1.3.0
 
-当前版本为 1.2.1；凭证配置转交改用 Setup AIHub 2.0.0 内的 `setup-api-key`。
+当前版本为 1.3.0。本版为六个 Skill 增加首错自动本地汇总；凭证配置继续使用 Setup AIHub 2.0.0 内的 `setup-api-key`。
+
+本版错误报告已通过 Windows 原生合成请求与恢复测试。本版在 WorkBuddy 中的界面验收尚未完成；Claude Code、Codex 本版仅核对结构和说明，未做宿主实测。下文的历史宿主结果保留各自版本范围。
 
 让 Claude Code、Codex 或 WorkBuddy 通过 AIhub 帮你生成和编辑图片、制作视频与音频、理解素材内容，或把 PDF 转成可编辑文档。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
 
@@ -201,11 +203,19 @@ AIHUB_RESULT_CHECK_MODELS=gemini-3.8-flash
 
 AIhub 检查需要上传实际产物，单个产物沿用 20 MiB 限制，超过时需宿主直接检查。文档正文提取不能证明排版、嵌入图片或公式完全保真，Agent 会说明实际检查范围。操作和限制详见 [结果检查说明](references/result-checks.md)。
 
-## 上游连续错误时的反馈
+## 请求出错后的本地报告
 
-同一任务默认累计 3 次独立上游错误时，Agent 会提供反馈入口；最终失败时即使不足 3 次也会提示。重复查询同一个失败任务不重复计数。鉴权、额度或权限问题会立即给出建议，后续成功的任务仍正常交付。
+第一次接口请求失败、无效响应或远端任务执行失败时，就会在任务文件夹保存一份可阅读的 `error-report.md`。报告包含用户原始需求、实际提示词与参数、脱敏请求/响应、可观察的 HTTP 状态、任务状态、耗时和已有重试、模型切换情况。后续错误更新同一份文件；反复查询同一个失败任务不会增加错误次数。
 
-程序在任务文件夹保存公开 Issue 草稿和供服务管理员私下定位的诊断报告，不会自动发送。公开草稿排除密钥、原始任务/请求 ID、提示词和素材链接。Plugin 问题可提交 [仓库 Issue](https://github.com/cookaihq/aihub-marketplace/issues/new)，服务问题联系当前 AIhub 管理员。可选 `AIHUB_ERROR_REPORT_THRESHOLD` 修改正整数阈值，`AIHUB_SUPPORT_URL` 指定服务的支持入口。
+每次失败反馈、继续查询、恢复成功及最终总结都会提供完整绝对路径的可点击链接，包括 Markdown 报告、`diagnostic.json`、`issue-draft.md` 和已有请求上下文。你可以说：
+
+> 打开这次任务的本地错误汇总，解释实际请求、失败阶段和仍未知的信息。继续查询已有任务，不要重新提交。
+
+HTTP 状态是客户端实际收到的 AIHub 响应，不代表供应商 HTTP 状态。远端任务可以在 HTTP 200 中报告失败；`service_unavailable` 本身不能证明上游宕机。服务没有返回的上游状态、路由和内部重试会标为未知，可让管理员按本地任务/请求 ID 查后台日志。旧诊断中固定填写的终止失败 HTTP 200 会标记为未经采集的历史值。
+
+本地报告含私密提示词与素材定位信息，仅保存在本机；API Key、Authorization、Cookie 和链接签名会脱敏，二进制或超长内容明确标注省略。公开 Issue 草稿继续排除原始需求、素材链接和定位 ID。程序不会自动发送报告或创建 Issue，也不会为报告重发请求或改变模型切换策略。保存失败时保留原任务结果，并说明报告未完整保存。
+
+`AIHUB_ERROR_REPORT_THRESHOLD` 保留旧配置兼容，不再延迟首次报告和提醒；`AIHUB_SUPPORT_URL` 保留服务支持入口。详细说明见[本地错误报告](references/error-reports.md)。
 
 ## 第一次使用
 

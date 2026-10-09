@@ -1,8 +1,8 @@
 ---
 name: tikin-creator-analytics
 metadata:
-  version: "1.2.1"
-description: v1.2.1｜Analyze a creator or account via tikin — profile stats, recent post performance, engagement rate, posting cadence, and top content. Use when the user asks for creator performance or provides a supported profile/channel URL or handle.
+  version: "1.3.0"
+description: v1.3.0｜Analyze a creator or account via tikin — profile stats, recent post performance, engagement rate, posting cadence, and top content. Use when the user asks for creator performance or provides a supported profile/channel URL or handle.
 ---
 
 # Creator Analytics
@@ -34,26 +34,7 @@ without blocking this task. Before the first tikin API call for the current user
    generic browser fetch. Parse identifiers locally or pass the original URL/share text to tikin.
    Calls to the configured tikin base URL and downloads from final media URLs returned by tikin are
    allowed.
-5. Resolve and require the key:
-
-```bash
-TIKIN_SETUP_DIR="<installed tikin-setup directory>"
-tikin_run() {
-  uv run --project "${TIKIN_SETUP_DIR}" "${TIKIN_SETUP_DIR}/scripts/tikin-config" \
-    --skill tikin-creator-analytics run -- "$@"
-}
-```
-
-Resolve `TIKIN_SETUP_DIR` from the installed `tikin-setup` Skill before using the command.
-Run API examples through `tikin_run` in the same shell as this definition. The helper reads
-`TIKIN_API_KEY` and `TIKIN_BASE_URL` independently from process environment →
-`$PWD/.env.tikin-creator-analytics` → `$PWD/.env.local` → `$PWD/.env` →
-`~/.config/tikin-social/<skill-name>/.env.local` → that directory’s `.env` →
-`~/.config/tikin-social/.env.<skill-name>` → the Plugin root’s `.env.local` → `.env` →
-`~/.config/<skill-name>/.env`. Global sources are automatic; add `--no-global-config`
-before `run` to skip all six for this call and use default routing without reading saved settings. Empty values fall through. Project files are read only in the
-invocation directory; other Skills' dedicated files are not read. File contents are literal, never
-sourced as shell code. Resolved values are passed only to the child command and are not printed.
+5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
 
 If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.
@@ -87,11 +68,12 @@ the platform skill: `tikin-tiktok`, `tikin-douyin`, `tikin-instagram`, `tikin-yo
 Profile = 1 call; each page of posts = 1 call. Estimate before running (1 + pages) and warn the
 user before pulling many pages. Check balance/usage anytime:
 
-```bash
-tikin_run sh <<'TIKIN_COMMAND'
-BASE="${TIKIN_BASE_URL:-https://console.tikin.net}"
-curl -s --max-time 30 "$BASE/api/usage/token/" -H "Authorization: Bearer $TIKIN_API_KEY"
-TIKIN_COMMAND
+```json
+{
+  "original_request": "<用户原始需求原文>",
+  "method": "GET",
+  "path": "/api/usage/token/"
+}
 ```
 
 **Budget the post-list loop.** With a user target post count, that target is the budget; with no

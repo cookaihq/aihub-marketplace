@@ -1,8 +1,8 @@
 ---
 name: tikin-setup
 metadata:
-  version: "1.2.1"
-description: v1.2.1｜安装、更新或修复 tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。Install or maintain tikin; delegate existing credential setup to setup-api-key.
+  version: "1.3.0"
+description: v1.3.0｜安装、更新或修复 tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。Install or maintain tikin; delegate existing credential setup to setup-api-key.
 ---
 
 # tikin Setup
@@ -74,17 +74,9 @@ Migration is optional and requires an explicit source, target and overwrite deci
 unrelated fields and existing higher-priority settings. Ordinary `~/.config/<skill-name>/.env`
 fallback needs no migration. Never expose credentials in chat, logs or commits.
 
-Run API commands with the selected configuration in a child process:
+Before any business API request, read [shared requests and local error reports](references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
 
-```bash
-uv run --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-config" \
-  --skill tikin-setup run -- sh -c \
-  'curl -s --max-time 30 "${TIKIN_BASE_URL}/api/usage/token/" -H "Authorization: Bearer ${TIKIN_API_KEY}"'
-```
-
-`run` requires a nonempty API key, reads configuration without writing files, and passes
-only supported resolved values to the child environment. It never prints or shell-sources
-the configuration. Keep shell programs quoted so variable expansion happens inside that child.
+`run -- <command>` remains a configuration utility; it does not record arbitrary child HTTP traffic.
 
 ## Install or repair
 
@@ -103,7 +95,7 @@ If GitHub has a network failure, use the same marketplace and Plugin from
 `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git`. Keep the same requested version and
 scope; authentication, missing repository or missing version is not a network fallback trigger.
 Report which source succeeded. Do not guess a WorkBuddy CLI command or tool schema: inspect
-its available native tools and current UI. Do not start codebuddy/cbc or an embedded CLI, even for help/list. The configuration helper supports native Windows Scripts/python.exe and quoted paths; API shell examples and the endpoint helper have separate platform limits. Local configuration tests do not prove host loading or complete Windows business support; macOS/Linux/WSL and all three host sessions require their own evidence.
+its available native tools and current UI. Do not start codebuddy/cbc or an embedded CLI, even for help/list. The shared request and endpoint helpers use pinned Python and quoted paths on native Windows; final media downloads use curl.exe there. Local configuration tests do not prove host loading or complete Windows business support; macOS/Linux/WSL and all three host sessions require their own evidence.
 
 Do not install through several channels in the same host. If an old manual copy contains
 unprefixed skill names, migrate to the managed channel and remove only obsolete tikin-owned

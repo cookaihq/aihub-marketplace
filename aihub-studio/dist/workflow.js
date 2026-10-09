@@ -1,10 +1,11 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFile, stat, writeFile, mkdir } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { AihubmaxClient, ApiError, PollBudgetExceededError } from './apiClient.js';
 import { credentialId, sanitized } from './config.js';
 import { checkMediaTools, downloadAssets, downloadJsonAssets, validateLocalMedia } from './download.js';
 import { validateGeneration } from './models.js';
+import { bindDiagnosticRecord } from './diagnostics.js';
 import { assertOutsideInstallation, readJob, recordPath, withJobLock, writeJob } from './state.js';
 function cleanError(error, cfg) {
     return sanitized(error instanceof Error ? error.message : String(error), [cfg.apiKey]);
@@ -298,11 +299,12 @@ export async function generate(cfg, options) {
     assertOutsideInstallation(options.outputDir);
     if (options.media !== 'document')
         await checkMediaTools();
+    const { job, record } = newJob(cfg, options.media, options.model, options.outputDir);
+    await bindDiagnosticRecord(cfg, record, { model: options.model, parameters: options.params, original_request: null });
     const client = new AihubmaxClient(cfg);
     const live = await client.listLiveModels();
     if (!live.has(options.model))
         throw new Error('The exact model ID is not present in the current key model list. Run models and use its unchanged ID. No generation was submitted.');
-    const { job, record } = newJob(cfg, options.media, options.model, options.outputDir);
     await save(record, job, cfg);
     await options.onRecord?.(record);
     process.stderr.write(`AIhub task record: ${record}\n`);
@@ -352,6 +354,7 @@ export async function resume(cfg, recordInput, waitSeconds) {
         if (job.skill !== cfg.skill || job.service_url !== cfg.baseUrl || job.credential_id !== credentialId(cfg.apiKey)) {
             throw new Error('This record belongs to a different Skill, API address or key. Restore its original configuration; to query with a deliberately changed key, use task with the known task ID.');
         }
+        await bindDiagnosticRecord(cfg, record);
         if (job.submission.state !== 'known')
             return result(job, record);
         return queryAndDeliver(new AihubmaxClient(cfg), cfg, job, record, waitSeconds);
@@ -359,6 +362,12 @@ export async function resume(cfg, recordInput, waitSeconds) {
 }
 export async function adoptTask(cfg, id, media, outputDir, waitSeconds) {
     assertOutsideInstallation(outputDir);
+    const { job } = newJob(cfg, media, '', outputDir);
+    const identity = createHash('sha256').update(`${cfg.baseUrl}\0${cfg.skill}\0${credentialId(cfg.apiKey)}\0${id}`).digest('hex');
+    const record = recordPath(outputDir, `task-${identity}`);
+    if (await stat(record).then(s => s.isFile()).catch(() => false))
+        return resume(cfg, record, waitSeconds);
+    await bindDiagnosticRecord(cfg, record, { task_id: id, original_request: null });
     const client = new AihubmaxClient(cfg);
     let task;
     try {
@@ -367,7 +376,7 @@ export async function adoptTask(cfg, id, media, outputDir, waitSeconds) {
     catch (error) {
         return { schema_version: 1, status: 'query_failed', task_id: id, error: cleanError(error, cfg), failure: failureInfo(error, cfg) };
     }
-    const { job, record } = newJob(cfg, media, task.model ?? '', outputDir);
+    job.model = task.model ?? '';
     job.submission = { state: 'known', task: sanitized(task, [cfg.apiKey]) };
     await save(record, job, cfg);
     return withJobLock(record, async () => {
@@ -417,6 +426,8 @@ export async function understand(cfg, options) {
             throw new Error(`understand 的 ${type} 内容块必须是 {"url":"https://..."} 对象。`);
         }
     }
+    const { job, record } = newJob(cfg, 'understanding', options.model, options.outputDir);
+    await bindDiagnosticRecord(cfg, record, { model: options.model, prompt: options.prompt, content: options.content, original_request: null });
     const client = new AihubmaxClient(cfg);
     const available = await client.listLlmModels();
     const live = available.find((item) => item.id === options.model);
@@ -432,7 +443,6 @@ export async function understand(cfg, options) {
         body.max_tokens = options.maxTokens;
     if (options.temperature !== undefined)
         body.temperature = options.temperature;
-    const { job, record } = newJob(cfg, 'understanding', options.model, options.outputDir);
     await save(record, job, cfg);
     await options.onRecord?.(record);
     return withJobLock(record, async () => {
@@ -478,6 +488,7 @@ export async function nativeMusic(cfg, options) {
     }
     assertOutsideInstallation(options.outputDir);
     await checkMediaTools();
+    await bindDiagnosticRecord(cfg, join(resolve(options.outputDir), 'request-context.json'), { model: options.model, parameters: options.body, original_request: null });
     await options.onSubmit?.();
     const response = await new AihubmaxClient(cfg).generateGeminiMusic(options.model, options.body);
     const parts = response.candidates?.flatMap((candidate) => candidate.content?.parts ?? []) ?? [];

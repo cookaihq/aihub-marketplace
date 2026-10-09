@@ -7,7 +7,7 @@ import { generate, resume, adoptTask, upload, understand, nativeMusic, TaskPersi
 import type { Media } from './state.js';
 import { selectionPlan } from './selection.js';
 import { startRun, continueRun } from './runs.js';
-import { collectRequestErrors, feedback } from './diagnostics.js';
+import { collectRequestErrors, configureDiagnostics, existingFeedback, feedback } from './diagnostics.js';
 import { reviewTask, DISABLE_CHECK_HINT } from './review.js';
 import { agentDefaults } from './agentDefaults.js';
 
@@ -140,6 +140,7 @@ async function mainWithDiagnostics(argv: string[], events: Parameters<typeof fee
     else if (command === 'describe') output = { schema_version: 1, ...describe(required(flags, 'model')) };
     else {
       cfg = loadConfig({ skill, useGlobalConfig: flags['no-global-config'] !== true });
+      configureDiagnostics(cfg);
       if (command === 'doctor') {
         await checkMediaTools();
         output = { schema_version: 1, status: 'ok', skill, node: process.version, media_tools: 'available', service_url: cfg.baseUrl, config_sources: cfg.sources, model_selection: cfg.modelSelection,
@@ -199,7 +200,11 @@ async function mainWithDiagnostics(argv: string[], events: Parameters<typeof fee
     try {
       const diagnostic = await feedback(cfg, output, events);
       if (diagnostic) output.feedback = diagnostic;
-    } catch { output.feedback_warning = '无法保存错误报告；保留原任务结果与已知任务 ID。'; }
+    } catch {
+      output.feedback_warning = '无法保存错误报告；保留原任务结果与已知任务 ID。';
+      const existing = await existingFeedback(output);
+      if (existing) output.feedback = existing;
+    }
     output = sanitized(output, [cfg.apiKey]);
   }
   const failure = output.failure ?? (output.result as Record<string, unknown> | undefined)?.failure;

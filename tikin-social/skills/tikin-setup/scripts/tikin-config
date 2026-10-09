@@ -459,6 +459,10 @@ def main():
     defaults_parser.add_argument("--config-dir", help="actual configuration directory of the current Agent")
     run_parser = subparsers.add_parser("run", help="run a command with resolved tikin configuration")
     run_parser.add_argument("argv", nargs=argparse.REMAINDER)
+    request_parser = subparsers.add_parser("request", help="execute one JSON API operation with durable local error reports")
+    request_parser.add_argument("--request-file", required=True)
+    request_parser.add_argument("--record", help="reuse the same run for pagination, queries and recovery")
+    request_parser.add_argument("--output-dir", default="data/tikin")
     set_routing_parser = subparsers.add_parser("set-routing")
     set_routing_parser.add_argument("--default", choices=MODES)
     set_routing_parser.add_argument("--platform", action="append", default=[])
@@ -499,6 +503,16 @@ def main():
         config_check(skill_name, global_enabled, deletion)
     elif args.command == "run":
         run_with_config(skill_name, args.argv, global_enabled)
+    elif args.command == "request":
+        from tikin_request import execute
+        values, _ = load_config(skill_name, global_enabled)
+        try:
+            output = execute(values, skill_name, args.request_file, args.record, args.output_dir)
+        except (OSError, ValueError) as error:
+            output = {"status": "local_error", "error": "Request or recovery record is invalid/unavailable; no business retry was made.",
+                      "error_type": type(error).__name__}
+        print(json.dumps(output, ensure_ascii=False, indent=2))
+        raise SystemExit(0 if output["status"] == "ok" else 1)
     elif args.command == "set-routing":
         initialize()
         set_routing(args.default, args.platform, args.clear_platforms)

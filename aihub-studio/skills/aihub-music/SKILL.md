@@ -1,8 +1,8 @@
 ---
 name: aihub-music
 metadata:
-  version: "1.2.1"
-description: v1.2.1｜Generate AIhub music with lyria-3-pro async tasks or the separate Gemini-native lyria-3-pro-preview protocol, then save verified audio files.
+  version: "1.3.0"
+description: v1.3.0｜Generate AIhub music with lyria-3-pro async tasks or the separate Gemini-native lyria-3-pro-preview protocol, then save verified audio files.
 ---
 
 # AIhub Music
@@ -41,4 +41,4 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill aihub-music --request-f
 
 检查开启时，每次完成检查都必须告诉用户：“如果想关闭结果检查，可以直接在对话中告诉我‘关闭结果检查’；也可以说‘仅本次关闭结果检查’。”通过、不符、证据不足或无法检查都要提示，不能只保留在 JSON 中。用户要求关闭时按参考说明执行，沿用已明确作用范围；范围不明再询问。关闭后仍执行文件检查。
 
-`feedback.show_notice=true` 时提供报告路径与 Issue/管理员入口；公开只使用脱敏草稿，不自动发送。结果不符或检查失败不触发重新生成。
+每次出现 `feedback` 都按[本地错误报告](../../references/error-reports.md)逐条提供 `artifact_links`，链接文字显示真实完整绝对路径；首次、再次失败、恢复和最终答复均包含。公开只用脱敏草稿，不自动发送。结果不符、检查或报告保存失败不触发重新生成。

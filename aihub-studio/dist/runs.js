@@ -6,6 +6,7 @@ import { credentialId, sanitized } from './config.js';
 import { selectionPlan } from './selection.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord } from './state.js';
 import { generate, resume, understand, nativeMusic, failureInfo, TaskPersistenceError } from './workflow.js';
+import { bindDiagnosticRecord } from './diagnostics.js';
 function canonical(value) {
     if (Array.isArray(value))
         return `[${value.map(canonical).join(',')}]`;
@@ -88,6 +89,7 @@ export async function continueRun(cfg, recordInput, waitSeconds, confirmation) {
     assertOutsideInstallation(record);
     return withJobLock(record, async () => {
         const run = await readRun(cfg, record);
+        await bindDiagnosticRecord(cfg, record, run.plan.request, true);
         const expectedToken = (index) => hash({ plan: run.plan_hash, index, candidate: run.plan.candidates[index] });
         if (run.confirmation && (run.confirmation.index !== run.cursor || run.confirmation.token !== expectedToken(run.cursor) ||
             run.confirmation.model !== run.plan.candidates[run.cursor]?.model ||

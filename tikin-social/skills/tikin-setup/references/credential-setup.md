@@ -8,7 +8,7 @@
 uv run --locked --no-dev --project "<tikin-setup实体>" python "<tikin-setup实体>/scripts/tikin-config" --skill <真实业务Skill> config-check
 ```
 
-没有 caller 使用 `--plugin-only`，不沿用默认 `tikin-setup`。身份/`--no-global-config` 放在子命令前。`config-check` 通过真实加载器输出无值 `secret-book.config-inspection/v1`，退出 `3` 表示配置问题；不调用 API，不创建路由文件，也不依赖 POSIX shell 或媒体工具。Windows 使用本 Skill `Scripts/python.exe`，macOS/Linux 使用 `bin/python`；不同于仍需 POSIX 适配的媒体/API shell 示例。
+没有 caller 使用 `--plugin-only`，不沿用默认 `tikin-setup`。身份/`--no-global-config` 放在子命令前。`config-check` 通过真实加载器输出无值 `secret-book.config-inspection/v1`，退出 `3` 表示配置问题；不调用 API，不创建路由文件，也不依赖 POSIX shell 或媒体工具。Windows 使用本 Skill `Scripts/python.exe`，macOS/Linux 使用 `bin/python`；业务 API 同样使用共享 Python 请求入口；最终媒体下载使用当前系统的下载工具。
 
 [credentials.json](credentials.json) 声明必填敏感 `TIKIN_API_KEY` 与关联可选 `TIKIN_BASE_URL`，默认地址 `https://console.tikin.net`。常规首配不强制填地址；现有非默认地址时核对 Key 属于同一服务。加载器按字段独立取首个非空值，声明关联组不授权拼配不同服务。
 

@@ -1,8 +1,8 @@
 ---
 name: tikin-endpoint-discovery
 metadata:
-  version: "1.2.1"
-description: v1.2.1｜Find the right tikin endpoint among 1,000+ across 16+ platforms. Use when you know the goal (e.g. "get a user's posts on Douyin") but not the exact API path, or when a platform has no dedicated skill (LinkedIn, Reddit, Bilibili, Weibo, WeChat, Kuaishou, Zhihu, Lemon8, etc.). Searches a bundled index and maps results to REST calls.
+  version: "1.3.0"
+description: v1.3.0｜Find the right tikin endpoint among 1,000+ across 16+ platforms. Use when you know the goal (e.g. "get a user's posts on Douyin") but not the exact API path, or when a platform has no dedicated skill (LinkedIn, Reddit, Bilibili, Weibo, WeChat, Kuaishou, Zhihu, Lemon8, etc.). Searches a bundled index and maps results to REST calls.
 ---
 
 # tikin — Endpoint Discovery
@@ -33,27 +33,7 @@ Never request the user-provided social-media content page with `curl`, WebFetch,
 browser fetch. Parse identifiers locally or pass the original URL/share text to the selected tikin
 endpoint. Before calling an endpoint, resolve and require the key:
 
-```bash
-TIKIN_SETUP_DIR="<installed tikin-setup directory>"
-tikin_run() {
-  uv run --project "${TIKIN_SETUP_DIR}" "${TIKIN_SETUP_DIR}/scripts/tikin-config" \
-    --skill tikin-endpoint-discovery run -- "$@"
-}
-```
-
-Resolve `TIKIN_SETUP_DIR` from the installed `tikin-setup` Skill before using the command.
-Run API examples through `tikin_run` in the same shell as this definition. The helper reads
-`TIKIN_API_KEY` and `TIKIN_BASE_URL` independently from process environment →
-`$PWD/.env.tikin-endpoint-discovery` → `$PWD/.env.local` → `$PWD/.env` →
-`~/.config/tikin-social/<skill-name>/.env.local` → that directory’s `.env` →
-`~/.config/tikin-social/.env.<skill-name>` → the Plugin root’s `.env.local` → `.env` →
-`~/.config/<skill-name>/.env`. Global sources are automatic; add `--no-global-config`
-before `run` to skip all six for this call and use default routing without reading saved settings. Empty values fall through. Project files are read only in the
-invocation directory; other Skills' dedicated files are not read. File contents are literal, never
-sourced as shell code. Resolved values are passed only to the child command and are not printed.
-
-Calls to the configured tikin base URL are allowed. If the user declines tikin, explain the
-limitation and ask before selecting an alternative; do not silently fetch the original page.
+Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
 
 ## Use the bundled search CLI
 
@@ -63,19 +43,19 @@ skill's directory (it works from any cwd; no PATH setup needed):
 
 ```bash
 # goal-based search, scoped to a platform
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-find-endpoint "one video" --platform tiktok
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-find-endpoint "user posts" --platform douyin
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-find-endpoint "comments" --platform youtube --method GET
+uv run --frozen --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-find-endpoint" "one video" --platform tiktok
+uv run --frozen --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-find-endpoint" "user posts" --platform douyin
+uv run --frozen --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-find-endpoint" "comments" --platform youtube --method GET
 
 # no platform filter — search everything
-uv run --project <this-skill-dir> <this-skill-dir>/scripts/tikin-find-endpoint "trending hashtag"
+uv run --frozen --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-find-endpoint" "trending hashtag"
 ```
 
 (`<this-skill-dir>` = the directory containing this SKILL.md. Other skills refer to this tool
 as `tikin-find-endpoint` for short — it always means this script.)
 
 The CLI runs on this skill's own pinned interpreter, declared by `pyproject.toml`, `uv.lock`
-and `.python-version` beside this file. Always launch it through `uv run --project <this-skill-dir>`; never through a
+and `.python-version` beside this file. Install the sibling `tikin-setup` Skill for the shared bootstrap. Always launch it through `uv run --frozen --project "<this-skill-dir>" python`; never through a
 bare `python3` or the bare script path, which resolve to whatever the PATH happens to point at. It
 needs [uv](https://docs.astral.sh/uv/) >= 0.8 — if `uv` is missing the CLI says so and prints the
 install command. The CLI also re-execs itself into `<this-skill-dir>/.venv` and rebuilds that
@@ -94,12 +74,15 @@ ships with the skill, and is refreshed on new releases when the API surface chan
 
 Given `GET /api/v1/{platform}/{api}/{action}`, call it via REST (see `tikin-rest-api`):
 
-```bash
-tikin_run sh <<'TIKIN_COMMAND'
-BASE="${TIKIN_BASE_URL:-https://console.tikin.net}"
-curl -s --max-time 30 "$BASE/api/v1/tiktok/app/v3/fetch_one_video?aweme_id=..." \
-  -H "Authorization: Bearer $TIKIN_API_KEY"
-TIKIN_COMMAND
+```json
+{
+  "original_request": "<用户原始需求原文>",
+  "method": "GET",
+  "path": "/api/v1/tiktok/app/v3/fetch_one_video",
+  "query": {
+    "aweme_id": "..."
+  }
+}
 ```
 
 Timeouts, which failures to retry (and which never to), and pagination budgets: follow the

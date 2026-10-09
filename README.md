@@ -2,7 +2,7 @@
 
 这个市场提供 AIhub 创作与文档处理、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
 
-当前版本为 Setup AIHub 2.0.0、AIhub Studio 1.2.1 和 tikin Social 1.2.1。Setup 的唯一 Skill 改为 `setup-api-key`，安装的 Plugin 仍叫 `setup-aihub`。新入口与历史版本的验证范围见 [Setup 使用说明](setup-aihub/README.md)。
+当前版本为 Setup AIHub 2.0.0、AIhub Studio 1.3.0 和 tikin Social 1.3.0。Setup 的唯一 Skill 改为 `setup-api-key`，安装的 Plugin 仍叫 `setup-aihub`。新入口与历史版本的验证范围见 [Setup 使用说明](setup-aihub/README.md)。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
@@ -66,7 +66,7 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 1.2.1 | [aihub-studio/v1.2.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv1.2.1) |
+| aihub-studio | 1.3.0 | [aihub-studio/v1.3.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv1.3.0) |
 | setup-aihub | 2.0.0 | [setup-aihub/v2.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv2.0.0) |
-| tikin-social | 1.2.1 | [tikin-social/v1.2.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv1.2.1) |
+| tikin-social | 1.3.0 | [tikin-social/v1.3.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv1.3.0) |
 <!-- release-table:end -->

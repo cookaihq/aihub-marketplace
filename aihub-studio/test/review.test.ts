@@ -177,7 +177,8 @@ test('uncertain review submission remains unavailable with reminder and private 
     for (const secret of ['fixture-review-secret', 'signature=hidden', 'private-review-request', 'private-generation-task', 'original prompt', f.dir]) assert.ok(!draft.includes(secret));
     assert.ok(privateReport.includes('private-review-request')); assert.ok(!privateReport.includes('fixture-review-secret'));
     const again = await f.call(cfg, 'review', '--record', done.run_record);
-    assert.equal(again.feedback.show_notice, false); notice(again);
+    assert.equal(again.feedback.show_notice, true);
+    assert.equal(again.feedback.error_report, done.feedback.error_report); notice(again);
     assert.equal((await f.call(cfg, 'review', '--record', done.run_record, '--recheck')).status, 'recovery_failed');
     assert.equal(f.state.reviewPosts, 1); assert.equal(f.state.generationPosts, 1);
   } finally { await f.close(); }

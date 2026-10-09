@@ -8,8 +8,8 @@ import subprocess
 import sys
 
 
-def ensure_runtime(marker="SETUP_AIHUB_BOOTSTRAP_REEXEC"):
-    project = Path(__file__).resolve().parent.parent
+def ensure_runtime(marker="SETUP_AIHUB_BOOTSTRAP_REEXEC", project=None):
+    project = Path(project).resolve() if project else Path(__file__).resolve().parent.parent
     environment = project / (os.environ.get("UV_PROJECT_ENVIRONMENT") or ".venv")
     target = os.path.normcase(os.path.realpath(environment))
     python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")

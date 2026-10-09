@@ -1,6 +1,8 @@
 /** HTTP contracts migrated from aihub-mcp f027798; no MCP runtime dependency. */
 import type { Config } from "./config.js";
-import { observeRequestError, observeTerminalTask } from './diagnostics.js';
+import { randomUUID } from 'node:crypto';
+import { observeExchange, observeRequestError, observeTerminalTask } from './diagnostics.js';
+import { redactEvidence, type HttpEvidence } from './diagnosticEvidence.js';
 
 export type TaskStatus = "pending" | "processing" | "completed" | "failed";
 
@@ -152,7 +154,12 @@ function retryDelayMs(response: Response | undefined, failedAttempt: number): nu
 }
 
 export class AihubmaxClient {
+  private readonly evidence = new WeakMap<object, HttpEvidence>();
   constructor(private readonly cfg: Config) {}
+
+  private evidenceFor(value: unknown): HttpEvidence | undefined {
+    return value && typeof value === 'object' ? this.evidence.get(value) : undefined;
+  }
 
   async request<T>(method: string, path: string, body?: unknown, opts: RequestOptions = {}): Promise<T> {
     const timeout = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -174,13 +181,23 @@ export class AihubmaxClient {
       const timeoutMs = Math.max(1, Math.floor(Math.min(timeout, remaining)));
       let response: Response | undefined;
       let text: string;
+      const started = Date.now();
+      const headers = { Authorization: `Bearer ${this.cfg.apiKey}`,
+        ...(serializedBody !== undefined ? { 'Content-Type': 'application/json' } : {}) };
+      const capture = async (responseBody: unknown, retry = false, timeoutStage: string | null = null) => {
+        const delay = retry ? retryDelayMs(response, attempt) : null;
+        const scheduled = retry && (opts.deadline === undefined || delay! < opts.deadline - Date.now());
+        return observeExchange(redactEvidence({ id: randomUUID(), at: new Date(started).toISOString(), method, url,
+          elapsed_ms: Date.now() - started, attempt: attempt + 1, max_attempts: MAX_ATTEMPTS, retry_policy: policy,
+          retry_scheduled: scheduled, retry_delay_ms: scheduled ? delay : null, timeout_ms: timeoutMs, timeout_stage: timeoutStage,
+          request: { headers, body: body ?? null, query: Object.fromEntries([...new URL(url).searchParams.keys()].map(key => [key, new URL(url).searchParams.getAll(key)])) }, response: { http_status: response?.status ?? null,
+            headers: response ? Object.fromEntries(response.headers.entries()) : {}, body: responseBody },
+        }, [this.cfg.apiKey]) as HttpEvidence);
+      };
       try {
         response = await fetch(url, {
           method,
-          headers: {
-            Authorization: `Bearer ${this.cfg.apiKey}`,
-            ...(serializedBody !== undefined ? { "Content-Type": "application/json" } : {}),
-          },
+          headers,
           ...(serializedBody !== undefined ? { body: serializedBody } : {}),
           signal: AbortSignal.timeout(timeoutMs),
         });
@@ -189,7 +206,7 @@ export class AihubmaxClient {
         // A known deterministic HTTP rejection stays terminal even if its body disconnects.
         if (response && response.status >= 400 && response.status < 500 && response.status !== 429) {
           const error = this.toApiError(response.status, "服务端拒绝请求，错误响应体未完整收到。", false);
-          observeRequestError(error, method, path);
+          await observeRequestError(error, method, path, await capture(null));
           throw error;
         }
         const definitelyNotSent = !response && isPreSendNetworkError(cause);
@@ -200,7 +217,9 @@ export class AihubmaxClient {
           `网络请求失败（${method} ${path}）：${detail || "未收到完整响应"}。` +
           (ambiguous ? "写入结果不明，请勿自动重新提交。" : "")),
           response?.status ?? 0, "network", ambiguous ? "ambiguous" : "network_error", undefined, ambiguous, retryable);
-        observeRequestError(error, method, path);
+        const timeoutStage = errorChain(cause).some(item => /timeout|abort/i.test(`${item.name} ${item.code}`))
+          ? (response ? 'response_body' : 'request_before_response_headers') : null;
+        await observeRequestError(error, method, path, await capture(null, retryable && attempt + 1 < MAX_ATTEMPTS, timeoutStage));
         if (retryable && attempt + 1 < MAX_ATTEMPTS) {
           await this.waitForRetry(retryDelayMs(response, attempt), attempt, error, opts);
           continue;
@@ -209,24 +228,30 @@ export class AihubmaxClient {
       }
 
       if (response.ok) {
+        let parsed: T;
         try {
           if (!text) throw new Error("empty response");
-          return JSON.parse(text) as T;
+          parsed = JSON.parse(text) as T;
         } catch {
           const error = new ApiError(this.redact(
             `服务端返回了非 JSON 响应（HTTP ${response.status}，${method} ${path}）。` +
             "请检查 AIHUB_BASE_URL 是否指向 API 网关。" +
             (isWrite ? "写入结果不明，请勿自动重新提交。" : "")),
             response.status, "protocol", "invalid_response", undefined, isWrite);
-          observeRequestError(error, method, path);
+          await observeRequestError(error, method, path, await capture(text));
           throw error;
         }
+        const evidence = await capture(parsed);
+        if (parsed && typeof parsed === 'object') this.evidence.set(parsed, evidence);
+        return parsed;
       }
 
       // No verified idempotency or rejection guarantee exists for AIhub generation POSTs.
       // In particular, HTTP 429 does not justify automatically repeating a paid submission.
       const error = this.toApiError(response.status, text, isWrite && (response.status >= 500 || response.status === 429), response.headers.get('x-request-id') ?? undefined);
-      observeRequestError(error, method, path);
+      let responseBody: unknown = text;
+      try { responseBody = JSON.parse(text); } catch { /* Preserve non-JSON response as text. */ }
+      await observeRequestError(error, method, path, await capture(responseBody, error.retryable && !isWrite && attempt + 1 < MAX_ATTEMPTS));
       if (error.retryable && !isWrite && attempt + 1 < MAX_ATTEMPTS) {
         await this.waitForRetry(retryDelayMs(response, attempt), attempt, error, opts);
         continue;
@@ -250,9 +275,7 @@ export class AihubmaxClient {
   }
 
   private redact(value: string): string {
-    return (this.cfg.apiKey ? value.split(this.cfg.apiKey).join("***") : value)
-      .replace(/(Bearer\s+)[^\s,;]+/gi, "$1***")
-      .replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, "$1***@");
+    return redactEvidence(value, [this.cfg.apiKey]) as string;
   }
 
   private toApiError(status: number, text: string, ambiguous: boolean, headerRequestId?: string): ApiError {
@@ -289,11 +312,11 @@ export class AihubmaxClient {
     const result = await this.request<SubmitResponse>("POST", path, params, opts);
     if (!result || typeof result.id !== "string" || !result.id || !TASK_STATUSES.has(result.status)) {
       const error = new ApiError("生成请求未返回有效的任务 ID 与状态；写入结果不明，请勿自动重新提交。",
-        200, "protocol", "invalid_response", undefined, true);
-      observeRequestError(error, 'POST', path);
+        this.evidenceFor(result)?.response.http_status ?? 0, "protocol", "invalid_response", undefined, true);
+      await observeRequestError(error, 'POST', path, this.evidenceFor(result));
       throw error;
     }
-    observeTerminalTask(result);
+    await observeTerminalTask(result, this.evidenceFor(result));
     return result;
   }
 
@@ -301,11 +324,11 @@ export class AihubmaxClient {
     const suffix = syncUpstream ? "?sync_upstream=true" : "";
     const task = await this.request<TaskResponse>("GET", `/v1/tasks/${encodeURIComponent(taskId)}${suffix}`, undefined, opts);
     if (!task || task.id !== taskId || !TASK_STATUSES.has(task.status)) {
-      const error = new ApiError("任务查询响应缺少有效 ID 或状态，请保留原 task_id 后再次查询。", 200, "protocol", "invalid_response");
-      observeRequestError(error, 'GET', `/v1/tasks/${encodeURIComponent(taskId)}`);
+      const error = new ApiError("任务查询响应缺少有效 ID 或状态，请保留原 task_id 后再次查询。", this.evidenceFor(task)?.response.http_status ?? 0, "protocol", "invalid_response");
+      await observeRequestError(error, 'GET', `/v1/tasks/${encodeURIComponent(taskId)}`, this.evidenceFor(task));
       throw error;
     }
-    observeTerminalTask(task);
+    await observeTerminalTask(task, this.evidenceFor(task));
     return task;
   }
 
@@ -352,8 +375,8 @@ export class AihubmaxClient {
   async listLiveModels(): Promise<Map<string, LiveModel>> {
     const result = await this.request<{ data?: LiveModel[] }>("GET", "/v1/models");
     if (!result || !Array.isArray(result.data) || result.data.some((model) => !model || typeof model.id !== "string")) {
-      const error = new ApiError("模型清单响应格式无效，无法确认模型可用性。", 200, "protocol", "invalid_response");
-      observeRequestError(error, 'GET', '/v1/models');
+      const error = new ApiError("模型清单响应格式无效，无法确认模型可用性。", this.evidenceFor(result)?.response.http_status ?? 0, "protocol", "invalid_response");
+      await observeRequestError(error, 'GET', '/v1/models', this.evidenceFor(result));
       throw error;
     }
     return new Map(result.data.map((model) => [model.id, model]));
@@ -363,8 +386,8 @@ export class AihubmaxClient {
   async listLlmModels(): Promise<LlmModel[]> {
     const result = await this.request<{ data?: LlmModel[] }>("GET", "/v1/configs/llm_generations_models");
     if (!result || !Array.isArray(result.data) || result.data.some((model) => !model || typeof model.id !== "string")) {
-      const error = new ApiError("LLM 模型清单响应格式无效，无法确认理解模型能力。", 200, "protocol", "invalid_response");
-      observeRequestError(error, 'GET', '/v1/configs/llm_generations_models');
+      const error = new ApiError("LLM 模型清单响应格式无效，无法确认理解模型能力。", this.evidenceFor(result)?.response.http_status ?? 0, "protocol", "invalid_response");
+      await observeRequestError(error, 'GET', '/v1/configs/llm_generations_models', this.evidenceFor(result));
       throw error;
     }
     return result.data;
@@ -375,8 +398,8 @@ export class AihubmaxClient {
     const path = `/v1beta/models/${encodeURIComponent(model)}:generateContent`;
     const response = await this.request<GeminiMusicResponse>("POST", path, body, { retry: "non-idempotent" });
     if (!response || !Array.isArray(response.candidates)) {
-      const error = new ApiError("Gemini 音乐响应缺少 candidates；原生请求结果不明，请勿自动重试。", 200, "protocol", "invalid_response", undefined, true);
-      observeRequestError(error, 'POST', path);
+      const error = new ApiError("Gemini 音乐响应缺少 candidates；原生请求结果不明，请勿自动重试。", this.evidenceFor(response)?.response.http_status ?? 0, "protocol", "invalid_response", undefined, true);
+      await observeRequestError(error, 'POST', path, this.evidenceFor(response));
       throw error;
     }
     return response;
@@ -386,8 +409,8 @@ export class AihubmaxClient {
   async getPricing(): Promise<PricingTable> {
     const result = await this.request<{ data?: PricingEntry[]; group_ratio?: Record<string, number> }>("GET", "/api/pricing");
     if (!result || !Array.isArray(result.data)) {
-      const error = new ApiError("定价清单响应格式无效。", 200, "protocol", "invalid_response");
-      observeRequestError(error, 'GET', '/api/pricing');
+      const error = new ApiError("定价清单响应格式无效。", this.evidenceFor(result)?.response.http_status ?? 0, "protocol", "invalid_response");
+      await observeRequestError(error, 'GET', '/api/pricing', this.evidenceFor(result));
       throw error;
     }
     return { models: new Map(result.data.map((entry) => [entry.model_name, entry])), groupRatio: result.group_ratio ?? {} };

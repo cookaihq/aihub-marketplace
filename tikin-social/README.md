@@ -5,12 +5,18 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Current version: **1.2.1**. Credential handoff now uses the
+Current version: **1.3.0**. All 17 Skills now share native JSON requests and automatic local error reports. Credential handoff uses the
 `setup-api-key` Skill in Setup AIHub 2.0.0. The following results apply to **1.2.0**:
 native Windows Plugin installation and Skill discovery are verified
 in Claude Code, Codex and WorkBuddy. Credential configuration passed in Codex's default sandbox
 and WorkBuddy; Claude Code natural invocation passed, while its configuration loop was not tested.
 Real social-data workflows require separate validation.
+
+For 1.3.0, synthetic request/report/recovery tests pass on native Windows. WorkBuddy host
+acceptance is still incomplete; Claude Code and Codex received structure/document checks only
+for this version. These results do not validate real social-data calls or media downloads.
+The full native Windows test suite retains four pre-existing failures in configuration tests
+that assert POSIX file-mode bits; the same failures reproduce on the 1.2.1 baseline.
 
 ## Default Skills and reminders
 
@@ -48,13 +54,19 @@ Include `tikin-setup` with the operational Skills; its helper loads their API co
 Start a new session after installation so the agent can discover the newly installed Skills.
 The agent should report installation, Skill invocation and a real API request as separate checks.
 
-API workflows require `curl`, a POSIX shell and `uv` 0.8 or newer. The two bundled Python helpers
-need an initial runtime setup with network access; endpoint search then works offline. Your
-agent can check these tools. Local credential inspection and deletion preview use the configuration
-helper on native Windows without a POSIX shell. The separate endpoint helper and API shell examples
-still have POSIX assumptions; complete Windows business support is not claimed. A WorkBuddy card
-does not prove runtime compatibility. Linux/WSL need their own validation; do not switch a Windows
-configuration task to WSL automatically.
+API requests and endpoint search use `uv` 0.8 or newer and the bundled pinned Python environments.
+The Agent invokes both helpers with explicit project and interpreter paths on native Windows,
+macOS or Linux; API requests no longer require a POSIX shell or curl. The initial runtime setup
+needs network access; endpoint search then works offline. Skills-only installations must include
+`tikin-setup`, which supplies the shared bootstrap and request helper.
+
+Final media downloads still need an available download tool (`curl.exe` on native Windows).
+Saving private reports on Windows requires the built-in Windows PowerShell 5.1 and a filesystem
+supporting Windows access controls. Files are restricted before private contents are written;
+a report save failure does not cause another API request. A WorkBuddy card does not prove runtime
+compatibility. This version's local synthetic tests and host acceptance are recorded separately;
+real social-data business, Linux and WSL flows remain unverified. Do not switch Windows tasks to WSL
+automatically.
 
 ## Configure API access
 
@@ -195,6 +207,32 @@ Supported source-platform pages are accessed through tikin. The agent can downlo
 URLs returned by tikin; it should not silently fetch a source social page through a generic
 HTTP tool when you decline tikin. Large pulls use explicit pagination and request budgets and
 may return a partial result with a resume cursor.
+
+## Local error reports
+
+The first API, protocol or remote-task failure automatically saves one readable `error-report.md`
+for the user task. It includes original requirements, submitted parameters, necessary source
+information, sanitized request/response JSON, timing, retries and observed error fields.
+Follow-up requests and pagination reuse that task's record. Repeated observations of the same
+failed task do not inflate the error count; recovery updates the same report.
+
+Every failure, repeat, recovery and final reply includes clickable links labelled with the complete
+absolute paths to the report, `diagnostic.json`, `issue-draft.md` and `run.json`. You can ask:
+
+> Open this task's local error report, explain the observed failure and unknown fields, and
+> continue from its existing record without repeating an uncertain submission.
+
+Reports stay on this computer and can contain private queries and media identifiers. API keys,
+Authorization, cookies and signed URL query values are redacted; binary and oversized content
+have explicit omission markers. Public Issue drafts exclude private requests, links and raw IDs.
+Nothing is sent to an administrator or issue tracker automatically.
+
+Client HTTP status, asynchronous task status and API-exposed provider evidence are separate.
+Missing upstream status, provider, routing or internal retries remain unknown; `service_unavailable`
+does not prove an upstream outage. An administrator can locate backend logs using the local IDs.
+Report saving never changes retry decisions; a save warning preserves the original request outcome.
+The shared [request reference](skills/tikin-setup/references/requests.md) describes recovery and
+how the Agent supplies these links.
 
 ## Skills
 
