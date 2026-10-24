@@ -48,13 +48,25 @@
 
 ## 让 Agent 帮你安装
 
-复制下面这段话到 Codex 或 WorkBuddy：
+AIhub 通过 CNB 与 GitHub 来源分发。请按当前使用的 Agent 选择对应的安装说明。
+
+### Codex：通过原生 Plugin 管理安装
+
+复制下面这段话到 Codex：
 
 ```text
-请安装 AIhub Studio Plugin：优先用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，CNB 网络故障时改用 https://github.com/cookaihq/aihub-marketplace.git，保持同一 Plugin 和版本。先阅读 aihub-studio/README.md；在 WorkBuddy 中还须先读 aihub-studio/references/workbuddy-install.md，使用当前应用的原生套件管理，不另起 CodeBuddy CLI。需要我操作界面时，请在回复中展示随包的添加市场截图，并指明“技能 → 套件 → 市场名称右侧的＋”。安装完整的 aihub-studio@aihub-marketplace，保留已有设置，并确认 Skill 可发现和调用。
+请在 Codex 中安装完整的 AIhub Studio Plugin（aihub-studio@aihub-marketplace）：优先用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，CNB 网络故障时改用 https://github.com/cookaihq/aihub-marketplace.git，保持同一 Plugin 和版本。先阅读仓库 README 和 aihub-studio/README.md，使用 Codex 的原生插件管理入口添加或复用 aihub-marketplace，再安装 aihub-studio，保留已有设置。分别报告市场添加、Plugin 安装、Skill 发现与调用的结果；如需新会话，请指导我操作。
 ```
 
-AIhub 通过上述 CNB 与 GitHub 来源分发。WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套件” → 市场名称一行最右侧的圆形“＋”**；点击后才会出现“添加市场”窗口。下图来自 Windows WorkBuddy 5.6.2 的实机截图，macOS 5.6.2 的入口也已核对；图中的“此市场暂无套件”仅记录截图时的本机状态，不代表完整安装或 Skill 调用已验收。具体步骤见 [WorkBuddy 安装说明](references/workbuddy-install.md)。Agent 有界面操作能力时可代为完成，需要你操作时会同时展示截图和步骤。安装过程沿用 WorkBuddy 已有配置，不应为此新建 `.codebuddy`；无需手动执行终端命令。
+### WorkBuddy：通过原生套件管理安装
+
+复制下面这段话到 WorkBuddy：
+
+```text
+请在 WorkBuddy 中安装 AIhub Studio Plugin：优先用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，CNB 网络故障时改用 https://github.com/cookaihq/aihub-marketplace.git，保持同一 Plugin 和版本。先阅读 aihub-studio/README.md 和 aihub-studio/references/workbuddy-install.md，使用当前应用的原生套件管理，不另起 CodeBuddy CLI。需要我操作界面时，请在回复中展示随包的添加市场截图，并指明“技能 → 套件 → 市场名称右侧的＋”。安装完整的 aihub-studio@aihub-marketplace，保留已有设置，并确认 Skill 可发现和调用。
+```
+
+WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套件” → 市场名称一行最右侧的圆形“＋”**；点击后才会出现“添加市场”窗口。下图来自 Windows WorkBuddy 5.6.2 的实机截图，macOS 5.6.2 的入口也已核对；图中的“此市场暂无套件”仅记录截图时的本机状态，不代表完整安装或 Skill 调用已验收。具体步骤见 [WorkBuddy 安装说明](references/workbuddy-install.md)。Agent 有界面操作能力时可代为完成，需要你操作时会同时展示截图和步骤。安装过程沿用 WorkBuddy 已有配置，不应为此新建 `.codebuddy`；无需手动执行终端命令。
 
 ![WorkBuddy 添加市场入口：顶部技能 → 套件 → 市场名称右侧的圆形＋](references/images/workbuddy-add-marketplace.png)
 
@@ -62,7 +74,7 @@ AIhub 通过上述 CNB 与 GitHub 来源分发。WorkBuddy 使用 **专家·技�
 
 ## 从旧 AIhub Plugin 迁移
 
-1.0.0 将安装对象从 `aihub@plugin-marketplace` 改为 **`aihub-studio@aihub-marketplace`**。新市场与旧市场是两个独立安装来源；只更新旧市场中的 `aihub` 不会换成新名称。先核对并准备下文的新配置，再按上面的安装提示词安装 AIhub Studio；随后停用旧 `aihub`，打开新会话，核对实际加载的 Plugin 身份、版本与六个 Skill 的来源，再验证调用。确认新版本可用后才卸载旧对象，不自动删除其配置。保留旧市场中的其他 Plugin；不能在两份同名 Skill 都启用时，把调用成功认定为新版通过。
+1.0.0 将安装对象从 `aihub@plugin-marketplace` 改为 **`aihub-studio@aihub-marketplace`**。新市场与旧市场是两个独立安装来源；只更新旧市场中的 `aihub` 不会换成新名称。先核对并准备下文的新配置，再按上面当前 Agent 对应的安装说明安装 AIhub Studio；随后停用旧 `aihub`，打开新会话，核对实际加载的 Plugin 身份、版本与六个 Skill 的来源，再验证调用。确认新版本可用后才卸载旧对象，不自动删除其配置。保留旧市场中的其他 Plugin；不能在两份同名 Skill 都启用时，把调用成功认定为新版通过。
 
 六个 `aihub-*` Skill 名、`AIHUB_*` 配置字段、项目配置与既有任务记录保持兼容。**Plugin 个人全局配置目录由 `~/.config/aihub/` 改为 `~/.config/aihub-studio/`；新版本不自动读取或搬迁旧 Plugin 目录。** 如果密钥只保存在旧目录，需要确认迁移或重新配置后才能使用新版本。当前 Skill 的 `~/.config/aihub-image/.env` 等普通 Skill 文件仍可作为末层来源。
 
