@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILL_DIR = ROOT / "skills" / "tikin-setup"
 SCRIPT = SKILL_DIR / "scripts" / "tikin-config"
 VENV_DIR = SKILL_DIR / ".venv"
-VENV_PY = VENV_DIR / "bin" / "python"
+VENV_PY = VENV_DIR / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 
 BUILD_HINT = f"uv sync --no-dev --project {SKILL_DIR}"
 
@@ -81,6 +81,8 @@ class TikinConfigTests(unittest.TestCase):
         self.config_home = self.user_home / ".config"
         self.env = os.environ.copy()
         self.env["HOME"] = str(self.user_home)
+        self.env["USERPROFILE"] = str(self.user_home)
+        self.env["PYTHONUTF8"] = "1"
         self.env["XDG_CONFIG_HOME"] = str(Path(self.tempdir.name) / "ignored-xdg")
         self.env.pop("TIKIN_API_KEY", None)
         self.env.pop("TIKIN_BASE_URL", None)
@@ -203,7 +205,6 @@ class TikinConfigTests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertNotIn(value, result.stderr)
 
-
     def test_init_creates_default_settings_with_private_permissions(self):
         self.run_config("init")
 
@@ -218,6 +219,7 @@ class TikinConfigTests(unittest.TestCase):
         process_env = self.env.copy()
         home = Path(self.tempdir.name) / "home"
         process_env["HOME"] = str(home)
+        process_env["USERPROFILE"] = str(home)
         process_env["XDG_CONFIG_HOME"] = ""
 
         self.run_config("init", env=process_env)

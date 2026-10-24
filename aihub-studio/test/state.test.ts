@@ -4,7 +4,8 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { withJobLock } from '../src/state.js';
+import { withJobLock, writePrivateText } from '../src/state.js';
+import { assertPrivateFile } from './private-permissions.js';
 
 const stateUrl = new URL('../src/state.js', import.meta.url).href;
 type Outcome = { type: 'entered' } | { type: 'rejected'; error: string };
@@ -88,6 +89,19 @@ async function abandonLock(record: string, workers: Worker[]): Promise<number> {
   assert.throws(() => process.kill(pid, 0), (error: unknown) => (error as NodeJS.ErrnoException).code === 'ESRCH');
   return pid;
 }
+
+test('private records restrict actual OS access after each atomic replacement', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'aihub-private-'));
+  try {
+    const path = join(directory, 'task.json');
+    for (const value of ['first synthetic record', 'replacement synthetic record']) {
+      await writePrivateText(path, value);
+      await assertPrivateFile(path);
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 test('a real killed owner leaves a lock that the next invocation can recover', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'aihub-dead-owner-'));

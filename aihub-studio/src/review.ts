@@ -7,6 +7,7 @@ import { RESULT_CHECK_DEFAULTS, sanitized, type LoadedConfig } from './config.js
 import { measureLocalMedia, type MediaMeasurements } from './download.js';
 import { extractDocumentText } from './documentText.js';
 import { readRun, type RunRecord } from './runs.js';
+import { bindDiagnosticRecord } from './diagnostics.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord, type SavedFile } from './state.js';
 import { resume, understand, upload, adoptTask, TaskPersistenceError } from './workflow.js';
 
@@ -268,6 +269,7 @@ async function runExternal(cfg: LoadedConfig, review: ReviewRecord, path: string
 export async function reviewTask(cfg: LoadedConfig, sourceInput: string, options: { provider?: 'host' | 'aihub'; waitSeconds?: number; report?: unknown; reviewToken?: string; recheck?: boolean } = {}): Promise<Record<string, unknown>> {
   const source = resolve(sourceInput);
   const run = await readRun(cfg, source);
+  await bindDiagnosticRecord(cfg, source, run.plan.request, true);
   const path = join(dirname(source), 'review.json');
   return withJobLock(path, async () => {
     let review: ReviewRecord;

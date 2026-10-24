@@ -44,7 +44,7 @@ uv run --project "${TIKIN_SETUP_DIR}" "${TIKIN_SETUP_DIR}/scripts/tikin-config" 
 
 同一用户、同一 Plugin、同一 Agent 配置目录的全部 Skill 与后续版本共用一条记录；不同 Agent 或配置目录分别保存，另一个 Plugin 独立。设置程序保留未知字段和其他 Agent 的记录；tikin 的已有 `routing` 同样保留。读取无副作用；保存使用文件锁、并发变更检查及原子替换，遇到损坏或未知格式不覆盖。残留锁只在查明没有程序正在保存后才能移除。更新 Plugin 不删除个人设置。
 
-macOS/Linux 按实际运行用户的 home 定位；Windows 原生用实际运行时用户目录，WSL 使用 Linux 用户目录，不跨环境读取。AIhub 的 Node 程序可以在原生 Windows 运行；tikin 仍受现有 POSIX Python bootstrap 限制，不新增 Windows 原生支持。`--no-global-config` 会跳过本项读取，并拒绝保存；不要绕过它打开 settings.json。
+macOS/Linux 按实际运行用户的 home 定位；Windows 原生用实际运行时用户目录，WSL 使用 Linux 用户目录，不跨环境读取。AIhub 的 Node 程序和 tikin 的共享 Python 请求、配置及端点搜索入口支持原生 Windows 路径；脚本检查与各宿主业务验收分别记录。`--no-global-config` 会跳过本项读取，并拒绝保存；不要绕过它打开 settings.json。
 
 ## 宿主依据
 

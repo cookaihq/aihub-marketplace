@@ -7,6 +7,7 @@ import { RESULT_CHECK_DEFAULTS, sanitized } from './config.js';
 import { measureLocalMedia } from './download.js';
 import { extractDocumentText } from './documentText.js';
 import { readRun } from './runs.js';
+import { bindDiagnosticRecord } from './diagnostics.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord } from './state.js';
 import { resume, understand, upload, adoptTask, TaskPersistenceError } from './workflow.js';
 export const DISABLE_CHECK_HINT = '如果想关闭结果检查，可以直接在对话中告诉我“关闭结果检查”；也可以说“仅本次关闭结果检查”。';
@@ -323,6 +324,7 @@ async function runExternal(cfg, review, path, waitSeconds) {
 export async function reviewTask(cfg, sourceInput, options = {}) {
     const source = resolve(sourceInput);
     const run = await readRun(cfg, source);
+    await bindDiagnosticRecord(cfg, source, run.plan.request, true);
     const path = join(dirname(source), 'review.json');
     return withJobLock(path, async () => {
         let review;

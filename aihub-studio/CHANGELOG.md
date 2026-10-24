@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.3.0 — 2026-10-09
+
+- 六个 Skill 首次 HTTP、协议或远端执行错误即保存本地 Markdown 汇总与实际脱敏请求/响应；跨轮追加、终止失败去重及恢复持续提供完整绝对路径链接。
+- 修正固定填写的终止失败 HTTP 200；区分客户端状态、异步状态和服务暴露的上游证据，并解释旧报告。
+- 公开草稿继续排除私密输入、素材链接和原始 ID；报告写入失败保留业务结果，不改变重试或模型切换。
+- 验证范围：Windows 原生自动测试全量 122 项通过，后续修改对应的 47 项回归通过；WorkBuddy 5.7.6 界面验收尚未完成，Claude Code/Codex 本版仅做结构与说明检查。
+
+## 1.2.1 — 2026-10-08
+
+- 凭证配置提示与转交改用 Setup AIHub 2.0.0 的 `setup-api-key` Skill；本机检查契约和最小回退流程保持兼容。
+
+## 1.2.0 — 2026-10-08
+
+- 新增 Windows 原生 PowerShell 入口，自动核对 Node 版本并固定模块路径解析，修复 Codex 默认沙箱内安装包启动时的用户目录 `EPERM`，保留业务 cwd、参数与退出码。
+- 新增无调用方 `config-check --plugin-only` 与声明字段的只读删除投影，沿用真实加载器。
+- 凭证缺项衔接 Setup AIHub，保留独立手填/Secret Book 最小回退、真实 cwd/caller 与业务提交状态。
+- 配置检查与媒体工具、线上鉴权分开；Codex 默认 Windows 沙箱、WorkBuddy 本机配置闭环及 Secret Book 真实表联调通过。Claude Code 安装、发现与自然触发通过，配置闭环未实测。
+- Windows 私有任务/诊断文件在写入前设置并回读 DACL，仅当前用户和 SYSTEM 可访问；使用系统 Windows PowerShell 路径，不依赖媒体工具的 PATH。
+- 修复 Windows 的已退出进程锁恢复与竞争中的文件忙处理；按真实文件名注入保存失败，验证结果未知或已提交的任务不会重复提交。
+- ZIP/DOCX 测试使用固定压缩夹具，权限测试在 Windows 核对真实 DACL；原生 Windows 完整回归 108 项通过。
+
 ## 1.1.3 — 2026-10-06
 
 - Keep the product name Secret Book untranslated in credential choices and guidance, including all six Skills, configuration errors, CLI help and the README. Preserve `secret-book` as the Skill identifier and the existing configuration inspection schema.

@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { realpathSync, statSync } from 'node:fs';
-import { mkdir, open, readFile, readdir, rename, unlink, rmdir, rm } from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, readdir, rename, unlink, rmdir, rm } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
 import type { TaskResponse } from './apiClient.js';
+import { preparePrivateFile } from './privateFile.js';
 
 export type Media = 'image' | 'video' | 'audio' | 'document' | 'understanding';
 export interface SavedFile { url: string; path: string; bytes: number; mime_type: string }
@@ -22,6 +24,8 @@ export interface Job {
 }
 
 const INSTALL_ROOT = fileURLToPath(new URL('../', import.meta.url));
+const windowsFileBusy = (error: unknown): boolean => process.platform === 'win32' &&
+  ['EPERM', 'EACCES', 'EBUSY'].includes((error as NodeJS.ErrnoException).code || '');
 export function assertOutsideInstallation(path: string): void {
   const install = statSync(INSTALL_ROOT);
   // Inspect filesystem identities: path strings alone miss symlinks and case-insensitive aliases.
@@ -58,6 +62,7 @@ export async function writePrivateText(path: string, value: string): Promise<voi
   const temp = `${path}.${randomUUID()}.tmp`;
   const handle = await open(temp, 'wx', 0o600);
   try {
+    await preparePrivateFile(temp);
     await handle.writeFile(value);
     await handle.sync();
     await handle.close();
@@ -101,7 +106,13 @@ export async function withJobLock<T>(path: string, run: () => Promise<T>): Promi
         locked = true;
         break;
       } catch (error) {
-        if (!['EEXIST', 'ENOTEMPTY'].includes((error as NodeJS.ErrnoException).code || '')) throw error;
+        const code = (error as NodeJS.ErrnoException).code;
+        if (process.platform === 'win32' && code === 'EPERM') {
+          // Windows reports an existing destination directory as EPERM. Only
+          // treat that concrete case as contention; preserve other ACL errors.
+          try { if (!(await lstat(lockPath)).isDirectory()) throw error; }
+          catch (probe) { if ((probe as NodeJS.ErrnoException).code === 'ENOENT') continue; throw probe; }
+        } else if (!['EEXIST', 'ENOTEMPTY'].includes(code || '')) throw error;
         let tokens: string[];
         try { tokens = await readdir(lockPath); }
         catch (e) { if ((e as NodeJS.ErrnoException).code === 'ENOENT') continue; throw e; }
@@ -110,14 +121,27 @@ export async function withJobLock<T>(path: string, run: () => Promise<T>): Promi
         if (staleToken) {
           let pid: number;
           try { pid = (JSON.parse(await readFile(join(lockPath, staleToken), 'utf8')) as { pid: number }).pid; }
-          catch (e) { if ((e as NodeJS.ErrnoException).code === 'ENOENT') continue; throw e; }
+          catch (e) {
+            if ((e as NodeJS.ErrnoException).code === 'ENOENT') continue;
+            // Another recoverer can have this exact token open/delete-pending.
+            // A denied read never authorizes deleting an unverified owner.
+            if (windowsFileBusy(e)) { await delay(10); continue; }
+            throw e;
+          }
           if (!Number.isSafeInteger(pid) || pid <= 0) throw new Error('Invalid task lock owner.');
           try { process.kill(pid, 0); throw new Error(`Task record is in use by process ${pid}.`); }
           catch (probe) { if ((probe as NodeJS.ErrnoException).code !== 'ESRCH') throw probe; }
           // Delete this exact old token, never a newly acquired owner's token at the same path.
-          await unlink(join(lockPath, staleToken)).catch((e: NodeJS.ErrnoException) => { if (e.code !== 'ENOENT') throw e; });
+          try { await unlink(join(lockPath, staleToken)); }
+          catch (e) {
+            if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+              if (windowsFileBusy(e)) { await delay(10); continue; }
+              throw e;
+            }
+          }
         }
-        await rmdir(lockPath).catch((e: NodeJS.ErrnoException) => {
+        await rmdir(lockPath).catch(async (e: NodeJS.ErrnoException) => {
+          if (windowsFileBusy(e)) { await delay(10); return; }
           if (!['ENOENT', 'ENOTEMPTY', 'EEXIST'].includes(e.code || '')) throw e;
         });
       }

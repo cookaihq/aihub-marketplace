@@ -6,6 +6,7 @@ import { credentialId, sanitized, type LoadedConfig } from './config.js';
 import { selectionPlan, type Candidate, type SelectionPlan } from './selection.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord } from './state.js';
 import { generate, resume, understand, nativeMusic, failureInfo, TaskPersistenceError } from './workflow.js';
+import { bindDiagnosticRecord } from './diagnostics.js';
 
 interface Attempt {
   index: number; model: string; submitted: boolean;
@@ -99,6 +100,7 @@ export async function continueRun(cfg: LoadedConfig, recordInput: string, waitSe
   assertOutsideInstallation(record);
   return withJobLock(record, async () => {
     const run = await readRun(cfg, record);
+    await bindDiagnosticRecord(cfg, record, run.plan.request, true);
     const expectedToken = (index: number) => hash({ plan: run.plan_hash, index, candidate: run.plan.candidates[index] });
     if (run.confirmation && (run.confirmation.index !== run.cursor || run.confirmation.token !== expectedToken(run.cursor) ||
       run.confirmation.model !== run.plan.candidates[run.cursor]?.model ||

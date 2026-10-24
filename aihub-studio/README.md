@@ -1,6 +1,10 @@
-# AIhub Studio Plugin 1.1.3
+# AIhub Studio Plugin 1.3.0
 
-让 Codex 或 WorkBuddy 通过 AIhub 帮你生成和编辑图片、制作视频与音频、理解素材内容，或把 PDF 转成可编辑文档。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
+当前版本为 1.3.0。本版为六个 Skill 增加首错自动本地汇总；凭证配置继续使用 Setup AIHub 2.0.0 内的 `setup-api-key`。
+
+本版错误报告已通过 Windows 原生合成请求与恢复测试。本版在 WorkBuddy 中的界面验收尚未完成；Claude Code、Codex 本版仅核对结构和说明，未做宿主实测。下文的历史宿主结果保留各自版本范围。
+
+让 Claude Code、Codex 或 WorkBuddy 通过 AIhub 帮你生成和编辑图片、制作视频与音频、理解素材内容，或把 PDF 转成可编辑文档。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
 
 ## 默认使用与提醒
 
@@ -39,16 +43,25 @@
 
 ## 开始前准备
 
-- **Agent：**本版适配 Codex 与 WorkBuddy，Claude Code 适配尚未完成。
+- **Agent：**本版提供 Claude Code、Codex 与 WorkBuddy 的完整 Plugin 入口；各宿主的实际验证范围见下文。
 - **账号：**只需配置 `AIHUB_API_KEY`（调用服务的密钥），服务地址已有内置默认值。模型访问权限和额度由账号决定。
 - **运行工具：**添加插件市场需要 Git；运行任务需要 Node.js 18 或更新版本，以及 FFmpeg 中用于检查媒体文件的 `ffprobe`。可以让 Agent 检查并指导安装；Plugin 本身不会自动安装系统工具或本机模型，也不需要另行启动 MCP 服务。
+- **Windows 文件保护：**保存私有任务、诊断或检查记录时需要系统自带的 Windows PowerShell 5.1 和支持访问权限的文件系统。程序在写入内容前限制为当前用户与 SYSTEM 可访问；无法设置或回读权限时停止保存并报告原因。只读配置检查不要求 FFmpeg 或这一步保存能力。
 - **输入素材：**需要参考图、录音、视频或 PDF 时，把文件放在 Agent 能访问的位置，或提供服务能访问的链接。本地上传的单个文件须非空且不超过 20 MiB；更大的素材需要所选模型支持的远程链接。
 
-**当前验证范围：**历史版本在 macOS 上直接运行共用程序，已完成部分图片生成、语音、转写、音乐、图片理解和 PDF 转换请求。Codex 与 WorkBuddy 从安装到 Skill 调用的完整流程尚未验收；Seedance 2.5、音画同步与数字人、Gemini 原生音乐的完整使用验证也未完成。Linux、Windows 原生环境和 WSL 的完整流程尚未验证。
+**历史 1.2.0 验证范围：**Windows 原生已通过三宿主完整 Plugin 安装与 Skill 发现；Codex 默认沙箱及 WorkBuddy 已通过凭证缺项转交、手填、恢复与最小回退，Claude Code 已通过自然请求触发，配置闭环未实测。Secret Book 2.5.2 真实表配置、恢复与清理已通过。这些结果只覆盖配置能力，不代表新的 `setup-api-key` 转交已完成宿主验收。历史版本在 macOS 上直接运行共用程序，已完成部分图片生成、语音、转写、音乐、图片理解和 PDF 转换请求；Seedance 2.5、音画同步与数字人、Gemini 原生音乐，以及三宿主中的完整媒体业务仍需各自验收。Linux、WSL 与本版 macOS 流程尚未验证。
 
 ## 让 Agent 帮你安装
 
 AIhub 通过 CNB 与 GitHub 来源分发。请按当前使用的 Agent 选择对应的安装说明。
+
+### Claude Code：通过原生 Plugin 管理安装
+
+复制下面这段话到 Claude Code：
+
+```text
+请在 Claude Code 中安装完整的 AIhub Studio Plugin（aihub-studio@aihub-marketplace）：优先用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，CNB 网络故障时改用 https://github.com/cookaihq/aihub-marketplace.git，保持同一 Plugin 和版本。先阅读仓库 README 和 aihub-studio/README.md，使用 Claude Code 的原生 Plugin 与 Marketplace 管理入口添加或复用 aihub-marketplace，再安装 aihub-studio，保留已有设置。分别报告市场添加、Plugin 安装、Skill 发现与调用的结果；如需新会话，请指导我操作。
+```
 
 ### Codex：通过原生 Plugin 管理安装
 
@@ -86,6 +99,8 @@ WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套�
 
 ## 完成首次配置
 
+现在可通过统一入口 **setup-api-key**（属于 setup-aihub Plugin）管理密钥；配置已经可读的业务仍直接执行。可以说“请用 setup-api-key 检查我这个项目的 AIhub 密钥”，无需提供英文 Plugin 名或字段名。Setup 不可用时保留本节的最小手填／Secret Book 流程；[随包衔接说明](references/credential-setup.md)给出完整安装请求。共享检查与删除预览契约保持兼容；新的 Skill 入口配合 Setup AIHub 2.0.0 或更新的兼容版本使用。
+
 首次配置、缺少密钥或需要修复配置时，Agent 会提供两种方式：**自行填写本机文件 / 从 Secret Book 选择凭证**。已经明确选择过时会沿用。仅说“继续用 AIhub”、尚未选择配置方式时，Agent 会先展示这两个选项，再展开所选方式的步骤。六个 Skill 默认共用一套设置，需要不同账号时再单独配置。
 
 只需要 `AIHUB_API_KEY`。服务默认使用 `https://api.aihubmax.com`，无需填写服务地址；从 Secret Book 取用时也只选择这个 Key。
@@ -96,7 +111,7 @@ WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套�
 请帮我配置 AIhub 的 AIHUB_API_KEY，沿用已有选择，或让我选择自行填写本机文件 / 从 Secret Book 选择凭证。首次新增使用个人全局配置，已有错误则修复实际生效的原文件；选择 Secret Book 后直接按它的流程配置。告诉我写入路径和实际来源，隐藏密钥，只做本机检查。
 ```
 
-- **选择 Secret Book：**Agent 直接按它的流程选择凭证、确认目标文件并保存。仅在发现未安装、无法调用或版本不兼容时提示并协助处理，无需先向你确认版本，也不要求每次升级到最新版。首次新增默认建议 `~/.config/aihub-studio/.env`；已有错误写回实际来源。Secret Book 2.4.0 起支持 Windows 原生环境，配置保存也支持 macOS / Linux。
+- **选择 Secret Book：**Agent 按它的凭证使用者流程选择凭证、确认目标文件并保存。首次新增默认建议 `~/.config/aihub-studio/.env`；已有错误写回实际来源。未安装时提供安装并继续、手填或暂缓；未加载、无连接与不兼容分别处理。有实际业务 Skill 的本机接入基线为 2.5.0，共享空 caller 需要 2.5.1 或更新版本；2.5.2 的 Windows 真实表配置、恢复与清理已通过，不强制升级到最新版。
 - **选择自行填写文件：**首次新增使用已选的**个人全局配置**，默认 `~/.config/aihub-studio/.env`。Agent 告诉你完整路径，你在本机填写并保存。**AIhub 自动读取上述全局目录**，六个 Skill 跨项目共用；已明确只供某个项目或 Skill 使用时沿用该位置。
 
 配置保存后，AIhub 直接读取本机文件，正常使用无需 Secret Book 查表。表中轮换密钥不会自动修改本机配置；需要更新时让 Agent 再次核对和保存。需要只在项目使用，可以让 Agent 检查项目 `.env.local` 的忽略规则与覆盖关系，再确认迁移。
@@ -127,6 +142,8 @@ WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套�
 **密钥和服务地址分别取首个非空值。** 子目录不存在、目录为空、文件缺失或某项为空时，继续向下查找；Plugin 目录存在或已填好一项，也不阻止其他缺项读取第 10 层。文件存在但无法读取时会报错。所有来源都没有密钥就报错，没有服务地址则使用上述默认地址。两项可能来自不同文件，修改账号或地址后应检查是否匹配。
 
 “工作文件夹”是 **Agent 实际执行任务的文件夹**，不是 Plugin 安装目录。程序不向父文件夹搜索项目配置。个人全局配置自动读取，但环境变量和当前工作文件夹中的配置仍优先；全局文件不随工作文件夹切换而改变。
+
+没有具体业务 Skill 时，配置检查可只查看工作文件夹的 `.env.local/.env` 与 Plugin 共享全局 `.env.local/.env`，不假借某个 Skill 或读取其专用层。这不代表六个 Skill 已全部验证。清除选定字段前可以只读预览清除后是否回退到其他来源；不会为预览临时修改文件。本机凭证检查无需 ffprobe，也不发线上鉴权请求。
 
 | 实际运行环境 | Plugin 共用全局配置文件 | 普通 Skill 回退文件，以图片为例 |
 | --- | --- | --- |
@@ -206,11 +223,19 @@ AIHUB_RESULT_CHECK_MODELS=gemini-3.8-flash
 
 AIhub 检查需要上传实际产物，单个产物沿用 20 MiB 限制，超过时需宿主直接检查。文档正文提取不能证明排版、嵌入图片或公式完全保真，Agent 会说明实际检查范围。操作和限制详见 [结果检查说明](references/result-checks.md)。
 
-## 上游连续错误时的反馈
+## 请求出错后的本地报告
 
-同一任务默认累计 3 次独立上游错误时，Agent 会提供反馈入口；最终失败时即使不足 3 次也会提示。重复查询同一个失败任务不重复计数。鉴权、额度或权限问题会立即给出建议，后续成功的任务仍正常交付。
+第一次接口请求失败、无效响应或远端任务执行失败时，就会在任务文件夹保存一份可阅读的 `error-report.md`。报告包含用户原始需求、实际提示词与参数、脱敏请求/响应、可观察的 HTTP 状态、任务状态、耗时和已有重试、模型切换情况。后续错误更新同一份文件；反复查询同一个失败任务不会增加错误次数。
 
-程序在任务文件夹保存公开 Issue 草稿和供服务管理员私下定位的诊断报告，不会自动发送。公开草稿排除密钥、原始任务/请求 ID、提示词和素材链接。Plugin 问题可提交 [仓库 Issue](https://github.com/cookaihq/aihub-marketplace/issues/new)，服务问题联系当前 AIhub 管理员。可选 `AIHUB_ERROR_REPORT_THRESHOLD` 修改正整数阈值，`AIHUB_SUPPORT_URL` 指定服务的支持入口。
+每次失败反馈、继续查询、恢复成功及最终总结都会提供完整绝对路径的可点击链接，包括 Markdown 报告、`diagnostic.json`、`issue-draft.md` 和已有请求上下文。你可以说：
+
+> 打开这次任务的本地错误汇总，解释实际请求、失败阶段和仍未知的信息。继续查询已有任务，不要重新提交。
+
+HTTP 状态是客户端实际收到的 AIHub 响应，不代表供应商 HTTP 状态。远端任务可以在 HTTP 200 中报告失败；`service_unavailable` 本身不能证明上游宕机。服务没有返回的上游状态、路由和内部重试会标为未知，可让管理员按本地任务/请求 ID 查后台日志。旧诊断中固定填写的终止失败 HTTP 200 会标记为未经采集的历史值。
+
+本地报告含私密提示词与素材定位信息，仅保存在本机；API Key、Authorization、Cookie 和链接签名会脱敏，二进制或超长内容明确标注省略。公开 Issue 草稿继续排除原始需求、素材链接和定位 ID。程序不会自动发送报告或创建 Issue，也不会为报告重发请求或改变模型切换策略。保存失败时保留原任务结果，并说明报告未完整保存。
+
+`AIHUB_ERROR_REPORT_THRESHOLD` 保留旧配置兼容，不再延迟首次报告和提醒；`AIHUB_SUPPORT_URL` 保留服务支持入口。详细说明见[本地错误报告](references/error-reports.md)。
 
 ## 第一次使用
 

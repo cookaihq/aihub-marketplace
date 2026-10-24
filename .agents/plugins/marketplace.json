@@ -1,17 +1,43 @@
 {
   "name": "aihub-marketplace",
-  "interface": { "displayName": "AIhub Marketplace" },
+  "interface": {
+    "displayName": "AIhub Marketplace"
+  },
   "plugins": [
     {
       "name": "aihub-studio",
-      "source": { "source": "local", "path": "./aihub-studio" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "source": {
+        "source": "local",
+        "path": "./aihub-studio"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
       "category": "Productivity"
     },
     {
       "name": "tikin-social",
-      "source": { "source": "local", "path": "./tikin-social" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "source": {
+        "source": "local",
+        "path": "./tikin-social"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "setup-aihub",
+      "source": {
+        "source": "local",
+        "path": "./setup-aihub"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
       "category": "Productivity"
     }
   ]

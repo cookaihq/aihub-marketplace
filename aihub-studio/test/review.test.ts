@@ -4,11 +4,12 @@ import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, writeFile, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { AddressInfo } from 'node:net';
 import { loadConfig, inspectConfig } from '../src/config.js';
+import { assertPrivateFile } from './private-permissions.js';
 const exec = promisify(execFile);
 const generator = 'gpt-image-2.5-flare';
 const checker = 'gemini-3.8-flash';
@@ -93,7 +94,7 @@ test('default host review preserves Chinese requirements, binds real files and r
     assert.equal(done.status, 'delivered'); assert.equal(review.status, 'pending');
     assert.equal(review.original_request, '生成纯红色正方形，不要文字');
     assert.equal(review.artifacts[0].measurements.width, 16); assert.equal(review.artifacts[0].sha256.length, 64);
-    assert.equal((await stat(review.review_record)).mode & 0o777, 0o600);
+    await assertPrivateFile(review.review_record);
     const checked = await submit(f, done, reportFor(review));
     assert.equal(checked.status, 'matched'); notice(checked);
     const again = await f.call({}, 'continue', '--record', done.run_record);
@@ -176,7 +177,8 @@ test('uncertain review submission remains unavailable with reminder and private 
     for (const secret of ['fixture-review-secret', 'signature=hidden', 'private-review-request', 'private-generation-task', 'original prompt', f.dir]) assert.ok(!draft.includes(secret));
     assert.ok(privateReport.includes('private-review-request')); assert.ok(!privateReport.includes('fixture-review-secret'));
     const again = await f.call(cfg, 'review', '--record', done.run_record);
-    assert.equal(again.feedback.show_notice, false); notice(again);
+    assert.equal(again.feedback.show_notice, true);
+    assert.equal(again.feedback.error_report, done.feedback.error_report); notice(again);
     assert.equal((await f.call(cfg, 'review', '--record', done.run_record, '--recheck')).status, 'recovery_failed');
     assert.equal(f.state.reviewPosts, 1); assert.equal(f.state.generationPosts, 1);
   } finally { await f.close(); }

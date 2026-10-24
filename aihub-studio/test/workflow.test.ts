@@ -12,6 +12,7 @@ import { readJob, writeJob, withJobLock } from '../src/state.js';
 import { modelEntry, validateGeneration } from '../src/models.js';
 import { credentialId } from '../src/config.js';
 import { result } from '../src/workflow.js';
+import { assertPrivateFile } from './private-permissions.js';
 
 const exec = promisify(execFile);
 const cli = resolve('scripts/aihub.mjs');
@@ -61,7 +62,7 @@ test('new CLI persists a task and resumes it through partial download to verifie
     const start = await run(dir, base, 'generate', '--skill', 'aihub-image', '--media', 'image', '--model', 'gpt-image-2', '--params-file', params, '--output-dir', dir);
     assert.equal(start.json.status, 'submitted'); assert.equal(start.json.task_id, 'test-task'); assert.equal(posts, 1);
     const record = start.json.record as string;
-    assert.equal((await stat(record)).mode & 0o777, 0o600);
+    await assertPrivateFile(record);
     assert.ok(!(await readFile(record, 'utf8')).includes(key));
     const failedQuery = await run(dir, base, 'resume', '--skill', 'aihub-image', '--record', record, '--wait-seconds', '0');
     assert.equal(failedQuery.json.status, 'query_failed'); assert.equal(failedQuery.json.task_id, 'test-task');
