@@ -2,7 +2,7 @@
 
 维护源是 [data/models.json](../data/models.json)，[manifest](../data/models.manifest.json) 由 `catalog-build` 生成。格式版本为 1，目录版本为递增正整数；每次改正文递增 `catalog_version`，再用 `catalog-build --check` 校验。程序版本与目录版本独立。
 
-固定远端为 `https://raw.githubusercontent.com/cookaihq/aihub-marketplace/main/setup-aihub/skills/setup-agent-model/data/` 下同名两个文件。只有公开 JSON 数据可刷新，不接受可执行脚本、地址覆盖、客户端名单或凭证。未发布时远端不存在会使用包内基线。
+固定远端为 `https://raw.githubusercontent.com/cookaihq/aihub-marketplace/main/setup-aihub/skills/setup-agent-model/data/` 下同名两个文件。只有公开 JSON 数据可刷新，不接受可执行脚本、地址覆盖、客户端名单或凭证。远端不可达或数据校验失败时，使用有效缓存或包内基线。
 
 每个条目必含 `id/name/description/status/routes`，可选 `key_groups/sources`。route 必含 `protocol/capabilities`，协议枚举 `openai-chat-completions/openai-responses/anthropic-messages/gemini-native`。capabilities 必含 `tool_calling/image_input/reasoning_efforts`，可选正整数 `context_window/max_output_tokens`；任何未核实能力为 `null`。两项布尔能力不得写字符串；reasoning_efforts 若非 null 必须是非空、无重复字符串数组。弃用条目 status 为 deprecated，保留旧配置，不作为新选择。
 

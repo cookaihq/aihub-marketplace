@@ -2,17 +2,17 @@
 
 通过对话管理 **Hermes、WorkBuddy、ChatGPT 桌面客户端、Codex CLI、Claude 桌面客户端和 Claude Code CLI** 的 AIhub 模型配置。先看已有配置，再选择修改哪项或新建；模型从目录选，Key 可在本机填写或从 Secret Book 取用。默认模型由你单独决定。
 
-本目录属于 **Setup AIHub 2.1.0 开发候选**，需要安装完整 Plugin；远端尚未发布时，安装请求不能取得此版本。目标系统为 Windows 原生和 macOS；Linux/WSL 暂不在本 Skill 范围内。
+本目录属于 **Setup AIHub 2.1.0**，需要安装完整 Plugin。目标系统为 Windows 原生和 macOS；Linux/WSL 暂不在本 Skill 范围内。
 
 当前已实现六类原生文件的无值检查、保存和恢复，以及 Secret Book 公开契约。Windows 合成测试通过不等于六客户端实机通过；macOS 尚未验证。Claude 桌面首次配置仍需其原生界面创建条目，未识别的库格式会停止写入。ChatGPT/Codex 需要的 GPT Responses 路由尚无精确型号证据，默认不会盲写；Claude-Max 组只用于 Claude Code CLI。
 
-| Windows 原生客户端 | 2.1.0 候选的实际验证范围 |
+| Windows 原生客户端 | 2.1.0 的实际验证范围 |
 | --- | --- |
-| Codex CLI 0.164.0 | 隔离配置下严格解析原生 Key/模型、完整 Plugin 安装及新 Skill 发现通过；会话配置闭环、默认沙箱执行与真实模型调用待验 |
+| Codex CLI 0.164.0 | 隔离配置下严格解析原生 Key/模型、完整 Plugin 安装及新 Skill 发现通过；本机合成 API 会话实际加载 Skill 并读取原生 Key/模型，检查脚本被默认只读策略拒绝执行；保存/恢复及真实模型调用待验 |
 | Claude Code CLI 2.1.293 | 本机合成 API 下实际加载新 Skill、读取原生 Key/模型并执行本机检查脚本通过；自然语言选择、保存确认/恢复及真实服务调用待验 |
 | Hermes 0.22.2（本机源码 d923a5eb487a） | 原生 Plugin Doctor/validate 通过；本机合成 API 下实际加载新 Skill、读取原生 Key/模型并执行本机检查脚本通过；保存确认/恢复及真实服务调用待验 |
 | WorkBuddy 5.8.3 / ChatGPT 桌面 26.1016.8622.0 | 本次桌面自动化连接不可用，界面发现/调用/加载尚未验证 |
-| Claude 桌面 | 未定位到可运行安装，本地 Code 和原生配置库尚待实机验证 |
+| Claude 桌面 | 本版暂缓实机验收，本地 Code 和原生配置库尚未验证 |
 
 ## 让 Agent 帮你安装
 

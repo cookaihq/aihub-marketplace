@@ -2,14 +2,14 @@
 
 通过对话管理业务服务密钥和客户端模型接入。`setup-api-key` 检查、配置、更换或清除 **AIhub 创作与文档服务**、**tikin 社交媒体数据服务**的本机接口密钥。你可以自行在本机填写，也可以选择 Secret Book；配置仍由原业务 Plugin 读取，Setup 不建立集中 Key 库。
 
-当前版本为 **2.1.0 开发候选**，包含两个独立入口：
+当前版本为 **2.1.0**，包含两个独立入口：
 
 | Skill | 用途 |
 | --- | --- |
 | `setup-aihub:setup-api-key` | AIhub Studio / tikin Social 的业务密钥，沿用本页流程 |
 | [setup-aihub:setup-agent-model](skills/setup-agent-model/README.md) | Hermes、WorkBuddy、ChatGPT 桌面客户端、Codex CLI、Claude 桌面客户端、Claude Code CLI 的原生模型与 Key 配置 |
 
-模型配置需要完整 2.1.0 Plugin，Secret Book 原生写入需要 2.7.0；尚未发布时不可从旧远端版本取得。六类文件写入与公开契约已实现，客户端验证与技术限制见对应 README；不能用下面 setup-api-key 的历史验收代替新 Skill 的六宿主验收。旧的 setup-aihub Skill 调用名不再提供。
+模型配置需要完整 2.1.0 或更新版本的 Plugin，Secret Book 原生写入需要 2.7.0 或更新版本。六类文件写入与公开契约已实现，客户端验证与技术限制见对应 README；不能用下面 setup-api-key 的历史验收代替新 Skill 的六宿主验收。旧的 setup-aihub Skill 调用名不再提供。
 
 以下历史验证、配置位置和使用流程针对 **setup-api-key**。模型配置的六宿主、两系统、原生字段与恢复步骤见上方独立入口。
 
@@ -33,7 +33,7 @@
 
 ## 让 Agent 帮你安装
 
-将下面一段复制到你使用的 Claude Code、Codex 或 WorkBuddy，让 Agent 核对来源和版本后安装。新入口需要 2.0.0 或更新版本；若仍加载旧版，先让 Agent 核对并更新实际安装。
+将下面一段复制到你使用的 Claude Code、Codex 或 WorkBuddy，让 Agent 核对来源和版本后安装。setup-api-key 需要 2.0.0 或更新版本，setup-agent-model 需要 2.1.0 或更新版本；若仍加载旧版，先让 Agent 核对并更新实际安装。
 
 > 请安装完整的 setup-aihub Plugin：优先从 https://github.com/cookaihq/aihub-marketplace.git 的 setup-aihub/ 获取，网络故障时同版本回退到 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。保留已有设置，并按当前宿主的原生 Plugin 入口安装，告诉我实际来源、版本以及是否能发现和调用本次所需的 setup-api-key 或 setup-agent-model。
 

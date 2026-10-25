@@ -15,6 +15,6 @@ Hermes 原生入口来源：[Plugin 开发文档](https://hermes-agent.nousresea
 
 如果某版本的桌面入口不可用，保留进度并报告具体缺项；不切换到另一客户端假称完成。Claude 桌面当前安装/原生配置库格式仍需实机证据；首次配置需先在其原生界面创建条目。没有可靠 `_meta.json` schema 时不伪造配置库选择。
 
-完整 Plugin 来源：<https://github.com/cookaihq/aihub-marketplace.git> 的 `setup-aihub/`；网络故障时同版本回退 <https://cnb.cool/zhidateam/tannt/aihub-marketplace.git>。核对版本是否已发布，开发候选不得冒充远端可安装版本。支持范围见 [README](../README.md)。
+完整 Plugin 来源：<https://github.com/cookaihq/aihub-marketplace.git> 的 `setup-aihub/`；网络故障时同版本回退 <https://cnb.cool/zhidateam/tannt/aihub-marketplace.git>。核对实际安装版本及当前会话加载来源。支持范围见 [README](../README.md)。
 
 程序更新通过对应宿主原生 Plugin 入口；没有已核实更新接口时由原生界面完成。不会运行独立 Skill 自更新脚本。Hermes 更新整个原生 Plugin；ChatGPT 和 Claude 桌面分别检查，不由 CLI 推断。安装、发现、调用、实际来源、模型请求分别验收。

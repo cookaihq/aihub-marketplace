@@ -2,7 +2,7 @@
 
 这个市场提供 AIhub 创作与文档处理、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
 
-当前版本为 Setup AIHub 2.1.0（开发候选）、AIhub Studio 1.3.0 和 tikin Social 1.3.0。Setup 包含 `setup-api-key` 与新增的 `setup-agent-model`，安装的 Plugin 仍叫 `setup-aihub`。新入口与历史版本的验证范围见 [Setup 使用说明](setup-aihub/README.md)。
+当前版本为 Setup AIHub 2.1.0、AIhub Studio 1.3.0 和 tikin Social 1.3.0。Setup 包含 `setup-api-key` 与新增的 `setup-agent-model`，安装的 Plugin 仍叫 `setup-aihub`。新入口与历史版本的验证范围见 [Setup 使用说明](setup-aihub/README.md)。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
