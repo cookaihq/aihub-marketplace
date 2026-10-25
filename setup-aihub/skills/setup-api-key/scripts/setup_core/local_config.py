@@ -201,6 +201,15 @@ def edit(plan):
     git_safe(path)
     raw = _content(path)
     content = transform(raw, plan["fields"], plan["action"])
+    return replace_content(expected, content)
+
+
+def replace_content(expected, content):
+    """Atomically replace confirmed bytes; shared by dotenv and native adapters."""
+    path = checked_path(expected["path"])
+    same_snapshot(expected)
+    git_safe(path)
+    raw = _content(path)
     prepare_parents(path)
     same_snapshot(expected, allow_new_parents=True)
     if path.exists() and raw == content:

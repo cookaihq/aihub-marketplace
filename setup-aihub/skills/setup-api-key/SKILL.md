@@ -1,8 +1,8 @@
 ---
 name: setup-api-key
 metadata:
-  version: "2.0.0"
-description: v2.0.0｜为 AIhub 创作与文档服务、tikin 社交媒体数据服务检查、配置、更换、修复或清除本机接口密钥。支持只提供名称开始、中文配置意图及业务缺项后的继续；也处理英文 credential setup 请求。不管理宿主模型、登录 Key 或远端开户充值。
+  version: "2.1.0"
+description: v2.1.0｜为 AIhub 创作与文档服务、tikin 社交媒体数据服务检查、配置、更换、修复或清除本机接口密钥。支持只提供名称开始、中文配置意图及业务缺项后的继续；也处理英文 credential setup 请求。不管理宿主模型、登录 Key 或远端开户充值。
 compatibility: Claude Code, Codex and WorkBuddy; uv >= 0.8, Python 3.13; target Plugin configuration runtime required.
 ---
 
@@ -46,4 +46,4 @@ compatibility: Claude Code, Codex and WorkBuddy; uv >= 0.8, Python 3.13; target 
 
 返回原业务任务前检查其提交状态：未提交且内容、原授权仍有效才交回执行；已提交先查询原结果；状态未知先核对。helper 不提交业务，配置修复或恢复均不授权重新发送请求。必要时提供“请用 setup-api-key 继续任务〈编号〉”及实际刷新/新会话步骤。
 
-本 Plugin 按当前宿主的完整 Plugin 渠道更新，不运行独立 Skill 更新脚本。准备账号、创建/撤销远端 Key、充值、模型路由和宿主模型设置属于其他任务；不要将它们混入凭证流程。
+本 Plugin 按当前宿主的完整 Plugin 渠道更新，不运行独立 Skill 更新脚本。准备账号、创建/撤销远端 Key、充值、模型路由属于其他任务；客户端 AIhub 模型配置转交同包 [setup-agent-model](../setup-agent-model/SKILL.md)，不要混入本流程。

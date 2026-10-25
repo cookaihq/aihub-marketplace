@@ -1,8 +1,17 @@
 # Setup AIHub
 
-通过对话检查、配置、更换或清除 **AIhub 创作与文档服务**、**tikin 社交媒体数据服务**的本机接口密钥。你可以自行在本机填写，也可以选择 Secret Book；配置仍由原业务 Plugin 读取，Setup 不建立集中 Key 库。
+通过对话管理业务服务密钥和客户端模型接入。`setup-api-key` 检查、配置、更换或清除 **AIhub 创作与文档服务**、**tikin 社交媒体数据服务**的本机接口密钥。你可以自行在本机填写，也可以选择 Secret Book；配置仍由原业务 Plugin 读取，Setup 不建立集中 Key 库。
 
-当前版本为 **2.0.0**，唯一 Skill 改名为 **setup-api-key**，完整入口为 `setup-aihub:setup-api-key`。安装的 Plugin 仍叫 `setup-aihub`；更新后用新入口继续既有任务，业务密钥位置不变。旧的 `setup-aihub` Skill 调用名不再提供。
+当前版本为 **2.1.0 开发候选**，包含两个独立入口：
+
+| Skill | 用途 |
+| --- | --- |
+| `setup-aihub:setup-api-key` | AIhub Studio / tikin Social 的业务密钥，沿用本页流程 |
+| [setup-aihub:setup-agent-model](skills/setup-agent-model/README.md) | Hermes、WorkBuddy、ChatGPT 桌面客户端、Codex CLI、Claude 桌面客户端、Claude Code CLI 的原生模型与 Key 配置 |
+
+模型配置需要完整 2.1.0 Plugin，Secret Book 原生写入需要 2.7.0；尚未发布时不可从旧远端版本取得。六类文件写入与公开契约已实现，客户端验证与技术限制见对应 README；不能用下面 setup-api-key 的历史验收代替新 Skill 的六宿主验收。旧的 setup-aihub Skill 调用名不再提供。
+
+以下历史验证、配置位置和使用流程针对 **setup-api-key**。模型配置的六宿主、两系统、原生字段与恢复步骤见上方独立入口。
 
 **2.0.0 的 Windows 原生验证：**三宿主均已通过完整 Plugin 安装和文件核对，当前调用范围如下；尚未完成三宿主全部验收。
 
@@ -26,7 +35,7 @@
 
 将下面一段复制到你使用的 Claude Code、Codex 或 WorkBuddy，让 Agent 核对来源和版本后安装。新入口需要 2.0.0 或更新版本；若仍加载旧版，先让 Agent 核对并更新实际安装。
 
-> 请安装完整的 setup-aihub Plugin：优先从 https://github.com/cookaihq/aihub-marketplace.git 的 setup-aihub/ 获取，网络故障时同版本回退到 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。保留已有设置，并按当前宿主的原生 Plugin 入口安装，告诉我实际来源、版本以及是否能发现和调用 setup-api-key。
+> 请安装完整的 setup-aihub Plugin：优先从 https://github.com/cookaihq/aihub-marketplace.git 的 setup-aihub/ 获取，网络故障时同版本回退到 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。保留已有设置，并按当前宿主的原生 Plugin 入口安装，告诉我实际来源、版本以及是否能发现和调用本次所需的 setup-api-key 或 setup-agent-model。
 
 Claude Code 使用实际技能选择器，可能显示完整的 `/setup-aihub:setup-api-key`；Codex 输入 `$` 选择对应入口，完整 Plugin 入口为 `setup-aihub:setup-api-key`；WorkBuddy 在当前会话点名或选择 `setup-api-key`，具体控件以客户端为准。都不要求额外参数。WorkBuddy 安装完整套件使用“专家·技能·连接器 → 技能 → 套件 → 市场行右侧圆形＋”；需要手工操作时，Agent 会按[同包指引](skills/setup-api-key/references/hosts.md#workbuddy-原生套件)展示截图与步骤。
 
@@ -108,7 +117,7 @@ Agent 先只读预览，再按你确认的文件和字段清除；同一字段�
 | 提示文件变了或结果不明 | “先核对现在的文件和来源，再决定下一步，保留别人的修改。” |
 | Secret Book 不可用 | “保留原配置任务，说明缺少的安装或角色能力，让我选择手填或暂缓。” |
 | WorkBuddy 找不到入口 | “请展示同包截图，核对当前页面和版本，指导我走原生套件入口。” |
-| 想配置宿主模型或登录 Key | “说明这是否属于 Setup 当前的业务 Plugin 凭证范围。” |
+| 想配置客户端的 AIhub 模型 | “请用 setup-agent-model，先列出现有原生配置。” |
 
 更新完整 Plugin 时使用当前宿主的 Plugin 管理入口；可说“检查 Setup AIHub 的版本，告诉我可以取得哪个版本，等我决定后再更新”。WorkBuddy 使用原生套件界面；未核实的更新 API 不会调用。本 Plugin 不使用独立 Skill 的自动检查更新开关。更新或卸载不搬移业务配置。
 

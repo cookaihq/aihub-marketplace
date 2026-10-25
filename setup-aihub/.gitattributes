@@ -1,0 +1,2 @@
+# Catalog integrity covers exact bytes, including line endings, on every host.
+skills/setup-agent-model/data/*.json text eol=lf

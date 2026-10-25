@@ -1,0 +1,4 @@
+interface:
+  display_name: "Setup Agent Model｜模型配置"
+  short_description: "检查六类客户端的 AIhub 模型与原生密钥配置，支持选择已有配置和恢复任务"
+  default_prompt: "请用 $setup-agent-model 检查并配置我的客户端模型。"

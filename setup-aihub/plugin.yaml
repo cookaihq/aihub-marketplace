@@ -1,0 +1,4 @@
+name: setup-aihub
+version: 2.1.0
+description: Configure AIhub models in native agent clients.
+author: cookaihq

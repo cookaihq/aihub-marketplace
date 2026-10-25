@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "catalog_version": 1,
+  "updated_at": "2026-10-25T00:00:00Z",
+  "models": [
+    {
+      "id": "gpt-6.1-sol",
+      "name": "GPT-6.1 Sol",
+      "description": "OpenAI 系列，AIhub 已登记 Chat Completions；Responses 待核实。",
+      "status": "active",
+      "routes": [
+        {
+          "protocol": "openai-chat-completions",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        }
+      ],
+      "key_groups": [
+        "Codex",
+        "default",
+        "Enterprise",
+        "Official"
+      ],
+      "sources": [
+        "https://api.aihubmax.com/api/pricing"
+      ]
+    },
+    {
+      "id": "gpt-6-astra",
+      "name": "GPT-6 Astra",
+      "description": "OpenAI 系列，AIhub 已登记 Chat Completions；Responses 待核实。",
+      "status": "active",
+      "routes": [
+        {
+          "protocol": "openai-chat-completions",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        }
+      ],
+      "key_groups": [
+        "Codex",
+        "default",
+        "Enterprise",
+        "Official"
+      ],
+      "sources": [
+        "https://api.aihubmax.com/api/pricing"
+      ]
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "name": "Claude Sonnet 5.5",
+      "description": "Claude Sonnet 系列；当前 AIhub 条目仅登记 Claude-Max。",
+      "status": "active",
+      "routes": [
+        {
+          "protocol": "anthropic-messages",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        },
+        {
+          "protocol": "openai-chat-completions",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        }
+      ],
+      "key_groups": [
+        "Claude-Max"
+      ],
+      "sources": [
+        "https://api.aihubmax.com/api/pricing"
+      ]
+    },
+    {
+      "id": "claude-opus-5-5",
+      "name": "Claude Opus 5.5",
+      "description": "Claude Opus 系列；当前 AIhub 条目仅登记 Claude-Max。",
+      "status": "active",
+      "routes": [
+        {
+          "protocol": "anthropic-messages",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        },
+        {
+          "protocol": "openai-chat-completions",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        }
+      ],
+      "key_groups": [
+        "Claude-Max"
+      ],
+      "sources": [
+        "https://api.aihubmax.com/api/pricing"
+      ]
+    },
+    {
+      "id": "claude-fable-5-1",
+      "name": "Claude Fable 5.1",
+      "description": "Claude Fable 系列；当前 AIhub 条目仅登记 Claude-Max。",
+      "status": "active",
+      "routes": [
+        {
+          "protocol": "anthropic-messages",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        },
+        {
+          "protocol": "openai-chat-completions",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        }
+      ],
+      "key_groups": [
+        "Claude-Max"
+      ],
+      "sources": [
+        "https://api.aihubmax.com/api/pricing"
+      ]
+    },
+    {
+      "id": "gemini-4-argon",
+      "name": "Gemini 4 Argon",
+      "description": "Gemini Argon 系列，已登记 Gemini 原生与 Chat Completions。",
+      "status": "active",
+      "routes": [
+        {
+          "protocol": "gemini-native",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        },
+        {
+          "protocol": "openai-chat-completions",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        }
+      ],
+      "key_groups": [
+        "Official",
+        "Enterprise"
+      ],
+      "sources": [
+        "https://api.aihubmax.com/api/pricing"
+      ]
+    },
+    {
+      "id": "gemini-3.8-flash",
+      "name": "Gemini 3.8 Flash",
+      "description": "Gemini Flash 系列，已登记 Gemini 原生与 Chat Completions。",
+      "status": "active",
+      "routes": [
+        {
+          "protocol": "gemini-native",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        },
+        {
+          "protocol": "openai-chat-completions",
+          "capabilities": {
+            "tool_calling": null,
+            "image_input": null,
+            "reasoning_efforts": null
+          }
+        }
+      ],
+      "key_groups": [
+        "Official",
+        "Enterprise"
+      ],
+      "sources": [
+        "https://api.aihubmax.com/api/pricing"
+      ]
+    }
+  ]
+}

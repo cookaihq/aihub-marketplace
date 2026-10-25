@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.0 — 开发候选
+
+- 新增 setup-agent-model：七款模型目录、有限刷新缓存、六类原生配置适配、精确选择、独立默认模型和跨轮恢复。
+- Key 支持本机隐藏输入，或 Secret Book 2.7.0 的公开原生写入契约；配置不发送模型请求。
+- 新增 Hermes 原生 Plugin 注册，共用行为源。Claude 桌面首次建库/格式与 GPT Responses 证据仍有明确限制；完整客户端/操作系统验收以 README 为准。
+- 固定模型目录文件的 LF 换行，避免 Windows Git 检出转换造成目录校验失败。
+
 ## 2.0.0 — 2026-10-08
 
 - 唯一 Skill 改名为 `setup-api-key`，完整入口为 `setup-aihub:setup-api-key`；旧 Skill 名不再提供。Plugin 安装身份仍为 `setup-aihub`。

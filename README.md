@@ -2,13 +2,13 @@
 
 这个市场提供 AIhub 创作与文档处理、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
 
-当前版本为 Setup AIHub 2.0.0、AIhub Studio 1.3.0 和 tikin Social 1.3.0。Setup 的唯一 Skill 改为 `setup-api-key`，安装的 Plugin 仍叫 `setup-aihub`。新入口与历史版本的验证范围见 [Setup 使用说明](setup-aihub/README.md)。
+当前版本为 Setup AIHub 2.1.0（开发候选）、AIhub Studio 1.3.0 和 tikin Social 1.3.0。Setup 包含 `setup-api-key` 与新增的 `setup-agent-model`，安装的 Plugin 仍叫 `setup-aihub`。新入口与历史版本的验证范围见 [Setup 使用说明](setup-aihub/README.md)。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
 | [AIhub Studio](aihub-studio/README.md)（`aihub-studio`） | 图片、视频、音频、音乐、多模态理解、文档处理 | 6 个 `aihub-*` Skill |
 | [tikin Social](tikin-social/README.md)（`tikin-social`） | 社交媒体数据查询、素材下载、账号与评论分析、趋势研究 | 17 个 `tikin-*` Skill |
-| [Setup AIHub](setup-aihub/README.md)（`setup-aihub`） | 检查、配置、更换和清除上述服务的本机密钥，保留实际来源与恢复进度 | `setup-api-key` |
+| [Setup AIHub](setup-aihub/README.md)（`setup-aihub`） | 管理上述业务服务密钥和六类客户端的原生模型配置 | `setup-api-key`、`setup-agent-model` |
 
 仓库提供 Claude Code、Codex 和 WorkBuddy 的市场清单。清单登记不代表所有宿主与操作系统的完整调用都已验证；各 Plugin 的运行工具、配置要求与验证范围见其 README。
 
@@ -67,6 +67,6 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 | 目标 | 版本 | Release |
 |---|---|---|
 | aihub-studio | 1.3.0 | [aihub-studio/v1.3.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv1.3.0) |
-| setup-aihub | 2.0.0 | [setup-aihub/v2.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv2.0.0) |
+| setup-aihub | 2.1.0 | [setup-aihub/v2.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv2.1.0) |
 | tikin-social | 1.3.0 | [tikin-social/v1.3.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv1.3.0) |
 <!-- release-table:end -->
