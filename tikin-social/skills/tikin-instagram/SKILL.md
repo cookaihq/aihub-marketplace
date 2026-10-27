@@ -2,7 +2,7 @@
 name: tikin-instagram
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Work with Instagram URLs and data via tikin — fetch user info and posts, search users/reels/hashtags/music/locations, pull post comments and replies, and hashtag feeds. Use when the user provides an Instagram URL or the task targets Instagram. Covers the Instagram V2 API.
+description: v1.3.0｜通过 Tikin 处理 Instagram 链接与数据，获取用户资料和帖子，搜索用户、Reels、话题标签、音乐和地点，查询评论、回复及标签内容流。用户提供 Instagram 链接或任务针对该平台时使用；覆盖 Instagram V2 接口。
 ---
 
 # Instagram (via tikin)

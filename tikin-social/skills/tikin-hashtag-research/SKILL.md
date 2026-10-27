@@ -2,7 +2,7 @@
 name: tikin-hashtag-research
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Research a hashtag or keyword via tikin — popularity signals, top and recent content, and related hashtags across supported platforms. Use when the user asks about a hashtag, related tags, content ideas, or supplies a supported hashtag URL.
+description: v1.3.0｜通过 Tikin 研究话题标签或关键词，查询受支持平台的热度指标、热门与最新内容及相关标签。适用于话题标签研究、关联标签查询、内容选题，或用户提供受支持的话题标签链接。
 ---
 
 # Hashtag Research

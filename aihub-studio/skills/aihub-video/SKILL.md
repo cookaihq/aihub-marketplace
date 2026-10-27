@@ -2,7 +2,7 @@
 name: aihub-video
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Generate videos through AIhub using Seedance 2.5 text, first-frame image, or multimodal reference inputs. Also handle C1 video lip sync and C2 image-and-audio digital humans. Check task-specific limits, resume existing tasks, and deliver checked video files.
+description: v1.3.0｜通过 AIhub 使用 Seedance 2.5，基于文字、首帧图片或多模态参考素材生成视频；也支持 C1 视频口型同步和 C2 图片加音频数字人。检查各类任务的限制，支持继续已有任务并交付核验后的视频文件。
 compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 

@@ -2,7 +2,7 @@
 name: aihub-audio
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Run AIhub D1 audio and speech workflows for speech-2.8-hd text-to-speech, paraformer-v2 transcription, explicit voice cloning, and resumable task delivery.
+description: v1.3.0｜通过 AIhub D1 处理音频与语音任务，包括 speech-2.8-hd 文本转语音、paraformer-v2 语音转写，以及用户明确要求的声音克隆；支持中断后继续任务并交付结果。
 compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 

@@ -2,7 +2,7 @@
 name: tikin-setup
 metadata:
   version: "1.3.0"
-description: v1.3.0｜安装、更新或修复 tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。Install or maintain tikin; delegate existing credential setup to setup-api-key.
+description: v1.3.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
 ---
 
 # tikin Setup

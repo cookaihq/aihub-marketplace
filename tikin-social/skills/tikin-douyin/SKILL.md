@@ -2,7 +2,7 @@
 name: tikin-douyin
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Work with Douyin (抖音) URLs and data via tikin — fetch videos, user profiles and post lists, video comments, and run video/user/general search via Douyin's dedicated search series. Use when the user provides a Douyin URL or the task targets Douyin. Covers App-V3 and the Douyin Search series.
+description: v1.3.0｜通过 Tikin 处理抖音链接与数据，获取视频、用户资料、作品列表和视频评论，并使用抖音专用搜索接口搜索视频、用户或综合内容。用户提供抖音链接或任务针对抖音时使用；覆盖 App-V3 与抖音搜索系列接口。
 ---
 
 # Douyin / 抖音 (via tikin)

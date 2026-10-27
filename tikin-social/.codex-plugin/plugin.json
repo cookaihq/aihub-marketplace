@@ -24,8 +24,8 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "tikin Social",
-    "shortDescription": "Social-media data, downloads, and analytics via tikin",
+    "displayName": "Tikin Social｜社交媒体数据与分析",
+    "shortDescription": "查询社交平台内容与数据、下载素材，分析账号、评论和趋势",
     "longDescription": "Use tikin skills to fetch social-media posts, profiles, comments, search results, trends, and analytics, download media, discover supported endpoints, and configure API access.",
     "developerName": "cookaihq",
     "category": "Productivity",

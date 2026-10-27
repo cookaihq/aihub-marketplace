@@ -20,8 +20,8 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "AIhub Studio",
-    "shortDescription": "AIhub Studio media and document workflows",
+    "displayName": "AIhub Studio｜多媒体创作与文档处理",
+    "shortDescription": "生成和处理图片、视频、音频、音乐，理解多媒体并处理文档",
     "longDescription": "Run image, video, audio, music, multimodal understanding and document workflows through AIhub, with resumable tasks and verified result delivery.",
     "developerName": "cookaihq",
     "category": "Productivity",
