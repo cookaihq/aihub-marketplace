@@ -16,6 +16,7 @@ from pathlib import Path
 
 from setup_core.consumers import ADAPTERS, HOSTS, Consumer
 from setup_core.errors import SetupError
+from setup_core.secret_book import inspect_dependency
 from setup_core.progress import (Tasks, active, apply_plan, consumer_for, guard_context, make_plan,
                                  pending_delegation, recheck, secret_book_compatibility, secret_book_handoff, secret_book_result)
 
@@ -78,7 +79,7 @@ def arguments():
         elif name == "handoff":
             command.add_argument("--availability", required=True,
                                  choices=("missing", "unknown", "unloaded", "incompatible", "available"))
-            command.add_argument("--secret-book-root", help="可用时必填：当前宿主选用的 Secret Book 完整 Skill 实体")
+            command.add_argument("--secret-book-root", help="可用或不兼容时必填：当前宿主选用的 Secret Book 完整 Skill 实体")
         elif name == "handoff-result":
             command.add_argument("--status", required=True, choices=("completed", "cancelled", "pending", "failed", "unknown"))
             command.add_argument("--reference", help="Secret Book 公开的不透明恢复引用；不传其状态文件")
@@ -182,6 +183,8 @@ def run(args):
             active(state)
             if state["source"] != "secret-book" or state["operation"] not in ("configure", "repair"):
                 raise SetupError("invalid_secret_book_operation")
+            if args.availability == "incompatible":
+                inspect_dependency(args.secret_book_root, state["context"]["caller"])
             if args.availability != "available":
                 state["phase"] = "waiting_secret_book"
                 state["secret_book"] = {"status": args.availability, "reference": None, "contract": "not_delegated", "delegated": False}

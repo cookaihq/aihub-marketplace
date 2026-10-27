@@ -104,6 +104,12 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(self.call("continue", "--task", task["id"])["phase"], "waiting_confirmation")
         prepared = self.apply(planned)
         self.assertEqual(prepared["phase"], "waiting_manual")
+        guide = prepared["result"]["manual_input"]
+        self.assertEqual(guide["path"], str(target))
+        self.assertEqual(guide["fields"][0]["key"], "AIHUB_API_KEY")
+        self.assertEqual(guide["fields"][0]["assignment"], "AIHUB_API_KEY=<你的 AIhub API Key>")
+        self.assertIn("本机编辑器", guide["steps"][0])
+        self.assertEqual(self.call("status", "--task", task["id"])["result"]["manual_input"], guide)
         verify_private_permissions(target)
         self.assertIn("# AIHUB_API_KEY=", target.read_text(encoding="utf-8"))
         unchanged = self.call("continue", "--task", task["id"])
@@ -372,6 +378,47 @@ class SetupTests(unittest.TestCase):
             self.assertEqual(accepted["caller_mode"], "plugin_shared")
             self.assertEqual(accepted["dependency"]["version"], "2.5.1")
             self.assertEqual(accepted["cwd"], str(self.project))
+
+    def test_old_incomplete_installation_offers_two_upgrades_and_manual_configuration(self):
+        root = self.dependency("2.0.1")
+        # An actual old release predates these files. It must still be identified
+        # by its valid metadata, rather than reported as an unknown installation.
+        (root / "references/roles.md").unlink()
+        (root / "references/consumer-setup.md").unlink()
+        for caller, minimum in ((None, "2.5.1"), ("aihub-image", "2.5.0")):
+            for availability in ("available", "incompatible"):
+                with self.subTest(caller=caller, availability=availability):
+                    task = self.start(source="secret-book", caller=caller)
+                    denied = self.call("handoff", "--task", task["id"], "--availability", availability,
+                                       "--secret-book-root", root, ok=False)
+                    self.assertEqual(denied["reason"], "secret_book_version_incompatible")
+                    self.assertEqual(denied["dependency"]["root"], str(root))
+                    self.assertEqual(denied["dependency"]["version"], "2.0.1")
+                    self.assertIn("v2.0.1", denied["message"])
+                    self.assertIn("v" + minimum, denied["message"])
+                    self.assertEqual(denied["options"], ["升级到最新版", "升级到最低可用版本（v" + minimum + "）", "手动配置"])
+                    self.assertEqual(self.call("status", "--task", task["id"]), task)
+                    self.assertFalse((self.user / ".config/aihub-studio").exists())
+
+    def test_manual_fallback_names_the_original_file_and_fields_and_resumes(self):
+        target = self.global_file("tikin-social")
+        target.write_text("TIKIN_API_KEY=" + self.marker + "\nTIKIN_BASE_URL=https://console.tikin.net\nOTHER=keep\n")
+        task = self.start("tikin-social", operation="repair", source="secret-book")
+        self.call("select", "--task", task["id"], "--target", target, "--fields", "TIKIN_API_KEY,TIKIN_BASE_URL")
+        self.handoff(task, self.dependency("2.0.1"), ok=False)
+        changed = self.call("source", "--task", task["id"], "--source", "manual")
+        prepared = self.apply(self.plan(changed, changed["selection"]["target"], ",".join(changed["selection"]["fields"])))
+        guide = prepared["result"]["manual_input"]
+        self.assertEqual(guide["path"], str(target))
+        self.assertEqual([field["key"] for field in guide["fields"]], ["TIKIN_API_KEY", "TIKIN_BASE_URL"])
+        self.assertIn("与该 Key 对应的服务地址", guide["fields"][1]["value_hint"])
+        self.assertNotIn(self.marker, json.dumps(guide))
+        self.assertIn(self.marker, target.read_text())
+        target.write_text("TIKIN_API_KEY=synthetic-replacement\nTIKIN_BASE_URL=https://console.tikin.net\nOTHER=keep\n")
+        done = self.call("continue", "--task", task["id"])
+        self.assertEqual(done["phase"], "completed")
+        self.assertEqual(done["result"]["local"]["fields"]["TIKIN_API_KEY"]["source"], str(target))
+        self.assertIn("OTHER=keep", target.read_text())
 
     def test_real_caller_keeps_250_compatibility_but_check_cannot_delegate(self):
         task = self.start(source="secret-book", caller="aihub-image")

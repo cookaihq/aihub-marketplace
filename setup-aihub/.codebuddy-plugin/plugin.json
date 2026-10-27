@@ -1,6 +1,6 @@
 {
   "name": "setup-aihub",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Manage local service credentials and native AIhub agent model configuration.",
   "description_zh": "管理 AIhub/tikin 业务密钥，以及六类客户端的 AIhub 原生模型配置。",
   "author": {

@@ -29,7 +29,7 @@ uv run --locked --no-dev --project "<setup-api-key Skill 实体目录>" python "
 1. `start` 后使用 `plan --task <id> --target "<文件>" --fields AIHUB_API_KEY`。tikin 字段可为 `TIKIN_API_KEY` 或经选择的 `TIKIN_BASE_URL`，多个用逗号隔开。`clear` 任务生成删除投影；其他任务准备手填位置。纯检查任务拒绝修改。
 2. 将计划中的目标、字段、作用范围、当前/投影来源与共享影响展示给用户。首次共享位置是业务 `.env`；已有来源必须沿用，环境变量不能用低层文件遮蔽。tikin 必须说明 Key 与地址是否仍对应；删除地址可能回到默认服务。
 3. 用户已授权当前摘要后，调用 `apply --task <id> --confirm <当前计划指纹>`。不要把“继续”、任务编号或旧计划当成新授权。helper 再读声明、加载器、来源和文件修订，任何变化均停止，不覆盖并发修改。
-4. `prepare` 只准备注释字段，不接收 Key，不替换既有值。告诉用户实际路径；Windows 可由 Agent 协助用本机编辑器打开，macOS/Linux 使用实际可用编辑器。让用户去掉对应示例行的 `#` 并填写值，不要求回贴文件。已有字段直接在原行修改。
+4. `prepare` 只准备注释字段，不接收 Key，不替换既有值。`apply` 返回并保存 `result.manual_input`，其中 `path` 是实际完整路径，`fields` 列出所选 `key`、占位 `assignment` 和 `value_hint`，`steps` 是本机填写步骤。向用户明确展示这些指引：打开该文件，在指定 `KEY=` 等号后填对应值，去掉示例行开头的 `#`；占位符连同尖括号一起替换，已有字段只改等号右侧，保留其他设置。Windows 可由 Agent 协助用本机编辑器打开，macOS/Linux 使用实际可用编辑器。不读取或展示配置文件原文，不要求回贴文件。跨轮可用 `status` 取回同一指引，保存后回复“继续”。
 5. 用户完成手填后 `continue --task <id>` 重新读取；手填造成的变化是预期的，不复用旧计划重写文件。清除由 helper 在同一次调用后复查，操作成功可能导致必填项缺失，按结果解释。
 
 Git 中目标及含剩余配置的原子替换临时文件必须未跟踪且实际被忽略。仅忽略精确 `.env.local`、没有覆盖 `.env.local.setup-aihub-*.tmp` 时会拒绝替换；说明具体规则缺口，在用户允许后补所需忽略规则再重做计划，不能先写入或静默换路径。不会自动修改索引。
@@ -40,9 +40,9 @@ Git 中目标及含剩余配置的原子替换临时文件必须未跟踪且实�
 
 `source --task <id> --source manual|secret-book` 切换用户已决定的来源，丢弃旧的待执行计划。已有明确目标/字段可用 `select --task <id> --target "<文件>" --fields <字段>` 保存选择；这不是写入确认，Secret Book 仍自行核对映射和目标。
 
-`handoff --task <id> --availability missing|unknown|unloaded|incompatible|available`：缺失时给出安装/手填/暂缓三项；可用时还须传 `--secret-book-root "<当前宿主选用的完整 Skill 实体>"`，只读核对其公开元数据后生成 `credentials.json` 路径及原生检查报告。它不安装或执行 Secret Book；宿主加载与运行能力仍由 Agent 核实。所需角色与公开流程见 [Secret Book](secret-book.md)。
+`handoff --task <id> --availability missing|unknown|unloaded|incompatible|available`：缺失时给出安装/手填/暂缓三项；`available` 和 `incompatible` 均须传 `--secret-book-root "<当前宿主选用的完整 Skill 实体>"` 只读核对元数据。只有 `available` 且检查通过才生成 `credentials.json` 路径及原生检查报告；`incompatible` 不委托写入。它不安装或执行 Secret Book；宿主加载与运行能力仍由 Agent 核实。所需角色与升级流程见 [Secret Book](secret-book.md)。
 
-只对 `configure/repair` 委托写入。真实 caller 最低 2.5.0，共享模式最低 2.5.1，空 caller 原样保留。位置缺失、版本不兼容或产物元数据不一致分别返回 `secret_book_location_required`、`secret_book_version_incompatible`、`secret_book_artifact_invalid`，不创建已委托状态，仍可转手填或保留任务。`dependency` 记录所选实体路径与版本；测试提交和验证范围另列，不作为宿主安装证据。
+只对 `configure/repair` 委托写入。真实 caller 最低 2.5.0，共享模式最低 2.5.1，空 caller 原样保留。位置缺失、版本不兼容或产物元数据不一致分别返回 `secret_book_location_required`、`secret_book_version_incompatible`、`secret_book_artifact_invalid`，不创建已委托状态，仍可转手填或保留任务。版本过低时 `message` 明确当前版本及最低要求，`options` 依次为“升级到最新版／升级到最低可用版本（具体版本）／手动配置”；不要替换回“安装／手填／暂缓”。`dependency` 记录所选实体路径与版本；测试提交和验证范围另列，不作为宿主安装证据。
 
 委托实际返回后用 `handoff-result --task <id> --status completed|cancelled|pending|failed|unknown`，有公开不透明引用才传 `--reference`。仅传状态/引用，不传 Secret Book 私有状态路径。成功后由业务加载器复查；模拟成功没有实际字段不会完成配置。失败、取消或待操作不由 Setup 重写文件。
 

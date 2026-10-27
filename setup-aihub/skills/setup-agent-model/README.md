@@ -2,7 +2,7 @@
 
 通过对话管理 **Hermes、WorkBuddy、ChatGPT 桌面客户端、Codex CLI、Claude 桌面客户端和 Claude Code CLI** 的 AIhub 模型配置。先看已有配置，再选择修改哪项或新建；模型从目录选，Key 可在本机填写或从 Secret Book 取用。默认模型由你单独决定。
 
-本目录属于 **Setup AIHub 2.1.0**，需要安装完整 Plugin。目标系统为 Windows 原生和 macOS；Linux/WSL 暂不在本 Skill 范围内。
+本目录属于 **Setup AIHub 2.1.1**（开发中，尚未发布），需要安装完整 Plugin。目标系统为 Windows 原生和 macOS；Linux/WSL 暂不在本 Skill 范围内。
 
 当前已实现六类原生文件的无值检查、保存和恢复，以及 Secret Book 公开契约。Windows 合成测试通过不等于六客户端实机通过；macOS 尚未验证。Claude 桌面首次配置仍需其原生界面创建条目，未识别的库格式会停止写入。ChatGPT/Codex 需要的 GPT Responses 路由尚无精确型号证据，默认不会盲写；Claude-Max 组只用于 Claude Code CLI。
 

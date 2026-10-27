@@ -28,7 +28,7 @@
     {
       "name": "setup-aihub",
       "source": "./setup-aihub",
-      "version": "2.1.0",
+      "version": "2.1.1",
       "description": "管理业务密钥与六类客户端的 AIhub 原生模型配置。",
       "category": "productivity",
       "author": {

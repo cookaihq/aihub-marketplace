@@ -79,10 +79,6 @@ def inspect_dependency(root, caller):
         raise SetupError("secret_book_location_required", compatibility=evidence, options=options)
     try:
         path = Path(root).resolve(strict=True)
-        for name in ("scripts/secret_book.py", "references/roles.md", "references/consumer-setup.md",
-                     ".python-version", "uv.lock"):
-            if not (path / name).is_file():
-                raise ValueError("incomplete artifact")
         metadata = []
         for name in ("pyproject.toml", "SKILL.md"):
             with (path / name).open("rb") as stream:
@@ -103,7 +99,22 @@ def inspect_dependency(root, caller):
         # Never echo source text or parser errors from an arbitrary local file.
         raise SetupError("secret_book_artifact_invalid", compatibility=evidence, options=options) from None
     dependency = {"root": str(path), "version": version, "evidence": "public_metadata_only"}
-    if tuple(map(int, version.split("."))) < tuple(map(int, evidence["minimum_verified_release"].split("."))):
+    minimum = evidence["minimum_verified_release"]
+    if tuple(map(int, version.split("."))) < tuple(map(int, minimum.split("."))):
         raise SetupError("secret_book_version_incompatible", dependency=dependency,
+                         compatibility=evidence,
+                         message=f"本机已安装的 Secret Book 版本过低（当前 v{version}）；本次配置至少需要 v{minimum}，升级后才能继续从 Secret Book 配置。",
+                         options=["升级到最新版", f"升级到最低可用版本（v{minimum}）", "手动配置"])
+    # Older releases legitimately lack newer workflow files. Identify their
+    # version first, while still refusing incomplete compatible installations.
+    required = ("scripts/secret_book.py", "references/roles.md", "references/consumer-setup.md",
+                ".python-version", "uv.lock")
+    try:
+        missing = [name for name in required if not (path / name).is_file()]
+    except OSError:
+        raise SetupError("secret_book_artifact_invalid", dependency=dependency,
+                         compatibility=evidence, options=options) from None
+    if missing:
+        raise SetupError("secret_book_artifact_invalid", dependency=dependency, missing_artifacts=missing,
                          compatibility=evidence, options=options)
     return dependency
