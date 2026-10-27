@@ -124,7 +124,7 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(done["result"]["online_authentication"], "not_performed")
         self.assertEqual(done["result"]["business_call"], "not_verified")
         self.assertNotIn(self.marker, (self.user / ".config/setup-aihub/tasks" / (task["id"] + ".json")).read_text())
-        self.assertEqual(self.call("list")["tasks"], [])
+        self.assertEqual(self.call("list")["tasks"][0]["phase"], "default_settings:pending_check")
         self.assertEqual(self.call("continue", "--task", task["id"])["phase"], "completed")
 
     def test_clear_projects_fallback_and_removes_all_duplicates_preserving_bytes(self):

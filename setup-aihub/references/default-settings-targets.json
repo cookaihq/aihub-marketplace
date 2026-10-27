@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "targets": [
+    {
+      "kind": "plugin",
+      "name": "aihub-studio",
+      "display_name": "AIhub",
+      "source_repository": "cookaihq/aihub-marketplace",
+      "setup_guide": "references/default-skills.md",
+      "rule_template": "references/default-skills-rule.md",
+      "default_message": "以后让 {agent} 生成图片、视频、配音或音乐时，默认使用 AIhub，不用每次再说“用 AIhub”。"
+    },
+    {
+      "kind": "plugin",
+      "name": "tikin-social",
+      "display_name": "tikin",
+      "source_repository": "cookaihq/aihub-marketplace",
+      "setup_guide": "skills/tikin-setup/references/default-skills.md",
+      "rule_template": "skills/tikin-setup/references/default-skills-rule.md",
+      "default_message": "以后让 {agent} 查询抖音、小红书等平台的数据时，默认使用 tikin，不用每次再指定。"
+    }
+  ]
+}

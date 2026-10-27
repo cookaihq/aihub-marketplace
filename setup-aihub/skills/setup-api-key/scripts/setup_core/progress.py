@@ -13,6 +13,7 @@ from .errors import SetupError
 from .local_config import checked_path, edit, snapshot, validate_target, transform
 from .local_platform import exclusive_lock, private_directory, private_permissions, sync_replaced_file
 from .secret_book import compatibility as secret_book_compatibility, inspect_dependency
+from .default_settings import pending as defaults_pending
 
 SCHEMA = "setup-aihub.task/v1"
 PHASES = {"installation", "inspection", "waiting_manual", "waiting_secret_book", "waiting_confirmation",
@@ -101,12 +102,13 @@ class Tasks:
         checked_path(self.directory / "probe")
         for path in sorted(self.directory.glob("*.json")):
             state = self.load(path.stem)
-            if state["phase"] in ("completed", "cancelled"):
+            if state["phase"] in ("completed", "cancelled") and not defaults_pending(state):
                 continue
             context = state["context"]
             if (context["host"] == host and context["platform"] == os.name and path_id(context["cwd"]) == path_id(cwd)
                     and path_id(context["home"]) == path_id(Path.home()) and (plugin is None or context["plugin"] == plugin)):
-                results.append({"id": state["id"], "plugin": context["plugin"], "phase": state["phase"], "updated": state["updated"]})
+                phase = "default_settings:" + state["result"]["default_settings"]["phase"] if defaults_pending(state) else state["phase"]
+                results.append({"id": state["id"], "plugin": context["plugin"], "phase": phase, "updated": state["updated"]})
         return results
 
 
@@ -266,6 +268,12 @@ def recheck(tasks, state, reconcile=False):
         state["phase"] = "completed" if report["status"] == "ok" else "inspection"
     if state["phase"] == "completed":
         state.pop("last_reason", None)
+        if state["operation"] in ("configure", "repair"):
+            state["result"].setdefault("default_settings", {
+                "schema_version": 1,
+                "phase": "pending_check" if state["context"]["global_enabled"] else "skipped",
+                "reason": "inspect_designated_installed_targets" if state["context"]["global_enabled"] else "global_disabled",
+            })
     tasks.save(state)
     return state
 

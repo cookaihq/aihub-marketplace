@@ -1,8 +1,8 @@
 ---
 name: setup-agent-model
 metadata:
-  version: "2.1.1"
-description: v2.1.1｜检查、配置、更换或修复 Hermes、WorkBuddy、ChatGPT 桌面客户端、Codex CLI、Claude 桌面客户端和 Claude Code CLI 的 AIhub 模型与原生 Key 配置。可只说名称开始，支持已有配置选择、模型目录、Secret Book 和中断恢复。AIhub 创作服务或 tikin 的业务密钥使用 setup-api-key。
+  version: "2.2.0"
+description: v2.2.0｜检查、配置、更换或修复 Hermes、WorkBuddy、ChatGPT 桌面客户端、Codex CLI、Claude 桌面客户端和 Claude Code CLI 的 AIhub 模型与原生 Key 配置。可只说名称开始，支持已有配置选择、模型目录、Secret Book 和中断恢复。AIhub 创作服务或 tikin 的业务密钥使用 setup-api-key。
 compatibility: Windows native and macOS; uv >= 0.8, Python 3.13; complete setup-aihub Plugin and local filesystem execution required. Six host entry points and verification limits are in references/hosts.md.
 ---
 
