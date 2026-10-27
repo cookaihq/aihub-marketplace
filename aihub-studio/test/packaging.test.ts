@@ -143,7 +143,7 @@ test('published Plugin runs outside the checkout without node_modules or origina
   } finally { await rm(temp, { recursive: true, force: true }); }
 });
 
-test('package, lockfile, Plugin manifests, marketplace and every Skill share one public version', async () => {
+test('Plugin sources agree and each Skill has its own version and matching prefix', async () => {
   const pkg = JSON.parse(await readFile('package.json', 'utf8'));
   const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));
   assert.equal(lock.version, pkg.version); assert.equal(lock.packages[''].version, pkg.version);
@@ -164,7 +164,8 @@ test('package, lockfile, Plugin manifests, marketplace and every Skill share one
   for (const name of await readdir('skills')) {
     const text = await readFile(join('skills', name, 'SKILL.md'), 'utf8');
     assert.equal(/^name: (.+)$/m.exec(text)?.[1], name);
-    assert.equal(/^metadata:\r?\n  version: "([^"]+)"\r?$/m.exec(text)?.[1], pkg.version);
-    assert.ok(text.includes(`description: v${pkg.version}｜`));
+    const skillVersion = /^metadata:\r?\n  version: "([^"]+)"\r?$/m.exec(text)?.[1];
+    assert.match(skillVersion ?? '', /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/);
+    assert.ok(text.includes(`description: v${skillVersion}｜`));
   }
 });

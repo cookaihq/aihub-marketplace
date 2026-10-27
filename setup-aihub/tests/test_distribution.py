@@ -26,9 +26,10 @@ class DistributionTests(unittest.TestCase):
                 lock = json.loads((root / "package-lock.json").read_text())
                 self.assertEqual(lock["version"], version)
                 self.assertEqual(lock["packages"][""]["version"], version)
+            elif plugin == 'setup-aihub':
+                version = re.search(r'^version: "?([^"\s]+)"?$', (root / 'plugin.yaml').read_text(), re.M)[1]
             else:
-                name = {"tikin-social": "tikin-setup", "setup-aihub": "setup-api-key"}[plugin]
-                version = tomllib.loads((root / "skills" / name / "pyproject.toml").read_text())["project"]["version"]
+                version = json.loads((root / '.claude-plugin/plugin.json').read_text())['version']
             for folder in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
                 manifest = json.loads((root / folder / "plugin.json").read_text(encoding="utf-8"))
                 self.assertEqual((manifest["name"], manifest["version"]), (plugin, version))
@@ -43,13 +44,14 @@ class DistributionTests(unittest.TestCase):
             for file in (root / "skills").glob("*/SKILL.md"):
                 text = file.read_text(encoding="utf-8")
                 self.assertEqual(re.search(r"^name: (.+)$", text, re.M)[1], file.parent.name)
-                self.assertEqual(re.search(r'^metadata:\n  version: "([^"]+)"$', text, re.M)[1], version)
-                self.assertIn("description: v" + version + "｜", text)
+                skill_version = re.search(r'^metadata:\n  version: "([^"]+)"$', text, re.M)[1]
+                self.assertRegex(skill_version, r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$')
+                self.assertIn("description: v" + skill_version + "｜", text)
                 runtime = file.parent / "pyproject.toml"
                 if runtime.exists():
-                    self.assertEqual(tomllib.loads(runtime.read_text())["project"]["version"], version)
+                    self.assertEqual(tomllib.loads(runtime.read_text())["project"]["version"], skill_version)
                     lock = tomllib.loads((file.parent / "uv.lock").read_text())
-                    self.assertEqual(next(p["version"] for p in lock["package"] if p["name"] == file.parent.name), version)
+                    self.assertEqual(next(p["version"] for p in lock["package"] if p["name"] == file.parent.name), skill_version)
             for file in ("README.md", "CHANGELOG.md", "LICENSE"):
                 self.assertTrue((root / file).is_file())
         self.assertEqual((SKILL / "scripts/_runtime_bootstrap.py").read_bytes(),

@@ -95,7 +95,9 @@ assert codex_entry.get('category')
 
 metadata_version = claude_marketplace.get('metadata', {}).get('version')
 if metadata_version is not None:
-    assert metadata_version == version
+    # Marketplace metadata describes the catalog, not this Plugin's package.
+    assert isinstance(metadata_version, str)
+    assert re.fullmatch(r'(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?', metadata_version)
 PY
 check $? "plugin names and latest release version are synchronized; Codex bundles ./skills/"
 
