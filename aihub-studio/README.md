@@ -1,8 +1,8 @@
-# AIhub Studio Plugin 1.3.0
+# AIhub Studio Plugin 1.3.1
 
-当前版本为 1.3.0。本版为六个 Skill 增加首错自动本地汇总；凭证配置继续使用 Setup AIHub 2.0.0 内的 `setup-api-key`。
+当前 Plugin 版本为 1.3.1，六个 Skill 保持 1.3.0。本次更新分发版本校验，业务行为保持不变。1.3.0 为六个 Skill 增加首错自动本地汇总；凭证配置继续使用 Setup AIHub 2.0.0 内的 `setup-api-key`。
 
-本版错误报告已通过 Windows 原生合成请求与恢复测试。本版在 WorkBuddy 中的界面验收尚未完成；Claude Code、Codex 本版仅核对结构和说明，未做宿主实测。下文的历史宿主结果保留各自版本范围。
+1.3.1 的三宿主清单与版本结构已核对；未新增客户端运行验收。1.3.0 的错误报告已通过 Windows 原生合成请求与恢复测试，在 WorkBuddy 中的界面验收尚未完成；Claude Code、Codex 1.3.0 仅核对结构和说明，未做宿主实测。下文的历史宿主结果保留各自版本范围。
 
 让 Claude Code、Codex 或 WorkBuddy 通过 AIhub 帮你生成和编辑图片、制作视频与音频、理解素材内容，或把 PDF 转成可编辑文档。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
 
