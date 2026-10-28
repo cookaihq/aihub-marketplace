@@ -1,8 +1,8 @@
 ---
 name: aihub-understanding
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜Understand image, audio, video, or file content through AIhub llm-custom models and return resumable text results.
+  version: "1.4.0"
+description: v1.4.0｜Understand image, audio, video, or file content through AIhub llm-custom models and return resumable text results.
 ---
 
 # AIhub Understanding

@@ -1,4 +1,6 @@
 import { modelEntry, validateGeneration } from './models.js';
+import { resolve } from 'node:path';
+import { audioContract, remoteAudio } from './audioMedia.js';
 export const OPERATIONS = {
     'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
     'video-text': 'aihub-video', 'video-start-frame': 'aihub-video', 'video-reference': 'aihub-video',
@@ -52,6 +54,9 @@ export function readTaskRequest(value, skill) {
             if (!Array.isArray(urls) || !urls.length || urls.some(url => typeof url !== 'string' || !url.trim()))
                 throw new Error(`inputs.${key} must contain nonempty remote URLs.`);
             for (const url of urls) {
+                if (value.operation === 'audio-transcribe' && key === 'audios' && !remoteAudio(url) &&
+                    (!/^[a-z][a-z0-9+.-]*:/i.test(url) || /^[a-z]:[\\/]/i.test(url)))
+                    continue;
                 let parsed;
                 try {
                     parsed = new URL(url);
@@ -64,7 +69,10 @@ export function readTaskRequest(value, skill) {
             }
         }
     }
-    return JSON.parse(JSON.stringify(value));
+    const request = JSON.parse(JSON.stringify(value));
+    if (request.operation === 'audio-transcribe' && request.inputs?.audios)
+        request.inputs.audios = request.inputs.audios.map(v => remoteAudio(v) ? v : resolve(v));
+    return request;
 }
 function defaults(request) {
     switch (request.operation) {
@@ -197,11 +205,12 @@ function buildCandidate(request, model) {
             allowedRequirements = ['voice_setting', 'audio_setting', 'voice_modify', 'pronunciation_dict', 'language_boost'];
         }
         else if (op === 'audio-transcribe') {
-            if (model !== 'paraformer-v2')
-                throw new Error('Transcription outputs and language/diarization options need a verified mapping for this model.');
+            candidate.transcription = audioContract(model);
             inputFields.audios = ['file_urls', 'many'];
             requiredInputs = ['audios'];
             allowedRequirements = ['channel_id', 'diarization', 'language_hints', 'recognition'];
+            if (model === 'paraformer-8k-v2')
+                allowedRequirements = allowedRequirements.filter(name => name !== 'language_hints');
         }
         else if (op === 'audio-clone') {
             inputFields.audios = ['audio_url', 'one'];

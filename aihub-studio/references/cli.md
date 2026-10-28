@@ -90,7 +90,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" upload --skill "${AIHUB_CALLER}" \
   --input-file "/任务目录/upload-input.json"
 ```
 
-JSON 中 `path`、`url`、`base64` 必须且只能选一个；可选 `file_name`。本地文件须非空且不超过 20 MiB，较大输入可使用模型支持且远端可访问的 URL。本地文件示例：
+JSON 中 `path`、`url`、`base64` 必须且只能选一个；可选 `file_name`。此通用上传入口的本地文件须非空且不超过 20 MiB；这是客户端适配器上限。录音转写直接把原路径交给 `audio-transcribe` 的 `plan/run`，按[大文件转写](audio-transcription.md)自动处理，勿先手工分片。其他较大输入使用模型支持且远端可访问的 URL。本地文件示例：
 
 ```json
 {

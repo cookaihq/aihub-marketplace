@@ -6871,7 +6871,8 @@
       "category": "generation",
       "mediaType": "audio",
       "models": [
-        "paraformer-v2"
+        "paraformer-v2",
+        "paraformer-8k-v2"
       ],
       "modelSource": "default",
       "requestContentTypes": [

@@ -1,9 +1,9 @@
 ---
 name: aihub-audio
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜Run AIhub D1 audio and speech workflows for speech-2.8-hd text-to-speech, paraformer-v2 transcription, explicit voice cloning, and resumable task delivery.
-compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
+  version: "1.4.0"
+description: v1.4.0｜Run AIhub D1 speech synthesis, local or URL recording transcription with waveform-based splitting and resumable merging, and explicit voice cloning.
+compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 
 # AIhub 音频与语音任务
@@ -25,7 +25,7 @@ D1 处理文本转语音、语音识别/转写和用户明确要求的声音克�
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。已有 `run.json` 用 `continue`；旧 `task.json` / 任务 ID 用 `resume` / `task` 查询原任务。
 
-新任务先执行 `doctor`。保存 `original_request`，选择 `audio-tts`、`audio-transcribe` 或 `audio-clone`。TTS 将待朗读文本写入 `prompt`，按 `describe` 选择音色等 `requirements`；转写/克隆的实际音频 URL 写入 `inputs.audios`，本地文件先上传。仅用户本次指定型号才填 `model`。先 `plan` 检查每个候选，再 `run`；不能为了换模型改变指定音色、语言或丢弃输入。
+新任务先执行 `doctor`。保存 `original_request`，选择 `audio-tts`、`audio-transcribe` 或 `audio-clone`。TTS 将待朗读文本写入 `prompt`，按 `describe` 选择音色等 `requirements`。转写先读[大文件转写与恢复](../../references/audio-transcription.md)，将原始本地路径或 URL 直接写入 `inputs.audios`；程序按实际模型与上传通道决定整段、转换或波形分段。克隆的本地素材仍先上传为 URL。仅用户本次指定型号才填 `model`。先 `plan` 检查每个候选，再 `run`；不能为了换模型改变指定音色、语言或丢弃输入。
 
 ```bash
 AIHUB_PLUGIN_DIR="<实际 Plugin 目录>"

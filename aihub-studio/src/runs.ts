@@ -7,11 +7,13 @@ import { selectionPlan, type Candidate, type SelectionPlan } from './selection.j
 import { assertOutsideInstallation, withJobLock, writePrivateRecord } from './state.js';
 import { generate, resume, understand, nativeMusic, failureInfo, TaskPersistenceError } from './workflow.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
+import { runTranscription } from './audioRun.js';
 
 interface Attempt {
   index: number; model: string; submitted: boolean;
   state: 'preflight' | 'skipped' | 'active' | 'finished';
   task_record?: string;
+  audio_record?: string;
   result?: Record<string, unknown>;
 }
 export interface RunRecord {
@@ -69,6 +71,7 @@ async function available(client: AihubmaxClient, candidate: Candidate): Promise<
 /** A terminal task failure is distinct from a failed request, query or download. */
 function disposition(result: Record<string, unknown>): 'next' | 'stop' | 'recover' | 'done' {
   if (result.status === 'delivered') return 'done';
+  if (result.status === 'transcription_failed' || result.status === 'upload_rejected') return 'stop';
   if (result.status === 'remote_failed') {
     // The task is terminal, but an explicit error may be account/input/policy-wide.
     // Gateway public_task_error maps exhausted model channels/credentials to model_unavailable.
@@ -122,8 +125,15 @@ export async function continueRun(cfg: LoadedConfig, recordInput: string, waitSe
     while (run.cursor < run.plan.candidates.length) {
       const candidate = run.plan.candidates[run.cursor]!;
       let attempt = run.attempts.find(row => row.index === run.cursor);
+      const transcribe = () => runTranscription(cfg, { model: candidate.model, params: candidate.params!,
+        inputs: run.plan.request.inputs!.audios!, outputDir: join(dirname(record), `attempt-${run.cursor+1}`), waitSeconds: remainingWait(),
+        onRecord: async path => { attempt!.audio_record = path; attempt!.state = 'active'; await saveRun(cfg, record, run); },
+        onSubmit: async () => { attempt!.submitted = true; await saveRun(cfg, record, run); } });
       if (attempt?.state === 'active') {
-        if (attempt.task_record) {
+        if (attempt.audio_record) {
+          if (!candidate.transcription || attempt.audio_record !== join(dirname(record), `attempt-${run.cursor+1}`, 'transcription.json')) throw new Error('Transcription record does not belong to this candidate.');
+          attempt.result = await transcribe();
+        } else if (attempt.task_record) {
           const childPath = relative(dirname(record), attempt.task_record);
           if (!isAbsolute(attempt.task_record) || !childPath || childPath === '..' || childPath.startsWith(`..${sep}`) || isAbsolute(childPath)) throw new Error('Attempt record must remain inside this run.');
           attempt.result = await resume(cfg, attempt.task_record, remainingWait());
@@ -180,7 +190,9 @@ export async function continueRun(cfg: LoadedConfig, recordInput: string, waitSe
       const outputDir = join(dirname(record), `attempt-${run.cursor + 1}`);
       try {
         const params = candidate.params!;
-        if (candidate.protocol === 'generation') {
+        if (candidate.transcription) {
+          attempt.result = await transcribe();
+        } else if (candidate.protocol === 'generation') {
           attempt.result = await generate(cfg, { media: candidate.media, model: candidate.model, params, outputDir, waitSeconds: remainingWait(), onRecord });
         } else if (candidate.protocol === 'understanding') {
           attempt.result = await understand(cfg, { model: candidate.model, prompt: params.prompt as string,

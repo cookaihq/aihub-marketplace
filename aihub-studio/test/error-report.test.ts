@@ -184,8 +184,13 @@ test('all six Skill workflows and native music retain original inputs and one re
     { skill: 'aihub-music', operation: 'music-native', model: 'lyria-3-pro-preview' },
   ];
   let posts = 0;
+  const wav = Buffer.alloc(44 + 16000);
+  wav.write('RIFF', 0); wav.writeUInt32LE(wav.length-8, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16);
+  wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(8000, 24); wav.writeUInt32LE(16000, 28);
+  wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(16000, 40);
   const server = createServer((req, res) => {
     const json = (body: unknown, status = 200) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
+    if (req.url === '/voice.wav') { res.writeHead(200, { 'content-type': 'audio/wav' }); res.end(wav); return; }
     if (req.method === 'GET') return json({ data: cases.map(item => ({ id: item.model, capabilities: ['vision'] })) });
     posts++;
     if (req.url?.startsWith('/v1beta/')) return json({ error: { code: 'service_unavailable' } }, 422);
@@ -195,6 +200,7 @@ test('all six Skill workflows and native music retain original inputs and one re
   try {
     for (const item of cases) await t.test(item.operation, async () => {
       const cfg = { ...config(`http://127.0.0.1:${(server.address() as AddressInfo).port}`), skill: item.skill };
+      if (item.operation === 'audio-transcribe') item.inputs = { audios: [`${cfg.baseUrl}/voice.wav`] };
       const request = { operation: item.operation, model: item.model, original_request: 'original synthetic ' + item.operation,
         ...(['document', 'audio-transcribe'].includes(item.operation) ? {} : { prompt: 'submitted synthetic prompt' }),
         ...(item.operation === 'document' ? { requirements: { page_count: 1 } } : {}),

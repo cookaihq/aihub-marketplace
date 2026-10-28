@@ -191,7 +191,7 @@ function fileStem(url: URL, index: number): string {
   return stem || `asset-${index + 1}`;
 }
 
-async function transfer(url: URL, outputDir: string, media: DownloadMedia, index: number, deadline: number): Promise<DownloadedFile> {
+async function transfer(url: URL, outputDir: string, media: DownloadMedia, index: number, deadline: number, maxBytes = Infinity): Promise<DownloadedFile> {
   const partPath = join(outputDir, `.aihub-${randomUUID()}.partial`);
   const ctrl = new AbortController();
   const remaining = deadline - Date.now();
@@ -206,8 +206,13 @@ async function transfer(url: URL, outputDir: string, media: DownloadMedia, index
       throw new DownloadFailure(`下载返回 HTTP ${response.status}。`, response.status === 429 || response.status >= 500, retryAfter(response.headers.get("retry-after")));
     }
     if (!response.body) throw new DownloadFailure("下载响应没有文件内容。");
+    if (Number(response.headers.get('content-length')) > maxBytes) {
+      await response.body.cancel();
+      throw new DownloadFailure('Source exceeds the local download byte budget.');
+    }
     const meter = new Transform({ transform(chunk: Buffer, _encoding, callback) {
       bytes += chunk.length;
+      if (bytes > maxBytes) { callback(new DownloadFailure('Source exceeds the local download byte budget.')); return; }
       clearTimeout(stallTimer);
       stallTimer = setTimeout(() => ctrl.abort(), STALL_TIMEOUT_MS);
       callback(null, chunk);
@@ -307,7 +312,7 @@ export async function validateLocalMedia(path: string, media: DownloadMedia): Pr
 }
 
 /** Each URL succeeds or fails independently; existing user files are never replaced. */
-export async function downloadAssets(urls: string[], outputDir: string, media: DownloadMedia): Promise<DownloadResult> {
+export async function downloadAssets(urls: string[], outputDir: string, media: DownloadMedia, maxBytes = Infinity): Promise<DownloadResult> {
   if (media !== "document") await checkMediaTools();
   const result: DownloadResult = { files: [], failed: [] };
   const directory = resolve(outputDir);
@@ -320,7 +325,7 @@ export async function downloadAssets(urls: string[], outputDir: string, media: D
       const deadline = Date.now() + ASSET_BUDGET_MS;
       for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
         try {
-          const file = await transfer(url, directory, media, index, deadline);
+          const file = await transfer(url, directory, media, index, deadline, maxBytes);
           // Recovery matches files against the exact URL stored in the task.
           // URL.href normalization must not make a saved result look missing.
           result.files.push({ ...file, url: rawUrl });

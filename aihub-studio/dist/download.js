@@ -199,7 +199,7 @@ function fileStem(url, index) {
     const stem = basename(filename, extname(filename)).replace(/[^a-zA-Z0-9_-]/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
     return stem || `asset-${index + 1}`;
 }
-async function transfer(url, outputDir, media, index, deadline) {
+async function transfer(url, outputDir, media, index, deadline, maxBytes = Infinity) {
     const partPath = join(outputDir, `.aihub-${randomUUID()}.partial`);
     const ctrl = new AbortController();
     const remaining = deadline - Date.now();
@@ -216,8 +216,16 @@ async function transfer(url, outputDir, media, index, deadline) {
         }
         if (!response.body)
             throw new DownloadFailure("下载响应没有文件内容。");
+        if (Number(response.headers.get('content-length')) > maxBytes) {
+            await response.body.cancel();
+            throw new DownloadFailure('Source exceeds the local download byte budget.');
+        }
         const meter = new Transform({ transform(chunk, _encoding, callback) {
                 bytes += chunk.length;
+                if (bytes > maxBytes) {
+                    callback(new DownloadFailure('Source exceeds the local download byte budget.'));
+                    return;
+                }
                 clearTimeout(stallTimer);
                 stallTimer = setTimeout(() => ctrl.abort(), STALL_TIMEOUT_MS);
                 callback(null, chunk);
@@ -345,7 +353,7 @@ export async function validateLocalMedia(path, media) {
     return { url: '', path, bytes: stat.size, mime_type: info.mime };
 }
 /** Each URL succeeds or fails independently; existing user files are never replaced. */
-export async function downloadAssets(urls, outputDir, media) {
+export async function downloadAssets(urls, outputDir, media, maxBytes = Infinity) {
     if (media !== "document")
         await checkMediaTools();
     const result = { files: [], failed: [] };
@@ -370,7 +378,7 @@ export async function downloadAssets(urls, outputDir, media) {
             const deadline = Date.now() + ASSET_BUDGET_MS;
             for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
                 try {
-                    const file = await transfer(url, directory, media, index, deadline);
+                    const file = await transfer(url, directory, media, index, deadline, maxBytes);
                     // Recovery matches files against the exact URL stored in the task.
                     // URL.href normalization must not make a saved result look missing.
                     result.files.push({ ...file, url: rawUrl });

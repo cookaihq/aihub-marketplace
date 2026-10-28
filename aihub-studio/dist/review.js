@@ -10,6 +10,7 @@ import { readRun } from './runs.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord } from './state.js';
 import { resume, understand, upload, adoptTask, TaskPersistenceError } from './workflow.js';
+import { readAudioRun } from './audioRun.js';
 export const DISABLE_CHECK_HINT = '如果想关闭结果检查，可以直接在对话中告诉我“关闭结果检查”；也可以说“仅本次关闭结果检查”。';
 const FINAL = new Set(['matched', 'mismatched', 'inconclusive', 'unavailable', 'disabled']);
 function hash(value) { return createHash('sha256').update(JSON.stringify(value)).digest('hex'); }
@@ -121,7 +122,13 @@ async function createReview(run, source) {
     const artifacts = [];
     for (const [i, file] of files.entries())
         artifacts.push(await inspectArtifact(file, i));
-    const sources = Object.entries(request.inputs ?? {}).flatMap(([kind, values]) => (Array.isArray(values) ? values : [values]).map((url, i) => ({ id: `source-${kind}-${i + 1}`, type: { images: 'image_url', mask: 'image_url', videos: 'video_url', audios: 'audio_url', files: 'file_url' }[kind], url })));
+    let sources = Object.entries(request.inputs ?? {}).flatMap(([kind, values]) => (Array.isArray(values) ? values : [values]).map((url, i) => ({ id: `source-${kind}-${i + 1}`, type: { images: 'image_url', mask: 'image_url', videos: 'video_url', audios: 'audio_url', files: 'file_url' }[kind], url })));
+    const audioRecord = run.attempts.at(-1)?.audio_record;
+    if (audioRecord) {
+        const audio = await readAudioRun(audioRecord);
+        sources = audio.sources.map((s, i) => ({ id: `source-audios-${i + 1}`, type: 'audio_url', path: s.path, sha256: s.sha256, bytes: s.bytes,
+            measurements: { duration_seconds: s.duration, has_audio: true } }));
+    }
     const review = { schema_version: 1, kind: 'aihub-review', id: randomUUID(), source_record: source, plan_hash: run.plan_hash,
         requirement_revision: hash({ original: request.original_request, revisions: request.requirement_revisions ?? [], checks: request.review_requirements ?? [], requirements: request.requirements ?? {} }),
         original_request: request.original_request, current_request: current,
@@ -148,6 +155,9 @@ async function unchanged(review) {
         if (await fileHash(artifact.path) !== artifact.sha256)
             throw new Error('Artifact changed after review preparation; this report is stale.');
     }
+    for (const source of review.sources)
+        if (source.path && await fileHash(source.path) !== source.sha256)
+            throw new Error('Source recording changed after review preparation.');
 }
 function parseReport(value, review) {
     if (!value || typeof value !== 'object' || Array.isArray(value))
@@ -188,9 +198,9 @@ function hasFullCoverage(review, report) {
         return false;
     if ([...review.artifacts, ...review.sources].some(a => !report.findings.some(f => f.evidence.some(e => e.asset_id === a.id))))
         return false;
-    for (const a of review.artifacts) {
+    for (const a of [...review.artifacts, ...review.sources]) {
         const c = report.coverage.find(c => c.asset_id === a.id);
-        if (/^(audio|video)\//.test(a.mime_type)) {
+        if (('mime_type' in a && /^(audio|video)\//.test(a.mime_type)) || ('type' in a && ['audio_url', 'video_url'].includes(a.type))) {
             const duration = a.measurements?.duration_seconds;
             if (duration === undefined || (a.measurements?.has_audio && c.audio_checked !== true))
                 return false;
@@ -204,7 +214,7 @@ function hasFullCoverage(review, report) {
                 return false;
         }
         // Text extraction cannot establish page/image/formula fidelity for converted documents.
-        if (review.provider === 'aihub' && a.limitation)
+        if (review.provider === 'aihub' && 'limitation' in a && a.limitation)
             return false;
     }
     return true;
@@ -239,8 +249,13 @@ async function runExternal(cfg, review, path, waitSeconds) {
     }
     else {
         const settings = cfg.resultCheck ?? RESULT_CHECK_DEFAULTS;
-        const content = review.sources.map(s => ({ type: s.type, [s.type]: { url: s.url } }));
-        const needed = new Set(content.map(c => String(c.type).replace('_url', '').replace('image', 'vision')));
+        if (review.sources.some(s => s.path && (s.bytes ?? Infinity) > 20 * 1024 * 1024)) {
+            review.status = 'unavailable';
+            review.reason = '原录音超过检查上传器的 20 MiB 限制；请由宿主检查保存的完整录音和分段覆盖，不能用转写成功或抽样代表全量语义检查。';
+            return;
+        }
+        const content = [];
+        const needed = new Set(review.sources.map(s => s.type.replace('_url', '').replace('image', 'vision')));
         for (const a of review.artifacts) {
             const kind = a.mime_type.split('/')[0];
             if (['image', 'video', 'audio'].includes(kind)) {
@@ -272,6 +287,21 @@ async function runExternal(cfg, review, path, waitSeconds) {
         review.provider = 'aihub';
         review.external = { state: 'preparing', model };
         await save(cfg, path, review); // An interrupted upload/submission must not be replayed.
+        await unchanged(review);
+        for (const s of review.sources) {
+            let url = s.url;
+            if (s.path) {
+                const uploaded = await upload(cfg, { path: s.path });
+                if (uploaded.status !== 'ok' || !('url' in uploaded) || typeof uploaded.url !== 'string') {
+                    review.external.result = uploaded;
+                    review.status = 'unavailable';
+                    review.reason = '原录音上传未完成，保留状态，不自动重发。';
+                    return;
+                }
+                url = uploaded.url;
+            }
+            content.push({ type: s.type, [s.type]: { url } });
+        }
         for (const a of review.artifacts) {
             const kind = a.mime_type.split('/')[0];
             if (!['image', 'video', 'audio'].includes(kind))

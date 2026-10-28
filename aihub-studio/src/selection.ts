@@ -1,6 +1,8 @@
 import type { FallbackPolicy, LoadedConfig } from './config.js';
 import { modelEntry, validateGeneration } from './models.js';
 import type { Media } from './state.js';
+import { resolve } from 'node:path';
+import { audioContract, remoteAudio, type AudioContract } from './audioMedia.js';
 
 export const OPERATIONS = {
   'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
@@ -28,6 +30,7 @@ export interface Candidate {
   media: Media;
   params?: Record<string, unknown>;
   rejection?: string;
+  transcription?: AudioContract;
 }
 export interface SelectionPlan {
   request: TaskRequest; candidates: Candidate[];
@@ -73,13 +76,17 @@ export function readTaskRequest(value: Record<string, unknown>, skill: string): 
       const urls = key === 'mask' ? [input] : input;
       if (!Array.isArray(urls) || !urls.length || urls.some(url => typeof url !== 'string' || !url.trim())) throw new Error(`inputs.${key} must contain nonempty remote URLs.`);
       for (const url of urls) {
+        if (value.operation === 'audio-transcribe' && key === 'audios' && !remoteAudio(url as string) &&
+          (!/^[a-z][a-z0-9+.-]*:/i.test(url as string) || /^[a-z]:[\\/]/i.test(url as string))) continue;
         let parsed: URL;
         try { parsed = new URL(url as string); } catch { throw new Error(`inputs.${key} must use remote HTTP(S) URLs; upload local files first.`); }
         if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error(`inputs.${key} must use HTTP(S) without embedded credentials.`);
       }
     }
   }
-  return JSON.parse(JSON.stringify(value)) as TaskRequest;
+  const request = JSON.parse(JSON.stringify(value)) as TaskRequest;
+  if (request.operation === 'audio-transcribe' && request.inputs?.audios) request.inputs.audios = request.inputs.audios.map(v => remoteAudio(v) ? v : resolve(v));
+  return request;
 }
 
 function defaults(request: TaskRequest): string[] {
@@ -174,9 +181,10 @@ function buildCandidate(request: TaskRequest, model: string): Candidate {
       if (!['speech-2.8-hd', 'speech-2.8-turbo'].includes(model)) throw new Error('Voice IDs and speech options require a verified mapping for this TTS model.');
       promptField = 'prompt'; allowedRequirements = ['voice_setting', 'audio_setting', 'voice_modify', 'pronunciation_dict', 'language_boost'];
     } else if (op === 'audio-transcribe') {
-      if (model !== 'paraformer-v2') throw new Error('Transcription outputs and language/diarization options need a verified mapping for this model.');
+      candidate.transcription = audioContract(model);
       inputFields.audios = ['file_urls', 'many']; requiredInputs = ['audios'];
       allowedRequirements = ['channel_id', 'diarization', 'language_hints', 'recognition'];
+      if (model === 'paraformer-8k-v2') allowedRequirements = allowedRequirements.filter(name => name !== 'language_hints');
     } else if (op === 'audio-clone') {
       inputFields.audios = ['audio_url', 'one']; requiredInputs = ['audios'];
       allowedRequirements = ['accuracy', 'need_volume_normalization', 'noise_reduction', 'preview_model', 'preview_text'];

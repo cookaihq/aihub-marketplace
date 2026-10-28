@@ -6,7 +6,9 @@ import { credentialId, sanitized } from './config.js';
 import { checkMediaTools, downloadAssets, downloadJsonAssets, validateLocalMedia } from './download.js';
 import { validateGeneration } from './models.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
-import { assertOutsideInstallation, readJob, recordPath, withJobLock, writeJob } from './state.js';
+import { UPLOAD_MAX_BYTES } from './audioMedia.js';
+import { transcriptText } from './transcript.js';
+import { assertOutsideInstallation, readJob, recordPath, withJobLock, writeJob, writePrivateText } from './state.js';
 function cleanError(error, cfg) {
     return sanitized(error instanceof Error ? error.message : String(error), [cfg.apiKey]);
 }
@@ -182,56 +184,39 @@ function structuredResultUrls(task) {
     visit(task.results);
     return [...new Set(urls)];
 }
-function firstStructuredText(value) {
-    if (!value || typeof value !== 'object')
-        return undefined;
-    if (Array.isArray(value)) {
-        for (const item of value) {
-            const found = firstStructuredText(item);
-            if (found)
-                return found;
-        }
-        return undefined;
-    }
-    const record = value;
-    if (typeof record.text === 'string' && record.text.trim())
-        return record.text;
-    for (const entry of Object.values(record)) {
-        const found = firstStructuredText(entry);
-        if (found)
-            return found;
-    }
-    return undefined;
-}
 async function finishStructuredAudio(job, record, cfg) {
     if (job.submission.state !== 'known' || job.submission.task.status !== 'completed')
         return;
     const urls = structuredResultUrls(job.submission.task);
     let downloaded;
     if (urls.length) {
-        downloaded = await downloadJsonAssets(urls, job.output_dir);
+        const kept = [];
+        for (const file of job.files) {
+            try {
+                if (!urls.includes(file.url) || (await stat(file.path)).size !== file.bytes)
+                    continue;
+                JSON.parse(await readFile(file.path, 'utf8'));
+                kept.push(file);
+            }
+            catch { /* Retry only missing or invalid downloads, never the paid task. */ }
+        }
+        downloaded = await downloadJsonAssets(urls.filter(url => !kept.some(f => f.url === url)), job.output_dir);
+        downloaded.files.unshift(...kept);
+        downloaded.files.sort((a, b) => urls.indexOf(a.url) - urls.indexOf(b.url));
     }
     else {
         await mkdir(job.output_dir, { recursive: true, mode: 0o700 });
         const path = join(job.output_dir, `transcription-${job.local_id}.json`);
         const body = JSON.stringify(job.submission.task.results ?? [], null, 2) + '\n';
-        await writeFile(path, body, { encoding: 'utf8', mode: 0o600, flag: 'wx' });
+        await writePrivateText(path, body);
         downloaded = { files: [{ url: `task://${job.submission.task.id}/results`, path, bytes: Buffer.byteLength(body), mime_type: 'application/json' }], failed: [] };
     }
     job.files = downloaded.files;
     job.failed = downloaded.failed;
-    job.text = firstStructuredText(job.submission.task.results);
-    if (!job.text) {
-        for (const file of job.files) {
-            try {
-                const parsed = JSON.parse(await readFile(file.path, 'utf8'));
-                job.text = firstStructuredText(parsed);
-                if (job.text)
-                    break;
-            }
-            catch { /* The JSON downloader already validates successful files. */ }
-        }
-    }
+    const texts = [];
+    for (const file of job.files)
+        texts.push(transcriptText(JSON.parse(await readFile(file.path, 'utf8'))));
+    job.text = texts.filter(Boolean).join('\n');
     await save(record, job, cfg);
 }
 async function finishResult(job, record, cfg) {
@@ -516,7 +501,6 @@ export async function nativeMusic(cfg, options) {
     return { schema_version: 1, status: 'delivered', model: options.model, files: [file], ...(text ? { text } : {}) };
 }
 // Retained from the source upload guard: the endpoint accepts whole-file base64 JSON.
-const UPLOAD_MAX_BYTES = 20 * 1024 * 1024;
 export async function upload(cfg, input) {
     const supplied = ['path', 'url', 'base64'].filter(key => input[key] !== undefined);
     if (supplied.length !== 1)

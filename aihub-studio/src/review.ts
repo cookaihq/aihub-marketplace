@@ -10,6 +10,7 @@ import { readRun, type RunRecord } from './runs.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord, type SavedFile } from './state.js';
 import { resume, understand, upload, adoptTask, TaskPersistenceError } from './workflow.js';
+import { readAudioRun } from './audioRun.js';
 
 export const DISABLE_CHECK_HINT = '如果想关闭结果检查，可以直接在对话中告诉我“关闭结果检查”；也可以说“仅本次关闭结果检查”。';
 type Verdict = 'matched' | 'mismatched' | 'inconclusive';
@@ -18,7 +19,7 @@ interface Requirement { id: string; text: string; priority: 'required' | 'prefer
 interface Artifact extends SavedFile {
   id: string; sha256: string; measurements?: MediaMeasurements; text?: string; limitation?: string; issue?: string;
 }
-interface Source { id: string; type: string; url: string }
+interface Source { id: string; type: string; url?: string; path?: string; sha256?: string; bytes?: number; measurements?: MediaMeasurements }
 interface ProgramCheck { id: string; artifact_id?: string; verdict: Verdict; expected: unknown; actual?: unknown }
 interface Evidence { asset_id: string; observation: string; location: string }
 interface Finding { requirement_id: string; verdict: Verdict; evidence: Evidence[] }
@@ -126,8 +127,14 @@ async function createReview(run: RunRecord, source: string): Promise<ReviewRecor
   if (run.status !== 'delivered' || !files?.length) throw new Error('Review requires a delivered run with actual files. Continue the generation task first.');
   const artifacts: Artifact[] = [];
   for (const [i, file] of files.entries()) artifacts.push(await inspectArtifact(file, i));
-  const sources: Source[] = Object.entries(request.inputs ?? {}).flatMap(([kind, values]) =>
+  let sources: Source[] = Object.entries(request.inputs ?? {}).flatMap(([kind, values]) =>
     (Array.isArray(values) ? values : [values]).map((url, i) => ({ id: `source-${kind}-${i + 1}`, type: ({ images: 'image_url', mask: 'image_url', videos: 'video_url', audios: 'audio_url', files: 'file_url' } as Record<string, string>)[kind]!, url })));
+  const audioRecord = run.attempts.at(-1)?.audio_record;
+  if (audioRecord) {
+    const audio = await readAudioRun(audioRecord);
+    sources = audio.sources.map((s,i) => ({ id: `source-audios-${i+1}`, type: 'audio_url', path: s.path, sha256: s.sha256, bytes: s.bytes,
+      measurements: { duration_seconds: s.duration, has_audio: true } }));
+  }
   const review: ReviewRecord = { schema_version: 1, kind: 'aihub-review', id: randomUUID(), source_record: source, plan_hash: run.plan_hash,
     requirement_revision: hash({ original: request.original_request, revisions: request.requirement_revisions ?? [], checks: request.review_requirements ?? [], requirements: request.requirements ?? {} }),
     original_request: request.original_request, current_request: current,
@@ -145,6 +152,7 @@ async function unchanged(review: ReviewRecord): Promise<void> {
     if (!artifact.sha256) throw new Error('Review artifact has no verified hash.');
     if (await fileHash(artifact.path) !== artifact.sha256) throw new Error('Artifact changed after review preparation; this report is stale.');
   }
+  for (const source of review.sources) if (source.path && await fileHash(source.path) !== source.sha256) throw new Error('Source recording changed after review preparation.');
 }
 function parseReport(value: unknown, review: ReviewRecord): Report {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Review report must be an object.');
@@ -173,9 +181,9 @@ function parseReport(value: unknown, review: ReviewRecord): Report {
 function hasFullCoverage(review: ReviewRecord, report: Report): boolean {
   if ([...review.artifacts, ...review.sources].some(a => !report.coverage.some(c => c.asset_id === a.id && c.complete))) return false;
   if ([...review.artifacts, ...review.sources].some(a => !report.findings.some(f => f.evidence.some(e => e.asset_id === a.id)))) return false;
-  for (const a of review.artifacts) {
+  for (const a of [...review.artifacts, ...review.sources]) {
     const c = report.coverage.find(c => c.asset_id === a.id)!;
-    if (/^(audio|video)\//.test(a.mime_type)) {
+    if (('mime_type' in a && /^(audio|video)\//.test(a.mime_type)) || ('type' in a && ['audio_url','video_url'].includes(a.type))) {
       const duration = a.measurements?.duration_seconds;
       if (duration === undefined || (a.measurements?.has_audio && c.audio_checked !== true)) return false;
       let end = 0;
@@ -186,7 +194,7 @@ function hasFullCoverage(review: ReviewRecord, report: Report): boolean {
       if (end < duration - 0.05) return false;
     }
     // Text extraction cannot establish page/image/formula fidelity for converted documents.
-    if (review.provider === 'aihub' && a.limitation) return false;
+    if (review.provider === 'aihub' && 'limitation' in a && a.limitation) return false;
   }
   return true;
 }
@@ -211,8 +219,11 @@ async function runExternal(cfg: LoadedConfig, review: ReviewRecord, path: string
     review.status = 'unavailable'; review.reason = '上次检查提交或素材上传的结果不明，保留记录，不自动再次提交。'; return;
   } else {
     const settings = cfg.resultCheck ?? RESULT_CHECK_DEFAULTS;
-    const content: Array<Record<string, unknown>> = review.sources.map(s => ({ type: s.type, [s.type]: { url: s.url } }));
-    const needed = new Set(content.map(c => String(c.type).replace('_url', '').replace('image', 'vision')));
+    if (review.sources.some(s => s.path && (s.bytes ?? Infinity) > 20 * 1024 * 1024)) {
+      review.status = 'unavailable'; review.reason = '原录音超过检查上传器的 20 MiB 限制；请由宿主检查保存的完整录音和分段覆盖，不能用转写成功或抽样代表全量语义检查。'; return;
+    }
+    const content: Array<Record<string, unknown>> = [];
+    const needed = new Set(review.sources.map(s => s.type.replace('_url', '').replace('image', 'vision')));
     for (const a of review.artifacts) {
       const kind = a.mime_type.split('/')[0]!;
       if (['image', 'video', 'audio'].includes(kind)) {
@@ -228,6 +239,18 @@ async function runExternal(cfg: LoadedConfig, review: ReviewRecord, path: string
     review.provider = 'aihub';
     review.external = { state: 'preparing', model };
     await save(cfg, path, review); // An interrupted upload/submission must not be replayed.
+    await unchanged(review);
+    for (const s of review.sources) {
+      let url = s.url;
+      if (s.path) {
+        const uploaded = await upload(cfg, { path: s.path });
+        if (uploaded.status !== 'ok' || !('url' in uploaded) || typeof uploaded.url !== 'string') {
+          review.external.result = uploaded; review.status = 'unavailable'; review.reason = '原录音上传未完成，保留状态，不自动重发。'; return;
+        }
+        url = uploaded.url;
+      }
+      content.push({ type: s.type, [s.type]: { url } });
+    }
     for (const a of review.artifacts) {
       const kind = a.mime_type.split('/')[0]!;
       if (!['image', 'video', 'audio'].includes(kind)) continue;

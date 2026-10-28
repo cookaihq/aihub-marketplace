@@ -30,7 +30,7 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 | `off` | 只尝试任务用途匹配的首个候选；其不可见、能力不符或失败时停止。 |
 | `preflight_only` | 尚未提交生成时可以跳过不兼容或不可见候选；提交过一次生成请求后不再切换。 |
 
-`AIHUB_MODEL_MAX_ATTEMPTS` 是可选正整数，包含首个模型。默认等于适用候选数；预检跳过、查询和下载不计数。每个候选最多提交一次，不循环列表。全局策略可在当前 Skill 的专用文件中覆盖；`doctor` 和 `models` 的 `model_selection` 提供实际值与来源。
+`AIHUB_MODEL_MAX_ATTEMPTS` 是可选正整数，包含首个模型。默认等于适用候选数；预检跳过、查询和下载不计数。每个普通候选最多提交一次，不循环列表；转写候选可包含多个分片，每片最多一次生成提交，次数限制仍按模型尝试计算。全局策略可在当前 Skill 的专用文件中覆盖；`doctor` 和 `models` 的 `model_selection` 提供实际值与来源。
 
 ## 任务 JSON
 
@@ -46,7 +46,7 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 }
 ```
 
-`inputs` 只接受远程 HTTP(S) URL；本地文件先通过 `upload` 取得真实 URL。列表字段为 `images`、`videos`、`audios`、`files`；`mask` 是单个 URL。省略未使用字段，不放空列表。`requirements` 保存用户要求的输出参数，未知字段、无法保留的输入和参数冲突都会拒绝该候选，不能为了切换删除要求。
+`audio-transcribe` 的 `inputs.audios` 接受本地路径或 HTTP(S) URL，由程序按[转写约束](audio-transcription.md)准备；其他操作的 `inputs` 只接受远程 HTTP(S) URL，本地文件先通过 `upload` 取得真实 URL。列表字段为 `images`、`videos`、`audios`、`files`；`mask` 是单个 URL。省略未使用字段，不放空列表。`requirements` 保存用户要求的输出参数，未知字段、无法保留的输入和参数冲突都会拒绝该候选，不能为了切换删除要求。
 
 结果检查项单独使用 `review_requirements`（`id`、`text`、`priority=required|preference`），不发送为生成模型参数；用户批准的完整需求变更保存到 `requirement_revisions`（`request`、`user_confirmation`）。字段格式、默认开启的检查流程与每次结束后的关闭提示见 [结果检查与错误反馈](result-checks.md)。没有拆分项时仍检查完整用户原文，生成 prompt 不能代替原文。
 
@@ -59,7 +59,7 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 | `video-lipsync` | 一个视频和一个音频 | `lipsync-2`；`active_speaker`、`sync_mode`、`temperature` |
 | `video-avatar` | 一张图片和一个音频，可选提示词 | `omnihuman-1.5`；`advanced`、`turbo_mode` |
 | `audio-tts` | 提示词中的待朗读文本 | `speech-2.8-hd` / `speech-2.8-turbo`；`voice_setting`、`audio_setting`、`voice_modify`、`pronunciation_dict`、`language_boost` |
-| `audio-transcribe` | `inputs.audios` | `paraformer-v2`；`channel_id`、`diarization`、`language_hints`、`recognition` |
+| `audio-transcribe` | 原录音路径或 URL 的 `inputs.audios` | `paraformer-v2` / `paraformer-8k-v2`；按模型检查格式、大小、时长并自动分段，8 kHz 型号不接受 `language_hints` |
 | `audio-clone` | 一个音频，须用户明确要求克隆 | `voice-clone`；`accuracy`、`need_volume_normalization`、`noise_reduction`、`preview_model`、`preview_text`；不承诺返回可下载音频 |
 | `music-async` | 提示词，可选图片参考 | `lyria-3-pro`；`negative_prompt` |
 | `music-native` | 提示词 | `lyria-3-pro-preview`；不接收额外要求或参考素材，不与异步音乐静默互换 |
@@ -80,7 +80,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill "${AIHUB_CALLER}" --req
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" continue --skill "${AIHUB_CALLER}" --record "/任务目录/data/aihub/aihub-run-UUID/run.json" --wait-seconds 30
 ```
 
-`plan` 只读配置和随包契约，不联网；先检查输出的 `candidates` 与 `excluded` 是否忠实于用户需求。`run` 默认写调用项目的 `data/aihub/`，也可传 `--output-dir`。在 Git 项目中开始写任务文件前确认输出目录被忽略。`run.json` 保存原始需求、候选请求、策略、尝试历史和确认；每次异步尝试在其 `attempt-N/aihub-UUID/` 下保存自己的 `task.json` 和 `files/`。
+`plan` 只读配置和随包契约，不联网；转写的实际音频探测、快照与分片在 `run` 中完成。先检查输出的 `candidates` 与 `excluded` 是否忠实于用户需求。`run` 默认写调用项目的 `data/aihub/`，也可传 `--output-dir`。在 Git 项目中开始写任务文件前确认输出目录被忽略。`run.json` 保存原始需求、候选请求、策略、尝试历史和确认；每次异步尝试在其 `attempt-N/aihub-UUID/` 下保存自己的 `task.json` 和 `files/`。
 
 `continue` 读取已保存计划，不用新配置替换候选或策略；仍核对原 Skill、服务地址和密钥。每次调用的轮询预算由全部候选共享，最高 600 秒。进程中断后仍然恢复原任务；原生音乐无可查询任务 ID，提交结果不明时不能自动重发。
 
