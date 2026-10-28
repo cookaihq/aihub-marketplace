@@ -13,6 +13,7 @@ from .errors import SetupError
 from .local_config import checked_path, edit, snapshot, validate_target, transform
 from .local_platform import exclusive_lock, private_directory, private_permissions, sync_replaced_file
 from .secret_book import compatibility as secret_book_compatibility, inspect_dependency
+from .default_settings import pending as defaults_pending
 
 SCHEMA = "setup-aihub.task/v1"
 PHASES = {"installation", "inspection", "waiting_manual", "waiting_secret_book", "waiting_confirmation",
@@ -101,12 +102,13 @@ class Tasks:
         checked_path(self.directory / "probe")
         for path in sorted(self.directory.glob("*.json")):
             state = self.load(path.stem)
-            if state["phase"] in ("completed", "cancelled"):
+            if state["phase"] in ("completed", "cancelled") and not defaults_pending(state):
                 continue
             context = state["context"]
             if (context["host"] == host and context["platform"] == os.name and path_id(context["cwd"]) == path_id(cwd)
                     and path_id(context["home"]) == path_id(Path.home()) and (plugin is None or context["plugin"] == plugin)):
-                results.append({"id": state["id"], "plugin": context["plugin"], "phase": state["phase"], "updated": state["updated"]})
+                phase = "default_settings:" + state["result"]["default_settings"]["phase"] if defaults_pending(state) else state["phase"]
+                results.append({"id": state["id"], "plugin": context["plugin"], "phase": phase, "updated": state["updated"]})
         return results
 
 
@@ -172,6 +174,21 @@ def make_plan(tasks, state, target, fields):
     return state
 
 
+def manual_input(plan):
+    hints = {
+        "AIHUB_API_KEY": ("你的 AIhub API Key", "AIhub 控制台或服务管理员提供的完整 API Key"),
+        "TIKIN_API_KEY": ("你的 tikin API Key", "与你使用的 tikin 服务对应的完整 API Key"),
+        "TIKIN_BASE_URL": ("与该 Key 对应的服务地址", "与该 Key 对应的服务地址；默认 https://console.tikin.net，自定义服务沿用已确认地址"),
+    }
+    return {"path": plan["target"],
+            "fields": [{"key": key, "assignment": key + "=<" + hints[key][0] + ">", "value_hint": hints[key][1]}
+                       for key in plan["fields"]],
+            "steps": ["在本机编辑器打开上述完整路径的文件。",
+                      "找到对应的 KEY= 行，在等号后填写说明中的值；已有值只替换等号右侧，示例行开头有 # 时去掉 #。",
+                      "尖括号内是填写说明，连同尖括号一起替换；保留其他字段，不把完整密钥发到聊天。",
+                      "保存文件后回复“继续”，由业务加载器检查是否生效。"]}
+
+
 def apply_plan(tasks, state, confirmation):
     active(state)
     if state["source"] != "manual" or state["phase"] != "waiting_confirmation":
@@ -190,6 +207,8 @@ def apply_plan(tasks, state, confirmation):
         tasks.save(state)  # A crash after this point requires inspection, never replay.
         try:
             result = edit(plan)
+            if plan["action"] == "prepare":
+                result["manual_input"] = manual_input(plan)
             state["result"] = result
             state["phase"] = "waiting_manual" if plan["action"] == "prepare" else "recheck"
             tasks.save(state)
@@ -249,6 +268,12 @@ def recheck(tasks, state, reconcile=False):
         state["phase"] = "completed" if report["status"] == "ok" else "inspection"
     if state["phase"] == "completed":
         state.pop("last_reason", None)
+        if state["operation"] in ("configure", "repair"):
+            state["result"].setdefault("default_settings", {
+                "schema_version": 1,
+                "phase": "pending_check" if state["context"]["global_enabled"] else "skipped",
+                "reason": "inspect_designated_installed_targets" if state["context"]["global_enabled"] else "global_disabled",
+            })
     tasks.save(state)
     return state
 

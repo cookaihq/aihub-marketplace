@@ -16,6 +16,8 @@ from pathlib import Path
 
 from setup_core.consumers import ADAPTERS, HOSTS, Consumer
 from setup_core.errors import SetupError
+from setup_core.secret_book import inspect_dependency
+from setup_core import default_settings
 from setup_core.progress import (Tasks, active, apply_plan, consumer_for, guard_context, make_plan,
                                  pending_delegation, recheck, secret_book_compatibility, secret_book_handoff, secret_book_result)
 
@@ -61,6 +63,14 @@ def arguments():
     listing = sub.add_parser("list", help="只读列出同一宿主/运行环境/工作文件夹的未完成任务")
     host(listing)
     listing.add_argument("--plugin", choices=ADAPTERS)
+    defaults = sub.add_parser("defaults", help="指定清单、Agent 核对结果与默认设置选项的跨轮恢复；不写规则")
+    host(defaults)
+    defaults.add_argument("--action", required=True, choices=("catalog", "record", "status", "choose", "preview", "verify", "finish"))
+    defaults.add_argument("--task")
+    defaults.add_argument("--input", help="无凭证 JSON 报告或预览参数文件")
+    defaults.add_argument("--choice", choices=("1", "2", "3", "设为默认", "本次跳过", "不再提醒"))
+    defaults.add_argument("--targets", help="用户明确选定的 eligible 子集，逗号分隔 ID；省略表示整个菜单")
+    defaults.add_argument("--confirm", help="用户已确认的完整默认规则预览指纹")
     for name in ("status", "attach", "source", "select", "plan", "apply", "continue", "reconcile", "cancel", "forget", "handoff", "handoff-result"):
         command = sub.add_parser(name)
         task(command)
@@ -78,7 +88,7 @@ def arguments():
         elif name == "handoff":
             command.add_argument("--availability", required=True,
                                  choices=("missing", "unknown", "unloaded", "incompatible", "available"))
-            command.add_argument("--secret-book-root", help="可用时必填：当前宿主选用的 Secret Book 完整 Skill 实体")
+            command.add_argument("--secret-book-root", help="可用或不兼容时必填：当前宿主选用的 Secret Book 完整 Skill 实体")
         elif name == "handoff-result":
             command.add_argument("--status", required=True, choices=("completed", "cancelled", "pending", "failed", "unknown"))
             command.add_argument("--reference", help="Secret Book 公开的不透明恢复引用；不传其状态文件")
@@ -89,6 +99,10 @@ def run(args):
     cwd = Path(args.cwd).resolve()
     if not cwd.is_dir():
         raise SetupError("cwd_not_directory")
+    if args.command == "defaults" and args.action == "catalog":
+        return default_settings.catalog(args.host)
+    if args.command == "defaults" and not args.task:
+        raise SetupError("default_settings_task_required")
     tasks = Tasks()
     if args.command in ("start", "inspect"):
         if args.plugin_root:
@@ -117,22 +131,42 @@ def run(args):
         return {"tasks": tasks.matches(args.host, cwd, args.plugin)}
     state = tasks.load(args.task)
     guard_context(state, args.host, cwd)
+    if args.command == "defaults" and args.action == "status":
+        return {"task": state["id"], "credential_phase": state["phase"],
+                "default_settings": state.get("result", {}).get("default_settings")}
     if args.command == "status":
         # Do not consume a pending authorization or inspect any business files.
         return state
     with tasks.lock({"task": args.task}):
         state = tasks.load(args.task)
         guard_context(state, args.host, cwd)
+        if args.command == "defaults":
+            if args.action in ("record", "preview", "finish"):
+                if not args.input:
+                    raise SetupError("default_settings_input_required")
+                result = getattr(default_settings, args.action)(state, default_settings.read_json(args.input))
+            elif args.action == "choose":
+                result = default_settings.choose(state, args.choice, args.targets.split(",") if args.targets else None)
+            else:
+                result = default_settings.verify(state, args.confirm)
+            tasks.save(state)
+            return {"task": state["id"], "credential_phase": state["phase"], "default_settings": result}
         if args.command == "cancel":
             if pending_delegation(state):
                 raise SetupError("secret_book_owns_write")
+            if state["phase"] == "completed" and default_settings.pending(state):
+                state["result"]["default_settings"].update(phase="skipped", eligible=[])
+                tasks.save(state)
+                return state
             state["phase"] = "cancelled"
+            if default_settings.pending(state):
+                state["result"]["default_settings"]["phase"] = "skipped"
             state.pop("plan", None)
             state.pop("authorization", None)
             tasks.save(state)
             return state
         if args.command == "forget":
-            if state["phase"] not in ("completed", "cancelled"):
+            if state["phase"] not in ("completed", "cancelled") or default_settings.pending(state):
                 raise SetupError("close_task_before_forgetting")
             tasks.path(state["id"]).unlink()
             return {"forgotten_task": state["id"], "business_configuration": "preserved"}
@@ -182,6 +216,8 @@ def run(args):
             active(state)
             if state["source"] != "secret-book" or state["operation"] not in ("configure", "repair"):
                 raise SetupError("invalid_secret_book_operation")
+            if args.availability == "incompatible":
+                inspect_dependency(args.secret_book_root, state["context"]["caller"])
             if args.availability != "available":
                 state["phase"] = "waiting_secret_book"
                 state["secret_book"] = {"status": args.availability, "reference": None, "contract": "not_delegated", "delegated": False}

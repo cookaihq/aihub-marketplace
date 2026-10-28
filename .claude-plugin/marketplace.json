@@ -15,14 +15,14 @@
     {
       "name": "tikin-social",
       "source": "./tikin-social",
-      "version": "1.3.0",
+      "version": "1.3.1",
       "description": "通过 tikin 获取社交媒体数据、下载素材并分析账号、评论和趋势，包含 17 个 Skill。",
       "category": "web-integration"
     },
     {
       "name": "setup-aihub",
       "source": "./setup-aihub",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "description": "管理业务密钥与六类客户端的 AIhub 原生模型配置。",
       "category": "productivity"
     }

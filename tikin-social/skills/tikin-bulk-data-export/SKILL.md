@@ -2,7 +2,7 @@
 name: tikin-bulk-data-export
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Fetch large social-media lists via tikin (posts, followers, search results, comments) with safe pagination, dedup, and CSV or JSON export. Use when the user wants all posts, a dataset, an export, or any large repeated pull from a supported platform or URL.
+description: v1.3.0｜通过 Tikin 批量获取社交媒体帖子、粉丝、搜索结果或评论，支持分页、去重及 CSV、JSON 导出。适用于获取全部帖子、构建数据集、导出数据，或从受支持平台和链接重复拉取大量数据。
 ---
 
 # Bulk Data Export

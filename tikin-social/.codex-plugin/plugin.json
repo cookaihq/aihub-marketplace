@@ -1,6 +1,6 @@
 {
   "name": "tikin-social",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Social-media data for AI agents via tikin. Download media and fetch posts, profiles, comments, search results, trends, and analytics across TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu, and more through tikin's unified REST API using your own tikin API key. Includes setup and authentication routing, REST best practices, endpoint discovery across 1,000+ API endpoints, platform-specific skills, and task skills for downloads, analytics, research, listening, comparison, comment analysis, and bulk export.",
   "author": {
     "name": "cookaihq",
@@ -24,8 +24,8 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "tikin Social",
-    "shortDescription": "Social-media data, downloads, and analytics via tikin",
+    "displayName": "Tikin Social｜社交媒体数据与分析",
+    "shortDescription": "查询社交平台内容与数据、下载素材，分析账号、评论和趋势",
     "longDescription": "Use tikin skills to fetch social-media posts, profiles, comments, search results, trends, and analytics, download media, discover supported endpoints, and configure API access.",
     "developerName": "cookaihq",
     "category": "Productivity",

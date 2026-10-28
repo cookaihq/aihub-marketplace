@@ -2,7 +2,7 @@
 name: tikin-social-media-downloader
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Download video, audio, or images (no-watermark where available) from a social-media URL or list of URLs. Use when the user pastes a TikTok/Douyin/Instagram/YouTube/Twitter/Xiaohongshu link and wants the media file, or says "download this video", "save without watermark", "grab the audio". Dispatches to the right per-platform tikin endpoint.
+description: v1.3.0｜从一个或多个社交媒体链接下载视频、音频或图片，平台支持时获取无水印素材。适用于用户提供 TikTok、抖音、Instagram、YouTube、Twitter/X、小红书链接并要求下载视频、保存无水印素材或提取音频；调用对应平台的 Tikin 接口。
 ---
 
 # Social Media Downloader

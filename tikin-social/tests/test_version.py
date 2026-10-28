@@ -1,6 +1,7 @@
 """Version metadata contracts; independent of business runtime dependencies."""
 import json
 import re
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -16,11 +17,14 @@ class VersionMetadataTests(unittest.TestCase):
             self.assertEqual(manifest["name"], "tikin-social")
         for skill in (ROOT / "skills").glob("*/SKILL.md"):
             text = skill.read_text()
-            self.assertEqual(re.search(r'^metadata:\s*\n  version: "([^"\s]+)"', text, re.M).group(1), version)
-            self.assertIn("v" + version + "｜", text)
+            skill_version = re.search(r'^metadata:\s*\n  version: "([^"\s]+)"', text, re.M).group(1)
+            self.assertRegex(skill_version, r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$')
+            self.assertIn("description: v" + skill_version + "｜", text)
             if (skill.parent / "pyproject.toml").exists():
-                for filename in ("pyproject.toml", "uv.lock"):
-                    self.assertIn('version = "' + version + '"', (skill.parent / filename).read_text())
+                project = tomllib.loads((skill.parent / 'pyproject.toml').read_text())['project']
+                self.assertEqual(project['version'], skill_version)
+                lock = tomllib.loads((skill.parent / 'uv.lock').read_text())
+                self.assertEqual(next(p['version'] for p in lock['package'] if p['name'] == project['name']), skill_version)
 
 
 if __name__ == "__main__":

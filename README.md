@@ -2,7 +2,7 @@
 
 这个市场提供 AIhub 创作与文档处理、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
 
-当前版本为 Setup AIHub 2.1.0、AIhub Studio 1.3.0 和 tikin Social 1.3.0。Setup 包含 `setup-api-key` 与新增的 `setup-agent-model`，安装的 Plugin 仍叫 `setup-aihub`。新入口与历史版本的验证范围见 [Setup 使用说明](setup-aihub/README.md)。
+当前版本为 Setup AIHub 2.2.0、AIhub Studio 1.3.1 和 tikin Social 1.3.1。Setup 包含 `setup-api-key` 与新增的 `setup-agent-model`，安装的 Plugin 仍叫 `setup-aihub`。新入口与历史版本的验证范围见 [Setup 使用说明](setup-aihub/README.md)。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
@@ -15,6 +15,22 @@
 配置服务时可以说“帮我配置 AIhub 创作服务的密钥”或“换一下刚才的 tikin Key”。已加载 Setup 后，仅说 `setup-api-key` 即可开始中文菜单；Setup 尚未安装时先使用[完整安装提示词](setup-aihub/README.md#让-agent-帮你安装)。业务凭证已可读时无需运行 Setup。
 
 ## 让 Agent 帮你安装
+
+### ChatGPT 桌面版：添加市场并安装全部 Plugin
+
+在 ChatGPT 桌面版能够执行本机命令的对话中，复制下面这段：
+
+```text
+请帮我添加 AIhub Marketplace，并安装该市场清单中的全部完整 Plugin。
+
+优先使用 https://github.com/cookaihq/aihub-marketplace.git，遇到网络故障时，同版本回退到 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。
+
+先阅读仓库及各 Plugin 的 README，确认当前 ChatGPT 使用的配置目录，再通过对应的 Codex CLI 添加或复用市场，并按清单逐个安装完整 Plugin。已有安装先核对并复用，保留已有设置和密钥。
+
+完成后逐项报告实际来源、Plugin 名称、版本、安装状态和 Skill 加载结果。需要刷新应用或开启新会话时，告诉我具体操作；无法完成的步骤明确说明原因。
+```
+
+该入口已核对[官方 CLI 说明](https://learn.chatgpt.com/plugins/build/plugins#add-a-marketplace-from-the-cli)和本机 CLI 帮助，ChatGPT 内的完整安装与 Skill 加载尚未实测。安装后需要配置业务密钥时，继续按 [Setup AIHub 使用说明](setup-aihub/README.md#配置密钥)操作。
 
 ### Claude Code / Codex：让 Agent 通过原生 Plugin 入口安装
 
@@ -67,6 +83,6 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 | 目标 | 版本 | Release |
 |---|---|---|
 | aihub-studio | 1.4.0 | [aihub-studio/v1.4.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv1.4.0) |
-| setup-aihub | 2.1.0 | [setup-aihub/v2.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv2.1.0) |
-| tikin-social | 1.3.0 | [tikin-social/v1.3.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv1.3.0) |
+| setup-aihub | 2.2.0 | [setup-aihub/v2.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv2.2.0) |
+| tikin-social | 1.3.1 | [tikin-social/v1.3.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv1.3.1) |
 <!-- release-table:end -->

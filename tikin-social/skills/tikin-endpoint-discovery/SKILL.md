@@ -2,7 +2,7 @@
 name: tikin-endpoint-discovery
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Find the right tikin endpoint among 1,000+ across 16+ platforms. Use when you know the goal (e.g. "get a user's posts on Douyin") but not the exact API path, or when a platform has no dedicated skill (LinkedIn, Reddit, Bilibili, Weibo, WeChat, Kuaishou, Zhihu, Lemon8, etc.). Searches a bundled index and maps results to REST calls.
+description: v1.3.0｜从 Tikin 覆盖 16 个以上平台的 1,000 多个接口中查找合适的数据接口。适用于已知目标但不清楚接口路径，或 LinkedIn、Reddit、哔哩哔哩、微博、微信、快手、知乎、Lemon8 等没有专属 Skill 的平台；检索随包索引并对应到 REST 调用。
 ---
 
 # tikin — Endpoint Discovery

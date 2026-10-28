@@ -2,7 +2,7 @@
 name: tikin-trend-research
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Discover trends via tikin — viral content, rising hashtags, hot sounds, and ranking boards across supported platforms. Use when the user asks what is trending, wants a regional or niche trend report, or provides a supported URL as trend context.
+description: v1.3.0｜通过 Tikin 发现受支持平台的热点趋势，包括热门内容、上升话题标签、热门音频和排行榜。适用于查询当前热点、生成地区或垂直领域趋势报告，或以受支持链接作为趋势研究线索。
 ---
 
 # Trend Research

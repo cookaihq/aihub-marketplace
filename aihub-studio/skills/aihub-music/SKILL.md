@@ -2,7 +2,7 @@
 name: aihub-music
 metadata:
   version: "1.4.0"
-description: v1.4.0｜Generate AIhub music with lyria-3-pro async tasks or the separate Gemini-native lyria-3-pro-preview protocol, then save verified audio files.
+description: v1.4.0｜通过 AIhub 的 lyria-3-pro 异步任务或独立的 Gemini 原生 lyria-3-pro-preview 协议生成音乐，保存并核验音频文件。
 ---
 
 # AIhub Music

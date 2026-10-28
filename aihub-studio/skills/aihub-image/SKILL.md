@@ -2,7 +2,7 @@
 name: aihub-image
 metadata:
   version: "1.4.0"
-description: v1.4.0｜Generate or edit images through AIhub with configured model priorities and recoverable fallback. Without configuration, use GPT Image 2.5 Flare for speed or Sunburst for detail. Resume existing image tasks and deliver checked files.
+description: v1.4.0｜通过 AIhub 生成或编辑图片，按已配置的模型优先级执行并支持可恢复的模型切换。未配置时，优先速度使用 GPT Image 2.5 Flare，优先细节使用 Sunburst。支持继续已有图片任务并交付核验后的文件。
 compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 

@@ -2,7 +2,7 @@
 name: tikin-creator-analytics
 metadata:
   version: "1.3.0"
-description: v1.3.0｜Analyze a creator or account via tikin — profile stats, recent post performance, engagement rate, posting cadence, and top content. Use when the user asks for creator performance or provides a supported profile/channel URL or handle.
+description: v1.3.0｜通过 Tikin 分析创作者或账号的资料统计、近期内容表现、互动率、发布频率和热门内容。适用于创作者表现分析，或用户提供受支持平台的账号、频道链接或用户名。
 ---
 
 # Creator Analytics

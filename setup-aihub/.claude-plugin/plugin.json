@@ -1,6 +1,6 @@
 {
   "name": "setup-aihub",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "管理 AIhub/tikin 业务密钥，以及六类客户端的 AIhub 原生模型配置。",
   "author": {
     "name": "cookaihq",

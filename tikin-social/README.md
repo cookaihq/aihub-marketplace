@@ -5,7 +5,7 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Current version: **1.3.0**. All 17 Skills now share native JSON requests and automatic local error reports. Credential handoff uses the
+Current Plugin version: **1.3.1**; all 17 Skills remain at **1.3.0**. This release updates version validation without changing business behavior. Host manifests and version metadata are checked; no new host-session acceptance is claimed. All 17 Skills share native JSON requests and automatic local error reports. Credential handoff uses the
 `setup-api-key` Skill in Setup AIHub 2.0.0. The following results apply to **1.2.0**:
 native Windows Plugin installation and Skill discovery are verified
 in Claude Code, Codex and WorkBuddy. Credential configuration passed in Codex's default sandbox
