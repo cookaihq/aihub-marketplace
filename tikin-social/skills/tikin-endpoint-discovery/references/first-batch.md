@@ -68,7 +68,10 @@ not live success or response equivalence. No parameters are silently renamed.
   `pagination_token` in the schema but document them as ineffective: do not
   promise further pages. Job-search filters changed; inspect current names
   instead of forwarding old `keyword`, `company`, `country` or singular filters.
-- WeChat public-account operations retain username length/pattern constraints.
+- WeChat `fetch_account_profile` and `fetch_account_services` expand the accepted
+  username format: all previous `gh_` values of up to 64 characters remain valid,
+  and the new schema permits additional formats up to 80 characters. These two
+  changes are compatible extensions, not required client migrations.
   Pugongying objects reject unknown fields where `additionalProperties: false`;
   an old permissive payload must not be treated as valid.
 - Reddit adds identifier patterns, lengths, enums and bounded arrays. Repeated

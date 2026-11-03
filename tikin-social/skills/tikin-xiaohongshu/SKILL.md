@@ -1,8 +1,8 @@
 ---
 name: tikin-xiaohongshu
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 Tikin 处理小红书 / RedNote 链接与数据，获取图文或视频笔记详情、用户资料、已发布笔记，搜索笔记、用户、商品和图片，查询评论及子评论。用户提供小红书链接、分享文本或任务针对小红书时使用；覆盖 Xiaohongshu App-V2 接口。
+  version: "1.6.0"
+description: v1.6.0｜通过 Tikin 处理小红书 / RedNote 链接与数据，获取图文或视频笔记详情、用户资料、已发布笔记，搜索笔记、用户、商品和图片，查询评论及子评论。用户提供小红书链接、分享文本或任务针对小红书时使用；覆盖 Xiaohongshu App-V2 接口。
 ---
 
 # Xiaohongshu / RedNote / 小红书 (via tikin)
@@ -17,6 +17,8 @@ Coverage via the App-V2 API. Exhaustive endpoints via the `tikin-endpoint-discov
 `tikin-find-endpoint "<goal>" --platform xiaohongshu`.
 
 Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

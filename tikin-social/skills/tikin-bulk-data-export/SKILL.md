@@ -1,8 +1,8 @@
 ---
 name: tikin-bulk-data-export
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 Tikin 批量获取社交媒体帖子、粉丝、搜索结果或评论，支持分页、去重及 CSV、JSON 导出。适用于获取全部帖子、构建数据集、导出数据，或从受支持平台和链接重复拉取大量数据。
+  version: "1.6.0"
+description: v1.6.0｜通过 Tikin 批量获取社交媒体帖子、粉丝、搜索结果或评论，支持分页、去重及 CSV、JSON 导出。适用于获取全部帖子、构建数据集、导出数据，或从受支持平台和链接重复拉取大量数据。
 ---
 
 # Bulk Data Export
@@ -17,6 +17,8 @@ Paginate a list endpoint at scale, dedup, and write a clean dataset — safely a
 estimate up front.
 
 Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

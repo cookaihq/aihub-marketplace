@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 import tempfile
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, unquote, urlencode, urlsplit, urlunsplit
 
 SECRET_KEY = re.compile(r'authorization|cookie|api[_.-]?key|password|secret|credential|accessToken|refreshToken|idToken|sessionId|(?:^|[_-])(?:auth|token|signature|sign|sig|session|jwt)(?:$|[_-])|^x-amz-|^x-goog-', re.I)
 
@@ -19,8 +19,18 @@ def secret_values(value, sensitive=False):
     if isinstance(value, str):
         return [value] if sensitive and value else []
     if isinstance(value, dict):
-        return [secret for name, item in value.items()
-                for secret in secret_values(item, sensitive or bool(SECRET_KEY.search(name)))]
+        values = []
+        for name, item in value.items():
+            values.extend(secret_values(item, sensitive or bool(SECRET_KEY.search(name))))
+            if name.lower() == 'proxy_url' and isinstance(item, str):
+                values.append(item)
+                try:
+                    password = urlsplit(item).password
+                    if password:
+                        values.extend([password, unquote(password)])
+                except ValueError:
+                    pass  # The complete malformed input is still masked.
+        return values
     if isinstance(value, list):
         return [secret for item in value for secret in secret_values(item, sensitive)]
     return []

@@ -1,0 +1,783 @@
+{
+  "cohorts": {
+    "bilibili_sync": [
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/account_session_info",
+        "rate_limit_metadata": "10/second",
+        "summary": "当前广告主账号信息/Get current advertiser account information",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/cooperate_experience_industry",
+        "rate_limit_metadata": "10/second",
+        "summary": "合作经验行业列表/Get collaboration-experience industries",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/dmp_pkg_list",
+        "rate_limit_metadata": "10/second",
+        "summary": "人群包列表/Get audience packages",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/effect_goods_drop",
+        "rate_limit_metadata": "10/second",
+        "summary": "带货类目下拉/Get commerce category options",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/industry_tags",
+        "rate_limit_metadata": "10/second",
+        "summary": "行业标签字典/Get industry tags",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/label_char_style",
+        "rate_limit_metadata": "10/second",
+        "summary": "内容风格字典/Get content-style tags",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/live_area_list",
+        "rate_limit_metadata": "10/second",
+        "summary": "直播分区下拉/Get live-streaming areas",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/live_commerce_info",
+        "rate_limit_metadata": "10/second",
+        "summary": "直播带货能力/Get live-commerce performance",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/live_good_category",
+        "rate_limit_metadata": "10/second",
+        "summary": "直播带货类目/Get live-commerce categories",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/live_guild_drop",
+        "rate_limit_metadata": "10/second",
+        "summary": "直播公会下拉/Get live-streaming guilds",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/live_parent_tag",
+        "rate_limit_metadata": "10/second",
+        "summary": "直播人设标签/Get live creator persona tags",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/live_upper_portrait",
+        "rate_limit_metadata": "10/second",
+        "summary": "直播UP主详情/Get live creator profile",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/mcn_drop",
+        "rate_limit_metadata": "10/second",
+        "summary": "MCN机构下拉/Get MCN organizations",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/partition_drop",
+        "rate_limit_metadata": "10/second",
+        "summary": "稿件分区下拉/Get video partition options",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/popular_avid_category_drop",
+        "rate_limit_metadata": "10/second",
+        "summary": "视频榜单行业下拉/Get video ranking industries",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/popular_avid_list",
+        "rate_limit_metadata": "10/second",
+        "summary": "视频榜单/Get Huahuo video rankings",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/popular_goods_industry_up_list",
+        "rate_limit_metadata": "10/second",
+        "summary": "行业带货UP主榜/Get commerce creators by industry",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/popular_goods_list",
+        "rate_limit_metadata": "10/second",
+        "summary": "X火商品榜/Get X-Huo product rankings",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/popular_goods_up_list",
+        "rate_limit_metadata": "10/second",
+        "summary": "商品带货UP主榜/Get creators ranked for a product",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/popular_up_list",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主榜单/Get creator rankings",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/popular_up_tid_drop",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主榜单分区下拉/Get creator ranking categories",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/popular_up_x_huo",
+        "rate_limit_metadata": "10/second",
+        "summary": "X火种草榜/Get X-Huo creator rankings",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/region_drop",
+        "rate_limit_metadata": "10/second",
+        "summary": "地域下拉/Get region options",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/search_upper_suggest",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主搜索联想/Search creator suggestions",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/square_static_info",
+        "rate_limit_metadata": "10/second",
+        "summary": "广场筛选字典/Get creator marketplace filter dictionaries",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/tag_character",
+        "rate_limit_metadata": "10/second",
+        "summary": "人设标签字典/Get persona tags",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/tag_commercial",
+        "rate_limit_metadata": "10/second",
+        "summary": "商业标签字典/Get commercial tags",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/tag_occupation",
+        "rate_limit_metadata": "10/second",
+        "summary": "职业标签字典/Get occupation tags",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_archive_highlights",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主稿件高光/Get creator video highlights",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_base_info",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主基础信息/Get creator basic information",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_busy_time",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主档期占用/Get creator unavailable dates",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_by_nickname",
+        "rate_limit_metadata": "10/second",
+        "summary": "按昵称查UP主/Find creators by nickname",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_detail",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主详情/Get creator profile",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_draft_performance",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主稿件表现/Get creator video performance",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_draft_trend",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主稿件数据趋势/Get creator video metric trends",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_fans_trend",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主粉丝增长趋势/Get creator follower trends",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_label_tree",
+        "rate_limit_metadata": "10/second",
+        "summary": "搜UP主筛选面板配置/Get creator filter panel configuration",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_overlap_uppers",
+        "rate_limit_metadata": "10/second",
+        "summary": "粉丝重合UP主/Get creators with overlapping audiences",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_representative",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主代表作/Get creator representative videos",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_seek_info",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主询单配置/Get creator inquiry settings",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/upper_similar",
+        "rate_limit_metadata": "10/second",
+        "summary": "内容相似UP主/Get creators with similar content",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/x_huo_date_options",
+        "rate_limit_metadata": "10/second",
+        "summary": "X火榜可选期数/Get X-Huo ranking periods",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.006,
+        "operation": "GET /api/v1/bilibili/huahuo/x_huo_industry_drop",
+        "rate_limit_metadata": "10/second",
+        "summary": "X火榜行业下拉/Get X-Huo ranking industries",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/bilibili/web/fetch_dynamic_comments",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取动态评论/Get dynamic comments",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/bilibili/web/fetch_user_post_videos_v2",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取用户主页作品数据V2/Get user homepage video data V2",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/bilibili/huahuo/search_live_upper",
+        "rate_limit_metadata": "10/second",
+        "summary": "直播广场搜索/Search live creators",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/bilibili/huahuo/search_upper",
+        "rate_limit_metadata": "10/second",
+        "summary": "UP主广场搜索（搜UP主 / 搜内容）/Search Huahuo creators or content",
+        "verification": "controlled workflow and real sample acceptance pending"
+      }
+    ],
+    "linkedin_async": [
+      {
+        "list_price": 0.008,
+        "operation": "GET /api/v1/linkedin/web_v2/async/create_company_profile_task",
+        "rate_limit_metadata": "10/second",
+        "summary": "创建获取公司主页资料任务/Create company profile task",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.008,
+        "operation": "GET /api/v1/linkedin/web_v2/async/create_post_detail_task",
+        "rate_limit_metadata": "10/second",
+        "summary": "创建获取帖子或文章详情任务/Create post detail task",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.008,
+        "operation": "GET /api/v1/linkedin/web_v2/async/create_user_profile_task",
+        "rate_limit_metadata": "10/second",
+        "summary": "创建获取用户主页信息任务/Create user profile task",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.0,
+        "operation": "GET /api/v1/linkedin/web_v2/async/get_task_result",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取异步任务结果/Get async task result",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.0,
+        "operation": "GET /api/v1/linkedin/web_v2/async/get_task_status",
+        "rate_limit_metadata": "10/second",
+        "summary": "查询异步任务状态/Get async task status",
+        "verification": "controlled workflow and real sample acceptance pending"
+      }
+    ],
+    "other_sync": [
+      {
+        "list_price": 0.02,
+        "operation": "GET /api/v1/douyin/xingtu/author_homepage_videos_v1",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取达人主页视频列表V1/Get Author Homepage Videos V1",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.003,
+        "operation": "GET /api/v1/douyin/xingtu_v2/get_author_commerce_spread_info",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取创作者性价比与效果预估/Get Author Commerce Spread Info",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.003,
+        "operation": "GET /api/v1/douyin/xingtu_v2/get_author_daily_link",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取创作者连接指标日趋势/Get Author Daily Link",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.003,
+        "operation": "GET /api/v1/douyin/xingtu_v2/get_author_daily_link_score",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取创作者连接指数日趋势/Get Author Daily Link Score",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.002,
+        "operation": "GET /api/v1/douyin/xingtu_v2/get_author_rec_videos_v2",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取创作者推荐视频/Get Author Recommended Videos V2",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.002,
+        "operation": "GET /api/v1/douyin/xingtu_v2/get_author_spread_videos",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取创作者传播表现视频/Get Author Spread Videos",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.002,
+        "operation": "GET /api/v1/douyin/xingtu_v2/get_author_video_distribution",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取创作者视频内容分布/Get Author Video Distribution",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.002,
+        "operation": "GET /api/v1/douyin/xingtu_v2/get_item_play_count",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取单个视频播放量(含详情)/Get Item Play Count",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.002,
+        "operation": "GET /api/v1/douyin/xingtu_v2/get_search_field_options",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取达人广场筛选项取值/Get Search Field Options",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.008,
+        "operation": "GET /api/v1/instagram/v3/get_hashtag_posts",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取话题标签帖子列表/Get hashtag posts",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.05,
+        "operation": "GET /api/v1/linkedin/web_v2/get_post_comments",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取帖子评论/Get post comments",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.002,
+        "operation": "GET /api/v1/threads/web/fetch_post_detail_v3",
+        "rate_limit_metadata": "3/second",
+        "summary": "获取帖子详情 V3（精简版）/Get post detail V3 (lightweight)",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.002,
+        "operation": "GET /api/v1/threads/web/search_profiles_v2",
+        "rate_limit_metadata": "3/second",
+        "summary": "搜索用户档案 V2/Search profiles V2",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/tiktok/web/fetch_post_ai_article",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取单个作品的AI长文内容/Get AI-generated article of a single video",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_check_follow",
+        "rate_limit_metadata": "10/second",
+        "summary": "检查用户是否关注了另一个用户/Check follow",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_check_retweet",
+        "rate_limit_metadata": "10/second",
+        "summary": "检查用户是否转推了某条推文/Check retweet",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_community_info",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取社区详情/Get community info",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_community_members",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取社区成员（无分页）/Get community members (no pagination)",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_community_timeline",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取社区帖子/Get community timeline",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_list_followers",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取列表关注者/Get list followers",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_list_members",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取列表成员/Get list members",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_list_timeline",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取列表帖子/Get list timeline",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_search_communities",
+        "rate_limit_metadata": "10/second",
+        "summary": "搜索社区/Search communities",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_user_about",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取用户账号档案信息/Get user about profile",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_user_affiliates",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取用户关联子账号/Get user affiliates",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_user_live_status",
+        "rate_limit_metadata": "10/second",
+        "summary": "检查用户是否正在直播/Check user live status",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/twitter/web/fetch_user_profiles_by_rest_ids",
+        "rate_limit_metadata": "10/second",
+        "summary": "批量根据用户ID获取用户资料/Get profiles by rest ids",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/weibo/app/fetch_hot_search_brief",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取热搜简报/Get hot search brief",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/weibo/app/fetch_user_followers",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取用户粉丝列表/Get user followers",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "GET /api/v1/weibo/app/fetch_user_following",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取用户关注列表/Get user following",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/douyin/search/fetch_general_search_v3",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取综合搜索 V3/Fetch general search V3",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/douyin/search/fetch_live_search_v2",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取直播搜索 V2/Fetch live search V2",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/douyin/search/fetch_search_suggest_v2",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取搜索关键词推荐 V2/Fetch search keyword suggestions V2",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/douyin/search/fetch_video_search_v3",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取视频搜索 V3/Fetch video search V3",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/douyin/search/fetch_video_search_v4",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取视频搜索 V4/Fetch video search V4",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/douyin/search/fetch_video_search_v5",
+        "rate_limit_metadata": "5/second",
+        "summary": "获取视频搜索 V5/Fetch video search V5",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.003,
+        "operation": "POST /api/v1/douyin/xingtu_v2/get_item_report_comments",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取视频评论分析/Get Item Report Comments",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.002,
+        "operation": "POST /api/v1/douyin/xingtu_v2/get_item_report_detail",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取视频详情报告/Get Item Report Detail",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.003,
+        "operation": "POST /api/v1/douyin/xingtu_v2/get_item_report_th_analysis",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取视频互动分析/Get Item Report Interaction Analysis",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.003,
+        "operation": "POST /api/v1/douyin/xingtu_v2/get_item_report_trend",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取视频整体表现趋势/Get Item Report Trend",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.04,
+        "operation": "POST /api/v1/douyin/xingtu_v2/multi_get_item_stats",
+        "rate_limit_metadata": "10/second",
+        "summary": "批量获取视频数据(播放量/点赞等)/Multi Get Item Stats",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "POST /api/v1/tiktok/ads/get_creators_card",
+        "rate_limit_metadata": "10/second",
+        "summary": "批量获取创作者卡片/Get creators card",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "POST /api/v1/tiktok/ads/get_top_ads_filters",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取热门广告筛选项/Get Top Ads filters",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "POST /api/v1/tiktok/ads/get_top_contents_item_detail",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取热门视频详情/Get top contents item detail",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.001,
+        "operation": "POST /api/v1/tiktok/ads/get_top_contents_list",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取热门视频榜单/Get top contents list",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/wechat_mp/v2/fetch_article_detail_h5",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取公众号文章详情（H5 版本，推荐）/Get WeChat MP Article Detail (H5, Recommended)",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/wechat_mp/v2/fetch_article_stats_h5",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取公众号文章互动数据（H5 版本）/Get WeChat MP Article Stats (H5)",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.02,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_blogger_filter_options",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取蒲公英找博主筛选项字典/Get PGY blogger filter options",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.02,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_blogger_notes_v2",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取蒲公英博主笔记案例 v2（覆盖跨域）/Get PGY blogger note cases v2 (cross-platform)",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.02,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_blogger_similar",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取蒲公英相似博主推荐/Get PGY similar bloggers",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.02,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_content_square",
+        "rate_limit_metadata": "10/second",
+        "summary": "蒲公英内容广场（热门内容榜单）/PGY content square leaderboards",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.02,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_keyword_daily",
+        "rate_limit_metadata": "10/second",
+        "summary": "蒲公英关键词逐日搜索指数/PGY keyword daily trend",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.02,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_keyword_related",
+        "rate_limit_metadata": "10/second",
+        "summary": "蒲公英关键词关联词（选题扩词）/PGY related keywords",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.02,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_keyword_stat",
+        "rate_limit_metadata": "10/second",
+        "summary": "蒲公英关键词概览（搜索指数+博主画像）/PGY keyword overview",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.02,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_live_blogger_list",
+        "rate_limit_metadata": "10/second",
+        "summary": "蒲公英直播博主广场（直播带货选号）/PGY live blogger square",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.01,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_note_comments",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取蒲公英笔记精选评论/Get PGY note featured comments",
+        "verification": "controlled workflow and real sample acceptance pending"
+      },
+      {
+        "list_price": 0.0,
+        "operation": "POST /api/v1/xiaohongshu/pgy/get_note_components",
+        "rate_limit_metadata": "10/second",
+        "summary": "获取蒲公英笔记组件/Get PGY note components",
+        "verification": "controlled workflow and real sample acceptance pending"
+      }
+    ],
+    "youtube_proxy": [
+      {
+        "list_price": 0.003,
+        "operation": "POST /api/v1/youtube/web_v2/get_video_streams_v3",
+        "rate_limit_metadata": "10/second",
+        "summary": "推荐：使用自带固定出口代理获取下载链接 / Recommended: download URLs with your fixed-exit proxy",
+        "verification": "controlled workflow and real sample acceptance pending"
+      }
+    ]
+  },
+  "state": "development-candidate"
+}

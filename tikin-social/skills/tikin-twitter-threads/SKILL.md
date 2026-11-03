@@ -1,8 +1,8 @@
 ---
 name: tikin-twitter-threads
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 Tikin 处理 Twitter/X 与 Threads 链接和数据，获取帖子详情、用户资料、用户时间线、粉丝与关注列表，搜索时间线、查询评论回复及 X 热门话题。用户提供相关链接或任务针对任一平台时使用；覆盖 Twitter-Web 与 Threads-Web 接口。
+  version: "1.6.0"
+description: v1.6.0｜通过 Tikin 处理 Twitter/X 与 Threads 链接和数据，获取帖子详情、用户资料、用户时间线、粉丝与关注列表，搜索时间线、查询评论回复及 X 热门话题。用户提供相关链接或任务针对任一平台时使用；覆盖 Twitter-Web 与 Threads-Web 接口。
 ---
 
 # Twitter / X & Threads (via tikin)
@@ -18,6 +18,8 @@ Coverage of Twitter/X and Threads (both microblog platforms). Exhaustive endpoin
 `--platform threads`.
 
 Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

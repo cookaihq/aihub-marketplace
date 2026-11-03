@@ -1,8 +1,8 @@
 ---
 name: tikin-hashtag-research
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 Tikin 研究话题标签或关键词，查询受支持平台的热度指标、热门与最新内容及相关标签。适用于话题标签研究、关联标签查询、内容选题，或用户提供受支持的话题标签链接。
+  version: "1.6.0"
+description: v1.6.0｜通过 Tikin 研究话题标签或关键词，查询受支持平台的热度指标、热门与最新内容及相关标签。适用于话题标签研究、关联标签查询、内容选题，或用户提供受支持的话题标签链接。
 ---
 
 # Hashtag Research
@@ -14,6 +14,8 @@ description: v1.4.0｜通过 Tikin 研究话题标签或关键词，查询受支
 每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 Assess a hashtag/keyword and surface its top content and related tags.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

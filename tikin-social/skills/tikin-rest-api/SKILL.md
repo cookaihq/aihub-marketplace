@@ -1,8 +1,8 @@
 ---
 name: tikin-rest-api
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
+  version: "1.6.0"
+description: v1.6.0｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
 ---
 
 # tikin — REST API
@@ -17,6 +17,8 @@ Direct HTTP access to all 1,000+ tikin endpoints. Use `tikin-endpoint-discovery`
 right path, then call it here.
 
 Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

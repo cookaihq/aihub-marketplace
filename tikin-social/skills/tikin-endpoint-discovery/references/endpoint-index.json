@@ -126,6 +126,15 @@
   {
     "method": "GET",
     "params": [
+      "itemId"
+    ],
+    "path": "/api/v1/tiktok/web/fetch_post_ai_article",
+    "summary": "获取单个作品的AI长文内容",
+    "tag": "TikTok-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
       "aweme_id",
       "cursor",
       "count",
@@ -1481,6 +1490,13 @@
   {
     "method": "POST",
     "params": [],
+    "path": "/api/v1/tiktok/ads/get_creators_card",
+    "summary": "批量获取创作者卡片",
+    "tag": "TikTok-Ads-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_location_list",
     "summary": "获取支持的国家地区列表",
     "tag": "TikTok-Ads-API"
@@ -1502,8 +1518,29 @@
   {
     "method": "POST",
     "params": [],
+    "path": "/api/v1/tiktok/ads/get_top_ads_filters",
+    "summary": "获取热门广告筛选项",
+    "tag": "TikTok-Ads-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_top_ads_spotlight",
     "summary": "获取热门广告聚光灯",
+    "tag": "TikTok-Ads-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/tiktok/ads/get_top_contents_item_detail",
+    "summary": "获取热门视频详情",
+    "tag": "TikTok-Ads-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/tiktok/ads/get_top_contents_list",
+    "summary": "获取热门视频榜单",
     "tag": "TikTok-Ads-API"
   },
   {
@@ -2453,6 +2490,13 @@
   {
     "method": "POST",
     "params": [],
+    "path": "/api/v1/douyin/search/fetch_general_search_v3",
+    "summary": "获取综合搜索 V3",
+    "tag": "Douyin-Search-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/douyin/search/fetch_image_search",
     "summary": "获取图片搜索",
     "tag": "Douyin-Search-API"
@@ -2462,6 +2506,13 @@
     "params": [],
     "path": "/api/v1/douyin/search/fetch_image_search_v3",
     "summary": "获取图文搜索 V3",
+    "tag": "Douyin-Search-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/douyin/search/fetch_live_search_v2",
+    "summary": "获取直播搜索 V2",
     "tag": "Douyin-Search-API"
   },
   {
@@ -2495,6 +2546,13 @@
   {
     "method": "POST",
     "params": [],
+    "path": "/api/v1/douyin/search/fetch_search_suggest_v2",
+    "summary": "获取搜索关键词推荐 V2",
+    "tag": "Douyin-Search-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/douyin/search/fetch_user_search",
     "summary": "获取用户搜索",
     "tag": "Douyin-Search-API"
@@ -2518,6 +2576,27 @@
     "params": [],
     "path": "/api/v1/douyin/search/fetch_video_search_v2",
     "summary": "获取视频搜索 V2",
+    "tag": "Douyin-Search-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/douyin/search/fetch_video_search_v3",
+    "summary": "获取视频搜索 V3",
+    "tag": "Douyin-Search-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/douyin/search/fetch_video_search_v4",
+    "summary": "获取视频搜索 V4",
+    "tag": "Douyin-Search-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/douyin/search/fetch_video_search_v5",
+    "summary": "获取视频搜索 V5",
     "tag": "Douyin-Search-API"
   },
   {
@@ -3718,6 +3797,18 @@
   {
     "method": "GET",
     "params": [
+      "oAuthorId",
+      "page",
+      "videoType",
+      "onlyAssign"
+    ],
+    "path": "/api/v1/douyin/xingtu/author_homepage_videos_v1",
+    "summary": "获取达人主页视频列表V1",
+    "tag": "Douyin-Xingtu-API"
+  },
+  {
+    "method": "GET",
+    "params": [
       "kolId"
     ],
     "path": "/api/v1/douyin/xingtu/author_hot_comment_tokens_v1",
@@ -3961,6 +4052,15 @@
   {
     "method": "GET",
     "params": [
+      "o_author_id"
+    ],
+    "path": "/api/v1/douyin/xingtu_v2/get_author_commerce_spread_info",
+    "summary": "获取创作者性价比与效果预估",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
       "author_id",
       "keyword_type"
     ],
@@ -4018,6 +4118,36 @@
     ],
     "path": "/api/v1/douyin/xingtu_v2/get_author_daily_fans",
     "summary": "获取创作者每日粉丝趋势",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "o_author_id",
+      "link_type",
+      "start_date",
+      "end_date",
+      "platform_source",
+      "platform_channel",
+      "industry_id"
+    ],
+    "path": "/api/v1/douyin/xingtu_v2/get_author_daily_link",
+    "summary": "获取创作者连接指标日趋势",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "o_author_id",
+      "link_score_type",
+      "start_date",
+      "end_date",
+      "platform_source",
+      "platform_channel",
+      "industry_id"
+    ],
+    "path": "/api/v1/douyin/xingtu_v2/get_author_daily_link_score",
+    "summary": "获取创作者连接指数日趋势",
     "tag": "Douyin-Xingtu-V2-API"
   },
   {
@@ -4093,6 +4223,17 @@
     "params": [
       "o_author_id",
       "platform_source",
+      "platform_channel"
+    ],
+    "path": "/api/v1/douyin/xingtu_v2/get_author_rec_videos_v2",
+    "summary": "获取创作者推荐视频",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "o_author_id",
+      "platform_source",
       "platform_channel",
       "only_assign",
       "flow_type"
@@ -4123,8 +4264,30 @@
       "platform_source",
       "platform_channel"
     ],
+    "path": "/api/v1/douyin/xingtu_v2/get_author_spread_videos",
+    "summary": "获取创作者传播表现视频",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "o_author_id",
+      "platform_source",
+      "platform_channel"
+    ],
     "path": "/api/v1/douyin/xingtu_v2/get_author_touch_distribution",
     "summary": "获取创作者视频触达分布",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "o_author_id",
+      "platform_source",
+      "platform_channel"
+    ],
+    "path": "/api/v1/douyin/xingtu_v2/get_author_video_distribution",
+    "summary": "获取创作者视频内容分布",
     "tag": "Douyin-Xingtu-V2-API"
   },
   {
@@ -4175,6 +4338,45 @@
     "params": [],
     "path": "/api/v1/douyin/xingtu_v2/get_ip_activity_list",
     "summary": "获取星图IP日历活动列表",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "item_id",
+      "platform_source",
+      "need_cover_url"
+    ],
+    "path": "/api/v1/douyin/xingtu_v2/get_item_play_count",
+    "summary": "获取单个视频播放量(含详情)",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/douyin/xingtu_v2/get_item_report_comments",
+    "summary": "获取视频评论分析",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/douyin/xingtu_v2/get_item_report_detail",
+    "summary": "获取视频详情报告",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/douyin/xingtu_v2/get_item_report_th_analysis",
+    "summary": "获取视频互动分析",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/douyin/xingtu_v2/get_item_report_trend",
+    "summary": "获取视频整体表现趋势",
     "tag": "Douyin-Xingtu-V2-API"
   },
   {
@@ -4239,6 +4441,16 @@
   {
     "method": "GET",
     "params": [
+      "platform_source",
+      "task_category"
+    ],
+    "path": "/api/v1/douyin/xingtu_v2/get_search_field_options",
+    "summary": "获取达人广场筛选项取值",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
       "core_user_id",
       "sec_uid"
     ],
@@ -4278,6 +4490,13 @@
     "params": [],
     "path": "/api/v1/douyin/xingtu_v2/multi_get_author_info",
     "summary": "批量获取创作者信息",
+    "tag": "Douyin-Xingtu-V2-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/douyin/xingtu_v2/multi_get_item_stats",
+    "summary": "批量获取视频数据(播放量/点赞等)",
     "tag": "Douyin-Xingtu-V2-API"
   },
   {
@@ -4724,6 +4943,13 @@
   {
     "method": "POST",
     "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_blogger_filter_options",
+    "summary": "获取蒲公英找博主筛选项字典",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/xiaohongshu/pgy/get_blogger_list",
     "summary": "蒲公英笔记博主广场（找博主/选号）",
     "tag": "Xiaohongshu-PGY-API"
@@ -4740,6 +4966,69 @@
     "params": [],
     "path": "/api/v1/xiaohongshu/pgy/get_blogger_notes_rate",
     "summary": "获取蒲公英博主数据表现",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_blogger_notes_v2",
+    "summary": "获取蒲公英博主笔记案例 v2（覆盖跨域）",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_blogger_similar",
+    "summary": "获取蒲公英相似博主推荐",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_content_square",
+    "summary": "蒲公英内容广场（热门内容榜单）",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_keyword_daily",
+    "summary": "蒲公英关键词逐日搜索指数",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_keyword_related",
+    "summary": "蒲公英关键词关联词（选题扩词）",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_keyword_stat",
+    "summary": "蒲公英关键词概览（搜索指数+博主画像）",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_live_blogger_list",
+    "summary": "蒲公英直播博主广场（直播带货选号）",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_note_comments",
+    "summary": "获取蒲公英笔记精选评论",
+    "tag": "Xiaohongshu-PGY-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/xiaohongshu/pgy/get_note_components",
+    "summary": "获取蒲公英笔记组件",
     "tag": "Xiaohongshu-PGY-API"
   },
   {
@@ -5348,6 +5637,16 @@
     ],
     "path": "/api/v1/instagram/v3/get_explore",
     "summary": "获取探索页推荐帖子",
+    "tag": "Instagram-V3-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "tag",
+      "max_id"
+    ],
+    "path": "/api/v1/instagram/v3/get_hashtag_posts",
+    "summary": "获取话题标签帖子列表",
     "tag": "Instagram-V3-API"
   },
   {
@@ -6044,6 +6343,13 @@
     "tag": "YouTube-Web-V2-API"
   },
   {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/youtube/web_v2/get_video_streams_v3",
+    "summary": "推荐：使用自带固定出口代理获取下载链接",
+    "tag": "YouTube-Web-V2-API"
+  },
+  {
     "method": "GET",
     "params": [
       "keyword",
@@ -6057,11 +6363,91 @@
   {
     "method": "GET",
     "params": [
+      "user_name",
+      "follows"
+    ],
+    "path": "/api/v1/twitter/web/fetch_check_follow",
+    "summary": "检查用户是否关注了另一个用户",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "screen_name",
+      "tweet_id"
+    ],
+    "path": "/api/v1/twitter/web/fetch_check_retweet",
+    "summary": "检查用户是否转推了某条推文",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "community_id"
+    ],
+    "path": "/api/v1/twitter/web/fetch_community_info",
+    "summary": "获取社区详情",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "community_id",
+      "cursor"
+    ],
+    "path": "/api/v1/twitter/web/fetch_community_members",
+    "summary": "获取社区成员（无分页）",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "community_id",
+      "ranking",
+      "cursor"
+    ],
+    "path": "/api/v1/twitter/web/fetch_community_timeline",
+    "summary": "获取社区帖子",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
       "tweet_id",
       "cursor"
     ],
     "path": "/api/v1/twitter/web/fetch_latest_post_comments",
     "summary": "获取最新的推文评论",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "list_id",
+      "cursor"
+    ],
+    "path": "/api/v1/twitter/web/fetch_list_followers",
+    "summary": "获取列表关注者",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "list_id",
+      "cursor"
+    ],
+    "path": "/api/v1/twitter/web/fetch_list_members",
+    "summary": "获取列表成员",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "list_id",
+      "cursor"
+    ],
+    "path": "/api/v1/twitter/web/fetch_list_timeline",
+    "summary": "获取列表帖子",
     "tag": "Twitter-Web-API"
   },
   {
@@ -6082,6 +6468,16 @@
     ],
     "path": "/api/v1/twitter/web/fetch_retweet_user_list",
     "summary": "转推用户列表",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "keyword",
+      "cursor"
+    ],
+    "path": "/api/v1/twitter/web/fetch_search_communities",
+    "summary": "搜索社区",
     "tag": "Twitter-Web-API"
   },
   {
@@ -6116,6 +6512,25 @@
   {
     "method": "GET",
     "params": [
+      "screen_name"
+    ],
+    "path": "/api/v1/twitter/web/fetch_user_about",
+    "summary": "获取用户账号档案信息",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "screen_name",
+      "cursor"
+    ],
+    "path": "/api/v1/twitter/web/fetch_user_affiliates",
+    "summary": "获取用户关联子账号",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
       "screen_name",
       "cursor"
     ],
@@ -6131,6 +6546,15 @@
     ],
     "path": "/api/v1/twitter/web/fetch_user_followings",
     "summary": "用户关注",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "rest_id"
+    ],
+    "path": "/api/v1/twitter/web/fetch_user_live_status",
+    "summary": "检查用户是否正在直播",
     "tag": "Twitter-Web-API"
   },
   {
@@ -6168,6 +6592,15 @@
   {
     "method": "GET",
     "params": [
+      "rest_ids"
+    ],
+    "path": "/api/v1/twitter/web/fetch_user_profiles_by_rest_ids",
+    "summary": "批量根据用户ID获取用户资料",
+    "tag": "Twitter-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
       "screen_name",
       "cursor"
     ],
@@ -6192,6 +6625,15 @@
     ],
     "path": "/api/v1/threads/web/fetch_post_detail_v2",
     "summary": "获取帖子详情 V2(支持链接)",
+    "tag": "Threads-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "url"
+    ],
+    "path": "/api/v1/threads/web/fetch_post_detail_v3",
+    "summary": "获取帖子详情 V3（精简版）",
     "tag": "Threads-Web-API"
   },
   {
@@ -6254,6 +6696,15 @@
   {
     "method": "GET",
     "params": [
+      "query"
+    ],
+    "path": "/api/v1/threads/web/search_profiles_v2",
+    "summary": "搜索用户档案 V2",
+    "tag": "Threads-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
       "bv_id"
     ],
     "path": "/api/v1/bilibili/web/bv_to_aid",
@@ -6294,6 +6745,19 @@
     ],
     "path": "/api/v1/bilibili/web/fetch_comment_reply",
     "summary": "获取视频下指定评论的回复",
+    "tag": "Bilibili-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "dynamic_id",
+      "oid",
+      "comment_type",
+      "mode",
+      "pagination_str"
+    ],
+    "path": "/api/v1/bilibili/web/fetch_dynamic_comments",
+    "summary": "获取动态评论",
     "tag": "Bilibili-Web-API"
   },
   {
@@ -6433,6 +6897,18 @@
     ],
     "path": "/api/v1/bilibili/web/fetch_user_post_videos",
     "summary": "获取用户主页作品数据",
+    "tag": "Bilibili-Web-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "uid",
+      "pn",
+      "ps",
+      "keyword"
+    ],
+    "path": "/api/v1/bilibili/web/fetch_user_post_videos_v2",
+    "summary": "获取用户主页作品数据V2",
     "tag": "Bilibili-Web-API"
   },
   {
@@ -6650,6 +7126,403 @@
     "path": "/api/v1/bilibili/app/fetch_video_comments",
     "summary": "获取视频评论列表",
     "tag": "Bilibili-App-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/account_session_info",
+    "summary": "当前广告主账号信息",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "industry_type"
+    ],
+    "path": "/api/v1/bilibili/huahuo/cooperate_experience_industry",
+    "summary": "合作经验行业列表",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/dmp_pkg_list",
+    "summary": "人群包列表",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/effect_goods_drop",
+    "summary": "带货类目下拉",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/industry_tags",
+    "summary": "行业标签字典",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/label_char_style",
+    "summary": "内容风格字典",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/live_area_list",
+    "summary": "直播分区下拉",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "upper_mid"
+    ],
+    "path": "/api/v1/bilibili/huahuo/live_commerce_info",
+    "summary": "直播带货能力",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/live_good_category",
+    "summary": "直播带货类目",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "name"
+    ],
+    "path": "/api/v1/bilibili/huahuo/live_guild_drop",
+    "summary": "直播公会下拉",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/live_parent_tag",
+    "summary": "直播人设标签",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "mcn_id",
+      "upper_mid"
+    ],
+    "path": "/api/v1/bilibili/huahuo/live_upper_portrait",
+    "summary": "直播UP主详情",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "name"
+    ],
+    "path": "/api/v1/bilibili/huahuo/mcn_drop",
+    "summary": "MCN机构下拉",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/partition_drop",
+    "summary": "稿件分区下拉",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/popular_avid_category_drop",
+    "summary": "视频榜单行业下拉",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "category",
+      "page"
+    ],
+    "path": "/api/v1/bilibili/huahuo/popular_avid_list",
+    "summary": "视频榜单",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "x_huo_industry_id",
+      "page"
+    ],
+    "path": "/api/v1/bilibili/huahuo/popular_goods_industry_up_list",
+    "summary": "行业带货UP主榜",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "x_huo_industry_id",
+      "page",
+      "rank_type",
+      "data_cycle",
+      "min_goods_price",
+      "max_goods_price"
+    ],
+    "path": "/api/v1/bilibili/huahuo/popular_goods_list",
+    "summary": "X火商品榜",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "goods_id",
+      "page"
+    ],
+    "path": "/api/v1/bilibili/huahuo/popular_goods_up_list",
+    "summary": "商品带货UP主榜",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "rank_cate",
+      "tid_name",
+      "page"
+    ],
+    "path": "/api/v1/bilibili/huahuo/popular_up_list",
+    "summary": "UP主榜单",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/popular_up_tid_drop",
+    "summary": "UP主榜单分区下拉",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "x_huo_industry_id",
+      "rank_date_type",
+      "rank_date",
+      "page"
+    ],
+    "path": "/api/v1/bilibili/huahuo/popular_up_x_huo",
+    "summary": "X火种草榜",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/region_drop",
+    "summary": "地域下拉",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/search_live_upper",
+    "summary": "直播广场搜索",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/search_upper",
+    "summary": "UP主广场搜索（搜UP主 / 搜内容）",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "nickname_or_mids",
+      "page",
+      "panel_type",
+      "marketing_target",
+      "cpm_type",
+      "cpm_cycle",
+      "play_median_traffic_type",
+      "play_median_cycle"
+    ],
+    "path": "/api/v1/bilibili/huahuo/search_upper_suggest",
+    "summary": "UP主搜索联想",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/square_static_info",
+    "summary": "广场筛选字典",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/tag_character",
+    "summary": "人设标签字典",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/tag_commercial",
+    "summary": "商业标签字典",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
+    "path": "/api/v1/bilibili/huahuo/tag_occupation",
+    "summary": "职业标签字典",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "upper_mid",
+      "day_range"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_archive_highlights",
+    "summary": "UP主稿件高光",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "mid"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_base_info",
+    "summary": "UP主基础信息",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "mid"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_busy_time",
+    "summary": "UP主档期占用",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "nickname"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_by_nickname",
+    "summary": "按昵称查UP主",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "upper_mid"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_detail",
+    "summary": "UP主详情",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "upper_mid",
+      "day_range"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_draft_performance",
+    "summary": "UP主稿件表现",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "upper_mid",
+      "trend_type"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_draft_trend",
+    "summary": "UP主稿件数据趋势",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "upper_mid",
+      "query_type"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_fans_trend",
+    "summary": "UP主粉丝增长趋势",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "panel_type"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_label_tree",
+    "summary": "搜UP主筛选面板配置",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "upper_mid",
+      "fans_range",
+      "page"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_overlap_uppers",
+    "summary": "粉丝重合UP主",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "upper_mid",
+      "type"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_representative",
+    "summary": "UP主代表作",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "mid"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_seek_info",
+    "summary": "UP主询单配置",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "upper_mid"
+    ],
+    "path": "/api/v1/bilibili/huahuo/upper_similar",
+    "summary": "内容相似UP主",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "rank_date_type"
+    ],
+    "path": "/api/v1/bilibili/huahuo/x_huo_date_options",
+    "summary": "X火榜可选期数",
+    "tag": "Bilibili-Huahuo-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "scene"
+    ],
+    "path": "/api/v1/bilibili/huahuo/x_huo_industry_drop",
+    "summary": "X火榜行业下拉",
+    "tag": "Bilibili-Huahuo-API"
   },
   {
     "method": "GET",
@@ -7392,6 +8265,13 @@
   {
     "method": "GET",
     "params": [],
+    "path": "/api/v1/weibo/app/fetch_hot_search_brief",
+    "summary": "获取热搜简报",
+    "tag": "Weibo-App-API"
+  },
+  {
+    "method": "GET",
+    "params": [],
     "path": "/api/v1/weibo/app/fetch_hot_search_categories",
     "summary": "获取热搜分类列表",
     "tag": "Weibo-App-API"
@@ -7475,6 +8355,27 @@
     ],
     "path": "/api/v1/weibo/app/fetch_user_audios",
     "summary": "获取用户音频列表",
+    "tag": "Weibo-App-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "uid",
+      "page"
+    ],
+    "path": "/api/v1/weibo/app/fetch_user_followers",
+    "summary": "获取用户粉丝列表",
+    "tag": "Weibo-App-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "uid",
+      "since_id",
+      "sort_type"
+    ],
+    "path": "/api/v1/weibo/app/fetch_user_following",
+    "summary": "获取用户关注列表",
     "tag": "Weibo-App-API"
   },
   {
@@ -7684,8 +8585,22 @@
   {
     "method": "POST",
     "params": [],
+    "path": "/api/v1/wechat_mp/v2/fetch_article_detail_h5",
+    "summary": "获取公众号文章详情（H5 版本，推荐）",
+    "tag": "WeChat-Media-Platform-V2-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/wechat_mp/v2/fetch_article_stats",
     "summary": "获取公众号文章互动数据",
+    "tag": "WeChat-Media-Platform-V2-API"
+  },
+  {
+    "method": "POST",
+    "params": [],
+    "path": "/api/v1/wechat_mp/v2/fetch_article_stats_h5",
+    "summary": "获取公众号文章互动数据（H5 版本）",
     "tag": "WeChat-Media-Platform-V2-API"
   },
   {
@@ -8593,6 +9508,51 @@
   {
     "method": "GET",
     "params": [
+      "url"
+    ],
+    "path": "/api/v1/linkedin/web_v2/async/create_company_profile_task",
+    "summary": "创建获取公司主页资料任务",
+    "tag": "LinkedIn-Web-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "url"
+    ],
+    "path": "/api/v1/linkedin/web_v2/async/create_post_detail_task",
+    "summary": "创建获取帖子或文章详情任务",
+    "tag": "LinkedIn-Web-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "url"
+    ],
+    "path": "/api/v1/linkedin/web_v2/async/create_user_profile_task",
+    "summary": "创建获取用户主页信息任务",
+    "tag": "LinkedIn-Web-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "task_id"
+    ],
+    "path": "/api/v1/linkedin/web_v2/async/get_task_result",
+    "summary": "获取异步任务结果",
+    "tag": "LinkedIn-Web-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "task_id"
+    ],
+    "path": "/api/v1/linkedin/web_v2/async/get_task_status",
+    "summary": "查询异步任务状态",
+    "tag": "LinkedIn-Web-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
       "url",
       "start",
       "pagination_token",
@@ -8620,6 +9580,19 @@
     ],
     "path": "/api/v1/linkedin/web_v2/get_job_detail",
     "summary": "获取职位详情",
+    "tag": "LinkedIn-Web-V2-API"
+  },
+  {
+    "method": "GET",
+    "params": [
+      "urn",
+      "sort_by",
+      "page",
+      "pagination_token",
+      "share_urn"
+    ],
+    "path": "/api/v1/linkedin/web_v2/get_post_comments",
+    "summary": "获取帖子评论",
     "tag": "LinkedIn-Web-V2-API"
   },
   {

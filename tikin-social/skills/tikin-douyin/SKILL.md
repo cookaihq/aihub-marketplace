@@ -1,8 +1,8 @@
 ---
 name: tikin-douyin
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 Tikin 处理抖音链接与数据，获取视频、用户资料、作品列表和视频评论，并使用抖音专用搜索接口搜索视频、用户或综合内容。用户提供抖音链接或任务针对抖音时使用；覆盖 App-V3 与抖音搜索系列接口。
+  version: "1.6.0"
+description: v1.6.0｜通过 Tikin 处理抖音链接与数据，获取视频、用户资料、作品列表和视频评论，并使用抖音专用搜索接口搜索视频、用户或综合内容。用户提供抖音链接或任务针对抖音时使用；覆盖 App-V3 与抖音搜索系列接口。
 ---
 
 # Douyin / 抖音 (via tikin)
@@ -17,6 +17,8 @@ Deep coverage of Douyin. Exhaustive endpoints via the `tikin-endpoint-discovery`
 `tikin-find-endpoint "<goal>" --platform douyin`.
 
 Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

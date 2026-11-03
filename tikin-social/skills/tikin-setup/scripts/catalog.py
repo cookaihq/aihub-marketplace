@@ -6,6 +6,19 @@ from typing import Any
 REFERENCES = Path(__file__).resolve().parents[2] / 'tikin-endpoint-discovery/references'
 CAPTION_CREATE = '/api/v1/youtube/web_v2/get_video_captions'
 CAPTION_RESULT = '/api/v1/youtube/web_v2/get_video_captions_result'
+LINKEDIN_PREFIX = '/api/v1/linkedin/web_v2/async/'
+LINKEDIN_CREATES = frozenset(LINKEDIN_PREFIX + suffix for suffix in (
+    'create_company_profile_task', 'create_post_detail_task', 'create_user_profile_task'))
+LINKEDIN_STATUS = LINKEDIN_PREFIX + 'get_task_status'
+LINKEDIN_RESULT = LINKEDIN_PREFIX + 'get_task_result'
+
+
+def side_effects(path: str, method: str) -> bool | None:
+    if path in LINKEDIN_CREATES or path == CAPTION_CREATE or method not in ('GET', 'HEAD', 'OPTIONS'):
+        return True
+    if path in (CAPTION_RESULT, LINKEDIN_STATUS, LINKEDIN_RESULT):
+        return False
+    return None
 
 
 def read(name: str) -> Any:
@@ -41,7 +54,10 @@ def describe(path: str, method: str) -> dict[str, Any]:
                 collect(item)
 
     collect(operation)
+    cohorts = read('catalog-cohorts.json')['cohorts']
+    cohort = next((name for name, rows in cohorts.items()
+                   if any(row['operation'] == method + ' ' + path for row in rows)), None)
     return {'method': method, 'path': path, 'operation': operation, 'components': components,
             'catalog': read('catalog-identity.json'), 'catalog_price': read('catalog-prices.json').get(path),
-            'side_effects': True if path == CAPTION_CREATE or method not in ('GET', 'HEAD', 'OPTIONS')
-                            else False if path == CAPTION_RESULT else None}
+            'cohort': cohort, 'real_acceptance': 'pending',
+            'side_effects': side_effects(path, method)}

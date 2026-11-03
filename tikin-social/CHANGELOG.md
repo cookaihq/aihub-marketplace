@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0
+
+Development candidate; not published.
+
+- Add the frozen second-batch catalog (1029 operations), explicit cohort identities, snapshot prices, and per-platform construction guidance.
+- Extend the shared durable task workflow to LinkedIn creation, free status/results, one-second query limits, failed records and continuation without replay.
+- Protect additional raw Ads Cookie and proxy credential echoes while retaining usable signed media URLs.
+- All 17 Skill behavior versions are 1.6.0; live service, credentials/proxy and native host acceptance remain pending. No second-batch release is claimed.
+
 ## 1.5.0
 
 - Preserve explicit JSON null separately from an omitted body, with distinct regression approval and legacy ambiguous-submission protection.

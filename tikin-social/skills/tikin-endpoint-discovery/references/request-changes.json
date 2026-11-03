@@ -1907,10 +1907,10 @@
         },
         {
           "field": "body/content/application/json/schema/properties/username/pattern",
-          "classification": "breaking_shape"
+          "classification": "compatible_extension"
         }
       ],
-      "classification": "breaking",
+      "classification": "compatible",
       "coverage": [
         "frozen-public-contract",
         "discovery-cli"
@@ -1929,10 +1929,10 @@
         },
         {
           "field": "body/content/application/json/schema/properties/username/pattern",
-          "classification": "breaking_shape"
+          "classification": "compatible_extension"
         }
       ],
-      "classification": "breaking",
+      "classification": "compatible",
       "coverage": [
         "frozen-public-contract",
         "discovery-cli"
@@ -1951,10 +1951,10 @@
         },
         {
           "field": "body/content/application/json/schema/properties/username/pattern",
-          "classification": "breaking_shape"
+          "classification": "compatible_extension"
         }
       ],
-      "classification": "breaking",
+      "classification": "compatible",
       "coverage": [
         "frozen-public-contract",
         "discovery-cli"

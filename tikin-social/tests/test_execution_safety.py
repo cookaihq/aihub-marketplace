@@ -190,6 +190,18 @@ class ExecutionSafetyTests(unittest.TestCase):
         self.assertEqual(second['status'], 'submission_unknown')
         self.assertEqual(len(self.calls), 1)
 
+    def test_proxy_password_echo_is_masked_while_signed_media_url_survives(self):
+        proxy = 'http://account:p%40ssword@proxy.example:8080'
+        media = 'https://media.example/video?signature=keep-this&expire=9999999999'
+        self.responses = [(200, {}, {'data': {'proxy': proxy, 'message': 'p@ssword', 'url': media}})]
+        result = self.request({'method': 'POST', 'path': '/api/v1/youtube/web_v2/get_video_streams_v3',
+                               'body': {'video_id': 'abcdefghijk', 'proxy_url': proxy}})
+        self.assertEqual(json.loads(self.calls[-1][2])['proxy_url'], proxy)
+        self.assertNotIn('p@ssword', json.dumps(result))
+        self.assertNotIn('p%40ssword', json.dumps(result))
+        self.assertEqual(result['response']['data']['url'], media)
+        self.assertNotIn('p@ssword', Path(result['record']).read_text())
+
     def test_regression_budget_is_shared_across_records_and_processes(self):
         approval, ledger = self.approval()
         first = self.request({'side_effects': False}, approval=approval)

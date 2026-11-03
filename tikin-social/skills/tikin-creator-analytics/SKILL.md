@@ -1,8 +1,8 @@
 ---
 name: tikin-creator-analytics
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 Tikin 分析创作者或账号的资料统计、近期内容表现、互动率、发布频率和热门内容。适用于创作者表现分析，或用户提供受支持平台的账号、频道链接或用户名。
+  version: "1.6.0"
+description: v1.6.0｜通过 Tikin 分析创作者或账号的资料统计、近期内容表现、互动率、发布频率和热门内容。适用于创作者表现分析，或用户提供受支持平台的账号、频道链接或用户名。
 ---
 
 # Creator Analytics
@@ -15,6 +15,8 @@ description: v1.4.0｜通过 Tikin 分析创作者或账号的资料统计、近
 
 Profile a single account and summarize its performance. For comparing multiple accounts, use
 `tikin-competitor-analysis`.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

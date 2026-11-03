@@ -81,22 +81,47 @@ class CatalogContractTests(unittest.TestCase):
                 self.assertEqual(old.returncode, 1)
                 self.assertEqual(json.loads(old.stdout)['error'], 'operation_not_in_catalog')
 
-    def test_frozen_set_has_no_retired_or_second_batch_operations(self):
+    def test_wechat_username_change_is_a_compatible_expansion(self):
+        changes = json.loads((ROOT / 'skills/tikin-endpoint-discovery/references/request-changes.json').read_text())
+        for suffix in ('fetch_account_profile', 'fetch_account_services'):
+            row = next(item for item in changes['request_changes'] if item['path'].endswith('/' + suffix))
+            self.assertEqual(row['classification'], 'compatible')
+            pattern = next(item for item in row['changes'] if item['field'].endswith('/pattern'))
+            self.assertEqual(pattern['classification'], 'compatible_extension')
+
+    def test_frozen_second_batch_has_exact_candidates_and_no_retired_operations(self):
         refs = ROOT / 'skills/tikin-endpoint-discovery/references'
         identity = json.loads((refs / 'catalog-identity.json').read_text())
         for name in ('endpoint-index.json', 'openapi.json'):
             self.assertEqual(hashlib.sha256((refs / name).read_bytes()).hexdigest(), identity['outputs'][name]['sha256'])
         self.assertEqual(identity['outputs']['endpoint-index.json']['sha256'],
-                         'c2a05795b3c2927bef5230d47afd9b2410db569bbeb8d4efdd5daff9c8abad12')
+                         '285a879c2e134a7925a9985feac4f4897d806e59c53062e98076b3fb8ae2bbb7')
         result = subprocess.run([sys.executable, str(DISCOVERY), '--limit', '2000'], capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         operations = {' '.join(line.split()[:2]) for line in result.stdout.splitlines()}
-        self.assertEqual(len(operations), 919)
+        self.assertEqual(len(operations), 1029)
         retired = {row['operation'] for row in json.loads((refs / 'request-changes.json').read_text())['retired']}
         self.assertFalse(operations & retired)
         self.assertIn('GET /api/v1/threads/web/search_posts', operations)
         self.assertIn('GET /api/v1/tiktok/shop/web/fetch_product_detail_v3', operations)
-        self.assertFalse(any('/linkedin/web_v2/async/' in op or '/bilibili/huahuo/' in op for op in operations))
+        self.assertIn('GET /api/v1/linkedin/web_v2/async/create_company_profile_task', operations)
+        self.assertEqual(sum('/bilibili/huahuo/' in op for op in operations), 45)
+
+    def test_new_operations_expose_cohort_and_candidate_status(self):
+        examples = [('/api/v1/bilibili/huahuo/upper_detail', 'GET', 'bilibili_sync'),
+                    ('/api/v1/xiaohongshu/pgy/get_note_components', 'POST', 'other_sync'),
+                    ('/api/v1/linkedin/web_v2/async/get_task_status', 'GET', 'linkedin_async'),
+                    ('/api/v1/youtube/web_v2/get_video_streams_v3', 'POST', 'youtube_proxy')]
+        for path, method, cohort in examples:
+            with self.subTest(path=path):
+                output = self.describe(path, method)
+                self.assertEqual(output['cohort'], cohort)
+                self.assertEqual(output['catalog']['status'], 'candidate')
+                self.assertEqual(output['real_acceptance'], 'pending')
+        query = self.describe('/api/v1/linkedin/web_v2/async/get_task_status')
+        self.assertFalse(query['side_effects'])
+        self.assertEqual(query['catalog_price']['usd'], '0.0')
+        self.assertIn('1 request per', query['operation']['description'])
 
 
 if __name__ == '__main__':

@@ -5,10 +5,10 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Candidate Plugin version: **1.5.0**, with `tikin-setup` **1.5.0** and the other 16 Skills
-at **1.4.0**. This candidate adds complete-suite identity checks, durable request
-execution, and the frozen first-batch catalog with 919 operations. The separate
-1.4.0 installation compatibility candidate retains the accepted 1002-entry index.
+Candidate Plugin version: **1.6.0**, with all 17 independently versioned Skills
+at **1.6.0** because the shared execution/workflow behavior changes affect the suite.
+This second-batch development candidate contains 1029 operations; the separate
+first-batch candidate contains 919. Neither catalog is evidence of live availability.
 Native host acceptance and publication are pending. All 17 Skills share native JSON requests and automatic local error reports. Credential handoff uses the
 `setup-api-key` Skill in Setup AIHub 2.0.0. The following results apply to **1.2.0**:
 native Windows Plugin installation and Skill discovery are verified
@@ -193,8 +193,9 @@ several accounts into one shared file without choosing which account each Skill 
 
 ## Candidate catalog and request behavior
 
-The 1.5.0 candidate carries the frozen first-batch catalog and full offline request
-contracts. Read the [migration guide](skills/tikin-endpoint-discovery/references/first-batch.md)
+The 1.6.0 development candidate carries the frozen second-batch catalog and full
+offline request contracts. Read the [second-batch workflow guide](skills/tikin-endpoint-discovery/references/second-batch.md)
+for platform prerequisites, limits, asynchronous tasks and candidate scope. Read the [migration guide](skills/tikin-endpoint-discovery/references/first-batch.md)
 for method/parameter changes and retired routes. Its `catalog-identity.json` reports
 the actual operation count and hashes. Service-dependent changes are not yet published
 or proven live; native host migration and Windows acceptance remain incomplete.

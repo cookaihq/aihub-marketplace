@@ -1,8 +1,8 @@
 ---
 name: tikin-tiktok
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 Tikin 处理 TikTok 链接与数据，获取视频、用户资料、作品列表，搜索内容，并查询趋势、广告洞察、创作者分析、评论关键词和商店搜索结果。用户提供 TikTok 链接或任务针对该平台时使用；覆盖 App-V3、Ads、Creator、Analytics 与 Shop 接口。
+  version: "1.6.0"
+description: v1.6.0｜通过 Tikin 处理 TikTok 链接与数据，获取视频、用户资料、作品列表，搜索内容，并查询趋势、广告洞察、创作者分析、评论关键词和商店搜索结果。用户提供 TikTok 链接或任务针对该平台时使用；覆盖 App-V3、Ads、Creator、Analytics 与 Shop 接口。
 ---
 
 # TikTok (via tikin)
@@ -18,6 +18,8 @@ Deep coverage of TikTok. For exhaustive endpoints use `tikin-endpoint-discovery`
 trends), hand off to the task skills noted below.
 
 Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

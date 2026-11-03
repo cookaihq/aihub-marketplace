@@ -1,8 +1,8 @@
 ---
 name: tikin-instagram
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 Tikin 处理 Instagram 链接与数据，获取用户资料和帖子，搜索用户、Reels、话题标签、音乐和地点，查询评论、回复及标签内容流。用户提供 Instagram 链接或任务针对该平台时使用；覆盖 Instagram V2 接口。
+  version: "1.6.0"
+description: v1.6.0｜通过 Tikin 处理 Instagram 链接与数据，获取用户资料和帖子，搜索用户、Reels、话题标签、音乐和地点，查询评论、回复及标签内容流。用户提供 Instagram 链接或任务针对该平台时使用；覆盖 Instagram V2 接口。
 ---
 
 # Instagram (via tikin)
@@ -17,6 +17,8 @@ Deep coverage of Instagram via the V2 API. Exhaustive endpoints via the
 `tikin-endpoint-discovery` skill: `tikin-find-endpoint "<goal>" --platform instagram`.
 
 Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

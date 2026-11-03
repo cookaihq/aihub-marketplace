@@ -43,6 +43,186 @@
     "usd": "0.001",
     "rate_limit": "10/second"
   },
+  "/api/v1/bilibili/huahuo/account_session_info": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/cooperate_experience_industry": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/dmp_pkg_list": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/effect_goods_drop": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/industry_tags": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/label_char_style": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/live_area_list": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/live_commerce_info": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/live_good_category": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/live_guild_drop": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/live_parent_tag": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/live_upper_portrait": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/mcn_drop": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/partition_drop": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/popular_avid_category_drop": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/popular_avid_list": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/popular_goods_industry_up_list": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/popular_goods_list": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/popular_goods_up_list": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/popular_up_list": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/popular_up_tid_drop": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/popular_up_x_huo": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/region_drop": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/search_live_upper": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/search_upper": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/search_upper_suggest": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/square_static_info": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/tag_character": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/tag_commercial": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/tag_occupation": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_archive_highlights": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_base_info": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_busy_time": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_by_nickname": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_detail": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_draft_performance": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_draft_trend": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_fans_trend": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_label_tree": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_overlap_uppers": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_representative": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_seek_info": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/upper_similar": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/x_huo_date_options": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/huahuo/x_huo_industry_drop": {
+    "usd": "0.006",
+    "rate_limit": "10/second"
+  },
   "/api/v1/bilibili/web/bv_to_aid": {
     "usd": "0.001",
     "rate_limit": "10/second"
@@ -60,6 +240,10 @@
     "rate_limit": "10/second"
   },
   "/api/v1/bilibili/web/fetch_comment_reply": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/web/fetch_dynamic_comments": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
@@ -116,6 +300,10 @@
     "rate_limit": "10/second"
   },
   "/api/v1/bilibili/web/fetch_user_post_videos": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/bilibili/web/fetch_user_post_videos_v2": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
@@ -859,11 +1047,19 @@
     "usd": "0.01",
     "rate_limit": "10/second"
   },
+  "/api/v1/douyin/search/fetch_general_search_v3": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
   "/api/v1/douyin/search/fetch_image_search": {
     "usd": "0.01",
     "rate_limit": "10/second"
   },
   "/api/v1/douyin/search/fetch_image_search_v3": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/search/fetch_live_search_v2": {
     "usd": "0.01",
     "rate_limit": "10/second"
   },
@@ -883,6 +1079,10 @@
     "usd": "0.01",
     "rate_limit": "10/second"
   },
+  "/api/v1/douyin/search/fetch_search_suggest_v2": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
   "/api/v1/douyin/search/fetch_user_search": {
     "usd": "0.01",
     "rate_limit": "10/second"
@@ -898,6 +1098,18 @@
   "/api/v1/douyin/search/fetch_video_search_v2": {
     "usd": "0.01",
     "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/search/fetch_video_search_v3": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/search/fetch_video_search_v4": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/search/fetch_video_search_v5": {
+    "usd": "0.01",
+    "rate_limit": "5/second"
   },
   "/api/v1/douyin/web/encrypt_uid_to_sec_user_id": {
     "usd": "0.001",
@@ -1123,6 +1335,10 @@
     "usd": "0.02",
     "rate_limit": "10/second"
   },
+  "/api/v1/douyin/xingtu/author_homepage_videos_v1": {
+    "usd": "0.02",
+    "rate_limit": "10/second"
+  },
   "/api/v1/douyin/xingtu/author_hot_comment_tokens_v1": {
     "usd": "0.02",
     "rate_limit": "10/second"
@@ -1219,6 +1435,10 @@
     "usd": "0.01",
     "rate_limit": "10/second"
   },
+  "/api/v1/douyin/xingtu_v2/get_author_commerce_spread_info": {
+    "usd": "0.003",
+    "rate_limit": "10/second"
+  },
   "/api/v1/douyin/xingtu_v2/get_author_content_hot_keywords": {
     "usd": "0.001",
     "rate_limit": "10/second"
@@ -1237,6 +1457,14 @@
   },
   "/api/v1/douyin/xingtu_v2/get_author_daily_fans": {
     "usd": "0.002",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/xingtu_v2/get_author_daily_link": {
+    "usd": "0.003",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/xingtu_v2/get_author_daily_link_score": {
+    "usd": "0.003",
     "rate_limit": "10/second"
   },
   "/api/v1/douyin/xingtu_v2/get_author_fans_distribution": {
@@ -1263,6 +1491,10 @@
     "usd": "0.001",
     "rate_limit": "10/second"
   },
+  "/api/v1/douyin/xingtu_v2/get_author_rec_videos_v2": {
+    "usd": "0.002",
+    "rate_limit": "10/second"
+  },
   "/api/v1/douyin/xingtu_v2/get_author_show_items": {
     "usd": "0.035",
     "rate_limit": "10/second"
@@ -1271,7 +1503,15 @@
     "usd": "0.002",
     "rate_limit": "10/second"
   },
+  "/api/v1/douyin/xingtu_v2/get_author_spread_videos": {
+    "usd": "0.002",
+    "rate_limit": "10/second"
+  },
   "/api/v1/douyin/xingtu_v2/get_author_touch_distribution": {
+    "usd": "0.002",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/xingtu_v2/get_author_video_distribution": {
     "usd": "0.002",
     "rate_limit": "10/second"
   },
@@ -1299,6 +1539,26 @@
     "usd": "0.002",
     "rate_limit": "10/second"
   },
+  "/api/v1/douyin/xingtu_v2/get_item_play_count": {
+    "usd": "0.002",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/xingtu_v2/get_item_report_comments": {
+    "usd": "0.003",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/xingtu_v2/get_item_report_detail": {
+    "usd": "0.002",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/xingtu_v2/get_item_report_th_analysis": {
+    "usd": "0.003",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/xingtu_v2/get_item_report_trend": {
+    "usd": "0.003",
+    "rate_limit": "10/second"
+  },
   "/api/v1/douyin/xingtu_v2/get_playlet_actor_rank_catalog": {
     "usd": "0.001",
     "rate_limit": "10/second"
@@ -1323,6 +1583,10 @@
     "usd": "0.001",
     "rate_limit": "10/second"
   },
+  "/api/v1/douyin/xingtu_v2/get_search_field_options": {
+    "usd": "0.002",
+    "rate_limit": "10/second"
+  },
   "/api/v1/douyin/xingtu_v2/get_user_profile_qrcode": {
     "usd": "0.002",
     "rate_limit": "10/second"
@@ -1341,6 +1605,10 @@
   },
   "/api/v1/douyin/xingtu_v2/multi_get_author_info": {
     "usd": "0.002",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/douyin/xingtu_v2/multi_get_item_stats": {
+    "usd": "0.04",
     "rate_limit": "10/second"
   },
   "/api/v1/douyin/xingtu_v2/search_anchor": {
@@ -1600,6 +1868,10 @@
     "rate_limit": "10/second"
   },
   "/api/v1/instagram/v3/get_explore": {
+    "usd": "0.008",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/instagram/v3/get_hashtag_posts": {
     "usd": "0.008",
     "rate_limit": "10/second"
   },
@@ -1947,6 +2219,26 @@
     "usd": "0.001",
     "rate_limit": "10/second"
   },
+  "/api/v1/linkedin/web_v2/async/create_company_profile_task": {
+    "usd": "0.008",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/linkedin/web_v2/async/create_post_detail_task": {
+    "usd": "0.008",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/linkedin/web_v2/async/create_user_profile_task": {
+    "usd": "0.008",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/linkedin/web_v2/async/get_task_result": {
+    "usd": "0.0",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/linkedin/web_v2/async/get_task_status": {
+    "usd": "0.0",
+    "rate_limit": "10/second"
+  },
   "/api/v1/linkedin/web_v2/get_company_posts": {
     "usd": "0.05",
     "rate_limit": "10/second"
@@ -1956,6 +2248,10 @@
     "rate_limit": "10/second"
   },
   "/api/v1/linkedin/web_v2/get_job_detail": {
+    "usd": "0.05",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/linkedin/web_v2/get_post_comments": {
     "usd": "0.05",
     "rate_limit": "10/second"
   },
@@ -2175,6 +2471,10 @@
     "usd": "0.002",
     "rate_limit": "10/second"
   },
+  "/api/v1/threads/web/fetch_post_detail_v3": {
+    "usd": "0.002",
+    "rate_limit": "3/second"
+  },
   "/api/v1/threads/web/fetch_user_info": {
     "usd": "0.002",
     "rate_limit": "3/second"
@@ -2199,6 +2499,10 @@
     "usd": "0.002",
     "rate_limit": "3/second"
   },
+  "/api/v1/threads/web/search_profiles_v2": {
+    "usd": "0.002",
+    "rate_limit": "3/second"
+  },
   "/api/v1/tiktok/ads/get_ad_interactive_analysis": {
     "usd": "0.001",
     "rate_limit": "10/second"
@@ -2219,6 +2523,10 @@
     "usd": "0.001",
     "rate_limit": "10/second"
   },
+  "/api/v1/tiktok/ads/get_creators_card": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
   "/api/v1/tiktok/ads/get_location_list": {
     "usd": "0.001",
     "rate_limit": "10/second"
@@ -2231,7 +2539,19 @@
     "usd": "0.001",
     "rate_limit": "10/second"
   },
+  "/api/v1/tiktok/ads/get_top_ads_filters": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
   "/api/v1/tiktok/ads/get_top_ads_spotlight": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/tiktok/ads/get_top_contents_item_detail": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/tiktok/ads/get_top_contents_list": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
@@ -2659,6 +2979,10 @@
     "usd": "0.001",
     "rate_limit": "10/second"
   },
+  "/api/v1/tiktok/web/fetch_post_ai_article": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
   "/api/v1/tiktok/web/fetch_post_comment": {
     "usd": "0.001",
     "rate_limit": "10/second"
@@ -2859,7 +3183,39 @@
     "usd": "0.001",
     "rate_limit": "10/second"
   },
+  "/api/v1/twitter/web/fetch_check_follow": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_check_retweet": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_community_info": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_community_members": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_community_timeline": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
   "/api/v1/twitter/web/fetch_latest_post_comments": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_list_followers": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_list_members": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_list_timeline": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
@@ -2868,6 +3224,10 @@
     "rate_limit": "10/second"
   },
   "/api/v1/twitter/web/fetch_retweet_user_list": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_search_communities": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
@@ -2883,11 +3243,23 @@
     "usd": "0.001",
     "rate_limit": "10/second"
   },
+  "/api/v1/twitter/web/fetch_user_about": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_user_affiliates": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
   "/api/v1/twitter/web/fetch_user_followers": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
   "/api/v1/twitter/web/fetch_user_followings": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_user_live_status": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
@@ -2900,6 +3272,10 @@
     "rate_limit": "10/second"
   },
   "/api/v1/twitter/web/fetch_user_profile": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/twitter/web/fetch_user_profiles_by_rest_ids": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
@@ -2979,7 +3355,15 @@
     "usd": "0.01",
     "rate_limit": "10/second"
   },
+  "/api/v1/wechat_mp/v2/fetch_article_detail_h5": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
   "/api/v1/wechat_mp/v2/fetch_article_stats": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/wechat_mp/v2/fetch_article_stats_h5": {
     "usd": "0.01",
     "rate_limit": "10/second"
   },
@@ -3008,6 +3392,10 @@
     "rate_limit": "10/second"
   },
   "/api/v1/weibo/app/fetch_hot_search": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/weibo/app/fetch_hot_search_brief": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
@@ -3044,6 +3432,14 @@
     "rate_limit": "10/second"
   },
   "/api/v1/weibo/app/fetch_user_audios": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/weibo/app/fetch_user_followers": {
+    "usd": "0.001",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/weibo/app/fetch_user_following": {
     "usd": "0.001",
     "rate_limit": "10/second"
   },
@@ -3315,6 +3711,10 @@
     "usd": "0.02",
     "rate_limit": "10/second"
   },
+  "/api/v1/xiaohongshu/pgy/get_blogger_filter_options": {
+    "usd": "0.02",
+    "rate_limit": "10/second"
+  },
   "/api/v1/xiaohongshu/pgy/get_blogger_list": {
     "usd": "0.02",
     "rate_limit": "10/second"
@@ -3325,6 +3725,42 @@
   },
   "/api/v1/xiaohongshu/pgy/get_blogger_notes_rate": {
     "usd": "0.02",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/xiaohongshu/pgy/get_blogger_notes_v2": {
+    "usd": "0.02",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/xiaohongshu/pgy/get_blogger_similar": {
+    "usd": "0.02",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/xiaohongshu/pgy/get_content_square": {
+    "usd": "0.02",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/xiaohongshu/pgy/get_keyword_daily": {
+    "usd": "0.02",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/xiaohongshu/pgy/get_keyword_related": {
+    "usd": "0.02",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/xiaohongshu/pgy/get_keyword_stat": {
+    "usd": "0.02",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/xiaohongshu/pgy/get_live_blogger_list": {
+    "usd": "0.02",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/xiaohongshu/pgy/get_note_comments": {
+    "usd": "0.01",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/xiaohongshu/pgy/get_note_components": {
+    "usd": "0.0",
     "rate_limit": "10/second"
   },
   "/api/v1/xiaohongshu/pgy/get_note_detail": {
@@ -3505,6 +3941,10 @@
   },
   "/api/v1/youtube/web_v2/get_video_streams_v2": {
     "usd": "0.004",
+    "rate_limit": "10/second"
+  },
+  "/api/v1/youtube/web_v2/get_video_streams_v3": {
+    "usd": "0.003",
     "rate_limit": "10/second"
   },
   "/api/v1/youtube/web_v2/search_channels": {

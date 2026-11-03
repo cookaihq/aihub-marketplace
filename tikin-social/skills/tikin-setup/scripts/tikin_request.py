@@ -17,8 +17,8 @@ from urllib.parse import parse_qsl, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 from request_reporting import atomic_write, existing_feedback, feedback, now, record_lock, redact, secret_values, upstream_fields
 from regression import GateError, GUARD_HEADER, Regression
-from catalog import CAPTION_CREATE, CAPTION_RESULT
-import caption_tasks
+from catalog import side_effects as catalog_side_effects
+import async_tasks
 
 MAX_ATTEMPTS = 3
 DEFAULT_TIMEOUT = 30
@@ -40,7 +40,7 @@ def result_data(value, key, depth=0):
     return value
 
 
-def public_result(body, key, failed):
+def public_result(body, key, failed, path=''):
     """Project only recognized error positions; business data and signed URLs stay usable."""
     clean = result_data(body, key)
     if not failed:
@@ -51,6 +51,7 @@ def public_result(body, key, failed):
     scopes = [clean]
     if isinstance(task, dict) and task.get('status') in ('failed', 'error'):
         scopes.append(task)
+    scopes.extend(async_tasks.failed_records(path, clean))
     for scope in scopes:
         if 'error' in scope:
             error = scope['error']
@@ -91,11 +92,13 @@ def retry_delay(headers, attempt):
     return seconds if seconds is not None else 2 ** (attempt - 1)
 
 
-def business_error(body):
+def business_error(body, path=''):
     if not isinstance(body, dict):
         return None, None
     nested = body.get('data')
     task = nested if isinstance(nested, dict) else body
+    if async_tasks.failed_records(path, body):
+        return {'code': 'task_record_failed', 'message': 'The scrape contains failed records.'}, task.get('task_id')
     if task.get('status') in ('failed', 'error'):
         return task.get('error') or {'code': 'unknown_error'}, task.get('id') or task.get('task_id') or task.get('job_id')
     if body.get('error'):
@@ -175,10 +178,9 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
     if not isinstance(side_effects, bool):
         raise ValueError('side_effects must be a boolean')
     canonical_path = urlsplit(path).path
-    if canonical_path == CAPTION_CREATE:
-        side_effects = True
-    elif canonical_path == CAPTION_RESULT:
-        side_effects = False
+    reviewed_effects = catalog_side_effects(canonical_path, method)
+    if reviewed_effects is not None:
+        side_effects = reviewed_effects
     replay_safe = method in READ_METHODS and not side_effects
     time_budget = spec.get('time_budget_seconds', 90)
     if isinstance(time_budget, bool) or not isinstance(time_budget, (int, float)) or not math.isfinite(time_budget) or not 0 < time_budget <= 300:
@@ -190,7 +192,8 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
     body = spec.get('body')
     body_present = 'body' in spec
     secrets = [key] + secret_values({'query': query, 'body': body})
-    if canonical_path in ('/api/v1/tiktok/ads/get_configure_safety', '/api/v1/tiktok/ads/get_location_list') and isinstance(body, str) and body:
+    if canonical_path in ('/api/v1/tiktok/ads/get_configure_safety', '/api/v1/tiktok/ads/get_location_list',
+                          '/api/v1/tiktok/ads/get_top_ads_filters') and isinstance(body, str) and body:
         secrets.append(body)
     headers = {'Authorization': 'Bearer ' + key, 'Accept': 'application/json'}
     if body_present:
@@ -247,9 +250,13 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
 
         pending = set(state.get('pending_writes', [state.get('pending_write')])) - {None}
         state.pop('pending_write', None)
-        task_gate = caption_tasks.before_send(state, canonical_path, query, fingerprint)
+        task_gate = async_tasks.before_send(state, canonical_path, query, fingerprint)
         if task_gate:
             return {**result_data(task_gate, secrets), 'record': str(record), 'feedback': existing_feedback(record)}
+        poll_deadline = async_tasks.start_poll(state, canonical_path, query)
+        if poll_deadline is not None:
+            deadline = min(deadline, time.monotonic() + max(0, poll_deadline - time.time()))
+            save()
         remaining_cooldown = state.get('not_before', 0) - time.time()
         if remaining_cooldown > 0:
             if remaining_cooldown >= deadline - time.monotonic():
@@ -269,7 +276,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
             remaining_time = deadline - time.monotonic()
             if remaining_time <= 0:
                 return {'status': 'time_budget_exhausted', 'record': str(record)}
-            task_gate = caption_tasks.before_send(state, canonical_path, query, fingerprint)
+            task_gate = async_tasks.before_send(state, canonical_path, query, fingerprint)
             if task_gate:
                 return {**result_data(task_gate, secrets), 'record': str(record), 'feedback': existing_feedback(record)}
             reservation = None
@@ -291,17 +298,20 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                 pending.add(fingerprint)
                 state['pending_writes'] = sorted(pending)
             state['retry_attempts'][fingerprint] = attempt
-            caption_tasks.reserve_query(state, canonical_path, query)
+            async_tasks.reserve_query(state, canonical_path, query)
             state['status'] = 'in_flight'
             save()
             start, at = time.monotonic(), now()
             status, response_headers, result_body, error, timeout_stage = exchange(method, url, headers, body, min(timeout, remaining_time), body_present)
             elapsed_ms = round((time.monotonic() - start) * 1000)
-            business, task_id = business_error(result_body)
+            business, task_id = business_error(result_body, canonical_path)
+            if error is None and business is None and status is not None and 200 <= status < 300:
+                if not async_tasks.valid_query_response(canonical_path, query, result_body):
+                    error = ValueError('invalid_task_response_identity')
             task_body = result_body.get('data', result_body) if isinstance(result_body, dict) else None
             if not isinstance(task_body, dict):
                 task_body = result_body
-            remote_failed = isinstance(task_body, dict) and task_body.get('status') in ('failed', 'error')
+            remote_failed = bool(task_id and business) or isinstance(task_body, dict) and task_body.get('status') in ('failed', 'error')
             failed = error is not None or status is None or not 200 <= status < 300 or business is not None
             not_sent = status is None and isinstance(error, (socket.gaierror, ConnectionRefusedError))
             ambiguous = not replay_safe and not not_sent and (error is not None or status == 429 or (status is not None and status >= 500))
@@ -315,7 +325,9 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                 retry = False
             delay = retry_delay(response_headers, attempt) if retry or 'retry-after' in response_headers else None
             if delay is not None:
-                state['not_before'] = time.time() + delay
+                state['not_before'] = max(state.get('not_before', 0), time.time() + delay)
+                if retry:
+                    delay = max(delay, state['not_before'] - time.time())
             if not transient:
                 state['retry_attempts'].pop(fingerprint, None)
             query_pairs = parse_qsl(urlsplit(url).query, keep_blank_values=True)
@@ -330,7 +342,8 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                                'response': {'http_status': status, 'headers': response_headers, 'body': result_body}}, secrets)
             state['exchanges'].append(evidence)
             state['status'] = 'submission_unknown' if ambiguous else 'remote_failed' if remote_failed else 'failed' if failed else 'ok'
-            task = caption_tasks.observe(state, canonical_path, fingerprint, result_data(result_body, secrets))
+            task = (async_tasks.observe(state, canonical_path, fingerprint, result_data(result_body, secrets))
+                    if error is None else None)
             # A later GET or another write must not erase an earlier uncertain submission.
             if not replay_safe and not ambiguous and not retry:
                 pending.discard(fingerprint)
@@ -361,7 +374,8 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                 latest_feedback = existing_feedback(record)
                 retry = False  # Never send another attempt without durable evidence.
             if retry and delay is not None and delay >= deadline - time.monotonic():
-                state['status'] = 'cooldown'
+                state['status'] = ('poll_budget_exhausted' if poll_deadline is not None and time.time() >= poll_deadline
+                                   else 'cooldown')
                 save()
                 break
             if not retry or delay is None:
@@ -371,7 +385,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
         output = {'schema_version': 1, 'status': state['status'], 'record': str(record),
                   'http_status': status,
                   'response_headers': {'retry-after': response_headers['retry-after']} if retry_after(response_headers) is not None else {},
-                  'response': public_result(result_body, secrets, failed)}
+                  'response': public_result(result_body, secrets, failed, canonical_path)}
         if task:
             output['task'] = task
         if state.get('not_before', 0) > time.time():

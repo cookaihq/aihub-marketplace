@@ -1,8 +1,8 @@
 ---
 name: tikin-comments-analysis
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 Tikin 获取并分析受支持帖子或视频链接下的评论，整理情绪分布、反复出现的话题、热门评论及值得关注的问题和投诉。适用于评论分析、讨论总结，或用户提供社交媒体帖子链接的场景。
+  version: "1.6.0"
+description: v1.6.0｜通过 Tikin 获取并分析受支持帖子或视频链接下的评论，整理情绪分布、反复出现的话题、热门评论及值得关注的问题和投诉。适用于评论分析、讨论总结，或用户提供社交媒体帖子链接的场景。
 ---
 
 # Comments Analysis
@@ -14,6 +14,8 @@ description: v1.4.0｜通过 Tikin 获取并分析受支持帖子或视频链接
 每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 Mine a single post's comment section for sentiment and themes.
+
+For selected new queries, read the [second-batch workflow guide](../tikin-endpoint-discovery/references/second-batch.md) before constructing a request. It records exact cohort scope, platform-specific inputs, pagination, Cookie prerequisites, prices and candidate limitations; LinkedIn task creation uses its shared asynchronous workflow.
 
 ## Runtime gate
 

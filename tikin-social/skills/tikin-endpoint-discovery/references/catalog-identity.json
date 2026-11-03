@@ -1,23 +1,24 @@
 {
   "schema_version": 1,
   "status": "candidate",
-  "batch": "2026-11-03-repair-candidate",
-  "operation_count": 919,
-  "manifest_sha256": "1c408c051f5b114e3531eef496e756f6789174627cb9f9d7d4c01b2ffff196eb",
+  "batch": "2026-11-03-second-batch-development",
+  "operation_count": 1029,
+  "manifest_sha256": "becc3a2022751f8f1c394ec2faa79e4c5b4e6602e8c168888efa4e71054fc4cf",
   "outputs": {
     "endpoint-index.json": {
-      "sha256": "c2a05795b3c2927bef5230d47afd9b2410db569bbeb8d4efdd5daff9c8abad12"
+      "sha256": "285a879c2e134a7925a9985feac4f4897d806e59c53062e98076b3fb8ae2bbb7"
     },
     "endpoint_costs.json": {
-      "sha256": "141a008a48326f695cc78c660a0ce91abbb8c3feca2f80af709e1afa6dce9242"
+      "sha256": "3652e2d296f1bde010774f9cb27ab5a2d632c38a1edf9f0f706e6a3495d9f0e4"
     },
     "openapi.json": {
-      "sha256": "f65acde70f99b4a961fe1e9c37312a4f5660e902646cf406932f651f612d9d67"
+      "sha256": "2db51d5ff4b9a8db0160c212795ee4126581efc156e08ccb700506f0467dc484"
     },
     "route_table.json": {
-      "sha256": "69229aa49c8cf527b1cdf989cdef764524be43041de159cec637c585293e4169"
+      "sha256": "21db98da0d201e5f7d69d0bad64c0cb29508cffcdf1287721c6e5f79e4bbb95d"
     }
   },
-  "selection_sha256": "2333af1adeed9cd35ec60ec3be493fbd92239af9352fbe7a9431f9e07415e427",
+  "cohorts_sha256": "3bd0e963e155be9b81bb1731d585f350106ae37e31421f0edef074145ba2846b",
+  "selection_sha256": "b058619e84c6947723d0986933f754069493b5b697d9df88b4b7e88a8fa4e1f3",
   "request_diff_sha256": "d1122947fa8cb7b2048c515722aa4404a262ec896c02b5b5b84e023ae61265c3"
 }
