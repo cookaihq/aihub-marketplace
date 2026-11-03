@@ -1,8 +1,8 @@
 ---
 name: tikin-rest-api
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
+  version: "1.4.0"
+description: v1.4.0｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
 ---
 
 # tikin — REST API
@@ -122,11 +122,14 @@ every tikin skill.** Other skills point here instead of restating the numbers.
 
 ### Timeouts and retries
 
-The shared helper implements 30-second API requests, at most 3 attempts for transient reads,
-1s/2s exponential backoff, and finite Retry-After capped at 60 seconds. Deterministic 4xx stop;
-HTTP 429/5xx, resets, DNS and timeouts are transient. Non-idempotent writes are not blindly
-retried; only DNS failure or connection refusal proves nothing was sent. A write timeout,
-disconnect or 5xx/429 can be ambiguous: preserve the record and query the task if possible.
+The shared helper implements 30-second API requests and a 90-second invocation budget.
+At most 3 attempts are allowed in a transient failure sequence for verified reads explicitly
+marked `side_effects: false`, using 1s/2s fallback backoff. Valid numeric/date Retry-After
+is honored in full and persists across processes. A wait beyond the time budget returns
+`cooldown` with the next allowed time. Deterministic 4xx stop. Unknown operations and
+GET calls that may create tasks retain write protection; only DNS failure or connection
+refusal proves nothing was sent. An ambiguous result preserves the original record and
+must not be replayed. Use an existing task's query if available.
 Report generation never changes these decisions. Do not wrap the helper in another retry loop.
 
 Final media downloads use a 300-second limit (curl.exe on native Windows); explicitly raise
@@ -136,7 +139,8 @@ deadline; on expiry preserve the task ID and report waiting instead of resubmitt
 
 ### Pagination budget
 
-- **QPS 10/sec.** Add a small delay or a concurrency cap (≤4) in loops.
+- Follow the operation's documented rate limit and actual Retry-After. There is no uniform
+  10 RPS allowance across all operations; use sequential calls when the limit is unknown.
 - When the user gave a target (row count, post count, time window), that target is the budget.
 - **When the user gave no target, the default budget is 50 pages or 5,000 items, whichever comes
   first.** Retries do not count against it — only pages actually retrieved do.

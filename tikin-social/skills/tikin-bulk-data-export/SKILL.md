@@ -1,8 +1,8 @@
 ---
 name: tikin-bulk-data-export
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 批量获取社交媒体帖子、粉丝、搜索结果或评论，支持分页、去重及 CSV、JSON 导出。适用于获取全部帖子、构建数据集、导出数据，或从受支持平台和链接重复拉取大量数据。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 批量获取社交媒体帖子、粉丝、搜索结果或评论，支持分页、去重及 CSV、JSON 导出。适用于获取全部帖子、构建数据集、导出数据，或从受支持平台和链接重复拉取大量数据。
 ---
 
 # Bulk Data Export
@@ -63,9 +63,8 @@ State the estimated calls and get the user's go-ahead before running.
   above the default cap does not lift it — confirm the larger budget with the user first, then
   state the raised number explicitly before running.
 - Loop until whichever comes first: `has_more` is false, the user's target row count, or that cap.
-- Add a short delay / concurrency cap ≤4 (QPS 10/sec). Retry transient errors (429/5xx/timeouts)
-  per the **Reliability** section in `tikin-rest-api`: 3 attempts total, 1s then 2s backoff,
-  honouring `Retry-After` on a 429, and never retrying 401/403/404/422.
+- Follow the operation-specific rate and the **Reliability** section in `tikin-rest-api`.
+  The shared executor owns retries and durable cooldowns; do not resubmit an unknown operation.
 - Retries do not consume the pagination budget; only pages actually retrieved do.
 - **When the cap ends the loop, report it as `budget exhausted`** — rows fetched, pages fetched,
   whether `has_more` is still true, and the cursor to resume from. This is a distinct outcome from

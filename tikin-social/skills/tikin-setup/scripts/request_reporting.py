@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -89,8 +90,9 @@ foreach ($rule in $rules) {
         raise OSError('Could not restrict private report permissions; no private content written')
 
 
-def atomic_write(path, text):
+def atomic_write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd: int | None
     fd, name = tempfile.mkstemp(dir=path.parent, prefix='.' + path.name + '.')
     temporary = Path(name)
     try:
@@ -102,6 +104,12 @@ def atomic_write(path, text):
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temporary, path)
+        if os.name != 'nt':
+            directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
     finally:
         if fd is not None:
             os.close(fd)
@@ -114,7 +122,7 @@ def record_lock(path):
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     with open(str(path) + '.lock', 'a+b') as stream:
         stream.seek(0)
-        if os.name == 'nt':
+        if sys.platform == 'win32':
             import msvcrt
             msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
         else:
@@ -124,7 +132,7 @@ def record_lock(path):
             yield
         finally:
             stream.seek(0)
-            if os.name == 'nt':
+            if sys.platform == 'win32':
                 msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
             else:
                 fcntl.flock(stream, fcntl.LOCK_UN)

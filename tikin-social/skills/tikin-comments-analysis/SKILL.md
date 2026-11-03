@@ -1,8 +1,8 @@
 ---
 name: tikin-comments-analysis
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 获取并分析受支持帖子或视频链接下的评论，整理情绪分布、反复出现的话题、热门评论及值得关注的问题和投诉。适用于评论分析、讨论总结，或用户提供社交媒体帖子链接的场景。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 获取并分析受支持帖子或视频链接下的评论，整理情绪分布、反复出现的话题、热门评论及值得关注的问题和投诉。适用于评论分析、讨论总结，或用户提供社交媒体帖子链接的场景。
 ---
 
 # Comments Analysis
@@ -65,8 +65,8 @@ the budget ends the pull, report it as `budget exhausted`: comments fetched, pag
 whether more remain.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Verification gate
 

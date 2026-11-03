@@ -1,8 +1,8 @@
 ---
 name: tikin-xiaohongshu
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 处理小红书 / RedNote 链接与数据，获取图文或视频笔记详情、用户资料、已发布笔记，搜索笔记、用户、商品和图片，查询评论及子评论。用户提供小红书链接、分享文本或任务针对小红书时使用；覆盖 Xiaohongshu App-V2 接口。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 处理小红书 / RedNote 链接与数据，获取图文或视频笔记详情、用户资料、已发布笔记，搜索笔记、用户、商品和图片，查询评论及子评论。用户提供小红书链接、分享文本或任务针对小红书时使用；覆盖 Xiaohongshu App-V2 接口。
 ---
 
 # Xiaohongshu / RedNote / 小红书 (via tikin)
@@ -83,8 +83,8 @@ whether more remains, and the cursor/page to resume from — instead of presenti
 complete.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Hand off to task skills
 

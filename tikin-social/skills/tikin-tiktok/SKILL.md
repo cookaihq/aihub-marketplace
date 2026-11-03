@@ -1,8 +1,8 @@
 ---
 name: tikin-tiktok
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 处理 TikTok 链接与数据，获取视频、用户资料、作品列表，搜索内容，并查询趋势、广告洞察、创作者分析、评论关键词和商店搜索结果。用户提供 TikTok 链接或任务针对该平台时使用；覆盖 App-V3、Ads、Creator、Analytics 与 Shop 接口。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 处理 TikTok 链接与数据，获取视频、用户资料、作品列表，搜索内容，并查询趋势、广告洞察、创作者分析、评论关键词和商店搜索结果。用户提供 TikTok 链接或任务针对该平台时使用；覆盖 App-V3、Ads、Creator、Analytics 与 Shop 接口。
 ---
 
 # TikTok (via tikin)
@@ -91,8 +91,8 @@ whether `has_more` is still true, and the cursor to resume from — instead of p
 pull as complete.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Hand off to task skills
 

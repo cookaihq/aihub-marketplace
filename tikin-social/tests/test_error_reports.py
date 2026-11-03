@@ -147,7 +147,7 @@ class ErrorReportTests(unittest.TestCase):
 
     def test_transient_reads_save_first_error_before_retry(self):
         request = self.root / 'read.json'
-        request.write_text(json.dumps({'original_request': 'synthetic read', 'path': '/api/v1/read'}), encoding='utf-8')
+        request.write_text(json.dumps({'original_request': 'synthetic read', 'path': '/api/v1/read', 'side_effects': False}), encoding='utf-8')
         self.status = 503
         def recover(_):
             reports = list(self.root.glob('tikin-run-*/error-report.md'))
@@ -160,10 +160,10 @@ class ErrorReportTests(unittest.TestCase):
         self.assertEqual(result['feedback']['upstream_error_count'], 1)
         self.assertEqual(len(self.calls), 2)
 
-    def test_nonfinite_retry_after_is_bounded(self):
+    def test_retry_after_preserves_full_finite_delays(self):
         for value in ['Infinity', 'NaN', '-Infinity', 'nonsense']:
             self.assertEqual(tikin_request.retry_delay({'retry-after': value}, 1), 1)
-        self.assertEqual(tikin_request.retry_delay({'retry-after': '3600'}, 1), 60)
+        self.assertEqual(tikin_request.retry_delay({'retry-after': '3600'}, 1), 3600)
 
 
 if __name__ == '__main__':

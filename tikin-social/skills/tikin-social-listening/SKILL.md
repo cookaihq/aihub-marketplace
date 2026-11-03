@@ -1,8 +1,8 @@
 ---
 name: tikin-social-listening
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 查询受支持社交平台上的品牌或关键词提及，收集帖子、分析情绪、归纳主题并生成附来源的摘要。适用于品牌舆情、关键词监测、社交聆听，或以受支持链接作为查询线索。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 查询受支持社交平台上的品牌或关键词提及，收集帖子、分析情绪、归纳主题并生成附来源的摘要。适用于品牌舆情、关键词监测、社交聆听，或以受支持链接作为查询线索。
 ---
 
 # Social Listening
@@ -75,8 +75,8 @@ mentions fetched, whether more remain, and the cursor to resume from. A digest b
 budget-capped sample must say so — the volume number is a floor, not a total.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried. One platform failing all 3 attempts does not abort the run: mark that platform as not
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation. One platform failing after the permitted attempts does not abort the run: mark that platform as not
 covered and continue with the rest.
 
 ## Verification gate

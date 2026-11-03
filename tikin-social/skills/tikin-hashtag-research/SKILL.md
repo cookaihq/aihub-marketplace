@@ -1,8 +1,8 @@
 ---
 name: tikin-hashtag-research
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 研究话题标签或关键词，查询受支持平台的热度指标、热门与最新内容及相关标签。适用于话题标签研究、关联标签查询、内容选题，或用户提供受支持的话题标签链接。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 研究话题标签或关键词，查询受支持平台的热度指标、热门与最新内容及相关标签。适用于话题标签研究、关联标签查询、内容选题，或用户提供受支持的话题标签链接。
 ---
 
 # Hashtag Research
@@ -64,8 +64,8 @@ as `budget exhausted` (pages and posts fetched, whether more remain) and say tha
 list is derived from that sample only.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried. A 404 here usually means the hashtag does not exist — report "no data", do not retry.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation. A 404 here usually means the hashtag does not exist — report "no data", do not retry.
 
 ## Verification gate
 

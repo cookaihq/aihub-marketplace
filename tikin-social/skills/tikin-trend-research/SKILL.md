@@ -1,8 +1,8 @@
 ---
 name: tikin-trend-research
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 发现受支持平台的热点趋势，包括热门内容、上升话题标签、热门音频和排行榜。适用于查询当前热点、生成地区或垂直领域趋势报告，或以受支持链接作为趋势研究线索。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 发现受支持平台的热点趋势，包括热门内容、上升话题标签、热门音频和排行榜。适用于查询当前热点、生成地区或垂直领域趋势报告，或以受支持链接作为趋势研究线索。
 ---
 
 # Trend Research
@@ -71,8 +71,8 @@ after **5 drill-downs of 2 pages each**, inside the overall 50-page / 5,000-item
 `budget exhausted` and name the trends that were not drilled into.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried. A board that fails all 3 attempts is reported as unavailable for that platform; the rest
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation. A board that fails after the permitted attempts is reported as unavailable for that platform; the rest
 of the report still runs.
 
 ## Verification gate

@@ -4,12 +4,13 @@ All tikin business API calls use the bundled `tikin-config request` command, inc
 
 ## Execute one operation
 
-Resolve the installed `tikin-setup` directory and the actual calling Skill name. Write a request JSON outside the installation, preserving the user's original words in `original_request`. Copy the endpoint, HTTP method and parameter names from endpoint discovery. `query` becomes URL parameters, `body` is the exact JSON object or raw array to submit. Do not put API keys in this file; the helper reads the existing configuration.
+Resolve the installed `tikin-setup` directory and the actual calling Skill name. Write a request JSON outside the installation, preserving the user's original words in `original_request`. Copy the endpoint, HTTP method and parameter names from endpoint discovery. `query` becomes URL parameters (array values become repeated parameters); `body` is the exact JSON object, array or string to submit. Omit `body` for an empty request. Do not put API keys in this file; the helper reads the existing configuration.
 
 ```json
 {
   "original_request": "读取我给出的这个 TikTok 视频详情",
   "method": "GET",
+  "side_effects": false,
   "path": "/api/v1/tiktok/app/v3/fetch_one_video",
   "query": {"aweme_id": "7372484719365098283"}
 }
@@ -23,15 +24,43 @@ uv run --frozen --project "<installed tikin-setup directory>" python "<installed
 
 On follow-up calls for the **same user task**, pass `--record "<absolute run.json returned by the first call>"`. Keep that caller and record for all pages, retries explicitly requested later and task-status queries. Create a new request file with the actual next cursor or query endpoint; `--record` reuses the report, it does not itself replay the previous request. Resume with the same service and credential. An ambiguous POST/PUT/PATCH/DELETE is retained and cannot be replayed automatically using the same record.
 
-`--no-global-config` goes before `request` when this task disables global configuration; it skips both Plugin and ordinary Skill global files. The actual loader retains the existing precedence and does not save credentials. The `run -- <command>` subcommand remains a configuration utility for compatibility; it does not capture arbitrary child HTTP traffic and is not the business request entrypoint.
+`--no-global-config` goes before `request` when this task disables global configuration; it skips both Plugin and ordinary Skill global files. The actual loader retains the existing precedence and does not save credentials. The `run -- <command>` subcommand remains a configuration utility; it does not capture arbitrary child HTTP traffic and is not the business request entrypoint.
 
-Optional request fields: `timeout_seconds` (default 30, positive finite value no greater than 300) and `reference_materials` (necessary source paths, URLs or descriptive metadata, without binary content). `original_request`, `method`, `path`, `query` and `body` are the only other fields. Configuration and request validation errors are local errors, not evidence that an upstream service failed.
+Optional request fields: `timeout_seconds` (default 30), `time_budget_seconds`
+(default 90 for the entire invocation, including retries and waits), `side_effects`
+(default true), and `reference_materials` (necessary source paths, URLs or descriptive
+metadata, without binary content). Both time limits must be finite, positive and at
+most 300 seconds. Set `side_effects: false` only for a verified read; the HTTP method
+alone does not establish that GET is harmless. Task creation, including GET caption
+requests that may create a job, uses true. Non-read HTTP methods retain write protection.
+Configuration and request validation errors are local errors, not evidence that an
+upstream service failed.
 
 ## Reliability and results
 
-The helper implements the shared REST reliability policy: at most 3 attempts for transient read errors, 1s/2s backoff, finite Retry-After capped at 60s, no retries for deterministic 4xx, and no blind write replay. Only DNS failure or connection refusal proves a write was not sent. HTTP 5xx/429, a timeout or a disconnect after a write can be ambiguous. Report creation never adds requests. Continue to apply the pagination budget in `tikin-rest-api`; do not create an unbounded polling loop.
+The helper allows at most 3 attempts in a transient failure sequence for explicitly
+verified reads, with 1s/2s fallback backoff and the complete valid numeric/date
+`Retry-After`. It never shortens a server cooldown. When the wait exceeds the time
+budget it returns `cooldown`, `not_before` and `retry_after_seconds`; continue with
+the same record after that time. The attempt count and cooldown survive process
+replacement. Deterministic 4xx are not retried. Only DNS failure or connection refusal
+proves a write was not sent. HTTP 5xx/429, a timeout or disconnect can leave writes,
+including side-effecting GETs, in `submission_unknown`; changing the semantic label
+does not clear their replay protection. Report creation never adds requests.
+Continue to apply the pagination budget in `tikin-rest-api`; do not create an
+unbounded polling loop.
+
+For explicitly approved regression, use [the shared approval and ledger](regression.md)
+through this same request entry. Every business attempt, including retries and
+resumption, reserves before sending. An ambiguous paid read is also not retried.
+This opt-in campaign does not impose its allowance on ordinary user requests.
 
 Read `status`, `http_status` and `response` before claiming success. A 2xx JSON envelope with `error`, `success=false`, a failing business `code`, or an asynchronous `status=failed/error` is a failure. Unknown response shapes require the endpoint's normal verification gate; do not infer success merely from a request ID. Preserve usable returned media URLs for the authorized download, but do not paste their signatures into an error report. Final media downloads use the existing bounded downloader and do not resend the data API request.
+
+`response_headers.retry-after` exposes a valid server value. Recognized envelope
+error messages are replaced with a stable local explanation; non-JSON error pages
+are not echoed as public diagnostics. Legal nested business fields, task state and
+signed media URLs remain intact. Private reports retain separately sanitized evidence.
 
 ## Every user-facing response
 

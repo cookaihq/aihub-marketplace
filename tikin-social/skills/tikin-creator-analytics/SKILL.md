@@ -1,8 +1,8 @@
 ---
 name: tikin-creator-analytics
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 分析创作者或账号的资料统计、近期内容表现、互动率、发布频率和热门内容。适用于创作者表现分析，或用户提供受支持平台的账号、频道链接或用户名。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 分析创作者或账号的资料统计、近期内容表现、互动率、发布频率和热门内容。适用于创作者表现分析，或用户提供受支持平台的账号、频道链接或用户名。
 ---
 
 # Creator Analytics
@@ -83,8 +83,8 @@ ends the loop, report it as `budget exhausted` (posts and pages fetched, whether
 say that the metrics describe that sample only.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Verification gate
 

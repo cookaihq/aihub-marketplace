@@ -465,6 +465,8 @@ def main():
     request_parser.add_argument("--request-file", required=True)
     request_parser.add_argument("--record", help="reuse the same run for pagination, queries and recovery")
     request_parser.add_argument("--output-dir", default="data/tikin")
+    request_parser.add_argument("--regression-approval", help="reference the existing shared regression approval and ledger")
+    request_parser.add_argument("--dry-run", action="store_true", help="describe the exact request identity without sending")
     set_routing_parser = subparsers.add_parser("set-routing")
     set_routing_parser.add_argument("--default", choices=MODES)
     set_routing_parser.add_argument("--platform", action="append", default=[])
@@ -507,10 +509,14 @@ def main():
         run_with_config(skill_name, args.argv, global_enabled)
     elif args.command == "request":
         from tikin_request import execute
+        from regression import GateError
         values, _ = load_config(skill_name, global_enabled)
         try:
-            output = execute(values, skill_name, args.request_file, args.record, args.output_dir)
-        except (OSError, ValueError) as error:
+            output = execute(values, skill_name, args.request_file, args.record, args.output_dir,
+                             args.regression_approval, args.dry_run)
+        except GateError as error:
+            output = {"status": "regression_blocked", "reason": error.reason}
+        except (OSError, ValueError, KeyError, TypeError) as error:
             output = {"status": "local_error", "error": "Request or recovery record is invalid/unavailable; no business retry was made.",
                       "error_type": type(error).__name__}
         print(json.dumps(output, ensure_ascii=False, indent=2))

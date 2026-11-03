@@ -1,8 +1,8 @@
 ---
 name: tikin-twitter-threads
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 处理 Twitter/X 与 Threads 链接和数据，获取帖子详情、用户资料、用户时间线、粉丝与关注列表，搜索时间线、查询评论回复及 X 热门话题。用户提供相关链接或任务针对任一平台时使用；覆盖 Twitter-Web 与 Threads-Web 接口。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 处理 Twitter/X 与 Threads 链接和数据，获取帖子详情、用户资料、用户时间线、粉丝与关注列表，搜索时间线、查询评论回复及 X 热门话题。用户提供相关链接或任务针对任一平台时使用；覆盖 Twitter-Web 与 Threads-Web 接口。
 ---
 
 # Twitter / X & Threads (via tikin)
@@ -91,8 +91,8 @@ whether more remains, and the cursor to resume from — instead of presenting a 
 complete.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Hand off to task skills
 

@@ -1,8 +1,8 @@
 ---
 name: tikin-douyin
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 处理抖音链接与数据，获取视频、用户资料、作品列表和视频评论，并使用抖音专用搜索接口搜索视频、用户或综合内容。用户提供抖音链接或任务针对抖音时使用；覆盖 App-V3 与抖音搜索系列接口。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 处理抖音链接与数据，获取视频、用户资料、作品列表和视频评论，并使用抖音专用搜索接口搜索视频、用户或综合内容。用户提供抖音链接或任务针对抖音时使用；覆盖 App-V3 与抖音搜索系列接口。
 ---
 
 # Douyin / 抖音 (via tikin)
@@ -95,8 +95,8 @@ whether `has_more` is still true, and the cursor to resume from — instead of p
 pull as complete.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Hand off to task skills
 

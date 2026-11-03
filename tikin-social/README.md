@@ -5,7 +5,7 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Candidate Plugin version: **1.4.0**, with `tikin-setup` **1.4.0** and the other 16 Skills
+Candidate Plugin version: **1.5.0**, with `tikin-setup` **1.5.0** and the other 16 Skills
 at **1.3.0**. This candidate adds complete-suite identity checks and migration guidance.
 It retains the accepted 1002-entry index; it does not introduce a new API batch.
 Native host acceptance and publication are pending. All 17 Skills share native JSON requests and automatic local error reports. Credential handoff uses the

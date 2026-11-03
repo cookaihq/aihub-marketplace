@@ -1,8 +1,8 @@
 ---
 name: tikin-competitor-analysis
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 对比多个社交媒体账号的粉丝数、互动率、发布频率、热门内容和增长迹象。适用于账号对比，或用户提供受支持平台的账号主页链接进行竞品分析。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 对比多个社交媒体账号的粉丝数、互动率、发布频率、热门内容和增长迹象。适用于账号对比，或用户提供受支持平台的账号主页链接进行竞品分析。
 ---
 
 # Competitor Analysis
@@ -61,8 +61,8 @@ cap from `tikin-rest-api`'s **Reliability** section. When a budget ends the run,
 fetched at all — never quietly drop accounts from the comparison table.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Verification gate
 

@@ -1,8 +1,8 @@
 ---
 name: tikin-social-media-downloader
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜从一个或多个社交媒体链接下载视频、音频或图片，平台支持时获取无水印素材。适用于用户提供 TikTok、抖音、Instagram、YouTube、Twitter/X、小红书链接并要求下载视频、保存无水印素材或提取音频；调用对应平台的 Tikin 接口。
+  version: "1.4.0"
+description: v1.4.0｜从一个或多个社交媒体链接下载视频、音频或图片，平台支持时获取无水印素材。适用于用户提供 TikTok、抖音、Instagram、YouTube、Twitter/X、小红书链接并要求下载视频、保存无水印素材或提取音频；调用对应平台的 Tikin 接口。
 ---
 
 # Social Media Downloader
@@ -99,7 +99,7 @@ file known to be much larger, raise the value explicitly and say so — never dr
 
 ## Batch downloads
 
-Loop over a URL list, **one at a time with a small delay** (respect QPS 10/sec). Each parse is one
+Loop over a URL list, **one at a time**, following its documented rate and actual Retry-After. Each parse is one
 billed call — warn the user for large batches and hand off to `tikin-bulk-data-export` for big jobs.
 
 **Budget the batch.** The user's list length is the budget when they gave one. **With no stated
@@ -108,7 +108,7 @@ target, stop after 50 URLs in a single run.** On hitting the cap, stop and repor
 still unprocessed, so the user can approve a follow-up run. Never trim the list silently.
 
 Transient errors (429/5xx/timeouts) and the retry budget: follow the **Reliability** section in
-`tikin-rest-api`. A URL that fails all 3 attempts is reported as failed for that entry — keep going
+`tikin-rest-api`. A URL that fails after the permitted attempts is reported as failed for that entry — keep going
 through the rest of the batch rather than aborting the whole run.
 
 ## Verification gate

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.0
+
+- Candidate: shared request execution protects side-effecting GETs and unknown operations,
+  persists full server cooldowns, and projects safe errors without damaging signed business URLs.
+- Opt-in regression uses the same request entry with an existing shared approval/ledger,
+  live service binding proof and a durable reservation before every business send.
+- Controlled CLI/process tests cover budget exhaustion, concurrency and interrupted recovery.
+  Real API, service publication and host acceptance remain pending.
+- Setup Skill is 1.5.0; changed workflow Skills are 1.4.0.
+
 ## 1.4.0
 
 - Candidate: complete Plugin and whole-suite Skills-only distributions share a generated

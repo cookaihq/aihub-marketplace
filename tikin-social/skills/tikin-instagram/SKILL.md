@@ -1,8 +1,8 @@
 ---
 name: tikin-instagram
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 处理 Instagram 链接与数据，获取用户资料和帖子，搜索用户、Reels、话题标签、音乐和地点，查询评论、回复及标签内容流。用户提供 Instagram 链接或任务针对该平台时使用；覆盖 Instagram V2 接口。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 处理 Instagram 链接与数据，获取用户资料和帖子，搜索用户、Reels、话题标签、音乐和地点，查询评论、回复及标签内容流。用户提供 Instagram 链接或任务针对该平台时使用；覆盖 Instagram V2 接口。
 ---
 
 # Instagram (via tikin)
@@ -84,8 +84,8 @@ whether more remains, and the token to resume from — instead of presenting a p
 complete.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Hand off to task skills
 

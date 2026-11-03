@@ -1,8 +1,8 @@
 ---
 name: tikin-youtube
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 处理 YouTube 链接与数据，获取视频信息、可下载的媒体流链接、字幕、评论与回复及频道资料，执行综合搜索或 Shorts 搜索。用户提供 YouTube 链接或任务针对该平台时使用；覆盖 YouTube Web-V2 接口。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 处理 YouTube 链接与数据，获取视频信息、可下载的媒体流链接、字幕、评论与回复及频道资料，执行综合搜索或 Shorts 搜索。用户提供 YouTube 链接或任务针对该平台时使用；覆盖 YouTube Web-V2 接口。
 ---
 
 # YouTube (via tikin)
@@ -81,8 +81,8 @@ whether more remains, and the continuation token to resume from — instead of p
 pull as complete.
 
 Transient errors (429/5xx/timeouts): follow the **Reliability** section in `tikin-rest-api` —
-3 attempts total, 1s then 2s backoff, `Retry-After` wins on a 429, and 401/403/404/422 are never
-retried.
+let the shared executor enforce side effects, the full cooldown and remaining attempt budget.
+Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Hand off to task skills
 
