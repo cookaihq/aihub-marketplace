@@ -57,15 +57,20 @@ This opt-in campaign does not impose its allowance on ordinary user requests.
 
 Read `status`, `http_status` and `response` before claiming success. A 2xx JSON envelope with `error`, `success=false`, a failing business `code`, or an asynchronous `status=failed/error` is a failure. Unknown response shapes require the endpoint's normal verification gate; do not infer success merely from a request ID. Preserve usable returned media URLs for the authorized download, but do not paste their signatures into an error report. Final media downloads use the existing bounded downloader and do not resend the data API request.
 
+`request_sha256` and `client_base_url` identify the exact attempted request; keep the
+complete successful output when handing it to [the YouTube V3 downloader](downloads.md).
+That downloader only consumes existing metadata and never repeats the API call.
+
 `response_headers.retry-after` exposes a valid server value. Recognized envelope
 error messages are replaced with a stable local explanation; non-JSON error pages
 are not echoed as public diagnostics. Legal nested business fields, task state and
 signed media URLs remain intact. Private reports retain separately sanitized evidence.
 
-Caption workflows additionally return `waiting`, `task_exists` or
+Caption and LinkedIn workflows additionally return `waiting`, `task_exists` or
 `poll_budget_exhausted` with the existing job. `waiting` and `task_exists` exit
 successfully but are not final business data; inspect the structured status.
-The same record preserves the bounded caption query count and deadline.
+The same record preserves the bounded query count and deadline, including in-flight
+query time. A query response for another task cannot complete the requested task.
 
 ## Every user-facing response
 

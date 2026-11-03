@@ -48,6 +48,7 @@ limitation and ask before selecting an alternative; do not silently fetch the or
 | Video info | `GET /api/v1/youtube/web_v2/get_video_info` | `video_id`, `language_code` |
 | Video info by URL | `GET /api/v1/youtube/web_v2/get_video_info_v2` | `video_url` |
 | Download streams | `GET /api/v1/youtube/web_v2/get_video_streams_v2` | `video_id` \| `video_url` |
+| Proxy download streams (candidate) | `POST /api/v1/youtube/web_v2/get_video_streams_v3` | JSON: `video_id`, `proxy_url`, optional `itags`, `verify_download` |
 | Captions/subtitles | `GET /api/v1/youtube/web_v2/get_video_captions` | `video_id`, `language_code`, `format` |
 | Caption job result | `GET /api/v1/youtube/web_v2/get_video_captions_result` | `job_id`, `format` |
 | Video comments | `GET /api/v1/youtube/web_v2/get_video_comments` | `video_id`, `sort_by`, `continuation_token` |
@@ -69,6 +70,15 @@ limitation and ask before selecting an alternative; do not silently fetch the or
   }
 }
 ```
+
+## Proxy download workflow
+
+For V3, follow [metadata and same-proxy downloading](../tikin-setup/references/downloads.md).
+Retain the successful request output and original proxy in private files, then use
+`tikin-config download` with the explicit exit-check URL. Metadata HTTP 200 and sampled
+bytes are not a complete download; verify all selected streams and report any required
+local merge separately. Do not silently use the V2 route or direct downloading to bypass
+missing proxy, verification or candidate-service prerequisites.
 
 ## Caption workflow
 
@@ -103,8 +113,8 @@ an explicitly approved new polling budget and the same regression allowance, if 
 Only completed/ready output with verified final content is a result. A failed job
 remains a failure with its original ID and report. A timeout or uncertain creation
 is not permission to resubmit. A completed empty/no-caption response may still be
-charged; do not infer free usage from HTTP 200 or an empty list. This workflow does
-not enable second-batch LinkedIn asynchronous operations.
+charged; do not infer free usage from HTTP 200 or an empty list. This workflow
+is separate from the LinkedIn task workflow in the second-batch guide.
 
 ## Pagination
 
@@ -131,5 +141,7 @@ Do not add an outer retry loop or resubmit an unknown operation.
 
 ## Red flags
 
-- Use `get_video_streams_v2` for downloadable media URLs; `get_video_info` is metadata only.
+- Use a supported streams operation for media URLs; `get_video_info` is metadata only.
+- V3 links require the original proxy, exit, headers and expiry conditions through the
+  shared download entry. A missing real proxy sample leaves that capability unverified.
 - A `video_id` is the 11-char id; pass full URLs to the `*_v2` variants.

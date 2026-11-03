@@ -26,6 +26,13 @@ MAX_RESPONSE_BYTES = 32 * 1024 * 1024
 READ_METHODS = {'GET', 'HEAD', 'OPTIONS'}
 
 
+def request_fingerprint(method: str, url: str, body: Any, body_present: bool = False) -> str:
+    value = [method, url, body]
+    if body_present and body is None:
+        value.append({'body_present': True})
+    return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
 def result_data(value, key, depth=0):
     """Keep full business results and usable media URLs; report limits apply only to evidence."""
     if isinstance(value, dict):
@@ -209,11 +216,8 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
     version = (json.loads(manifest_path.read_text(encoding='utf-8'))['version'] if manifest_path.is_file()
                else tomllib.loads((setup_root / 'pyproject.toml').read_text(encoding='utf-8'))['project']['version'])
     binding = hashlib.sha256((base + '\0' + key).encode()).hexdigest()
-    fingerprint_input = [method, url, body]
-    legacy_fingerprint = hashlib.sha256(json.dumps(fingerprint_input, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-    if body_present and body is None:
-        fingerprint_input.append({'body_present': True})
-    fingerprint = hashlib.sha256(json.dumps(fingerprint_input, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    legacy_fingerprint = request_fingerprint(method, url, body)
+    fingerprint = request_fingerprint(method, url, body, body_present)
     if dry_run:
         return {'status': 'ok', 'sent': False, 'request_sha256': fingerprint, 'method': method, 'path': path,
                 'client_base_url': base, 'test_token_sha256': hashlib.sha256(key.encode()).hexdigest(),
@@ -383,7 +387,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
             sys.stderr.write(f'[tikin] attempt {attempt}/{MAX_ATTEMPTS} failed; retrying in {delay}s\n')
             time.sleep(delay)
         output = {'schema_version': 1, 'status': state['status'], 'record': str(record),
-                  'http_status': status,
+                  'http_status': status, 'request_sha256': fingerprint, 'client_base_url': base,
                   'response_headers': {'retry-after': response_headers['retry-after']} if retry_after(response_headers) is not None else {},
                   'response': public_result(result_body, secrets, failed, canonical_path)}
         if task:

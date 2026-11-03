@@ -78,7 +78,7 @@ def now():
     return datetime.now(timezone.utc).isoformat()
 
 
-def restrict_private(path):
+def restrict_private(path: Path) -> None:
     if os.name != 'nt':
         os.chmod(path, 0o600)
         return

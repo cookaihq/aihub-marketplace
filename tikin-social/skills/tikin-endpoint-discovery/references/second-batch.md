@@ -124,4 +124,7 @@ changed exit, expired links and metadata-only success are not completed download
 HTTP 200 metadata is charged even when optional sample verification is false.
 Sampled-range verification is not full-file verification. Separate audio/video
 streams require downloading both and an explicit merge step if a combined file
-is requested. No approved real proxy or sample is provided by this candidate.
+is requested. Use the [shared download entry](../../tikin-setup/references/downloads.md)
+with the original request and full successful response; its same-proxy exit checks,
+complete byte/container checks and durable partial state enforce those conditions.
+No approved real proxy or sample is provided by this candidate.

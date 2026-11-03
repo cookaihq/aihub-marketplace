@@ -78,6 +78,9 @@ Before any business API request, read [shared requests and local error reports](
 
 `run -- <command>` remains a configuration utility; it does not record arbitrary child HTTP traffic.
 
+For an existing successful YouTube V3 metadata result, follow [same-proxy downloads](references/downloads.md).
+The shared `download` subcommand consumes that result and its original request; it does not request metadata or load API credentials.
+
 ## Install or repair
 
 First read [the complete-suite installation and migration procedure](references/installation.md).
@@ -99,7 +102,7 @@ If GitHub has a network failure, use the same marketplace and Plugin from
 `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git`. Keep the same requested version and
 scope; authentication, missing repository or missing version is not a network fallback trigger.
 Report which source succeeded. Do not guess a WorkBuddy CLI command or tool schema: inspect
-its available native tools and current UI. Do not start codebuddy/cbc or an embedded CLI, even for help/list. The shared request and endpoint helpers use pinned Python and quoted paths on native Windows; final media downloads use curl.exe there. Local configuration tests do not prove host loading or complete Windows business support; macOS/Linux/WSL and all three host sessions require their own evidence.
+its available native tools and current UI. Do not start codebuddy/cbc or an embedded CLI, even for help/list. The shared request, endpoint and YouTube V3 download helpers use pinned Python and quoted paths on native Windows; other final media downloads use curl.exe there. Local configuration tests do not prove host loading or complete Windows business support; macOS/Linux/WSL and all three host sessions require their own evidence.
 
 Do not leave several active channels in the same host. Inventory prefixed and unprefixed
 old copies; preserve local edits and shared targets until the replacement has been verified.

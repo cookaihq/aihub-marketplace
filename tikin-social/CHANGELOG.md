@@ -7,6 +7,7 @@ Development candidate; not published.
 - Add the frozen second-batch catalog (1029 operations), explicit cohort identities, snapshot prices, and per-platform construction guidance.
 - Extend the shared durable task workflow to LinkedIn creation, free status/results, one-second query limits, failed records and continuation without replay.
 - Protect additional raw Ads Cookie and proxy credential echoes while retaining usable signed media URLs.
+- Add `tikin-config download` for existing YouTube V3 results: original request/proxy binding, exit/expiry checks, complete stream transfers and safe partial-file continuation without another metadata request.
 - All 17 Skill behavior versions are 1.6.0; live service, credentials/proxy and native host acceptance remain pending. No second-batch release is claimed.
 
 ## 1.5.0
@@ -33,7 +34,8 @@ Development candidate; not published.
   version/content identity; `tikin-config status` detects missing or modified suite files.
 - Installation and update instructions pin a complete release, preserve local changes,
   account configuration and shared copies, and require fresh-session source verification.
-- The accepted endpoint index is unchanged. macOS public CLI/distribution tests are passing;
+- The installation-only checkpoint retained the accepted endpoint index; the 1.5.0
+  candidate includes the first-batch catalog described above. macOS public CLI/distribution tests are passing;
   native host migration acceptance and publication remain pending. Windows is not yet tested.
 
 ## 1.4.0 — 2026-11-03

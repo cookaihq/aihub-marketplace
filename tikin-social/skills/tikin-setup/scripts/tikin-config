@@ -470,6 +470,11 @@ def main():
     request_parser.add_argument("--output-dir", default="data/tikin")
     request_parser.add_argument("--regression-approval", help="reference the existing shared regression approval and ledger")
     request_parser.add_argument("--dry-run", action="store_true", help="describe the exact request identity without sending")
+    download_parser = subparsers.add_parser("download", help="verify and download existing YouTube V3 streams through their original proxy")
+    download_parser.add_argument("--request-file", required=True)
+    download_parser.add_argument("--response-file", required=True)
+    download_parser.add_argument("--output-dir", required=True)
+    download_parser.add_argument("--exit-check-url", required=True, help="explicit JSON ip check URL, accessed only through the same proxy")
     set_routing_parser = subparsers.add_parser("set-routing")
     set_routing_parser.add_argument("--default", choices=MODES)
     set_routing_parser.add_argument("--platform", action="append", default=[])
@@ -510,6 +515,11 @@ def main():
         config_check(skill_name, global_enabled, deletion)
     elif args.command == "run":
         run_with_config(skill_name, args.argv, global_enabled)
+    elif args.command == "download":
+        from proxy_download import download
+        output = download(args.request_file, args.response_file, args.output_dir, args.exit_check_url)
+        print(json.dumps(output, ensure_ascii=False, indent=2))
+        raise SystemExit(0 if output["status"] == "complete" else 1)
     elif args.command == "request":
         from tikin_request import execute
         from regression import GateError

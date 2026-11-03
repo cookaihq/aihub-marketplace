@@ -68,7 +68,8 @@ macOS or Linux; API requests no longer require a POSIX shell or curl. The initia
 needs network access; endpoint search then works offline. Skills-only installations must include
 `tikin-setup`, which supplies the shared bootstrap and request helper.
 
-Final media downloads still need an available download tool (`curl.exe` on native Windows).
+YouTube V3 same-proxy downloads use the same pinned Python runtime. Other final media
+downloads need an available download tool (`curl.exe` on native Windows).
 Saving private reports on Windows requires the built-in Windows PowerShell 5.1 and a filesystem
 supporting Windows access controls. Files are restricted before private contents are written;
 a report save failure does not cause another API request. A WorkBuddy card does not prove runtime
@@ -188,6 +189,15 @@ for platform prerequisites, limits, asynchronous tasks and candidate scope. Read
 for method/parameter changes and retired routes. Its `catalog-identity.json` reports
 the actual operation count and hashes. Service-dependent changes are not yet published
 or proven live; native host migration and Windows acceptance remain incomplete.
+
+For YouTube V3, follow the [same-proxy download guide](skills/tikin-setup/references/downloads.md).
+Provide an existing authorized proxy and an explicit JSON exit-check URL; the helper
+retains the successful metadata request, verifies every selected stream and preserves
+partial files. It does not purchase a proxy, refresh metadata or merge audio and video.
+
+> Download this YouTube video using my existing proxy and exit-check URL. Keep the
+> proxy credentials local, preserve the metadata result, and tell me separately which
+> streams finished, which remain partial, and whether audio/video still need merging.
 
 ## First use
 

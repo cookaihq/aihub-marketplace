@@ -48,6 +48,7 @@ limitation and ask before selecting an alternative; do not silently fetch the or
 | Douyin | `GET /api/v1/douyin/app/v3/fetch_one_video_by_share_url` | `share_url` | video `url_list` |
 | Douyin (by id) | `GET /api/v1/douyin/app/v3/fetch_one_video_v2` | `aweme_id` | video `url_list` |
 | YouTube | `GET /api/v1/youtube/web_v2/get_video_streams_v2` | `video_id` \| `video_url` | stream URLs (pick resolution) |
+| YouTube V3 (candidate) | `POST /api/v1/youtube/web_v2/get_video_streams_v3` | JSON `video_id`, `proxy_url`, `itags`, `verify_download` | same-proxy streams and headers |
 | Instagram | `GET /api/v1/instagram/v2/fetch_post_info` | `code_or_url` | media URL(s) |
 | Xiaohongshu | `GET /api/v1/xiaohongshu/app_v2/get_video_note_detail` (video) / `get_image_note_detail` (images) | `note_id` | video / image URLs |
 | Twitter/X | `GET /api/v1/twitter/web/fetch_tweet_detail` | `tweet_id` | media `url_list` |
@@ -84,7 +85,15 @@ Timeouts, which failures to retry (and which never to): follow the **Reliability
 
 ## Step 3 — Extract the media URL, then download
 
-Parse the response for the highest-quality (no-watermark, for TikTok/Douyin) media URL — usually a
+For YouTube V3, use the [shared same-proxy download workflow](../tikin-setup/references/downloads.md)
+with the original request file, complete successful CLI response, output directory and
+explicit exit-check URL. It validates both default streams, preserves partial files and
+finished work across processes, and refuses changed proxy/exit, expired links, false
+verification and redirects. Do not pass these V3 links to the generic curl example below.
+V3's real proxy/media acceptance is pending in this candidate; confirm service availability
+and the user's proxy before requesting metadata.
+
+For other returned media, parse the response for the highest-quality (no-watermark, for TikTok/Douyin) media URL — usually a
 `url_list` array or a stream URL. Use Python's standard `json` module for structured parsing;
 do not introduce a `jq` dependency unless it is already available and the user prefers it. Then
 save the returned media URL:
