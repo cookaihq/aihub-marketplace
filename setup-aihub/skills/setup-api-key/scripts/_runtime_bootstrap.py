@@ -69,7 +69,14 @@ def ensure_runtime(marker="SETUP_AIHUB_BOOTSTRAP_REEXEC", project=None):
             if not safe:
                 fail("runtime_preparation_failed")
             try:
-                rebuilt = subprocess.run(["uv", "venv", "--clear", "--python", pin, str(environment)], capture_output=True, timeout=60)
+                command = ["uv", "venv", "--clear", "--python", os.environ.get("UV_PYTHON") or pin, str(environment)]
+                # uv 0.12 additionally requires --force for a damaged venv with
+                # no pyvenv.cfg. Only this verified Skill-owned directory is
+                # eligible; external overrides and unknown content stay refused.
+                help_result = subprocess.run(["uv", "venv", "--help"], capture_output=True, timeout=10)
+                if b"--force" in help_result.stdout:
+                    command.append("--force")
+                rebuilt = subprocess.run(command, capture_output=True, timeout=60)
                 if rebuilt.returncode:
                     fail("runtime_preparation_failed")
                 result = subprocess.run(["uv", "sync", "--locked", "--no-dev", "--project", str(project)], capture_output=True, timeout=60)

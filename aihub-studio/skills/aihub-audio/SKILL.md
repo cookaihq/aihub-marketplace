@@ -1,14 +1,14 @@
 ---
 name: aihub-audio
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 AIhub D1 合成语音、转写本地或 URL 录音，以及执行用户明确要求的声音克隆；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
+  version: "1.5.0"
+description: v1.5.0｜通过 AIhub D1 合成语音、转写本地或 URL 录音，以及执行用户明确要求的声音克隆；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
 compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 
 # AIhub 音频与语音任务
 
-凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)衔接 Setup 或最小回退；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开 Setup 配置网页；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
 
 Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 

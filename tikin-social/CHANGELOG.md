@@ -11,6 +11,8 @@ Development candidate; not published.
 
 ## 1.5.0
 
+Development candidate; not published.
+
 - Preserve explicit JSON null separately from an omitted body, with distinct regression approval and legacy ambiguous-submission protection.
 - Refresh the frozen first-batch public response schema to v2; the 919 operation set and request contracts are unchanged.
 
@@ -27,15 +29,18 @@ Development candidate; not published.
   record; known creation is reused, and raw Cookie string inputs remain private.
 - Setup Skill is 1.5.0; the other 16 Skills are 1.4.0.
 
-## 1.4.0
-
 - Candidate: complete Plugin and whole-suite Skills-only distributions share a generated
   version/content identity; `tikin-config status` detects missing or modified suite files.
 - Installation and update instructions pin a complete release, preserve local changes,
   account configuration and shared copies, and require fresh-session source verification.
 - The accepted endpoint index is unchanged. macOS public CLI/distribution tests are passing;
   native host migration acceptance and publication remain pending. Windows is not yet tested.
-- `tikin-setup` is 1.4.0; the other 16 Skills remain 1.3.0.
+
+## 1.4.0 — 2026-11-03
+
+十七个 Skill 的凭证入口接入 Setup 2.3.0 本机网页。支持 Key 与服务地址关联确认，保留真实 caller、作用域及原业务提交状态；共享运行环境可恢复 uv 0.12 的损坏默认目录。全部 Skill 为 1.4.0。
+
+macOS 合成脚本、网页与 Codex 0.166.0 的业务缺 Key / 保存 / 跨轮恢复通过；Claude Code 2.1.317 被额度不足阻断，WorkBuddy 被辅助功能权限阻断，Windows 原生待验。完整范围见 README；未使用真实业务 Key 或计费请求做本轮验证。
 
 ## 1.3.1 — 2026-10-27
 

@@ -194,6 +194,8 @@ def apply_plan(tasks, state, confirmation):
     if state["source"] != "manual" or state["phase"] != "waiting_confirmation":
         raise SetupError("no_pending_confirmation")
     plan = state.get("plan", {})
+    if plan.get("action") not in ("prepare", "clear"):
+        raise SetupError("browser_confirmation_required")
     unsigned = {key: value for key, value in plan.items() if key != "confirmation"}
     if not confirmation or confirmation != plan.get("confirmation") or fingerprint(unsigned) != confirmation:
         raise SetupError("confirmation_mismatch")

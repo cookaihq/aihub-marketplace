@@ -1,14 +1,14 @@
 ---
 name: aihub-image
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 AIhub 生成或编辑图片，按已配置的模型优先级执行并支持可恢复的模型切换。未配置时，优先速度使用 GPT Image 2.5 Flare，优先细节使用 Sunburst。支持继续已有图片任务并交付核验后的文件。
+  version: "1.5.0"
+description: v1.5.0｜通过 AIhub 生成或编辑图片，按已配置的模型优先级执行并支持可恢复的模型切换。未配置时，优先速度使用 GPT Image 2.5 Flare，优先细节使用 Sunburst。支持继续已有图片任务并交付核验后的文件。
 compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
 # AIhub 图片任务
 
-凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)衔接 Setup 或最小回退；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开 Setup 配置网页；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
 
 Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 

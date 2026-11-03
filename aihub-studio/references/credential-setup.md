@@ -16,6 +16,14 @@ node "<Plugin实体>/scripts/aihub.mjs" config-check --skill <实际业务Skill>
 
 配置已可读时继续正常任务。首次配置、实际缺项或有依据需要修复时，先报告字段与实际来源；402、403、429、网络问题分别核对余额、权限、限流、连接，不直接要求换 Key。401 也要核对 Key 所属账号与最终服务组合。
 
+## 缺 Key 时实际打开配置页
+
+本机加载器报告缺 Key，或用户主动配置/修复时，**实际调用当前宿主的 `setup-aihub:setup-api-key` 2.3.0 或更新版本，打开其本机网页**。保留原业务需求、真实 caller、cwd、全局开关与提交状态。读取 Setup 的 `references/browser.md`，执行 `setup_ui.py start` 并给出它返回的可点击链接；不能只说“已转交”或把编辑 `.env` 当作默认下一步。
+
+用户在同一页面手动填写 Key 或选择 Secret Book，预览实际来源与目标后保存。Key 不经聊天、模型、argv、日志或进度文件。保存后用当前业务的真实加载器无值复查，完成 Setup 的默认设置检查，再按原任务状态继续：未提交且原授权有效才执行，已提交/未知先查原结果。
+
+Setup 未安装、版本不足或本会话未加载时，先说明实际状态，提供安装/更新兼容完整 Plugin 后继续的入口；已有相应安装授权直接沿用。只增加市场条目不代表 Plugin 已安装。仅用户选择文件编辑或当前运行环境无浏览器时使用下述最小回退；不阻断配置已正常的业务。
+
 ## Setup 可用时
 
 核对当前宿主已发现的 `setup-aihub:setup-api-key` 来自正确完整 Plugin 且兼容，再进入其凭证流程。交付 consumer `aihub-studio`、实际版本/实体、caller、真实 cwd、全局开关、声明与无值报告、已有来源/范围选择，以及原业务记录引用和提交状态。只保留无密钥元数据。Setup 的配置检查不再次转回本流程，避免递归。
@@ -26,7 +34,7 @@ Setup 尚未发布、未安装、未加载或不可调用时，保留原任务�
 
 > 请从 https://github.com/cookaihq/aihub-marketplace.git 安装完整的 setup-aihub Plugin；网络故障时使用同版本 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，安装后用 setup-api-key 继续刚才的 AIhub 凭证配置。
 
-先核对 Setup AIHub 2.0.0 或更新的兼容版本可取得，不以旧条目代替新功能。WorkBuddy 沿用[原生套件指引与截图](workbuddy-install.md)，只将安装对象换成获授权的完整 `setup-aihub`，不另起 CLI 或手写注册表。
+先核对 Setup AIHub 2.3.0 或更新的兼容版本可取得，不以旧条目代替新功能。WorkBuddy 沿用[原生套件指引与截图](workbuddy-install.md)，只将安装对象换成获授权的完整 `setup-aihub`，不另起 CLI 或手写注册表。
 
 ## Setup 不可用时的最小回退
 
