@@ -6,8 +6,9 @@ TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more thr
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
 Candidate Plugin version: **1.5.0**, with `tikin-setup` **1.5.0** and the other 16 Skills
-at **1.3.0**. This candidate adds complete-suite identity checks and migration guidance.
-It retains the accepted 1002-entry index; it does not introduce a new API batch.
+at **1.4.0**. This candidate adds complete-suite identity checks, durable request
+execution, and the frozen first-batch catalog with 919 operations. The separate
+1.4.0 installation compatibility candidate retains the accepted 1002-entry index.
 Native host acceptance and publication are pending. All 17 Skills share native JSON requests and automatic local error reports. Credential handoff uses the
 `setup-api-key` Skill in Setup AIHub 2.0.0. The following results apply to **1.2.0**:
 native Windows Plugin installation and Skill discovery are verified
