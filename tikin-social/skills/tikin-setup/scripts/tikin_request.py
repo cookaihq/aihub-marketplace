@@ -11,7 +11,7 @@ import sys
 import time
 import tomllib
 import uuid
-from typing import Any
+from typing import Any, Mapping
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -76,7 +76,7 @@ class NoRedirect(HTTPRedirectHandler):
         return None  # Never forward credentials or replay a POST to another location.
 
 
-def retry_after(headers):
+def retry_after(headers: Mapping[str, str | None]) -> float | None:
     raw = headers.get('retry-after')
     if not isinstance(raw, str):
         return None

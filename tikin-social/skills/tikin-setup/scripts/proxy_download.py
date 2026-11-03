@@ -19,14 +19,18 @@ from urllib.parse import SplitResult, unquote, urlsplit
 import uuid
 
 from request_reporting import atomic_write, record_lock, restrict_private
-from tikin_request import request_fingerprint
+from tikin_request import request_fingerprint, retry_after
 
 STREAMS_PATH = '/api/v1/youtube/web_v2/get_video_streams_v3'
 MAX_STREAM_SECONDS = 300
 
 
 class DownloadError(Exception):
-    pass  # Only fixed, credential-free reason codes are raised by this module.
+    """Fixed, credential-free reason plus the shared transport's cooldown evidence."""
+    def __init__(self, reason: str, not_before: float | None = None, http_status: int | None = None) -> None:
+        super().__init__(reason)
+        self.not_before = not_before
+        self.http_status = http_status
 
 
 def require(condition: Any, reason: str) -> None:
@@ -103,8 +107,10 @@ class Proxy:
             active_socket = connection.sock
             seconds_left(deadline)
             response = connection.getresponse()
-            require(not 300 <= response.status < 400, 'redirect_refused')
-            require(response.status == 200, 'media_http_failure')
+            if response.status != 200:
+                delay = retry_after({'retry-after': response.getheader('Retry-After')})
+                raise DownloadError('redirect_refused' if 300 <= response.status < 400 else 'media_http_failure',
+                                    time.time() + delay if delay is not None else None, response.status)
             yield response
         finally:
             timer.cancel()
@@ -285,6 +291,10 @@ def download(request_file: str, response_file: str, output_dir: str, exit_check_
                 atomic_write(record, json.dumps(state, ensure_ascii=False, indent=2) + '\n')
 
             save()
+            if state.get('not_before', 0) > time.time():
+                return {**state, 'status': 'cooldown', 'record': str(record),
+                        'retry_after_seconds': state['not_before'] - time.time()}
+            state.pop('not_before', None)
             deadline = time.monotonic() + MAX_STREAM_SECONDS * len(streams)
             for stream in streams:
                 itag = stream['itag']
@@ -316,9 +326,14 @@ def download(request_file: str, response_file: str, output_dir: str, exit_check_
                     os.link(partial, final)  # Atomic publication cannot overwrite an existing file.
                     partial.unlink()
                     entry.update(status='complete', complete_transfer_verified=True, file=str(final), bytes=size, sha256=digest)
+                    state['last_http_status'] = 200
                     save()
                 except (DownloadError, OSError, ValueError, TypeError, KeyError, http.client.HTTPException, KeyboardInterrupt) as error:
                     state['reason'] = str(error) if isinstance(error, DownloadError) else 'transfer_interrupted_or_invalid'
+                    if isinstance(error, DownloadError):
+                        state['last_http_status'] = error.http_status
+                        if error.not_before is not None:
+                            state['not_before'] = max(state.get('not_before', 0), error.not_before)
                     if Path(entry['file']).is_file():
                         entry['bytes'] = Path(entry['file']).stat().st_size
                     save()

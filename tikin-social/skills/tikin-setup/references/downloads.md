@@ -98,6 +98,10 @@ regression allowance. A new paid metadata request needs the existing authorizati
 remaining budget, not an automatic recovery loop.
 
 `status: blocked` gives a stable `reason` before the affected download can proceed.
+Valid integer or HTTP-date `Retry-After` values from the proxy/media boundary use the
+shared request parser and persist their full `not_before` time. A new process returns
+`status: cooldown` before any exit/media request until that time; changing processes
+does not shorten the server's wait. No automatic retry or long blocking sleep is added.
 Report `metadata_success`, download status and any retained record/file paths separately.
 Do not claim a failed download was free. Exit/media traffic is proxy traffic, not a
 zero-priced Tikin query and not a way to bypass the single metadata-request ledger.

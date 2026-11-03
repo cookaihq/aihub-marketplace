@@ -63,7 +63,7 @@
     "tikin-setup/references/credentials.json": "a58c14ea6813c715d6f7a19d96a14119ad9da1d5fca638ef3d41923bf443b1e2",
     "tikin-setup/references/default-skills-rule.md": "befb8e20e12c935af82f10b7b49701365e2c61ab08a7eb991432a84435c8ef29",
     "tikin-setup/references/default-skills.md": "c716803895f5ac6850f3b70a9da9efb8f893f26073f738dfc6f22be4ca9a4317",
-    "tikin-setup/references/downloads.md": "7e907a19f06b288d7496f7190ea5c3cb8556fa8e2c7cbaa5d0007a2d3b640bd3",
+    "tikin-setup/references/downloads.md": "8488ddcc2a622d4ced0104ca010bf0729528ca7fdbdcba28f00a77d55c226be7",
     "tikin-setup/references/installation.md": "599a2a90a698953a43c613b978dc64427679559b1c62d5c97735fef38469a740",
     "tikin-setup/references/regression.md": "a26fc5ea19f0594f5894f50778f62f800c681325daecc0f424c1893b2066851e",
     "tikin-setup/references/remote-key-maintenance.md": "237ff26b7aeb7941bbfb17491c535b1a493265583030bdd1752ed1980004de37",
@@ -73,11 +73,11 @@
     "tikin-setup/scripts/catalog.py": "14a9aa12b2976ba31378882474b7d8710b134d4a559b7ba7e16c9f37f1236b31",
     "tikin-setup/scripts/default_skills/__init__.py": "54c3fdbf6cf036962209a2d45e74ffdee53814c0c2b9974530d469663b893abc",
     "tikin-setup/scripts/installation.py": "6773f4683d42458ede9555f4271c2a67aa43dd019be63e18803421bdc01343af",
-    "tikin-setup/scripts/proxy_download.py": "4cb08cf20223a56eda8a458296d81d0d389a8536d3d92a54f858efe93ca96ea9",
+    "tikin-setup/scripts/proxy_download.py": "3e9166e0d190192c4c4ec92d38dbeede234c778ba40fb03ce0d8c208cbfeb32e",
     "tikin-setup/scripts/regression.py": "bff0e42089da5b0aeed37bf66720011c36a688251a1fda05e3bd88433b9bfc30",
     "tikin-setup/scripts/request_reporting.py": "cba3addc22d48fc98618c188ed5b38e495d7675e3fb620d9951e59a18cf2ba9c",
     "tikin-setup/scripts/tikin-config": "28a0bcf8d6b6ceb03a6d3594cea99a4a341ad8988de0d5d455372faed95e5f60",
-    "tikin-setup/scripts/tikin_request.py": "f263c7be693a64ee9514beaa06a49e45202b0f7cc510c53f218dc14a3637f7ba",
+    "tikin-setup/scripts/tikin_request.py": "604b43432845ea6a3add93d6262dd81bb219a59c3de30f802fb51785cc400a95",
     "tikin-setup/uv.lock": "9f7460ef624aa50b170d477147165f3a38b3fe6c108a099a9986f427bb9153f9",
     "tikin-social-listening/SKILL.md": "62482bc03188cd22a55565b22ccdb28bcd3cbc54e1d1bbfef93e16ce8462a389",
     "tikin-social-listening/agents/openai.yaml": "ddbb0bb57810939d6513febcbb6ec2983765d9241120926270d8a2fb8a684622",
@@ -94,6 +94,6 @@
     "tikin-youtube/SKILL.md": "c898fdcaf2d413833bfa11c1ba195b20d556535fde89ce250561742116a057e6",
     "tikin-youtube/agents/openai.yaml": "31112f8be0d028534f0fb46756b156ec7909fd968fa5d97cd700706026454786"
   },
-  "suite_sha256": "d82d8c6dd7981d73f7d92fae56a3c5c93bfa219b9eb2a5407df4f722c11419c0",
+  "suite_sha256": "ac940771fd36d524be8cbdf9a052b982bf65dae64de145e634894796499aa71b",
   "index_sha256": "285a879c2e134a7925a9985feac4f4897d806e59c53062e98076b3fb8ae2bbb7"
 }

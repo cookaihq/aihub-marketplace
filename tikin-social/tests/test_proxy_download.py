@@ -285,6 +285,18 @@ class ProxyDownloadTests(unittest.TestCase):
         media = [row for row in self.calls() if row['peer'] == 'origin' and '/media/' in row['path']]
         self.assertTrue(all(row['headers'].get('accept-encoding') == 'identity' for row in media))
 
+    def test_media_retry_after_blocks_network_when_resuming_in_a_new_process(self):
+        self.configure(video_mode='limited', retry_after='120')
+        self.metadata()
+        first = self.download()
+        self.assertEqual(first['status'], 'partial')
+        count = len(self.calls())
+        resumed = self.download()
+        self.assertEqual(resumed['status'], 'cooldown')
+        self.assertGreater(resumed['retry_after_seconds'], 100)
+        self.assertEqual(resumed['last_http_status'], 429)
+        self.assertEqual(len(self.calls()), count)
+
 
 if __name__ == '__main__':
     unittest.main()

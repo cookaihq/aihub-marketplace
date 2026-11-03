@@ -81,6 +81,9 @@ def main():
                 self.reply(403, b'headers missing')
                 return
             mode = cfg.get('mode', 'ok') if self.path.startswith('/media/140') else cfg.get('video_mode', 'ok')
+            if mode == 'limited':
+                self.reply(429, b'', {'Retry-After': cfg.get('retry_after', '120')})
+                return
             if mode == 'redirect':
                 self.reply(302, b'', {'Location': f'http://127.0.0.1:{ports["http"]}/leak'})
                 return
