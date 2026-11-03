@@ -520,7 +520,7 @@ def main():
             output = {"status": "local_error", "error": "Request or recovery record is invalid/unavailable; no business retry was made.",
                       "error_type": type(error).__name__}
         print(json.dumps(output, ensure_ascii=False, indent=2))
-        raise SystemExit(0 if output["status"] == "ok" else 1)
+        raise SystemExit(0 if output["status"] in ("ok", "waiting", "task_exists") else 1)
     elif args.command == "set-routing":
         initialize()
         set_routing(args.default, args.platform, args.clear_platforms)

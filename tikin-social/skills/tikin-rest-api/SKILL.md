@@ -16,6 +16,8 @@ description: v1.4.0｜通过共享请求工具调用 Tikin REST API，并保存�
 Direct HTTP access to all 1,000+ tikin endpoints. Use `tikin-endpoint-discovery` to find the
 right path, then call it here.
 
+Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
 ## Runtime gate
 
 On the first tikin use in each Agent session, follow the `tikin-setup` session update gate once

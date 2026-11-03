@@ -15,8 +15,10 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
-from request_reporting import atomic_write, existing_feedback, feedback, now, record_lock, redact, upstream_fields
+from request_reporting import atomic_write, existing_feedback, feedback, now, record_lock, redact, secret_values, upstream_fields
 from regression import GateError, GUARD_HEADER, Regression
+from catalog import CAPTION_CREATE, CAPTION_RESULT
+import caption_tasks
 
 MAX_ATTEMPTS = 3
 DEFAULT_TIMEOUT = 30
@@ -32,7 +34,10 @@ def result_data(value, key, depth=0):
                 for name, item in value.items()}
     if isinstance(value, list):
         return [result_data(item, key, depth + 1) for item in value]
-    return value.replace(key, '[REDACTED]') if isinstance(value, str) else value
+    if isinstance(value, str):
+        for secret in ([key] if isinstance(key, str) else key):
+            value = value.replace(secret, '[REDACTED]')
+    return value
 
 
 def public_result(body, key, failed):
@@ -92,7 +97,7 @@ def business_error(body):
     nested = body.get('data')
     task = nested if isinstance(nested, dict) else body
     if task.get('status') in ('failed', 'error'):
-        return task.get('error') or {'code': 'unknown_error'}, task.get('id') or task.get('task_id')
+        return task.get('error') or {'code': 'unknown_error'}, task.get('id') or task.get('task_id') or task.get('job_id')
     if body.get('error'):
         return body['error'], None
     code = body.get('code')
@@ -169,6 +174,11 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
     side_effects = spec.get('side_effects', True)
     if not isinstance(side_effects, bool):
         raise ValueError('side_effects must be a boolean')
+    canonical_path = urlsplit(path).path
+    if canonical_path == CAPTION_CREATE:
+        side_effects = True
+    elif canonical_path == CAPTION_RESULT:
+        side_effects = False
     replay_safe = method in READ_METHODS and not side_effects
     time_budget = spec.get('time_budget_seconds', 90)
     if isinstance(time_budget, bool) or not isinstance(time_budget, (int, float)) or not math.isfinite(time_budget) or not 0 < time_budget <= 300:
@@ -178,6 +188,9 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
     if query:
         url += ('&' if '?' in path else '?') + urlencode(query, doseq=True)
     body = spec.get('body')
+    secrets = [key] + secret_values({'query': query, 'body': body})
+    if canonical_path in ('/api/v1/tiktok/ads/get_configure_safety', '/api/v1/tiktok/ads/get_location_list') and isinstance(body, str) and body:
+        secrets.append(body)
     headers = {'Authorization': 'Bearer ' + key, 'Accept': 'application/json'}
     if body is not None:
         headers['Content-Type'] = 'application/json'
@@ -220,7 +233,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
         else:
             state = {'schema_version': 1, 'kind': 'tikin-run', 'plugin': 'tikin-social', 'plugin_version': version,
                      'skill': skill, 'binding': binding, 'created_at': now(), 'updated_at': now(),
-                     'original_request': redact(spec['original_request'], [key]), 'status': 'ready', 'events': [], 'exchanges': []}
+                     'original_request': redact(spec['original_request'], secrets), 'status': 'ready', 'events': [], 'exchanges': []}
             state['regression'] = regression_ref
 
         def save():
@@ -229,6 +242,9 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
 
         pending = set(state.get('pending_writes', [state.get('pending_write')])) - {None}
         state.pop('pending_write', None)
+        task_gate = caption_tasks.before_send(state, canonical_path, query, fingerprint)
+        if task_gate:
+            return {**result_data(task_gate, secrets), 'record': str(record), 'feedback': existing_feedback(record)}
         remaining_cooldown = state.get('not_before', 0) - time.time()
         if remaining_cooldown > 0:
             if remaining_cooldown >= deadline - time.monotonic():
@@ -243,10 +259,14 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
         warning = None
         latest_feedback = None
         result_body, status = None, None
+        task = None
         for attempt in range(attempts + 1, MAX_ATTEMPTS + 1):
             remaining_time = deadline - time.monotonic()
             if remaining_time <= 0:
                 return {'status': 'time_budget_exhausted', 'record': str(record)}
+            task_gate = caption_tasks.before_send(state, canonical_path, query, fingerprint)
+            if task_gate:
+                return {**result_data(task_gate, secrets), 'record': str(record), 'feedback': existing_feedback(record)}
             reservation = None
             if regression:
                 try:
@@ -266,6 +286,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                 pending.add(fingerprint)
                 state['pending_writes'] = sorted(pending)
             state['retry_attempts'][fingerprint] = attempt
+            caption_tasks.reserve_query(state, canonical_path, query)
             state['status'] = 'in_flight'
             save()
             start, at = time.monotonic(), now()
@@ -301,9 +322,10 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                                'request': {'headers': headers, 'body': body,
                                            'query': {name: [value for key_name, value in query_pairs if key_name == name] for name, _ in query_pairs},
                                            'original_request': spec['original_request'], 'reference_materials': spec.get('reference_materials')},
-                               'response': {'http_status': status, 'headers': response_headers, 'body': result_body}}, [key])
+                               'response': {'http_status': status, 'headers': response_headers, 'body': result_body}}, secrets)
             state['exchanges'].append(evidence)
             state['status'] = 'submission_unknown' if ambiguous else 'remote_failed' if remote_failed else 'failed' if failed else 'ok'
+            task = caption_tasks.observe(state, canonical_path, fingerprint, result_data(result_body, secrets))
             # A later GET or another write must not erase an earlier uncertain submission.
             if not replay_safe and not ambiguous and not retry:
                 pending.discard(fingerprint)
@@ -316,7 +338,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                                 'task_id': task_id, 'task_status': task_body.get('status') if remote_failed else None,
                                 'request_id': response_headers.get('x-request-id'), 'ambiguous': ambiguous,
                                 'code': detail.get('code'), 'message': detail.get('message') or (str(error) if error else None),
-                                'exchange_id': evidence['id'], 'upstream': upstream_fields(result_body)}, [key])
+                                'exchange_id': evidence['id'], 'upstream': upstream_fields(result_body)}, secrets)
                 prior = next((item for item in state['events'] if item['id'] == event['id']), None)
                 if prior:
                     event['at'] = prior['at']
@@ -344,7 +366,9 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
         output = {'schema_version': 1, 'status': state['status'], 'record': str(record),
                   'http_status': status,
                   'response_headers': {'retry-after': response_headers['retry-after']} if retry_after(response_headers) is not None else {},
-                  'response': public_result(result_body, key, failed)}
+                  'response': public_result(result_body, secrets, failed)}
+        if task:
+            output['task'] = task
         if state.get('not_before', 0) > time.time():
             output.update(not_before=state['not_before'], retry_after_seconds=state['not_before'] - time.time())
         if latest_feedback:

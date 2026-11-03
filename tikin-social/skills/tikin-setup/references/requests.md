@@ -62,6 +62,11 @@ error messages are replaced with a stable local explanation; non-JSON error page
 are not echoed as public diagnostics. Legal nested business fields, task state and
 signed media URLs remain intact. Private reports retain separately sanitized evidence.
 
+Caption workflows additionally return `waiting`, `task_exists` or
+`poll_budget_exhausted` with the existing job. `waiting` and `task_exists` exit
+successfully but are not final business data; inspect the structured status.
+The same record preserves the bounded caption query count and deadline.
+
 ## Every user-facing response
 
 When `feedback` exists, copy **every** `feedback.artifact_links` entry into the conversation on first failure, repeated failure/query, recovery and the final response. Each link label must show its **full absolute path** and point at that real saved file. Do not shorten it to a filename, relative path or “same directory”, and do not place links in code fences. `feedback.user_notice` contains ready-to-use Markdown.

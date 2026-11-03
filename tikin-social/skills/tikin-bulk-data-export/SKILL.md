@@ -16,6 +16,8 @@ description: v1.4.0｜通过 Tikin 批量获取社交媒体帖子、粉丝、搜
 Paginate a list endpoint at scale, dedup, and write a clean dataset — safely and with a cost
 estimate up front.
 
+Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
 ## Runtime gate
 
 On the first tikin use in each Agent session, follow the `tikin-setup` session update gate once
@@ -70,6 +72,11 @@ State the estimated calls and get the user's go-ahead before running.
   whether `has_more` is still true, and the cursor to resume from. This is a distinct outcome from
   "the source ran out of data"; never present it as a complete export.
 - Dedup by stable id (e.g. `aweme_id` / post id) as you go.
+
+LinkedIn user posts do not have verified pagination through the listed `start` or
+`pagination_token`; company posts use only the documented effective `start`.
+Threads user lists likewise document ineffective pagination in this batch. Report
+the available first result and limitation instead of promising a complete export.
 
 ## Step 3 — Export
 

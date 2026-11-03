@@ -14,6 +14,18 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 SECRET_KEY = re.compile(r'authorization|cookie|api[_.-]?key|password|secret|credential|accessToken|refreshToken|idToken|sessionId|(?:^|[_-])(?:auth|token|signature|sign|sig|session|jwt)(?:$|[_-])|^x-amz-|^x-goog-', re.I)
 
 
+def secret_values(value, sensitive=False):
+    """Also mask known input secrets if a service echoes them in another field."""
+    if isinstance(value, str):
+        return [value] if sensitive and value else []
+    if isinstance(value, dict):
+        return [secret for name, item in value.items()
+                for secret in secret_values(item, sensitive or bool(SECRET_KEY.search(name)))]
+    if isinstance(value, list):
+        return [secret for item in value for secret in secret_values(item, sensitive)]
+    return []
+
+
 def redact(value, secrets=(), key='', depth=0):
     if SECRET_KEY.search(key):
         return '[REDACTED]'

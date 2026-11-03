@@ -16,6 +16,8 @@ description: v1.4.0｜通过 Tikin 处理小红书 / RedNote 链接与数据，�
 Coverage via the App-V2 API. Exhaustive endpoints via the `tikin-endpoint-discovery` skill:
 `tikin-find-endpoint "<goal>" --platform xiaohongshu`.
 
+Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
 ## Runtime gate
 
 On the first tikin use in each Agent session, follow the `tikin-setup` session update gate once

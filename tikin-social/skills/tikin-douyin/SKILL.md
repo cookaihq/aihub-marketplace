@@ -16,6 +16,8 @@ description: v1.4.0｜通过 Tikin 处理抖音链接与数据，获取视频、
 Deep coverage of Douyin. Exhaustive endpoints via the `tikin-endpoint-discovery` skill:
 `tikin-find-endpoint "<goal>" --platform douyin`.
 
+Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
 ## Runtime gate
 
 On the first tikin use in each Agent session, follow the `tikin-setup` session update gate once
@@ -58,6 +60,12 @@ discovery.)
 | Video search | `POST /api/v1/douyin/search/fetch_video_search_v2` | body: `keyword`, `cursor`, `sort_type`, `publish_time` |
 | User search | `POST /api/v1/douyin/search/fetch_user_search_v2` | body: `keyword`, `cursor` |
 | General search | `POST /api/v1/douyin/search/fetch_general_search_v2` | body: `keyword`, `cursor`, `sort_type` |
+
+The owning-account collection operation is now
+`POST /api/v1/douyin/web/fetch_user_collects_videos`, with `collects_id` and
+`cookie` required in its JSON body. Obtain the authorized account Cookie through
+the existing private configuration workflow; do not echo it or claim a public
+collection ID alone is sufficient. The shared migration guide contains the example.
 
 ## Example
 

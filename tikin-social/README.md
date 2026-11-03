@@ -190,6 +190,14 @@ Old `~/.config/tikin/.env`, `~/.config/tikin/settings.json`, or files under a cu
 The existing ordinary `~/.config/<skill-name>/.env` fallback needs no migration. Do not combine
 several accounts into one shared file without choosing which account each Skill should use.
 
+## Candidate catalog and request behavior
+
+The 1.5.0 candidate carries the frozen first-batch catalog and full offline request
+contracts. Read the [migration guide](skills/tikin-endpoint-discovery/references/first-batch.md)
+for method/parameter changes and retired routes. Its `catalog-identity.json` reports
+the actual operation count and hashes. Service-dependent changes are not yet published
+or proven live; native host migration and Windows acceptance remain incomplete.
+
 ## First use
 
 Start with this offline check in a new session:
@@ -259,7 +267,7 @@ how the Agent supplies these links.
 |-------|--------------|
 | `tikin-setup` | Install or repair tikin, configure a key and routing, and check for updates |
 | `tikin-rest-api` | REST best practices: auth, paths, pagination, rate limits, cost |
-| `tikin-endpoint-discovery` | Search 1,000+ endpoints with `tikin-find-endpoint` |
+| `tikin-endpoint-discovery` | Search the bundled supported endpoints with `tikin-find-endpoint` |
 
 ### Platforms
 | Skill | Coverage |

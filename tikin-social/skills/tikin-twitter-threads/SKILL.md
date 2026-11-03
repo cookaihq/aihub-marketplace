@@ -17,6 +17,8 @@ Coverage of Twitter/X and Threads (both microblog platforms). Exhaustive endpoin
 `tikin-endpoint-discovery` skill: `tikin-find-endpoint "<goal>" --platform twitter` or
 `--platform threads`.
 
+Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
 ## Runtime gate
 
 On the first tikin use in each Agent session, follow the `tikin-setup` session update gate once
@@ -61,9 +63,12 @@ limitation and ask before selecting an alternative; do not silently fetch the or
 |---|---|---|
 | User info | `GET /api/v1/threads/web/fetch_user_info` | `username` |
 | User posts | `GET /api/v1/threads/web/fetch_user_posts` | `user_id`, `end_cursor` |
-| Search (top) | `GET /api/v1/threads/web/search_top` | `query`, `end_cursor` |
-| Search (recent) | `GET /api/v1/threads/web/search_recent` | `query`, `end_cursor` |
-| Post comments | `GET /api/v1/threads/web/fetch_post_comments` | `post_id`, `end_cursor` |
+| Search posts (candidate) | `GET /api/v1/threads/web/search_posts` | `query` |
+
+Threads top/recent search and the old post-comments route are retired. The new
+search candidate is not yet verified as response/billing equivalent. Threads user
+post/reply/repost listing currently documents no effective pagination; do not loop
+`end_cursor` merely because it remains in the schema.
 
 ## Example
 

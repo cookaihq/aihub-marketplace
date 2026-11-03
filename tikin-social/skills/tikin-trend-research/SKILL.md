@@ -42,9 +42,7 @@ limitation and ask before selecting an alternative; do not silently fetch the or
 
 | Platform | What | Endpoint |
 |---|---|---|
-| TikTok | Popular trends | `GET /api/v1/tiktok/ads/get_popular_trends` (`period`, `country_code`) |
-| TikTok | Trending hashtags | `GET /api/v1/tiktok/ads/get_trends_hashtag_list` |
-| TikTok | Hot sounds | `GET /api/v1/tiktok/ads/get_sound_rank_list` |
+| TikTok | Trending hashtags | `POST /api/v1/tiktok/ads/get_trends_hashtag_list` |
 | Twitter/X | Trending topics | `GET /api/v1/twitter/web/fetch_trending` (`country`) |
 
 For niche trends, also run keyword/hashtag search on the relevant platform skill. For other

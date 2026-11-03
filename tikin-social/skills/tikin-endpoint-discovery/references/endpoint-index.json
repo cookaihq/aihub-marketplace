@@ -563,16 +563,6 @@
   {
     "method": "GET",
     "params": [
-      "aweme_type",
-      "item_id"
-    ],
-    "path": "/api/v1/tiktok/app/v3/add_video_play_count",
-    "summary": "根据视频ID来增加作品的播放数",
-    "tag": "TikTok-App-V3-API"
-  },
-  {
-    "method": "GET",
-    "params": [
       "room_id"
     ],
     "path": "/api/v1/tiktok/app/v3/check_live_room_online",
@@ -918,43 +908,6 @@
     ],
     "path": "/api/v1/tiktok/app/v3/fetch_share_short_link",
     "summary": "获取分享短链接",
-    "tag": "TikTok-App-V3-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "page_id",
-      "seller_id"
-    ],
-    "path": "/api/v1/tiktok/app/v3/fetch_shop_home",
-    "summary": "获取商家主页数据",
-    "tag": "TikTok-App-V3-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "seller_id"
-    ],
-    "path": "/api/v1/tiktok/app/v3/fetch_shop_home_page_list",
-    "summary": "获取商家主页Page列表数据",
-    "tag": "TikTok-App-V3-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "share_link"
-    ],
-    "path": "/api/v1/tiktok/app/v3/fetch_shop_id_by_share_link",
-    "summary": "通过分享链接获取店铺ID",
-    "tag": "TikTok-App-V3-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "shop_id"
-    ],
-    "path": "/api/v1/tiktok/app/v3/fetch_shop_info",
-    "summary": "获取商家信息数据",
     "tag": "TikTok-App-V3-API"
   },
   {
@@ -1351,7 +1304,8 @@
     "method": "GET",
     "params": [
       "region",
-      "count"
+      "count",
+      "exclude_product_ids"
     ],
     "path": "/api/v1/tiktok/shop/web/fetch_hot_selling_products_list",
     "summary": "获取热卖商品列表",
@@ -1365,18 +1319,7 @@
       "region"
     ],
     "path": "/api/v1/tiktok/shop/web/fetch_product_detail",
-    "summary": "获取商品详情V1(桌面端-数据完整)",
-    "tag": "TikTok-Shop-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "product_id",
-      "seller_id",
-      "region"
-    ],
-    "path": "/api/v1/tiktok/shop/web/fetch_product_detail_v2",
-    "summary": "获取商品详情V2(移动端-数据少)",
+    "summary": "获取商品详情V1",
     "tag": "TikTok-Shop-Web-API"
   },
   {
@@ -1392,25 +1335,11 @@
   {
     "method": "GET",
     "params": [
-      "share_link"
+      "share_link",
+      "region"
     ],
     "path": "/api/v1/tiktok/shop/web/fetch_product_id_by_share_link",
     "summary": "通过分享链接获取商品ID",
-    "tag": "TikTok-Shop-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "product_id",
-      "page_start",
-      "page_size",
-      "sort_rule",
-      "filter_type",
-      "filter_value",
-      "region"
-    ],
-    "path": "/api/v1/tiktok/shop/web/fetch_product_reviews",
-    "summary": "获取商品评论V1",
     "tag": "TikTok-Shop-Web-API"
   },
   {
@@ -1468,7 +1397,7 @@
       "region"
     ],
     "path": "/api/v1/tiktok/shop/web/fetch_search_products_list_v2",
-    "summary": "搜索商品列表V2(移动端)",
+    "summary": "搜索商品列表V2(移动端，仅 US)",
     "tag": "TikTok-Shop-Web-API"
   },
   {
@@ -1501,160 +1430,102 @@
       "region"
     ],
     "path": "/api/v1/tiktok/shop/web/fetch_seller_products_list_v2",
-    "summary": "获取商家商品列表V2(移动端)",
+    "summary": "获取商家商品列表V2(移动端，仅 US)",
     "tag": "TikTok-Shop-Web-API"
   },
   {
     "method": "GET",
     "params": [
-      "share_link"
+      "share_link",
+      "region"
     ],
     "path": "/api/v1/tiktok/shop/web/fetch_shop_id_by_share_link",
     "summary": "通过分享链接获取店铺ID",
     "tag": "TikTok-Shop-Web-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "material_id",
-      "metric_type",
-      "period_type"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_ad_interactive_analysis",
     "summary": "获取广告互动分析",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "material_id",
-      "metric"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_ad_keyframe_analysis",
     "summary": "获取广告关键帧分析",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "material_id",
-      "metric",
-      "period_type"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_ad_percentile",
     "summary": "获取广告百分位数据",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "ads_id"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_ads_detail",
     "summary": "获取单个广告详情",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
+    "method": "POST",
     "params": [],
     "path": "/api/v1/tiktok/ads/get_configure_safety",
     "summary": "获取搜索板块配置",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
+    "method": "POST",
     "params": [],
     "path": "/api/v1/tiktok/ads/get_location_list",
     "summary": "获取支持的国家地区列表",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "query",
-      "count",
-      "scenario",
-      "country_code"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_query_suggestions",
     "summary": "获取查询建议",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "material_id",
-      "industry",
-      "country_code"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_recommended_ads",
     "summary": "获取推荐广告",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "industry",
-      "page",
-      "limit"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_top_ads_spotlight",
     "summary": "获取热门广告聚光灯",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "hashtag_id",
-      "time_range",
-      "country_code"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_trends_hashtag_detail",
     "summary": "获取热门标签详情(趋势)",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "time_range",
-      "country_code",
-      "page",
-      "limit",
-      "industry_id"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/get_trends_hashtag_list",
     "summary": "获取热门标签榜单(趋势)",
     "tag": "TikTok-Ads-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "objective",
-      "like",
-      "period",
-      "industry",
-      "keyword",
-      "page",
-      "limit",
-      "order_by",
-      "country_code",
-      "ad_format",
-      "ad_language",
-      "search_id"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/tiktok/ads/search_ads",
     "summary": "搜索广告",
     "tag": "TikTok-Ads-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "live_room_url",
-      "danmaku_type"
-    ],
-    "path": "/api/v1/douyin/web/douyin_live_room",
-    "summary": "提取直播间弹幕",
-    "tag": "Douyin-Web-API"
   },
   {
     "method": "GET",
@@ -1778,18 +1649,6 @@
     "tag": "Douyin-Web-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "room_id",
-      "author_id",
-      "offset",
-      "limit"
-    ],
-    "path": "/api/v1/douyin/web/fetch_live_room_product_result",
-    "summary": "抖音直播间商品信息",
-    "tag": "Douyin-Web-API"
-  },
-  {
     "method": "POST",
     "params": [],
     "path": "/api/v1/douyin/web/fetch_multi_video",
@@ -1899,14 +1758,10 @@
     "tag": "Douyin-Web-API"
   },
   {
-    "method": "GET",
-    "params": [
-      "collects_id",
-      "max_cursor",
-      "counts"
-    ],
+    "method": "POST",
+    "params": [],
     "path": "/api/v1/douyin/web/fetch_user_collects_videos",
-    "summary": "获取用户收藏夹数据",
+    "summary": "获取用户收藏夹作品（自带Cookie）",
     "tag": "Douyin-Web-API"
   },
   {
@@ -2064,40 +1919,12 @@
     "tag": "Douyin-Web-API"
   },
   {
-    "method": "POST",
-    "params": [],
-    "path": "/api/v1/douyin/web/generate_a_bogus",
-    "summary": "使用接口网址生成A-Bogus参数",
-    "tag": "Douyin-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [],
-    "path": "/api/v1/douyin/web/generate_real_msToken",
-    "summary": "生成真实msToken",
-    "tag": "Douyin-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [],
-    "path": "/api/v1/douyin/web/generate_s_v_web_id",
-    "summary": "生成s_v_web_id",
-    "tag": "Douyin-Web-API"
-  },
-  {
     "method": "GET",
     "params": [
       "user_agent"
     ],
     "path": "/api/v1/douyin/web/generate_ttwid",
     "summary": "生成ttwid",
-    "tag": "Douyin-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [],
-    "path": "/api/v1/douyin/web/generate_verify_fp",
-    "summary": "生成verify_fp",
     "tag": "Douyin-Web-API"
   },
   {
@@ -2109,13 +1936,6 @@
     ],
     "path": "/api/v1/douyin/web/generate_wss_xb_signature",
     "summary": "生成弹幕xb签名",
-    "tag": "Douyin-Web-API"
-  },
-  {
-    "method": "POST",
-    "params": [],
-    "path": "/api/v1/douyin/web/generate_x_bogus",
-    "summary": "使用接口网址生成X-Bogus参数",
     "tag": "Douyin-Web-API"
   },
   {
@@ -2219,17 +2039,6 @@
     "path": "/api/v1/douyin/web/webcast_id_2_room_id",
     "summary": "直播间号转房间号",
     "tag": "Douyin-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "aweme_type",
-      "item_id",
-      "cookie"
-    ],
-    "path": "/api/v1/douyin/app/v3/add_video_play_count",
-    "summary": "根据视频ID来增加作品的播放数",
-    "tag": "Douyin-App-V3-API"
   },
   {
     "method": "GET",
@@ -2437,7 +2246,8 @@
       "sec_user_id",
       "max_cursor",
       "count",
-      "sort_type"
+      "sort_type",
+      "channel"
     ],
     "path": "/api/v1/douyin/app/v3/fetch_user_post_videos",
     "summary": "获取用户主页作品数据",
@@ -2657,13 +2467,6 @@
   {
     "method": "POST",
     "params": [],
-    "path": "/api/v1/douyin/search/fetch_live_search_v1",
-    "summary": "获取直播搜索 V1",
-    "tag": "Douyin-Search-API"
-  },
-  {
-    "method": "POST",
-    "params": [],
     "path": "/api/v1/douyin/search/fetch_multi_search",
     "summary": "获取多重搜索",
     "tag": "Douyin-Search-API"
@@ -2715,13 +2518,6 @@
     "params": [],
     "path": "/api/v1/douyin/search/fetch_video_search_v2",
     "summary": "获取视频搜索 V2",
-    "tag": "Douyin-Search-API"
-  },
-  {
-    "method": "POST",
-    "params": [],
-    "path": "/api/v1/douyin/search/fetch_vision_search",
-    "summary": "获取图像识别搜索",
     "tag": "Douyin-Search-API"
   },
   {
@@ -4495,6 +4291,9 @@
       "marketing_target",
       "first_industry_id",
       "author_list_id",
+      "price_type",
+      "price_min",
+      "price_max",
       "tag",
       "persona_tags",
       "gender",
@@ -4512,9 +4311,6 @@
       "play_over_rate_max",
       "burst_text_rate_min",
       "burst_text_rate_max",
-      "price_type",
-      "price_min",
-      "price_max",
       "extra_filter"
     ],
     "path": "/api/v1/douyin/xingtu_v2/search_anchor",
@@ -4525,6 +4321,8 @@
     "method": "GET",
     "params": [
       "keyword",
+      "seach_type",
+      "time_range_days",
       "page",
       "sort_field",
       "sort_type",
@@ -4532,6 +4330,9 @@
       "marketing_target",
       "first_industry_id",
       "author_list_id",
+      "price_type",
+      "price_min",
+      "price_max",
       "tag",
       "persona_tags",
       "gender",
@@ -4549,9 +4350,6 @@
       "play_over_rate_max",
       "burst_text_rate_min",
       "burst_text_rate_max",
-      "price_type",
-      "price_min",
-      "price_max",
       "extra_filter"
     ],
     "path": "/api/v1/douyin/xingtu_v2/search_creator",
@@ -4569,6 +4367,9 @@
       "marketing_target",
       "first_industry_id",
       "author_list_id",
+      "price_type",
+      "price_min",
+      "price_max",
       "tag",
       "persona_tags",
       "gender",
@@ -4586,9 +4387,6 @@
       "play_over_rate_max",
       "burst_text_rate_min",
       "burst_text_rate_max",
-      "price_type",
-      "price_min",
-      "price_max",
       "extra_filter"
     ],
     "path": "/api/v1/douyin/xingtu_v2/search_toutiao_creator",
@@ -4612,13 +4410,6 @@
     "params": [],
     "path": "/api/v1/xiaohongshu/web_v3/fetch_homefeed_categories",
     "summary": "获取首页分类列表",
-    "tag": "Xiaohongshu-Web-V3-API"
-  },
-  {
-    "method": "GET",
-    "params": [],
-    "path": "/api/v1/xiaohongshu/web_v3/fetch_hot_list",
-    "summary": "获取小红书热榜",
     "tag": "Xiaohongshu-Web-V3-API"
   },
   {
@@ -4934,21 +4725,21 @@
     "method": "POST",
     "params": [],
     "path": "/api/v1/xiaohongshu/pgy/get_blogger_list",
-    "summary": "获取蒲公英博主列表（选号）",
+    "summary": "蒲公英笔记博主广场（找博主/选号）",
     "tag": "Xiaohongshu-PGY-API"
   },
   {
     "method": "POST",
     "params": [],
     "path": "/api/v1/xiaohongshu/pgy/get_blogger_notes",
-    "summary": "获取蒲公英博主笔记明细",
+    "summary": "获取蒲公英博主笔记案例",
     "tag": "Xiaohongshu-PGY-API"
   },
   {
     "method": "POST",
     "params": [],
     "path": "/api/v1/xiaohongshu/pgy/get_blogger_notes_rate",
-    "summary": "获取蒲公英博主笔记转化率",
+    "summary": "获取蒲公英博主数据表现",
     "tag": "Xiaohongshu-PGY-API"
   },
   {
@@ -5685,7 +5476,6 @@
   {
     "method": "GET",
     "params": [
-      "user_id",
       "username"
     ],
     "path": "/api/v1/instagram/v3/get_user_about",
@@ -5705,7 +5495,6 @@
   {
     "method": "GET",
     "params": [
-      "user_id",
       "username",
       "count",
       "max_id"
@@ -5717,7 +5506,6 @@
   {
     "method": "GET",
     "params": [
-      "user_id",
       "username",
       "count",
       "max_id"
@@ -5729,17 +5517,15 @@
   {
     "method": "GET",
     "params": [
-      "user_id",
       "username"
     ],
     "path": "/api/v1/instagram/v3/get_user_former_usernames",
-    "summary": "获取用户曾用用户名",
+    "summary": "获取用户账号名更改次数",
     "tag": "Instagram-V3-API"
   },
   {
     "method": "GET",
     "params": [
-      "user_id",
       "username",
       "first",
       "after",
@@ -5776,7 +5562,6 @@
   {
     "method": "GET",
     "params": [
-      "user_id",
       "username"
     ],
     "path": "/api/v1/instagram/v3/get_user_profile",
@@ -5786,7 +5571,6 @@
   {
     "method": "GET",
     "params": [
-      "user_id",
       "username",
       "first",
       "after",
@@ -5801,7 +5585,6 @@
   {
     "method": "GET",
     "params": [
-      "user_id",
       "username"
     ],
     "path": "/api/v1/instagram/v3/get_user_stories",
@@ -5811,7 +5594,6 @@
   {
     "method": "GET",
     "params": [
-      "user_id",
       "username",
       "first",
       "after",
@@ -5938,71 +5720,11 @@
   {
     "method": "GET",
     "params": [
-      "channel_id",
-      "lang",
-      "sortBy",
-      "contentType",
-      "nextToken"
-    ],
-    "path": "/api/v1/youtube/web/get_channel_videos_v2",
-    "summary": "获取频道视频 V2",
-    "tag": "YouTube-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
       "video_id",
       "continuation_token"
     ],
     "path": "/api/v1/youtube/web/get_relate_video",
     "summary": "获取推荐视频",
-    "tag": "YouTube-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "language_code",
-      "country_code",
-      "section"
-    ],
-    "path": "/api/v1/youtube/web/get_trending_videos",
-    "summary": "获取趋势视频",
-    "tag": "YouTube-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "video_id",
-      "url_access",
-      "lang",
-      "videos",
-      "audios",
-      "subtitles",
-      "related"
-    ],
-    "path": "/api/v1/youtube/web/get_video_info",
-    "summary": "获取视频信息 V1",
-    "tag": "YouTube-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "video_id"
-    ],
-    "path": "/api/v1/youtube/web/get_video_info_v2",
-    "summary": "获取视频信息 V2",
-    "tag": "YouTube-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "subtitle_url",
-      "format",
-      "fix_overlap",
-      "target_lang"
-    ],
-    "path": "/api/v1/youtube/web/get_video_subtitles",
-    "summary": "获取视频字幕",
     "tag": "YouTube-Web-API"
   },
   {
@@ -6497,7 +6219,7 @@
       "end_cursor"
     ],
     "path": "/api/v1/threads/web/fetch_user_posts",
-    "summary": "获取用户帖子列表",
+    "summary": "获取用户帖子列表（无分页）",
     "tag": "Threads-Web-API"
   },
   {
@@ -6507,7 +6229,7 @@
       "end_cursor"
     ],
     "path": "/api/v1/threads/web/fetch_user_replies",
-    "summary": "获取用户回复列表",
+    "summary": "获取用户回复列表（无分页）",
     "tag": "Threads-Web-API"
   },
   {
@@ -6517,27 +6239,16 @@
       "end_cursor"
     ],
     "path": "/api/v1/threads/web/fetch_user_reposts",
-    "summary": "获取用户转发列表",
+    "summary": "获取用户转发列表（无分页）",
     "tag": "Threads-Web-API"
   },
   {
     "method": "GET",
     "params": [
-      "query",
-      "end_cursor"
+      "query"
     ],
-    "path": "/api/v1/threads/web/search_recent",
-    "summary": "搜索最新内容",
-    "tag": "Threads-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "query",
-      "end_cursor"
-    ],
-    "path": "/api/v1/threads/web/search_top",
-    "summary": "搜索热门内容",
+    "path": "/api/v1/threads/web/search_posts",
+    "summary": "搜索帖子",
     "tag": "Threads-Web-API"
   },
   {
@@ -6717,6 +6428,7 @@
     "params": [
       "uid",
       "pn",
+      "ps",
       "order"
     ],
     "path": "/api/v1/bilibili/web/fetch_user_post_videos",
@@ -7309,110 +7021,6 @@
     "path": "/api/v1/kuaishou/app/search_video_v2",
     "summary": "搜索视频V2",
     "tag": "Kuaishou-App-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "channel_name",
-      "page"
-    ],
-    "path": "/api/v1/weibo/web/fetch_channel_feed",
-    "summary": "根据频道名称获取热门内容",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "cid",
-      "max_id"
-    ],
-    "path": "/api/v1/weibo/web/fetch_comment_replies",
-    "summary": "获取评论子评论",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [],
-    "path": "/api/v1/weibo/web/fetch_config_list",
-    "summary": "获取频道配置列表",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [],
-    "path": "/api/v1/weibo/web/fetch_hot_search",
-    "summary": "获取热搜榜",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "post_id",
-      "mid",
-      "max_id",
-      "max_id_type"
-    ],
-    "path": "/api/v1/weibo/web/fetch_post_comments",
-    "summary": "获取微博评论",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "post_id"
-    ],
-    "path": "/api/v1/weibo/web/fetch_post_detail",
-    "summary": "获取微博详情",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "keyword",
-      "page",
-      "search_type",
-      "time_scope"
-    ],
-    "path": "/api/v1/weibo/web/fetch_search",
-    "summary": "搜索微博",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [],
-    "path": "/api/v1/weibo/web/fetch_search_topics",
-    "summary": "获取搜索页热搜词",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "containerid",
-      "page"
-    ],
-    "path": "/api/v1/weibo/web/fetch_trend_top",
-    "summary": "获取频道热门趋势",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "uid"
-    ],
-    "path": "/api/v1/weibo/web/fetch_user_info",
-    "summary": "获取用户信息",
-    "tag": "Weibo-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "uid",
-      "page",
-      "since_id"
-    ],
-    "path": "/api/v1/weibo/web/fetch_user_posts",
-    "summary": "获取用户微博列表",
-    "tag": "Weibo-Web-API"
   },
   {
     "method": "GET",
@@ -8686,6 +8294,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "subreddit_id",
       "need_format"
     ],
@@ -8696,6 +8305,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "post_id",
       "cursor",
       "sort_type",
@@ -8708,6 +8318,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "subreddit_id",
       "need_format"
     ],
@@ -8718,6 +8329,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "query",
       "search_type",
       "sort",
@@ -8734,6 +8346,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "sort",
       "time",
       "after",
@@ -8746,6 +8359,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "sort",
       "filter_posts",
       "after",
@@ -8758,6 +8372,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "subtopic_ids",
       "after",
       "need_format"
@@ -8769,6 +8384,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "sort",
       "time",
       "filter_posts",
@@ -8782,6 +8398,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "post_id",
       "sort_type",
       "after",
@@ -8794,6 +8411,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "post_id",
       "include_comment_id",
       "comment_id",
@@ -8806,6 +8424,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "post_ids",
       "include_comment_id",
       "comment_id",
@@ -8818,6 +8437,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "post_ids",
       "include_comment_id",
       "comment_id",
@@ -8830,6 +8450,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "query",
       "safe_search",
       "allow_nsfw",
@@ -8842,6 +8463,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "subreddit_name",
       "sort",
       "filter_posts",
@@ -8855,6 +8477,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "subreddit_name",
       "need_format"
     ],
@@ -8865,6 +8488,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "subreddit_name",
       "sort",
       "range",
@@ -8877,6 +8501,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "subreddit_id",
       "need_format"
     ],
@@ -8887,6 +8512,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "subreddit_name",
       "need_format"
     ],
@@ -8897,6 +8523,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "need_format"
     ],
     "path": "/api/v1/reddit/app/fetch_trending_searches",
@@ -8906,6 +8533,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "username",
       "need_format"
     ],
@@ -8916,6 +8544,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "username",
       "sort",
       "page_size",
@@ -8929,6 +8558,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "username",
       "sort",
       "after",
@@ -8941,6 +8571,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "username",
       "need_format"
     ],
@@ -8951,6 +8582,7 @@
   {
     "method": "GET",
     "params": [
+      "language",
       "username",
       "need_format"
     ],
@@ -8961,487 +8593,10 @@
   {
     "method": "GET",
     "params": [
-      "ad_id"
-    ],
-    "path": "/api/v1/linkedin/web/get_ad_detail",
-    "summary": "获取广告详情",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "post_id",
-      "comment_id",
-      "previous_replies_token"
-    ],
-    "path": "/api/v1/linkedin/web/get_comments_replies",
-    "summary": "获取评论回复",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "company_id"
-    ],
-    "path": "/api/v1/linkedin/web/get_company_affiliated_pages",
-    "summary": "获取公司关联页面",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "company_id"
-    ],
-    "path": "/api/v1/linkedin/web/get_company_associated_member_insights",
-    "summary": "获取公司关联成员洞察",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "company_id"
-    ],
-    "path": "/api/v1/linkedin/web/get_company_job_count",
-    "summary": "获取公司职位数量",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "company_id",
-      "page",
-      "sort_by",
-      "date_posted",
-      "experience_level",
-      "remote",
-      "job_type",
-      "easy_apply",
-      "under_10_applicants",
-      "fair_chance_employer"
-    ],
-    "path": "/api/v1/linkedin/web/get_company_jobs",
-    "summary": "获取公司职位",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "company_id",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_company_people",
-    "summary": "获取公司员工",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "company_id",
-      "page",
+      "url",
+      "start",
+      "pagination_token",
       "sort_by"
-    ],
-    "path": "/api/v1/linkedin/web/get_company_posts",
-    "summary": "获取公司帖子",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "company",
-      "company_id"
-    ],
-    "path": "/api/v1/linkedin/web/get_company_profile",
-    "summary": "获取公司资料",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "group_id"
-    ],
-    "path": "/api/v1/linkedin/web/get_group_info",
-    "summary": "获取群组信息",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "group_id",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_group_posts",
-    "summary": "获取群组帖子",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "job_id",
-      "include_skills"
-    ],
-    "path": "/api/v1/linkedin/web/get_job_detail",
-    "summary": "获取职位详情",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "post_id",
-      "page",
-      "sort_order",
-      "post_type"
-    ],
-    "path": "/api/v1/linkedin/web/get_post_comments",
-    "summary": "获取帖子评论",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "post_id"
-    ],
-    "path": "/api/v1/linkedin/web/get_post_detail",
-    "summary": "获取帖子详情",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "post_id",
-      "page",
-      "type"
-    ],
-    "path": "/api/v1/linkedin/web/get_post_reactions",
-    "summary": "获取帖子点赞反应",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "post_id",
-      "page",
-      "pagination_token"
-    ],
-    "path": "/api/v1/linkedin/web/get_post_reposts",
-    "summary": "获取帖子转发",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_about",
-    "summary": "获取用户简介",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_certifications",
-    "summary": "获取用户认证",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page",
-      "pagination_token"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_comments",
-    "summary": "获取用户评论",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "username"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_contact",
-    "summary": "获取用户联系信息",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_educations",
-    "summary": "获取用户教育背景",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_experience",
-    "summary": "获取用户工作经历",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "username"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_follower_and_connection",
-    "summary": "获取用户粉丝和连接数",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_honors",
-    "summary": "获取用户荣誉奖项",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page",
-      "pagination_token"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_images",
-    "summary": "获取用户图片",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_interests_companies",
-    "summary": "获取用户感兴趣的公司",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_interests_groups",
-    "summary": "获取用户感兴趣的群组",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page",
-      "pagination_token"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_posts",
-    "summary": "获取用户帖子",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "username",
-      "include_follower_and_connection",
-      "include_experiences",
-      "include_skills",
-      "include_certifications",
-      "include_publications",
-      "include_educations",
-      "include_volunteers",
-      "include_honors",
-      "include_interests",
-      "include_bio"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_profile",
-    "summary": "获取用户资料",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_publications",
-    "summary": "获取用户出版物",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page",
-      "pagination_token"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_reactions",
-    "summary": "获取用户点赞反应",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page",
-      "type",
-      "pagination_token"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_recommendations",
-    "summary": "获取用户推荐信",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_skills",
-    "summary": "获取用户技能",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page",
-      "pagination_token"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_videos",
-    "summary": "获取用户视频",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "urn",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/get_user_volunteers",
-    "summary": "获取用户志愿者经历",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "keyword",
-      "advertiser_name",
-      "country",
-      "date",
-      "pagination_token"
-    ],
-    "path": "/api/v1/linkedin/web/search_ads",
-    "summary": "搜索广告",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "keyword",
-      "page",
-      "sort_by",
-      "date_posted",
-      "geocode",
-      "company",
-      "experience_level",
-      "remote",
-      "job_type",
-      "easy_apply",
-      "has_verifications",
-      "under_10_applicants",
-      "fair_chance_employer"
-    ],
-    "path": "/api/v1/linkedin/web/search_jobs",
-    "summary": "搜索职位",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "keyword"
-    ],
-    "path": "/api/v1/linkedin/web/search_location",
-    "summary": "搜索地理位置",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "name",
-      "first_name",
-      "last_name",
-      "title",
-      "company",
-      "school",
-      "page",
-      "geocode_location",
-      "current_company",
-      "profile_language",
-      "industry",
-      "service_category"
-    ],
-    "path": "/api/v1/linkedin/web/search_people",
-    "summary": "搜索用户",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "keyword",
-      "page",
-      "date_posted",
-      "sort_by",
-      "from_member",
-      "from_company",
-      "content_type"
-    ],
-    "path": "/api/v1/linkedin/web/search_posts",
-    "summary": "搜索帖子",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "keyword",
-      "page"
-    ],
-    "path": "/api/v1/linkedin/web/search_schools",
-    "summary": "搜索学校",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "keyword"
-    ],
-    "path": "/api/v1/linkedin/web/search_suggestion_industry",
-    "summary": "搜索行业建议",
-    "tag": "LinkedIn-Web-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "url",
-      "limit"
-    ],
-    "path": "/api/v1/linkedin/web_v2/get_author_articles",
-    "summary": "按作者获取文章",
-    "tag": "LinkedIn-Web-V2-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "url",
-      "start_date",
-      "end_date"
     ],
     "path": "/api/v1/linkedin/web_v2/get_company_posts",
     "summary": "获取公司帖子",
@@ -9459,7 +8614,9 @@
   {
     "method": "GET",
     "params": [
-      "url"
+      "url",
+      "include_skills",
+      "include_hiring_team"
     ],
     "path": "/api/v1/linkedin/web_v2/get_job_detail",
     "summary": "获取职位详情",
@@ -9478,8 +8635,9 @@
     "method": "GET",
     "params": [
       "url",
-      "start_date",
-      "end_date"
+      "type",
+      "start",
+      "pagination_token"
     ],
     "path": "/api/v1/linkedin/web_v2/get_user_posts",
     "summary": "获取用户帖子",
@@ -9497,37 +8655,23 @@
   {
     "method": "GET",
     "params": [
-      "location",
-      "keyword",
-      "country",
-      "job_type",
-      "experience_level",
-      "time_range",
-      "remote",
-      "company",
-      "selective_search"
+      "keywords",
+      "geo_code",
+      "date_posted",
+      "experience_levels",
+      "company_ids",
+      "title_ids",
+      "onsite_remotes",
+      "functions",
+      "industries",
+      "job_types",
+      "sort_by",
+      "easy_apply",
+      "under_10_applicants",
+      "start"
     ],
     "path": "/api/v1/linkedin/web_v2/search_jobs",
     "summary": "搜索职位",
-    "tag": "LinkedIn-Web-V2-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "url"
-    ],
-    "path": "/api/v1/linkedin/web_v2/search_jobs_by_url",
-    "summary": "按搜索 URL 抓取职位",
-    "tag": "LinkedIn-Web-V2-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "first_name",
-      "last_name"
-    ],
-    "path": "/api/v1/linkedin/web_v2/search_users",
-    "summary": "按姓名搜索用户",
     "tag": "LinkedIn-Web-V2-API"
   },
   {
@@ -9926,31 +9070,5 @@
     "path": "/api/v1/ios_shortcut/shortcut",
     "summary": "用于iOS快捷指令的版本更新信息",
     "tag": "iOS-Shortcut"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "token",
-      "message_id"
-    ],
-    "path": "/api/v1/temp_mail/v1/get_email_by_id",
-    "summary": "Get Email By Id",
-    "tag": "Temp-Mail-API"
-  },
-  {
-    "method": "GET",
-    "params": [
-      "token"
-    ],
-    "path": "/api/v1/temp_mail/v1/get_emails_inbox",
-    "summary": "Get Emails",
-    "tag": "Temp-Mail-API"
-  },
-  {
-    "method": "GET",
-    "params": [],
-    "path": "/api/v1/temp_mail/v1/get_temp_email_address",
-    "summary": "Get Temp Email",
-    "tag": "Temp-Mail-API"
   }
 ]

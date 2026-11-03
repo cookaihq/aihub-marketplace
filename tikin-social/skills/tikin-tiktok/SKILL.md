@@ -17,6 +17,8 @@ Deep coverage of TikTok. For exhaustive endpoints use `tikin-endpoint-discovery`
 (`tikin-find-endpoint "<goal>" --platform tiktok`). For outcomes (download, analyze a creator,
 trends), hand off to the task skills noted below.
 
+Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
 ## Runtime gate
 
 On the first tikin use in each Agent session, follow the `tikin-setup` session update gate once
@@ -54,14 +56,15 @@ limitation and ask before selecting an alternative; do not silently fetch the or
 | User search | `GET /api/v1/tiktok/app/v3/fetch_user_search_result` | `keyword`, `offset`, `count` |
 | Video comments | `GET /api/v1/tiktok/app/v3/fetch_video_comments` | `aweme_id`, `cursor`, `count` |
 | Hashtag video list | `GET /api/v1/tiktok/app/v3/fetch_hashtag_video_list` | `ch_id`, `cursor`, `count` |
-| Popular trends | `GET /api/v1/tiktok/ads/get_popular_trends` | `period`, `country_code`, `page`, `limit` |
-| Trending hashtags | `GET /api/v1/tiktok/ads/get_trends_hashtag_list` | `time_range`, `country_code`, `page` |
-| Hashtag detail | `GET /api/v1/tiktok/ads/get_trends_hashtag_detail` | `hashtag_id`, `country_code` |
-| Sound rank | `GET /api/v1/tiktok/ads/get_sound_rank_list` | `period`, `rank_type`, `page` |
-| Search creators | `GET /api/v1/tiktok/ads/search_creators` | `keyword`, `sort_by`, `creator_country` |
+| Trending hashtags | `POST /api/v1/tiktok/ads/get_trends_hashtag_list` | `time_range`, `country_code`, `page` |
+| Hashtag detail | `POST /api/v1/tiktok/ads/get_trends_hashtag_detail` | `hashtag_id`, `country_code` |
 | Creator video analytics | `POST /api/v1/tiktok/creator/get_video_analytics_summary` | JSON body |
 | Comment keywords | `GET /api/v1/tiktok/analytics/fetch_comment_keywords` | `item_id` |
 | Product detail | `GET /api/v1/tiktok/shop/web/fetch_product_detail_v3` | `product_id`, `region` |
+
+The old popular-trends, sound-rank and creator-search paths are retired in this
+batch; no equivalent replacement is asserted. Ads POST parameters belong in the
+JSON body; inspect `--describe` and the migration guide before using them.
 
 ## Example
 

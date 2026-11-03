@@ -301,6 +301,92 @@ class ExecutionSafetyTests(unittest.TestCase):
         self.assertEqual(result['response']['error']['code'], 'invalid_response')
         self.assertNotIn('supplier.invalid', json.dumps(result))
 
+    def test_caption_job_waits_queries_and_reuses_known_creation(self):
+        create_path = '/api/v1/youtube/web_v2/get_video_captions'
+        query_path = '/api/v1/youtube/web_v2/get_video_captions_result'
+        self.responses = [(200, {}, {'code': 200, 'data': {'status': 'processing', 'job_id': 'job-12345', 'captions': []}}),
+                          (200, {}, {'data': {'status': 'queued', 'job_id': 'job-12345'}}),
+                          (200, {}, {'data': {'status': 'ready', 'job_id': 'job-12345', 'captions': []}}),
+                          (200, {}, {'data': {'status': 'completed', 'job_id': 'job-12345', 'content': 'final captions'}})]
+        creation = self.request({'path': create_path, 'query': {'video_id': 'synthetic'}, 'side_effects': False})
+        self.assertEqual(creation['status'], 'waiting')
+        record = creation['record']
+        queued = self.request({'path': query_path, 'query': {'job_id': 'job-12345'}}, record)
+        self.assertEqual(queued['status'], 'waiting')
+        ready = self.request({'path': query_path, 'query': {'job_id': 'job-12345'}}, record)
+        self.assertEqual(ready['status'], 'waiting')
+        complete = self.request({'path': query_path, 'query': {'job_id': 'job-12345'}}, record)
+        self.assertEqual(complete['status'], 'ok')
+        self.assertEqual(complete['response']['data']['content'], 'final captions')
+        repeated = self.request({'path': create_path, 'query': {'video_id': 'synthetic'}, 'side_effects': False}, record)
+        self.assertEqual(repeated['status'], 'task_exists')
+        self.assertEqual(repeated['task']['job_id'], 'job-12345')
+        self.assertEqual(len(self.calls), 4)
+
+    def test_cookie_body_is_sent_exactly_but_not_saved_in_ordinary_evidence(self):
+        self.responses = [(422, {}, {'error': {'code': 'invalid_input'}})]
+        cookie = 'sessionid=synthetic-private-cookie; uid=synthetic-user'
+        result = self.request({'method': 'POST', 'path': '/api/v1/tiktok/ads/get_location_list', 'body': cookie})
+        self.assertEqual(json.loads(self.calls[0][2]), cookie)
+        self.assertNotIn(cookie, Path(result['record']).read_text())
+        self.assertNotIn(cookie, Path(result['feedback']['error_report']).read_text())
+
+    def test_wire_preserves_object_array_string_empty_body_and_repeated_queries(self):
+        examples = [{'nested': {'message': 'value'}, 'number': 2}, ['a', 'b'], 'raw-json-string', None]
+        for body in examples:
+            spec = {'method': 'POST', 'query': {'item': ['one', 'two'], 'empty': ''}}
+            if body is not None:
+                spec['body'] = body
+            result = self.request(spec)
+            self.assertEqual(result['status'], 'ok')
+            method, path, sent = self.calls[-1]
+            self.assertEqual(method, 'POST')
+            self.assertEqual(path, '/api/v1/test?item=one&item=two&empty=')
+            self.assertEqual(json.loads(sent) if sent else None, body)
+
+    def test_all_thirteen_migrated_post_requests_reach_the_controlled_boundary(self):
+        refs = ROOT / 'skills/tikin-endpoint-discovery/references'
+        document = json.loads((refs / 'openapi.json').read_text())
+        rows = json.loads((refs / 'request-changes.json').read_text())['method_migrations']
+        self.assertEqual(len(rows), 13)
+        for row in rows:
+            schema = document['paths'][row['path']]['post']['requestBody']['content']['application/json']['schema']
+            if '$ref' in schema:
+                target = document
+                for part in schema['$ref'][2:].split('/'):
+                    target = target[part]
+                schema = {**target, **{key: value for key, value in schema.items() if key != '$ref'}}
+            body = ('sessionid=synthetic-cookie' if schema['type'] == 'string'
+                    else {name: 'synthetic-' + name for name in schema.get('required', [])})
+            result = self.request({'method': row['new_method'], 'path': row['path'], 'body': body})
+            self.assertEqual(result['status'], 'ok')
+            method, path, sent = self.calls[-1]
+            self.assertEqual((method, path), ('POST', row['path']))
+            self.assertEqual(json.loads(sent), body)
+        self.assertEqual(len(self.calls), 13)
+
+    def test_caption_query_budget_survives_process_replacement(self):
+        path = '/api/v1/youtube/web_v2/get_video_captions_result'
+        self.responses = [(200, {}, {'data': {'job_id': 'job-12345', 'status': 'queued'}})]
+        record = None
+        for _ in range(10):
+            result = self.request({'path': path, 'query': {'job_id': 'job-12345'}}, record)
+            self.assertEqual(result['status'], 'waiting')
+            record = result['record']
+        blocked = self.request({'path': path, 'query': {'job_id': 'job-12345'}}, record)
+        self.assertEqual(blocked['status'], 'poll_budget_exhausted')
+        self.assertEqual(blocked['poll_attempts'], 10)
+        self.assertEqual(len(self.calls), 10)
+
+    def test_caption_terminal_failure_preserves_original_job_and_error_record(self):
+        self.responses = [(200, {}, {'data': {'job_id': 'job-12345', 'status': 'failed',
+                                            'error': {'code': 'caption_failed'}}})]
+        result = self.request({'path': '/api/v1/youtube/web_v2/get_video_captions_result', 'query': {'job_id': 'job-12345'}})
+        self.assertEqual(result['status'], 'remote_failed')
+        self.assertEqual(result['task']['job_id'], 'job-12345')
+        self.assertTrue(Path(result['feedback']['error_report']).is_file())
+        self.assertEqual(len(self.calls), 1)
+
     def test_failed_response_hides_internal_details_but_preserves_nested_business_urls(self):
         signed = 'https://media.invalid/file?signature=download-value&token=business-token'
         self.responses = [(502, {}, {'error': {'code': 'service_unavailable',

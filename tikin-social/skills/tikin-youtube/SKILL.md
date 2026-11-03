@@ -49,6 +49,7 @@ limitation and ask before selecting an alternative; do not silently fetch the or
 | Video info by URL | `GET /api/v1/youtube/web_v2/get_video_info_v2` | `video_url` |
 | Download streams | `GET /api/v1/youtube/web_v2/get_video_streams_v2` | `video_id` \| `video_url` |
 | Captions/subtitles | `GET /api/v1/youtube/web_v2/get_video_captions` | `video_id`, `language_code`, `format` |
+| Caption job result | `GET /api/v1/youtube/web_v2/get_video_captions_result` | `job_id`, `format` |
 | Video comments | `GET /api/v1/youtube/web_v2/get_video_comments` | `video_id`, `sort_by`, `continuation_token` |
 | Comment replies | `GET /api/v1/youtube/web_v2/get_video_comment_replies` | `continuation_token` |
 | Channel id (from URL) | `GET /api/v1/youtube/web_v2/get_channel_id` | `channel_url` |
@@ -68,6 +69,42 @@ limitation and ask before selecting an alternative; do not silently fetch the or
   }
 }
 ```
+
+## Caption workflow
+
+Treat `get_video_captions` as a request that may create a paid job, even though it
+uses GET. The executor enforces side effects for this operation. First omit
+`language_code` to obtain available languages; choose an actual returned language
+when requesting content. A synchronous response does not validate the async path.
+
+On `status: processing` with `job_id`, retain the same `--record` and query
+`get_video_captions_result` using that job and selected format. The executor returns
+`waiting` for processing/queued/active states; an empty intermediate array is not
+final absence. A repeated known creation in the same record returns `task_exists`
+with the existing job instead of creating another one.
+
+```json
+{
+  "original_request": "<用户原始字幕需求>",
+  "method": "GET",
+  "path": "/api/v1/youtube/web_v2/get_video_captions_result",
+  "query": {"job_id": "<returned job_id>", "format": "srt"}
+}
+```
+
+The result query is explicitly zero-priced in this frozen catalog; real free
+billing still requires current configuration/usage evidence. The shared executor
+marks it read-only, spaces waiting queries by at least 2 seconds, and preserves a
+maximum of 10 query attempts / 60 seconds per job in the same record. Retries count
+toward those limits. On `poll_budget_exhausted`, preserve the job and report waiting;
+do not restart creation or discard the record to renew a loop. Resume only within
+an explicitly approved new polling budget and the same regression allowance, if used.
+
+Only completed/ready output with verified final content is a result. A failed job
+remains a failure with its original ID and report. A timeout or uncertain creation
+is not permission to resubmit. A completed empty/no-caption response may still be
+charged; do not infer free usage from HTTP 200 or an empty list. This workflow does
+not enable second-batch LinkedIn asynchronous operations.
 
 ## Pagination
 

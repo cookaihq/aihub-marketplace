@@ -40,7 +40,7 @@ class DistributionTests(unittest.TestCase):
         for result in (native, standalone):
             installed = result['installation']
             self.assertEqual(installed['status'], 'verified')
-            self.assertEqual(installed['index_sha256'], 'a995089a14589f782a88a943936c538a32e888bde3ad1c286ac4be60ca44e1b3')
+            self.assertEqual(installed['index_sha256'], 'c2a05795b3c2927bef5230d47afd9b2410db569bbeb8d4efdd5daff9c8abad12')
             self.assertEqual(installed['skill_count'], 17)
             self.assertEqual(result['key_source'], 'environment')
             self.assertNotIn('synthetic-install-key', json.dumps(result))

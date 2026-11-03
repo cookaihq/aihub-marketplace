@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "candidate",
+  "batch": "2026-11-03-repair-candidate",
+  "operation_count": 919,
+  "manifest_sha256": "f6204c6fc65af5ef2fd1148adb5c1ab49038862eb4511821cf9daeac2fc74626",
+  "outputs": {
+    "endpoint-index.json": {
+      "sha256": "c2a05795b3c2927bef5230d47afd9b2410db569bbeb8d4efdd5daff9c8abad12"
+    },
+    "endpoint_costs.json": {
+      "sha256": "141a008a48326f695cc78c660a0ce91abbb8c3feca2f80af709e1afa6dce9242"
+    },
+    "openapi.json": {
+      "sha256": "b4f86a6df3c5b44ee37d8f38f7224741870f5506e7c6ea5a2e9bc7975e6482b7"
+    },
+    "route_table.json": {
+      "sha256": "69229aa49c8cf527b1cdf989cdef764524be43041de159cec637c585293e4169"
+    }
+  },
+  "selection_sha256": "2333af1adeed9cd35ec60ec3be493fbd92239af9352fbe7a9431f9e07415e427",
+  "request_diff_sha256": "d1122947fa8cb7b2048c515722aa4404a262ec896c02b5b5b84e023ae61265c3"
+}

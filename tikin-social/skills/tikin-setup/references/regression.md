@@ -102,6 +102,12 @@ sample or renewed price evidence may add an approval hash to that same ledger;
 existing reservations and limits remain. The deployment probe allowance belongs
 to its separate deployment workflow, not this regression ledger.
 
+If a later approved batch changes the catalog or renews the service declaration,
+the operator may replace the ledger's active `binding_sha256` and register the
+new approval hash **while preserving all reservations and limits**. Old run
+records remain tied to their original binding and cannot be replayed under the
+new target. This is an explicit evidence renewal, never a fresh campaign budget.
+
 ## Reservation, interruption and continuation
 
 The executor locks the ledger and atomically saves a private reservation before

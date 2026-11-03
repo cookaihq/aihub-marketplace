@@ -1,8 +1,8 @@
 ---
 name: tikin-endpoint-discovery
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜从 Tikin 覆盖 16 个以上平台的 1,000 多个接口中查找合适的数据接口。适用于已知目标但不清楚接口路径，或 LinkedIn、Reddit、哔哩哔哩、微博、微信、快手、知乎、Lemon8 等没有专属 Skill 的平台；检索随包索引并对应到 REST 调用。
+  version: "1.4.0"
+description: v1.4.0｜从 Tikin 支持的平台接口中查找合适的数据接口。适用于已知目标但不清楚接口路径，或 LinkedIn、Reddit、哔哩哔哩、微博、微信、快手、知乎、Lemon8 等没有专属 Skill 的平台；检索随包索引并对应到 REST 调用。
 ---
 
 # tikin — Endpoint Discovery
@@ -13,7 +13,9 @@ description: v1.3.0｜从 Tikin 覆盖 16 个以上平台的 1,000 多个接口�
 
 每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
-tikin has 1,000+ endpoints. This skill finds the one you need, then hands off to `tikin-rest-api`.
+This skill searches the current bundled catalog, then hands off to `tikin-rest-api`.
+Read the [first-batch contract and migration guide](references/first-batch.md) for
+method changes, request constraints, retirement and candidate replacement status.
 
 ## Runtime gate
 
@@ -71,6 +73,18 @@ The index lives at `references/endpoint-index.json` (beside the script, inside t
 ships with the skill, and is refreshed on new releases when the API surface changes.
 
 ## Map a result to a call
+
+Before constructing a changed request, inspect the full frozen contract offline:
+
+```text
+uv run --frozen --project "<this-skill-dir>" python "<this-skill-dir>/scripts/tikin-find-endpoint" --describe /api/v1/tiktok/ads/get_location_list --method POST
+```
+
+The JSON includes the operation, referenced components, required fields, defaults,
+constraints, catalog identity and snapshot price/rate. Preserve `$ref` siblings.
+Use the method from discovery; old methods and retired operations return an explicit
+local absence with migration information. Catalog `candidate` status is not service
+publication evidence. A snapshot zero price does not establish current live billing.
 
 Given `GET /api/v1/{platform}/{api}/{action}`, call it via REST (see `tikin-rest-api`):
 

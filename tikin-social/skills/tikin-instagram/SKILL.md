@@ -16,6 +16,8 @@ description: v1.4.0｜通过 Tikin 处理 Instagram 链接与数据，获取用�
 Deep coverage of Instagram via the V2 API. Exhaustive endpoints via the
 `tikin-endpoint-discovery` skill: `tikin-find-endpoint "<goal>" --platform instagram`.
 
+Before constructing a changed request, read the [first-batch contract and migration guide](../tikin-endpoint-discovery/references/first-batch.md) and use the discovery CLI's `--describe` output for its exact method, body shape and constraints. Candidate catalog content requires the matching service release before live use.
+
 ## Runtime gate
 
 On the first tikin use in each Agent session, follow the `tikin-setup` session update gate once
@@ -58,6 +60,15 @@ limitation and ask before selecting an alternative; do not silently fetch the or
 | Post comments | `GET /api/v1/instagram/v2/fetch_post_comments` | `code_or_url`, `sort_by`, `pagination_token` |
 | Comment replies | `GET /api/v1/instagram/v2/fetch_comment_replies` | `code_or_url`, `comment_id`, `pagination_token` |
 | Shortcode → media id | `GET /api/v1/instagram/v2/shortcode_to_media_id` | `shortcode` |
+
+## Changed v3 username lookups
+
+The affected `v3/get_user_profile`, `get_user_about`, `get_user_followers`,
+`get_user_following`, `get_user_former_usernames`, `get_user_highlights`,
+`get_user_reels`, `get_user_stories` and `get_user_tagged_posts` require `username`;
+the old `user_id` parameter is removed. Use `--describe` for each exact v3 path
+and its paging fields. Do not silently turn an ID into a username or assume the
+v2 request contract applies to v3.
 
 ## Example
 

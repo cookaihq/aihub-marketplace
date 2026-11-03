@@ -1,0 +1,3023 @@
+{
+  "method_migrations": [
+    {
+      "path": "/api/v1/tiktok/ads/get_ad_interactive_analysis",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_ad_keyframe_analysis",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_ad_percentile",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_ads_detail",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_configure_safety",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_location_list",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_query_suggestions",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_recommended_ads",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_top_ads_spotlight",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_trends_hashtag_detail",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/get_trends_hashtag_list",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/tiktok/ads/search_ads",
+      "old_method": "GET",
+      "new_method": "POST"
+    },
+    {
+      "path": "/api/v1/douyin/web/fetch_user_collects_videos",
+      "old_method": "GET",
+      "new_method": "POST"
+    }
+  ],
+  "request_changes": [
+    {
+      "method": "GET",
+      "path": "/api/v1/bilibili/web/fetch_user_post_videos",
+      "changes": [
+        {
+          "field": "query/pn/schema/maximum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/pn/schema/minimum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/ps",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "2a4c2d3b73a2bd10112ba25455dbadfd006073062c7dc3e6d07d8f9b14a83b96",
+      "public_request_sha256": "2a4c2d3b73a2bd10112ba25455dbadfd006073062c7dc3e6d07d8f9b14a83b96",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/douyin/app/v3/fetch_user_post_videos",
+      "changes": [
+        {
+          "field": "query/channel",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "compatible",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "676979b604110ecf01fc8079595428e3705150b3f5c3dc85a791567810ebd9c9",
+      "public_request_sha256": "676979b604110ecf01fc8079595428e3705150b3f5c3dc85a791567810ebd9c9",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/billboard/fetch_hot_account_list",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/query_tag/additionalProperties",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/query_tag/default",
+          "classification": "behavior_change"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/query_tag/properties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "bbf6bb331cfc637b97914b94595805e09a602e9952b855cdf1f090634766bf50",
+      "public_request_sha256": "bbf6bb331cfc637b97914b94595805e09a602e9952b855cdf1f090634766bf50",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/billboard/fetch_hot_total_high_fan_list",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/additionalProperties",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/properties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/billboard/fetch_hot_total_high_like_list",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/additionalProperties",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/properties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/billboard/fetch_hot_total_high_play_list",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/additionalProperties",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/properties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/billboard/fetch_hot_total_high_topic_list",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/additionalProperties",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/properties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/billboard/fetch_hot_total_low_fan_list",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/additionalProperties",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/properties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/billboard/fetch_hot_total_topic_list",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/additionalProperties",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/properties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_request_sha256": "361dbea4ffc38de1fcdfd25a12e82f247595b0e2350310fb16724edb430d212b",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/billboard/fetch_hot_total_video_list",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/additionalProperties",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/tags/items/properties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "76b4403a00c3a0e80c8dfb9ec784f3fcf537547fb8965a0115f07131d03c971d",
+      "public_request_sha256": "76b4403a00c3a0e80c8dfb9ec784f3fcf537547fb8965a0115f07131d03c971d",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/web/fetch_user_collects",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/cookie/minLength",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "c5d3fc547353db23bb6a61f988c7d37a0f3de00846e063ada4342d01e04f4385",
+      "public_request_sha256": "c5d3fc547353db23bb6a61f988c7d37a0f3de00846e063ada4342d01e04f4385",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/douyin/web/fetch_user_like_videos",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/cookie/anyOf",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "compatible",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "705476781deacc5f74aab66a126ad4199e5f044b65462cb1c95f058528c43439",
+      "public_request_sha256": "705476781deacc5f74aab66a126ad4199e5f044b65462cb1c95f058528c43439",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/douyin/xingtu_v2/get_author_audience_distribution",
+      "changes": [
+        {
+          "field": "query/link_type/required",
+          "classification": "breaking_required_parameter"
+        },
+        {
+          "field": "query/link_type/schema/anyOf",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "query/link_type/schema/type",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "2d10d314fd0242b9f6cf8d38e5f18e0d384485e642f9d5e18c586c843f160b06",
+      "public_request_sha256": "2d10d314fd0242b9f6cf8d38e5f18e0d384485e642f9d5e18c586c843f160b06",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/douyin/xingtu_v2/search_anchor",
+      "changes": [
+        {
+          "field": "query/price_max/schema/anyOf/0/minimum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/price_min/schema/anyOf/0/minimum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/price_type/schema/anyOf/0/enum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "14fe05ae2271fe9fb787c955aded0a2ebfec1b356273a6abe759f13c7a0e6e59",
+      "public_request_sha256": "14fe05ae2271fe9fb787c955aded0a2ebfec1b356273a6abe759f13c7a0e6e59",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/douyin/xingtu_v2/search_creator",
+      "changes": [
+        {
+          "field": "query/keyword/required",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "query/keyword/schema/default",
+          "classification": "behavior_change"
+        },
+        {
+          "field": "query/price_max/schema/anyOf/0/minimum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/price_min/schema/anyOf/0/minimum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/price_type/schema/anyOf/0/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/seach_type",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/time_range_days",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "626f6ca8267be6881f2d165b53dfb17ac84b91023640ccbfdf04a2dc8353453d",
+      "public_request_sha256": "626f6ca8267be6881f2d165b53dfb17ac84b91023640ccbfdf04a2dc8353453d",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/douyin/xingtu_v2/search_toutiao_creator",
+      "changes": [
+        {
+          "field": "query/price_max/schema/anyOf/0/minimum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/price_min/schema/anyOf/0/minimum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/price_type/schema/anyOf/0/enum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "f13de9bc93a93ea4d1cad0c9e6fd756d2949aa2e0ff2e1bc67e20da6de819100",
+      "public_request_sha256": "f13de9bc93a93ea4d1cad0c9e6fd756d2949aa2e0ff2e1bc67e20da6de819100",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/instagram/v3/get_user_about",
+      "changes": [
+        {
+          "field": "query/user_id",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/username/required",
+          "classification": "breaking_required_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "ff638a16cbccdfb63f24121c9933177250c5a1fde1b4f1a8b6df1c507cbc7363",
+      "public_request_sha256": "ff638a16cbccdfb63f24121c9933177250c5a1fde1b4f1a8b6df1c507cbc7363",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/instagram/v3/get_user_followers",
+      "changes": [
+        {
+          "field": "query/user_id",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/username/required",
+          "classification": "breaking_required_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "3c4d0577f50422f331b9f0be536d0cd256a499045c83122b2db34312ca19838b",
+      "public_request_sha256": "3c4d0577f50422f331b9f0be536d0cd256a499045c83122b2db34312ca19838b",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/instagram/v3/get_user_following",
+      "changes": [
+        {
+          "field": "query/user_id",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/username/required",
+          "classification": "breaking_required_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "3c4d0577f50422f331b9f0be536d0cd256a499045c83122b2db34312ca19838b",
+      "public_request_sha256": "3c4d0577f50422f331b9f0be536d0cd256a499045c83122b2db34312ca19838b",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/instagram/v3/get_user_former_usernames",
+      "changes": [
+        {
+          "field": "query/user_id",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/username/required",
+          "classification": "breaking_required_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "ff638a16cbccdfb63f24121c9933177250c5a1fde1b4f1a8b6df1c507cbc7363",
+      "public_request_sha256": "ff638a16cbccdfb63f24121c9933177250c5a1fde1b4f1a8b6df1c507cbc7363",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/instagram/v3/get_user_highlights",
+      "changes": [
+        {
+          "field": "query/user_id",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/username/required",
+          "classification": "breaking_required_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "485a603f59d95cf1f64d8178607d01d1fc12c4ba46f9456aae6972d8dff19494",
+      "public_request_sha256": "485a603f59d95cf1f64d8178607d01d1fc12c4ba46f9456aae6972d8dff19494",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/instagram/v3/get_user_profile",
+      "changes": [
+        {
+          "field": "query/user_id",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/username/required",
+          "classification": "breaking_required_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "ff638a16cbccdfb63f24121c9933177250c5a1fde1b4f1a8b6df1c507cbc7363",
+      "public_request_sha256": "ff638a16cbccdfb63f24121c9933177250c5a1fde1b4f1a8b6df1c507cbc7363",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/instagram/v3/get_user_reels",
+      "changes": [
+        {
+          "field": "query/user_id",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/username/required",
+          "classification": "breaking_required_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "b540d268cbd0de435fff25a1c02e84e4d0ed0d3dd651ef4f6f2e82ee5fc9236c",
+      "public_request_sha256": "b540d268cbd0de435fff25a1c02e84e4d0ed0d3dd651ef4f6f2e82ee5fc9236c",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/instagram/v3/get_user_stories",
+      "changes": [
+        {
+          "field": "query/user_id",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/username/required",
+          "classification": "breaking_required_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "ff638a16cbccdfb63f24121c9933177250c5a1fde1b4f1a8b6df1c507cbc7363",
+      "public_request_sha256": "ff638a16cbccdfb63f24121c9933177250c5a1fde1b4f1a8b6df1c507cbc7363",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/instagram/v3/get_user_tagged_posts",
+      "changes": [
+        {
+          "field": "query/user_id",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/username/required",
+          "classification": "breaking_required_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "f4fea086e61f82b84b4f8659bf1eac48f0d496b318153003685f75a09f86a4f5",
+      "public_request_sha256": "f4fea086e61f82b84b4f8659bf1eac48f0d496b318153003685f75a09f86a4f5",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/kuaishou/app/fetch_hot_board_detail",
+      "changes": [
+        {
+          "field": "query/boardId/schema/default",
+          "classification": "behavior_change"
+        }
+      ],
+      "classification": "behavior_change",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "be37ab48d6789031b453e22bab0583f033f143dfbf7d52390bfc0811dd3fe7c3",
+      "public_request_sha256": "ff22996720ae8673bb6ea33b54ab88c59e245c2986bb5dbdcf4542107b18c0bc",
+      "public_normalizations": [
+        {
+          "field": "/parameters/0/schema/default",
+          "classification": "behavior_change"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/linkedin/web_v2/get_company_posts",
+      "changes": [
+        {
+          "field": "query/end_date",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/pagination_token",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/sort_by",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/start",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/start_date",
+          "classification": "removed_parameter"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "0d119fa49467b4db0838d60326ca3f3c2933ed0fe92464dc55abdb01a9239550",
+      "public_request_sha256": "0d119fa49467b4db0838d60326ca3f3c2933ed0fe92464dc55abdb01a9239550",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/linkedin/web_v2/get_job_detail",
+      "changes": [
+        {
+          "field": "query/include_hiring_team",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/include_skills",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "compatible",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "f6b94230eccdef9ae14a768cee547f1bc2c2e78fb17cef504b990de873b3b491",
+      "public_request_sha256": "f6b94230eccdef9ae14a768cee547f1bc2c2e78fb17cef504b990de873b3b491",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/linkedin/web_v2/get_user_posts",
+      "changes": [
+        {
+          "field": "query/end_date",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/pagination_token",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/start",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/start_date",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/type",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "e3a1572b19caaaee5d6945ec4162febf67cc63121d529c23d485f9697af9d11b",
+      "public_request_sha256": "e3a1572b19caaaee5d6945ec4162febf67cc63121d529c23d485f9697af9d11b",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/linkedin/web_v2/search_jobs",
+      "changes": [
+        {
+          "field": "query/company",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/company_ids",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/country",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/date_posted",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/easy_apply",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/experience_level",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/experience_levels",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/functions",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/geo_code",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/industries",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/job_type",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/job_types",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/keyword",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/keywords",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/location",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/onsite_remotes",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/remote",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/selective_search",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/sort_by",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/start",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/time_range",
+          "classification": "removed_parameter"
+        },
+        {
+          "field": "query/title_ids",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/under_10_applicants",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "d1fbb9a2496aee88eb584de5d014b380b14865920380537f6bfb7e342bc9b97a",
+      "public_request_sha256": "d1fbb9a2496aee88eb584de5d014b380b14865920380537f6bfb7e342bc9b97a",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/check_subreddit_muted",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/subreddit_id/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_id/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_id/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "c39d822ef70f10291963e41e31ed4dd006882bb0fc669597b283fa4782c04436",
+      "public_request_sha256": "c39d822ef70f10291963e41e31ed4dd006882bb0fc669597b283fa4782c04436",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_comment_replies",
+      "changes": [
+        {
+          "field": "query/cursor/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/cursor/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/cursor/schema/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/post_id/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_id/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_id/schema/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/sort_type/schema/enum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "b9cddbd802bce2370c26e6319808eade0bf9c601f097313cf8a2c28432927272",
+      "public_request_sha256": "b9cddbd802bce2370c26e6319808eade0bf9c601f097313cf8a2c28432927272",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_community_highlights",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/subreddit_id/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_id/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_id/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "c39d822ef70f10291963e41e31ed4dd006882bb0fc669597b283fa4782c04436",
+      "public_request_sha256": "c39d822ef70f10291963e41e31ed4dd006882bb0fc669597b283fa4782c04436",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_dynamic_search",
+      "changes": [
+        {
+          "field": "query/after/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/allow_nsfw/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/query/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/query/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/safe_search/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/search_type/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/sort/schema/anyOf",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/sort/schema/type",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "query/time_range/schema/anyOf",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/time_range/schema/type",
+          "classification": "compatible_relaxation"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "f103874a9ab5030a0e4f4fbf99838365d6e5102984bae054f217ba7c6b73b6b4",
+      "public_request_sha256": "f103874a9ab5030a0e4f4fbf99838365d6e5102984bae054f217ba7c6b73b6b4",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_games_feed",
+      "changes": [
+        {
+          "field": "query/after/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/sort/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/time/schema/enum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "e25f8334decc09a630b5ffaa0cb3a2fba58cb456f41544d97b27746fe438aa95",
+      "public_request_sha256": "e25f8334decc09a630b5ffaa0cb3a2fba58cb456f41544d97b27746fe438aa95",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_home_feed",
+      "changes": [
+        {
+          "field": "query/after/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/type",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/maxItems",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/sort/schema/enum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "b949de49162291c53e3cebda6585c50db95f36d249d61cd9d4a5e497f34b62cd",
+      "public_request_sha256": "b949de49162291c53e3cebda6585c50db95f36d249d61cd9d4a5e497f34b62cd",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_news_feed",
+      "changes": [
+        {
+          "field": "query/after/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/subtopic_ids/schema/items/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subtopic_ids/schema/items/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subtopic_ids/schema/items/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subtopic_ids/schema/items/type",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subtopic_ids/schema/maxItems",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "b598bf03d313bea0bb7c56287c2da71f36c99c0102efb24acd59a0ca6bee67c4",
+      "public_request_sha256": "b598bf03d313bea0bb7c56287c2da71f36c99c0102efb24acd59a0ca6bee67c4",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_popular_feed",
+      "changes": [
+        {
+          "field": "query/after/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/type",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/maxItems",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/sort/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/time/schema/enum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "552fc70348ce304ae7d34e8ea7d45054980895e131c9d67b80a482e1847a7a5e",
+      "public_request_sha256": "552fc70348ce304ae7d34e8ea7d45054980895e131c9d67b80a482e1847a7a5e",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_post_comments",
+      "changes": [
+        {
+          "field": "query/after/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/post_id/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_id/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_id/schema/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/sort_type/schema/enum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "56947e3532995175502ddcb0e224074625cc8e2ac0ba889e505dc6c259296494",
+      "public_request_sha256": "56947e3532995175502ddcb0e224074625cc8e2ac0ba889e505dc6c259296494",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_post_details",
+      "changes": [
+        {
+          "field": "query/comment_id/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/comment_id/schema/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/post_id/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_id/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_id/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "e65b7210ea65ac66bea1d33931797a5cdfc4bdd6deeddf20a375489e91b699dc",
+      "public_request_sha256": "e65b7210ea65ac66bea1d33931797a5cdfc4bdd6deeddf20a375489e91b699dc",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_post_details_batch",
+      "changes": [
+        {
+          "field": "query/comment_id/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/comment_id/schema/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/post_ids/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_ids/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_ids/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "23a4bf284eb887cc186b6a4c0146d606e422273e2d484fb0cdd8121fd8d83986",
+      "public_request_sha256": "23a4bf284eb887cc186b6a4c0146d606e422273e2d484fb0cdd8121fd8d83986",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_post_details_batch_large",
+      "changes": [
+        {
+          "field": "query/comment_id/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/comment_id/schema/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/post_ids/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_ids/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/post_ids/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "54201c5801e5ea2217de41c760acfcbe179578c2bc4067709eeb7827689c7f17",
+      "public_request_sha256": "54201c5801e5ea2217de41c760acfcbe179578c2bc4067709eeb7827689c7f17",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_search_typeahead",
+      "changes": [
+        {
+          "field": "query/allow_nsfw/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/query/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/safe_search/schema/enum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "205c548d12f84b961f422be10f4e08abb9e2dc1b4af08d3eb02166f937fb0c5c",
+      "public_request_sha256": "205c548d12f84b961f422be10f4e08abb9e2dc1b4af08d3eb02166f937fb0c5c",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_subreddit_feed",
+      "changes": [
+        {
+          "field": "query/after/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/pattern",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/items/type",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/filter_posts/schema/maxItems",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/sort/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "82e2120d8d78af5ca861eb6fa85399acaec1b48178d5e85de71c05706b5278fd",
+      "public_request_sha256": "82e2120d8d78af5ca861eb6fa85399acaec1b48178d5e85de71c05706b5278fd",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_subreddit_info",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/subreddit_name/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "ea54d21b9ea9531c4eb427352b6c569dc5923ab4f6a7894100515848b1986802",
+      "public_request_sha256": "ea54d21b9ea9531c4eb427352b6c569dc5923ab4f6a7894100515848b1986802",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_subreddit_post_channels",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/range/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/sort/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "c995e0f3c5d54484322de448d362239a9fdec976f8b29b9d3bf045eef733a77e",
+      "public_request_sha256": "c995e0f3c5d54484322de448d362239a9fdec976f8b29b9d3bf045eef733a77e",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_subreddit_settings",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/subreddit_id/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_id/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_id/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "c39d822ef70f10291963e41e31ed4dd006882bb0fc669597b283fa4782c04436",
+      "public_request_sha256": "c39d822ef70f10291963e41e31ed4dd006882bb0fc669597b283fa4782c04436",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_subreddit_style",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/subreddit_name/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/subreddit_name/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "ea54d21b9ea9531c4eb427352b6c569dc5923ab4f6a7894100515848b1986802",
+      "public_request_sha256": "ea54d21b9ea9531c4eb427352b6c569dc5923ab4f6a7894100515848b1986802",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_trending_searches",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "compatible",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "648bd62606ae7ad867f7e676f6e2d33e2e0daf0937853e74280d768cfb714df8",
+      "public_request_sha256": "648bd62606ae7ad867f7e676f6e2d33e2e0daf0937853e74280d768cfb714df8",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_user_active_subreddits",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/username/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "b869b0b18bd2f0e03cc95d33f10bc0fc6be61e5772718e6d808b0eb65d4bc1bd",
+      "public_request_sha256": "b869b0b18bd2f0e03cc95d33f10bc0fc6be61e5772718e6d808b0eb65d4bc1bd",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_user_comments",
+      "changes": [
+        {
+          "field": "query/after/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/page_size/schema/maximum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/page_size/schema/minimum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/sort/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "4d29b83cabd6b549ad8b164880a718d0892a09a92c92e8e699e0f0e845904583",
+      "public_request_sha256": "4d29b83cabd6b549ad8b164880a718d0892a09a92c92e8e699e0f0e845904583",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_user_posts",
+      "changes": [
+        {
+          "field": "query/after/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/sort/schema/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "e42f6d16ac32467cab38a0a58aa7d7147213b48f12338715a77bab965ef3c7bd",
+      "public_request_sha256": "e42f6d16ac32467cab38a0a58aa7d7147213b48f12338715a77bab965ef3c7bd",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_user_profile",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/username/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "b869b0b18bd2f0e03cc95d33f10bc0fc6be61e5772718e6d808b0eb65d4bc1bd",
+      "public_request_sha256": "b869b0b18bd2f0e03cc95d33f10bc0fc6be61e5772718e6d808b0eb65d4bc1bd",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reddit/app/fetch_user_trophies",
+      "changes": [
+        {
+          "field": "query/language",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/username/schema/maxLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/minLength",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/username/schema/pattern",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "b869b0b18bd2f0e03cc95d33f10bc0fc6be61e5772718e6d808b0eb65d4bc1bd",
+      "public_request_sha256": "b869b0b18bd2f0e03cc95d33f10bc0fc6be61e5772718e6d808b0eb65d4bc1bd",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tiktok/app/v3/fetch_content_translate",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/src_content/default",
+          "classification": "behavior_change"
+        }
+      ],
+      "classification": "behavior_change",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "579e0486b9c525951a65eb09c9a0f383ef5b2655b3fa0e16209aeac4581e79ae",
+      "public_request_sha256": "d9029158806837de37a73bbc2d80b1921877c0a408741675990d227739078bf8",
+      "public_normalizations": [
+        {
+          "field": "/body/content/application/json/schema/properties/src_content/default",
+          "classification": "behavior_change"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tiktok/shop/web/fetch_hot_selling_products_list",
+      "changes": [
+        {
+          "field": "query/count/schema/default",
+          "classification": "behavior_change"
+        },
+        {
+          "field": "query/count/schema/maximum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/count/schema/minimum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "query/exclude_product_ids",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "query/region/schema/default",
+          "classification": "behavior_change"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "184bb45d66ae483010a6d2e446e3c4f78c642cbe98e77b1ad73e75affb2e0015",
+      "public_request_sha256": "184bb45d66ae483010a6d2e446e3c4f78c642cbe98e77b1ad73e75affb2e0015",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tiktok/shop/web/fetch_product_id_by_share_link",
+      "changes": [
+        {
+          "field": "query/region",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "compatible",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "cbe90648ae53a6606424dc1a5a8c2405718d4e2beac0de2de9ccbf7eae400493",
+      "public_request_sha256": "cbe90648ae53a6606424dc1a5a8c2405718d4e2beac0de2de9ccbf7eae400493",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tiktok/shop/web/fetch_shop_id_by_share_link",
+      "changes": [
+        {
+          "field": "query/region",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "compatible",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "cbe90648ae53a6606424dc1a5a8c2405718d4e2beac0de2de9ccbf7eae400493",
+      "public_request_sha256": "cbe90648ae53a6606424dc1a5a8c2405718d4e2beac0de2de9ccbf7eae400493",
+      "public_normalizations": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tiktok/web/fetch_user_post",
+      "changes": [
+        {
+          "field": "query/count/schema/default",
+          "classification": "behavior_change"
+        },
+        {
+          "field": "query/cursor/schema/minimum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "c1a61ab0af99a3f1f04e7755449b0d0410b1ac93ca0f56798baa9005ea8f3051",
+      "public_request_sha256": "c1a61ab0af99a3f1f04e7755449b0d0410b1ac93ca0f56798baa9005ea8f3051",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/wechat_channels/v2/fetch_search_channel_videos",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/cursor",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "compatible",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "324a842528f1ddee8bdfa2f266da9a7e5d8c00a3511d492a2e4274a2e29114aa",
+      "public_request_sha256": "324a842528f1ddee8bdfa2f266da9a7e5d8c00a3511d492a2e4274a2e29114aa",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/wechat_mp/v2/fetch_account_articles",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/page_size/maximum",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/page_size/minimum",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/username/maxLength",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/username/pattern",
+          "classification": "breaking_shape"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "642b4017ff2be77e9ee4f25626ce8da638aadc4a8c5ce5af476427eabcf868b4",
+      "public_request_sha256": "642b4017ff2be77e9ee4f25626ce8da638aadc4a8c5ce5af476427eabcf868b4",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/wechat_mp/v2/fetch_account_profile",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/username/maxLength",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/username/pattern",
+          "classification": "breaking_shape"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "d7c8206f3c549a9099c336f2d20088786658d3ff939c0c2f1ad6c3473fbf3605",
+      "public_request_sha256": "d7c8206f3c549a9099c336f2d20088786658d3ff939c0c2f1ad6c3473fbf3605",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/wechat_mp/v2/fetch_account_services",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/username/maxLength",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/username/pattern",
+          "classification": "breaking_shape"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "d7c8206f3c549a9099c336f2d20088786658d3ff939c0c2f1ad6c3473fbf3605",
+      "public_request_sha256": "d7c8206f3c549a9099c336f2d20088786658d3ff939c0c2f1ad6c3473fbf3605",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/wechat_mp/v2/fetch_article_comments",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/comment_id",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "compatible",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "4e6aaf487c41aab4ebcd190cac9ccfdc62a4eb1353d91c7d538ec20d9efc417b",
+      "public_request_sha256": "4e6aaf487c41aab4ebcd190cac9ccfdc62a4eb1353d91c7d538ec20d9efc417b",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/wechat_mp/v2/fetch_comment_replies",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/all_pages",
+          "classification": "behavior_change"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/comment_id",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "behavior_change",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "0a380f8071564c4351dbd0454479018a00285855d86b7662fc28f53131df0227",
+      "public_request_sha256": "0a380f8071564c4351dbd0454479018a00285855d86b7662fc28f53131df0227",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/wechat_search/v2/fetch_search",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/properties/business_type/enum",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "compatible",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "f5bc922d187bd4a2a88bd1f236e093a098bd3f39f450f9f1d0cc31b2a2778ea1",
+      "public_request_sha256": "f5bc922d187bd4a2a88bd1f236e093a098bd3f39f450f9f1d0cc31b2a2778ea1",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_blogger_core_data",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/business",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/date_type/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/date_type/maximum",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/date_type/minimum",
+          "classification": "compatible_relaxation"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "7c37b667e3c72d12945b2e1428101f789cf2209fc31665803b71361cd39fc746",
+      "public_request_sha256": "7c37b667e3c72d12945b2e1428101f789cf2209fc31665803b71361cd39fc746",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_blogger_data_summary",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/business",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "50c683f0ced601b7bafd3fc4de0b29ce112394b1ed5b0a599463fa18da71e18e",
+      "public_request_sha256": "50c683f0ced601b7bafd3fc4de0b29ce112394b1ed5b0a599463fa18da71e18e",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_blogger_detail",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "03423493d07db499675126b16e90bd67846c6e43fa06701c0bb61f50b2c8e469",
+      "public_request_sha256": "03423493d07db499675126b16e90bd67846c6e43fa06701c0bb61f50b2c8e469",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_blogger_fans_history",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/date_type/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/date_type/maximum",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/date_type/minimum",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/increase_type",
+          "classification": "compatible_extension"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "4456754561f2207bc40d1dd6dd809e8c0a8b566eca0b1708070d9efcb5685d2f",
+      "public_request_sha256": "4456754561f2207bc40d1dd6dd809e8c0a8b566eca0b1708070d9efcb5685d2f",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_blogger_fans_profile",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "03423493d07db499675126b16e90bd67846c6e43fa06701c0bb61f50b2c8e469",
+      "public_request_sha256": "03423493d07db499675126b16e90bd67846c6e43fa06701c0bb61f50b2c8e469",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_blogger_fans_summary",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "03423493d07db499675126b16e90bd67846c6e43fa06701c0bb61f50b2c8e469",
+      "public_request_sha256": "03423493d07db499675126b16e90bd67846c6e43fa06701c0bb61f50b2c8e469",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_blogger_list",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/blogger",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/brand_user_id/anyOf",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/column",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/coop",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/fans",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/fans_number_lower",
+          "classification": "behavior_change"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/fans_number_upper",
+          "classification": "behavior_change"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/flags",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/goal",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/keyword",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/live",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/note",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/page_num/maximum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/page_size/maximum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/search_type",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/similar_user_id",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/similar_word",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/sort",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/required",
+          "classification": "compatible_relaxation"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "784aa3bee7b1e968346ee70ee25679a170d22145d022d2288e31f2f7ead54574",
+      "public_request_sha256": "784aa3bee7b1e968346ee70ee25679a170d22145d022d2288e31f2f7ead54574",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_blogger_notes",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/content_tag",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/feature_tag",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/is_third_platform",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/note_type/default",
+          "classification": "behavior_change"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/note_type/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/page_size/default",
+          "classification": "behavior_change"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/page_size/maximum",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "f4e1c56618e18ee6fcf7782c07b52e0986bb35bd07299bacc4967151f1c3b926",
+      "public_request_sha256": "f4e1c56618e18ee6fcf7782c07b52e0986bb35bd07299bacc4967151f1c3b926",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_blogger_notes_rate",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/business",
+          "classification": "compatible_extension"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/date_type/enum",
+          "classification": "breaking_constraint"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/date_type/maximum",
+          "classification": "compatible_relaxation"
+        },
+        {
+          "field": "body/content/application/json/schema/properties/date_type/minimum",
+          "classification": "compatible_relaxation"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "7c37b667e3c72d12945b2e1428101f789cf2209fc31665803b71361cd39fc746",
+      "public_request_sha256": "7c37b667e3c72d12945b2e1428101f789cf2209fc31665803b71361cd39fc746",
+      "public_normalizations": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/xiaohongshu/pgy/get_note_detail",
+      "changes": [
+        {
+          "field": "body/content/application/json/schema/additionalProperties",
+          "classification": "breaking_constraint"
+        }
+      ],
+      "classification": "breaking",
+      "coverage": [
+        "frozen-public-contract",
+        "discovery-cli"
+      ],
+      "source_request_sha256": "d63aa8352751cf30bed7bc134344b1e1a61026afff1b9a5312cbe3d582efeb0d",
+      "public_request_sha256": "d63aa8352751cf30bed7bc134344b1e1a61026afff1b9a5312cbe3d582efeb0d",
+      "public_normalizations": []
+    }
+  ],
+  "retired": [
+    {
+      "operation": "GET /api/v1/douyin/app/v3/add_video_play_count",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/douyin/web/douyin_live_room",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/douyin/web/fetch_live_room_product_result",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/douyin/web/fetch_user_collects_videos",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/douyin/web/fetch_user_collects_videos",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/douyin/web/generate_real_msToken",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/douyin/web/generate_s_v_web_id",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/douyin/web/generate_verify_fp",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_ad_detail",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_comments_replies",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_company_affiliated_pages",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_company_associated_member_insights",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_company_job_count",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_company_jobs",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_company_people",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_company_posts",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_company_profile",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_group_info",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_group_posts",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_job_detail",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_post_comments",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_post_detail",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_post_reactions",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_post_reposts",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_about",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_certifications",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_comments",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_contact",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_educations",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_experience",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_follower_and_connection",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_honors",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_images",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_interests_companies",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_interests_groups",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_posts",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_profile",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_publications",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_reactions",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_recommendations",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_skills",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_videos",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/get_user_volunteers",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/search_ads",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/search_jobs",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/search_location",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/search_people",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/search_posts",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/search_schools",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web/search_suggestion_industry",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web_v2/get_author_articles",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web_v2/search_jobs_by_url",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/linkedin/web_v2/search_users",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/temp_mail/v1/get_email_by_id",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/temp_mail/v1/get_emails_inbox",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/temp_mail/v1/get_temp_email_address",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/threads/web/search_recent",
+      "reason": "explicit upstream deprecation; ADR-0002",
+      "replacement": "GET /api/v1/threads/web/search_posts",
+      "status": "candidate_requires_semantic_and_live_acceptance"
+    },
+    {
+      "operation": "GET /api/v1/threads/web/search_top",
+      "reason": "explicit upstream deprecation; ADR-0002",
+      "replacement": "GET /api/v1/threads/web/search_posts",
+      "status": "candidate_requires_semantic_and_live_acceptance"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_ad_interactive_analysis",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_ad_interactive_analysis",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_ad_keyframe_analysis",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_ad_keyframe_analysis",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_ad_percentile",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_ad_percentile",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_ads_detail",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_ads_detail",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_configure_safety",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_configure_safety",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_location_list",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_location_list",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_query_suggestions",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_query_suggestions",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_recommended_ads",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_recommended_ads",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_top_ads_spotlight",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_top_ads_spotlight",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_trends_hashtag_detail",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_trends_hashtag_detail",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/get_trends_hashtag_list",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/get_trends_hashtag_list",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/ads/search_ads",
+      "reason": "method changed; migrate to current native method",
+      "replacement": "POST /api/v1/tiktok/ads/search_ads",
+      "status": "method_migration_update_request"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/add_video_play_count",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_creator_showcase_product_list",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_product_detail",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_product_detail_v2",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_product_detail_v3",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_product_detail_v4",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_product_id_by_share_link",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_product_review",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_product_search",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_shop_home",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_shop_home_page_list",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_shop_id_by_share_link",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_shop_info",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_shop_product_category",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_shop_product_list",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_shop_product_list_v2",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/app/v3/fetch_shop_product_recommend",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/shop/web/fetch_product_detail_v2",
+      "reason": "explicit upstream deprecation; ADR-0002",
+      "replacement": "GET /api/v1/tiktok/shop/web/fetch_product_detail_v3",
+      "status": "retained_candidate_requires_semantic_and_live_acceptance"
+    },
+    {
+      "operation": "GET /api/v1/tiktok/shop/web/fetch_product_reviews",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_channel_feed",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_comment_replies",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_config_list",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_hot_search",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_post_comments",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_post_detail",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_search",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_search_topics",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_trend_top",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_user_info",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/weibo/web/fetch_user_posts",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/xiaohongshu/web_v3/fetch_hot_list",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/youtube/web/get_channel_videos_v2",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/youtube/web/get_trending_videos",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/youtube/web/get_video_info",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/youtube/web/get_video_info_v2",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/youtube/web/get_video_subtitles",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "GET /api/v1/youtube/web_v2/get_video_captions_v2",
+      "reason": "channel-only historical path removed from upstream schema; method verified from API commit 28582e8",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "POST /api/v1/douyin/search/fetch_live_search_v1",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "POST /api/v1/douyin/search/fetch_vision_search",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "POST /api/v1/douyin/web/generate_a_bogus",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    },
+    {
+      "operation": "POST /api/v1/douyin/web/generate_x_bogus",
+      "reason": "removed from upstream schema",
+      "replacement": null,
+      "status": "no_verified_replacement"
+    }
+  ]
+}

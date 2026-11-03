@@ -38,7 +38,14 @@ def main():
     ap.add_argument("--platform")
     ap.add_argument("--method")
     ap.add_argument("--limit", type=int, default=20)
+    ap.add_argument("--describe", help="exact /api/... path; print its frozen public contract as JSON")
     args = ap.parse_args()
+
+    if args.describe:
+        from catalog import describe
+        result = describe(args.describe, (args.method or 'GET').upper())
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 1 if result.get('error') else 0
 
     if not os.path.exists(INDEX):
         print("Endpoint index missing — reinstall the tikin plugin.", file=sys.stderr)

@@ -8,7 +8,12 @@
   live service binding proof and a durable reservation before every business send.
 - Controlled CLI/process tests cover budget exhaustion, concurrency and interrupted recovery.
   Real API, service publication and host acceptance remain pending.
-- Setup Skill is 1.5.0; changed workflow Skills are 1.4.0.
+- Import the coordinator-frozen first-batch index (919 operations) and public schema;
+  offline discovery exposes full contracts, 13 method migrations, 76 request changes
+  and all 110 selected retirement records without enabling second-batch routes.
+- Caption creation/query states and bounded polling persist in the shared execution
+  record; known creation is reused, and raw Cookie string inputs remain private.
+- Setup Skill is 1.5.0; the other 16 Skills are 1.4.0.
 
 ## 1.4.0
 
