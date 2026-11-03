@@ -4,7 +4,7 @@ All tikin business API calls use the bundled `tikin-config request` command, inc
 
 ## Execute one operation
 
-Resolve the installed `tikin-setup` directory and the actual calling Skill name. Write a request JSON outside the installation, preserving the user's original words in `original_request`. Copy the endpoint, HTTP method and parameter names from endpoint discovery. `query` becomes URL parameters (array values become repeated parameters); `body` is the exact JSON object, array or string to submit. Omit `body` for an empty request. Do not put API keys in this file; the helper reads the existing configuration.
+Resolve the installed `tikin-setup` directory and the actual calling Skill name. Write a request JSON outside the installation, preserving the user's original words in `original_request`. Copy the endpoint, HTTP method and parameter names from endpoint discovery. `query` becomes URL parameters (array values become repeated parameters); `body` is the exact JSON value to submit, including an object, array, string or explicit `null`. Omit `body` for no request body; `"body": null` sends JSON `null`. Do not put API keys in this file; the helper reads the existing configuration.
 
 ```json
 {

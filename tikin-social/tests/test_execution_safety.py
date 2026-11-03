@@ -21,7 +21,7 @@ class ExecutionSafetyTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='tikin-execution-')
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.responses = [(200, {}, {'data': {'items': []}})]
         self.calls = []
         self.received = threading.Event()
@@ -164,6 +164,30 @@ class ExecutionSafetyTests(unittest.TestCase):
         self.responses = [(503, {}, {'error': {'code': 'unavailable'}})]
         first = self.request({})
         self.assertEqual(first['status'], 'submission_unknown')
+        self.assertEqual(len(self.calls), 1)
+
+    def test_explicit_json_null_keeps_body_presence_and_has_a_distinct_approval(self):
+        absent = {'method': 'POST'}
+        explicit = {'method': 'POST', 'body': None}
+        fingerprints = []
+        for spec in (absent, explicit):
+            run = subprocess.run(self.command(spec) + ['--dry-run'], env=self.env, cwd=self.root,
+                                 text=True, capture_output=True, timeout=5)
+            fingerprints.append(json.loads(run.stdout)['request_sha256'])
+        legacy = hashlib.sha256(json.dumps(['POST', self.base + '/api/v1/test', None],
+                                           sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        self.assertEqual(fingerprints[0], legacy)
+        self.assertNotEqual(fingerprints[0], fingerprints[1])
+        self.assertEqual(self.request(absent)['status'], 'ok')
+        self.assertEqual(self.request(explicit)['status'], 'ok')
+        self.assertEqual([call[2] for call in self.calls], [b'', b'null'])
+
+    def test_null_cannot_replay_an_older_ambiguous_bodyless_submission(self):
+        self.responses = [(503, {}, {'error': {'code': 'unavailable'}})]
+        first = self.request({'method': 'POST'})
+        self.assertEqual(first['status'], 'submission_unknown')
+        second = self.request({'method': 'POST', 'body': None}, first['record'])
+        self.assertEqual(second['status'], 'submission_unknown')
         self.assertEqual(len(self.calls), 1)
 
     def test_regression_budget_is_shared_across_records_and_processes(self):

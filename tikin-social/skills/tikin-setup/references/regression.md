@@ -10,7 +10,12 @@ Use the existing `tikin-config request` entry. `--dry-run` describes the exact
 `request_sha256` and selected identity without transmitting. It does not create
 an approval, ledger or route proof. The fingerprint is SHA-256 of UTF-8 Python
 `json.dumps([METHOD, full_url, body], sort_keys=True, ensure_ascii=False)`;
-omitted body is `null`. Prefer the dry-run output over reconstructing it.
+omitted body is represented by `null` in that legacy fingerprint. Existing absent
+and non-null bodies keep their fingerprints. For an explicitly present JSON
+`null`, append `{"body_present": true}` as a fourth array element before hashing;
+this request sends the four bytes `null` and needs its own approval. An older
+ambiguous absent/null submission still blocks replay in the same record. Prefer
+the dry-run output over reconstructing the fingerprint.
 
 ```text
 uv run --frozen --project "<setup>" python "<setup>/scripts/tikin-config" --skill tikin-rest-api request --request-file "<request.json>" --dry-run

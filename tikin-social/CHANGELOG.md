@@ -2,6 +2,9 @@
 
 ## 1.5.0
 
+- Preserve explicit JSON null separately from an omitted body, with distinct regression approval and legacy ambiguous-submission protection.
+- Refresh the frozen first-batch public response schema to v2; the 919 operation set and request contracts are unchanged.
+
 - Candidate: shared request execution protects side-effecting GETs and unknown operations,
   persists full server cooldowns, and projects safe errors without damaging signed business URLs.
 - Opt-in regression uses the same request entry with an existing shared approval/ledger,

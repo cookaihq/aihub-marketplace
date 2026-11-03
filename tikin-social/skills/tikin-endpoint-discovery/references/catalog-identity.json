@@ -3,7 +3,7 @@
   "status": "candidate",
   "batch": "2026-11-03-repair-candidate",
   "operation_count": 919,
-  "manifest_sha256": "f6204c6fc65af5ef2fd1148adb5c1ab49038862eb4511821cf9daeac2fc74626",
+  "manifest_sha256": "1c408c051f5b114e3531eef496e756f6789174627cb9f9d7d4c01b2ffff196eb",
   "outputs": {
     "endpoint-index.json": {
       "sha256": "c2a05795b3c2927bef5230d47afd9b2410db569bbeb8d4efdd5daff9c8abad12"
@@ -12,7 +12,7 @@
       "sha256": "141a008a48326f695cc78c660a0ce91abbb8c3feca2f80af709e1afa6dce9242"
     },
     "openapi.json": {
-      "sha256": "b4f86a6df3c5b44ee37d8f38f7224741870f5506e7c6ea5a2e9bc7975e6482b7"
+      "sha256": "f65acde70f99b4a961fe1e9c37312a4f5660e902646cf406932f651f612d9d67"
     },
     "route_table.json": {
       "sha256": "69229aa49c8cf527b1cdf989cdef764524be43041de159cec637c585293e4169"

@@ -108,13 +108,13 @@ def business_error(body):
     return None, None
 
 
-def exchange(method, url, headers, body, timeout):
+def exchange(method, url, headers, body, timeout, body_present=False):
     """Return actual status/body plus a transport error; never guess a provider status."""
     response, status, response_headers = None, None, {}
     started = time.monotonic()
     try:
         request = Request(url, method=method, headers=headers,
-                          data=json.dumps(body, ensure_ascii=False).encode('utf-8') if body is not None else None)
+                          data=json.dumps(body, ensure_ascii=False).encode('utf-8') if body_present else None)
         try:
             response = build_opener(NoRedirect).open(request, timeout=timeout)
         except HTTPError as error:
@@ -188,11 +188,12 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
     if query:
         url += ('&' if '?' in path else '?') + urlencode(query, doseq=True)
     body = spec.get('body')
+    body_present = 'body' in spec
     secrets = [key] + secret_values({'query': query, 'body': body})
     if canonical_path in ('/api/v1/tiktok/ads/get_configure_safety', '/api/v1/tiktok/ads/get_location_list') and isinstance(body, str) and body:
         secrets.append(body)
     headers = {'Authorization': 'Bearer ' + key, 'Accept': 'application/json'}
-    if body is not None:
+    if body_present:
         headers['Content-Type'] = 'application/json'
     record = Path(record_input).resolve() if record_input else Path(output_dir).resolve() / ('tikin-run-' + str(uuid.uuid4())) / 'run.json'
     setup_root = Path(__file__).resolve().parents[1]
@@ -205,11 +206,15 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
     version = (json.loads(manifest_path.read_text(encoding='utf-8'))['version'] if manifest_path.is_file()
                else tomllib.loads((setup_root / 'pyproject.toml').read_text(encoding='utf-8'))['project']['version'])
     binding = hashlib.sha256((base + '\0' + key).encode()).hexdigest()
-    fingerprint = hashlib.sha256(json.dumps([method, url, body], sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    fingerprint_input = [method, url, body]
+    legacy_fingerprint = hashlib.sha256(json.dumps(fingerprint_input, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    if body_present and body is None:
+        fingerprint_input.append({'body_present': True})
+    fingerprint = hashlib.sha256(json.dumps(fingerprint_input, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     if dry_run:
         return {'status': 'ok', 'sent': False, 'request_sha256': fingerprint, 'method': method, 'path': path,
                 'client_base_url': base, 'test_token_sha256': hashlib.sha256(key.encode()).hexdigest(),
-                'side_effects': not replay_safe}
+                'side_effects': not replay_safe, 'body_present': body_present}
     regression = Regression(regression_approval, base, key, fingerprint, not replay_safe) if regression_approval else None
     regression_ref = regression.reference if regression else None
     if regression:
@@ -221,7 +226,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                 raise ValueError('record belongs to another Skill, service or credential')
             if state.get('regression') != regression_ref:
                 raise GateError('record_regression_mismatch')
-            if fingerprint in state.get('pending_writes', [state.get('pending_write')]):
+            if {fingerprint, legacy_fingerprint}.intersection(state.get('pending_writes', [state.get('pending_write')])):
                 output: dict[str, Any] = {'status': 'submission_unknown', 'record': str(record),
                           'error': 'Previous write outcome is unknown; do not replay automatically'}
                 try:
@@ -290,7 +295,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
             state['status'] = 'in_flight'
             save()
             start, at = time.monotonic(), now()
-            status, response_headers, result_body, error, timeout_stage = exchange(method, url, headers, body, min(timeout, remaining_time))
+            status, response_headers, result_body, error, timeout_stage = exchange(method, url, headers, body, min(timeout, remaining_time), body_present)
             elapsed_ms = round((time.monotonic() - start) * 1000)
             business, task_id = business_error(result_body)
             task_body = result_body.get('data', result_body) if isinstance(result_body, dict) else None
@@ -319,7 +324,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                                'retry_policy': 'read-only' if replay_safe else 'may-have-side-effects',
                                'retry_scheduled': retry, 'retry_delay_ms': delay * 1000 if delay is not None else None,
                                'timeout_ms': timeout * 1000, 'timeout_stage': timeout_stage,
-                               'request': {'headers': headers, 'body': body,
+                               'request': {'headers': headers, 'body': body, 'body_present': body_present,
                                            'query': {name: [value for key_name, value in query_pairs if key_name == name] for name, _ in query_pairs},
                                            'original_request': spec['original_request'], 'reference_materials': spec.get('reference_materials')},
                                'response': {'http_status': status, 'headers': response_headers, 'body': result_body}}, secrets)
@@ -355,7 +360,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                 warning = '无法保存最新错误报告；保留原任务结果与任务 ID，不要因此重新提交。'
                 latest_feedback = existing_feedback(record)
                 retry = False  # Never send another attempt without durable evidence.
-            if retry and delay >= deadline - time.monotonic():
+            if retry and delay is not None and delay >= deadline - time.monotonic():
                 state['status'] = 'cooldown'
                 save()
                 break
