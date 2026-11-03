@@ -1,8 +1,8 @@
 ---
 name: tikin-setup
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
+  version: "1.4.0"
+description: v1.4.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
 ---
 
 # tikin Setup
@@ -80,6 +80,10 @@ Before any business API request, read [shared requests and local error reports](
 
 ## Install or repair
 
+First read [the complete-suite installation and migration procedure](references/installation.md).
+It also governs updates: preserve shared copies and local edits, stage one fixed source,
+verify the replacement in a fresh host session, then retire only that host's duplicate.
+
 Detect the active host and existing installation from its CLI/configuration. Do not infer it from
 directory or branch names. Before a first install or installation-scope change, tell the user what
 will be written and get confirmation. Use exactly one matching path:
@@ -89,7 +93,7 @@ will be written and get confirmation. Use exactly one matching path:
 | Codex plugin | If absent, run `codex plugin marketplace add cookaihq/aihub-marketplace`, then `codex plugin add tikin-social@aihub-marketplace`. |
 | Claude Code plugin | If absent, run `claude plugin marketplace add cookaihq/aihub-marketplace`, then `claude plugin install tikin-social@aihub-marketplace --scope <scope>` with the confirmed `user`, `project`, or `local` scope. |
 | WorkBuddy | Use the native marketplace installer with `https://github.com/cookaihq/aihub-marketplace.git` and select `tikin-social`. When manual UI is required: 专家·技能·连接器 → 技能 → 套件 → circular ＋ beside the marketplace names; after adding the market click ＋ on the `tikin-social` card. “添加市场” is the dialog title, not the visible initial button. |
-| Agent Skills client | Run `npx skills add https://github.com/cookaihq/aihub-marketplace/tree/main/tikin-social --skill '*'` and select only the active agent and requested project/user scope. |
+| Agent Skills client | Stage the fixed complete suite and use the local-source installer in [the installation procedure](references/installation.md); select only the active agent and requested project/user scope. |
 
 If GitHub has a network failure, use the same marketplace and Plugin from
 `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git`. Keep the same requested version and
@@ -97,9 +101,8 @@ scope; authentication, missing repository or missing version is not a network fa
 Report which source succeeded. Do not guess a WorkBuddy CLI command or tool schema: inspect
 its available native tools and current UI. Do not start codebuddy/cbc or an embedded CLI, even for help/list. The shared request and endpoint helpers use pinned Python and quoted paths on native Windows; final media downloads use curl.exe there. Local configuration tests do not prove host loading or complete Windows business support; macOS/Linux/WSL and all three host sessions require their own evidence.
 
-Do not install through several channels in the same host. If an old manual copy contains
-unprefixed skill names, migrate to the managed channel and remove only obsolete tikin-owned
-copies; never delete a user-modified or unrelated skill without confirmation.
+Do not leave several active channels in the same host. Inventory prefixed and unprefixed
+old copies; preserve local edits and shared targets until the replacement has been verified.
 
 Newly installed plugin components become available in a new chat or CLI session. Finish local
 configuration in the current session, then tell the user when a new session is required.
@@ -118,15 +121,16 @@ for later tikin calls in the same session and do not block the user's current ta
    while both Plugin copies supply the same `tikin-*` names.
 2. Check only that channel and only tikin-owned components.
 3. For Codex, record the installed version from `codex plugin list --marketplace aihub-marketplace
-   --json`, refresh with `codex plugin marketplace upgrade aihub-marketplace`, then run `codex plugin
-   add tikin-social@aihub-marketplace`. Repeated `plugin add` is the idempotent reinstall/update path
-   for Git-backed plugin sources; compare the before/after installed versions only when reporting
-   whether an update occurred.
+   --json` and inspect the target version. Apply only after the user requests or confirms that
+   update: refresh with `codex plugin marketplace upgrade aihub-marketplace`, then run
+   `codex plugin add tikin-social@aihub-marketplace`. Compare the actual installed version and
+   content identity with the selected target before reporting success.
 4. For Claude Code, read the owning installation's `scope` from `claude plugin list --json`, then
-   use `claude plugin update tikin-social@aihub-marketplace --scope <scope>`. Do not let the command's
+   after an authorized update use `claude plugin update tikin-social@aihub-marketplace --scope <scope>`. Do not let the command's
    `user` default redirect an update for a `project`, `local`, or `managed` installation.
 5. For WorkBuddy use its actual native Plugin update UI/tool for `tikin-social`; do not write
-   cache/index files manually. For Agent Skills, use the source-aware `npx skills` updater for installed `tikin-*` skills only.
+   cache/index files manually. For Skills-only, check the complete Plugin release, then follow
+   the fixed-suite procedure after confirmation; never update its Skills independently.
 6. If an update succeeds, keep using the already-loaded version for the current task and state
    that the new version applies in a new session.
 7. If the network, updater, sandbox, or approval policy prevents the check, continue silently

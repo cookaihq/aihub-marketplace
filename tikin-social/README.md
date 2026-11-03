@@ -5,7 +5,10 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Current Plugin version: **1.3.1**; all 17 Skills remain at **1.3.0**. This release updates version validation without changing business behavior. Host manifests and version metadata are checked; no new host-session acceptance is claimed. All 17 Skills share native JSON requests and automatic local error reports. Credential handoff uses the
+Candidate Plugin version: **1.4.0**, with `tikin-setup` **1.4.0** and the other 16 Skills
+at **1.3.0**. This candidate adds complete-suite identity checks and migration guidance.
+It retains the accepted 1002-entry index; it does not introduce a new API batch.
+Native host acceptance and publication are pending. All 17 Skills share native JSON requests and automatic local error reports. Credential handoff uses the
 `setup-api-key` Skill in Setup AIHub 2.0.0. The following results apply to **1.2.0**:
 native Windows Plugin installation and Skill discovery are verified
 in Claude Code, Codex and WorkBuddy. Credential configuration passed in Codex's default sandbox
@@ -39,9 +42,9 @@ The check needs no API key or network. Codex, Claude Code and WorkBuddy have rul
 Paste this into your agent:
 
 > Install the complete tikin-social Plugin from the aihub-marketplace repository,
-> https://cnb.cool/zhidateam/tannt/aihub-marketplace.git, in its tikin-social/ directory.
-> Prefer CNB; if it fails because of a network problem, try
-> https://github.com/cookaihq/aihub-marketplace.git with the same Plugin and version.
+> https://github.com/cookaihq/aihub-marketplace.git, in its tikin-social/ directory.
+> Prefer GitHub; if it fails because of a network problem, try
+> https://cnb.cool/zhidateam/tannt/aihub-marketplace.git with the same Plugin and version.
 > Preserve my existing settings, then verify that this agent can discover and invoke its Skills.
 
 Claude Code and Codex have native Plugin installations. WorkBuddy uses the **套件** market:
@@ -49,8 +52,10 @@ Claude Code and Codex have native Plugin installations. WorkBuddy uses the **套
 **添加市场** dialog. After adding the repository, click the ＋ on the **tikin-social** card to
 install it. Adding the market and installing its Plugin are separate steps.
 
-Agent Skills clients can also install the Skills from this repository’s `tikin-social/` directory.
-Include `tikin-setup` with the operational Skills; its helper loads their API configuration.
+Other Agent Skills clients can install the **complete 17-Skill suite** from this same
+repository's `tikin-social/` directory and one fixed Plugin release. Setup, discovery,
+shared helpers and the index travel together; individual Skill updates are not supported.
+Ask your Agent to preserve local edits and verify the complete suite's content identity.
 Start a new session after installation so the agent can discover the newly installed Skills.
 The agent should report installation, Skill invocation and a real API request as separate checks.
 
@@ -155,12 +160,25 @@ source-file repair by Setup.
 
 ## Migrate an existing installation
 
-This release replaces `tikin-plugin` with `tikin-social` in **aihub-marketplace**. The 17 Skill
+Older releases replaced `tikin-plugin` with `tikin-social` in **aihub-marketplace**. The 17 Skill
 names and API field names stay unchanged. Install `tikin-social` and prepare its configuration,
 then disable the old `tikin-plugin@plugin-marketplace` or `tikin-plugin@tikin-plugins` instance.
 Open a new session and verify that the Plugin identity and actual `tikin-*` Skill sources belong
 to `tikin-social`. After validation succeeds, uninstall the old instance. The Skills retain the
 same names, so do not test with both Plugin copies active in the same agent.
+
+Standalone `tikin-*` copies can also duplicate the Plugin. Ask:
+
+> Migrate this Agent to the native tikin-social Plugin from aihub-marketplace. First
+> list its actual sources and any shared copies or local edits. Preserve my current
+> account configuration, stage a fixed complete version, and verify its actual loaded
+> source, offline endpoint search and configuration in a new session before retiring
+> this Agent's duplicate. Keep every copy still needed by another Agent.
+
+The Agent follows the bundled [installation and migration procedure](skills/tikin-setup/references/installation.md).
+The status check reports the loaded helper's resolved path, complete Plugin version,
+individual Skill versions and index hash. Content verification alone does not prove
+that a new host session has loaded that source or that a real API call succeeded.
 
 Old `~/.config/tikin/.env`, `~/.config/tikin/settings.json`, or files under a custom
 `XDG_CONFIG_HOME/tikin/` are not read or moved automatically. You can ask:
@@ -274,8 +292,10 @@ executes the tools; marketplace visibility alone cannot validate the configurati
 For API errors, ask the agent to inspect local sources and distinguish authentication, permission,
 quota and network failures. For an update, say “Update only my tikin-social installation, keep
 my configuration, and tell me which version will load in the next session.” Plugins use the
-owning host’s update channel; Agent Skills installations use their source-aware updater. The
-first tikin use in a session performs the existing best-effort check through that channel;
+owning host’s update channel; Skills-only installations replace the complete suite from
+one fixed Plugin tag and commit. Updates require your request or confirmation, preserve
+local changes, and are checked in a new session before the previous source is retired.
+The first tikin use in a session performs a best-effort check through its owning channel;
 network or update failures do not block the current task. Credentials and routing preferences
 are kept outside the installation directory.
 

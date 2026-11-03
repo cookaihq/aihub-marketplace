@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0
+
+- Candidate: complete Plugin and whole-suite Skills-only distributions share a generated
+  version/content identity; `tikin-config status` detects missing or modified suite files.
+- Installation and update instructions pin a complete release, preserve local changes,
+  account configuration and shared copies, and require fresh-session source verification.
+- The accepted endpoint index is unchanged. macOS public CLI/distribution tests are passing;
+  native host migration acceptance and publication remain pending. Windows is not yet tested.
+- `tikin-setup` is 1.4.0; the other 16 Skills remain 1.3.0.
+
 ## 1.3.1 — 2026-10-27
 
 - 分发校验分别检查 Plugin、Skill 自有运行时与市场目录版本，取消跨对象同号要求；17 个 Skill 保持 1.3.0，业务行为不变。

@@ -314,6 +314,7 @@ def set_key():
 
 
 def status(skill_name="tikin-setup", global_enabled=True):
+    from installation import inspect
     _, sources = load_config(skill_name, global_enabled)
     settings = read_settings() if global_enabled else DEFAULT_SETTINGS
     print(json.dumps({
@@ -323,6 +324,7 @@ def status(skill_name="tikin-setup", global_enabled=True):
         "plugin": PLUGIN_NAME, "skill": skill_name, "cwd": str(Path.cwd()),
         "global_enabled": global_enabled,
         "settings": {"routing": settings["routing"]},
+        "installation": inspect(Path(SKILL_DIR)),
     }, sort_keys=True))
 
 

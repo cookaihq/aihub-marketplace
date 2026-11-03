@@ -220,11 +220,10 @@ if [ -x skills/tikin-setup/scripts/tikin-config ]; then
 else
   check 1 "tikin-config is executable"
 fi
-# The tests resolve their own interpreter (tikin-setup's pinned .venv, built via
-# uv if absent) — python3 here only drives unittest, it never runs tikin-config.
-# Missing runtimes are reported with a build command. A skipped behavior suite
-# is incomplete verification and therefore fails this release validator.
-unittest_out="$(python3 -m unittest discover -s tests 2>&1)"
+# Run the suite with the same pinned interpreter as the shipped helper. The host's
+# system Python may predate tomllib and cannot import the request/version tests.
+# A skipped behavior suite is incomplete verification and fails this validator.
+unittest_out="$(uv run --frozen --project skills/tikin-setup python -m unittest discover -s tests 2>&1)"
 unittest_rc=$?
 if [ "$unittest_rc" -eq 0 ] && printf '%s' "$unittest_out" | grep -q 'skipped='; then
   check 1 "tikin-config behavior tests unavailable — build the required runtime"
