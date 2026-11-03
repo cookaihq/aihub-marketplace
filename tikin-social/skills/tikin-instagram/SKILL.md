@@ -1,13 +1,13 @@
 ---
 name: tikin-instagram
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 处理 Instagram 链接与数据，获取用户资料和帖子，搜索用户、Reels、话题标签、音乐和地点，查询评论、回复及标签内容流。用户提供 Instagram 链接或任务针对该平台时使用；覆盖 Instagram V2 接口。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 处理 Instagram 链接与数据，获取用户资料和帖子，搜索用户、Reels、话题标签、音乐和地点，查询评论、回复及标签内容流。用户提供 Instagram 链接或任务针对该平台时使用；覆盖 Instagram V2 接口。
 ---
 
 # Instagram (via tikin)
 
-纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并衔接 Setup 或最小回退；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
+纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并实际打开 Setup 配置网页；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
 
 ## 默认 Skill 检查
 

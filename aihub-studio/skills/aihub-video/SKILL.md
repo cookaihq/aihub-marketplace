@@ -1,14 +1,14 @@
 ---
 name: aihub-video
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜通过 AIhub 使用 Seedance 2.5，基于文字、首帧图片或多模态参考素材生成视频；也支持 C1 视频口型同步和 C2 图片加音频数字人。检查各类任务的限制，支持继续已有任务并交付核验后的视频文件。
+  version: "1.5.0"
+description: v1.5.0｜通过 AIhub 使用 Seedance 2.5，基于文字、首帧图片或多模态参考素材生成视频；也支持 C1 视频口型同步和 C2 图片加音频数字人。检查各类任务的限制，支持继续已有任务并交付核验后的视频文件。
 compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
 # AIhub 视频与数字人任务
 
-凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)衔接 Setup 或最小回退；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开 Setup 配置网页；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
 
 Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 

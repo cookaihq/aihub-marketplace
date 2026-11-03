@@ -37,6 +37,7 @@ CONFIG_KEYS = ("TIKIN_API_KEY", "TIKIN_BASE_URL")
 # remains available when an Agent Skills client installs only Skill directories.
 PLUGIN_NAME = "tikin-social"
 DEFAULT_BASE_URL = "https://console.tikin.net"
+CREDENTIAL_SETUP_HINT = 'follow tikin-setup/references/credential-setup.md to launch the local configuration page through setup-aihub:setup-api-key 2.3.0 or newer and return its clickable link. Preserve caller, cwd, global option and submission state; recheck after saving and check default settings before resuming. If Setup is unavailable, use the documented minimal local fallback.'
 SKILL_NAMES = frozenset({
     "tikin-bulk-data-export", "tikin-comments-analysis", "tikin-competitor-analysis",
     "tikin-creator-analytics", "tikin-douyin", "tikin-endpoint-discovery",
@@ -214,6 +215,8 @@ def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None)
         "environment": {key: hashlib.sha256(os.environ[key].encode()).hexdigest()
                         if os.environ.get(key, "").strip() else None for key in CONFIG_KEYS},
     }
+    if not values.get("TIKIN_API_KEY"):
+        inspection["next_step"] = CREDENTIAL_SETUP_HINT
     return values, sources, inspection
 
 
@@ -245,7 +248,7 @@ def run_with_config(skill_name, command, global_enabled=True):
         raise SystemExit("run requires a command after --")
     values, _ = load_config(skill_name, global_enabled)
     if not values.get("TIKIN_API_KEY"):
-        raise SystemExit("missing TIKIN_API_KEY; follow tikin-setup/references/credential-setup.md for setup-aihub:setup-api-key or the minimal local fallback")
+        raise SystemExit("missing TIKIN_API_KEY; " + CREDENTIAL_SETUP_HINT)
     environment = dict(os.environ)
     environment.update(values)
     environment["TIKIN_BASE_URL"] = values.get("TIKIN_BASE_URL") or DEFAULT_BASE_URL
@@ -406,7 +409,7 @@ def validate_key(timeout, skill_name="tikin-setup", global_enabled=True):
     values, _ = load_config(skill_name, global_enabled)
     key = values.get("TIKIN_API_KEY")
     if not key:
-        raise SystemExit("missing TIKIN_API_KEY")
+        raise SystemExit("missing TIKIN_API_KEY; " + CREDENTIAL_SETUP_HINT)
     base_url = (
         values.get("TIKIN_BASE_URL")
         or DEFAULT_BASE_URL

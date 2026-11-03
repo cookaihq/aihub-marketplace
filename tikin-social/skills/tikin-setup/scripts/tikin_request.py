@@ -113,7 +113,7 @@ def exchange(method, url, headers, body, timeout):
 def execute(values, skill, request_file, record_input=None, output_dir='data/tikin'):
     key, base = values.get('TIKIN_API_KEY'), values['TIKIN_BASE_URL'].rstrip('/')
     if not key:
-        raise ValueError('missing TIKIN_API_KEY; run config-check')
+        raise ValueError('missing TIKIN_API_KEY; run config-check, then follow tikin-setup/references/credential-setup.md to open the Setup 2.3.0 local configuration page. Preserve the original caller, cwd and submission state.')
     spec = json.loads(Path(request_file).read_text(encoding='utf-8-sig'))
     if not isinstance(spec, dict) or set(spec) - {'method', 'path', 'query', 'body', 'original_request', 'timeout_seconds', 'reference_materials'}:
         raise ValueError('request-file has unknown fields or is not an object')

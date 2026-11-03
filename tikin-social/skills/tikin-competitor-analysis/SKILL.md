@@ -1,13 +1,13 @@
 ---
 name: tikin-competitor-analysis
 metadata:
-  version: "1.3.0"
-description: v1.3.0｜通过 Tikin 对比多个社交媒体账号的粉丝数、互动率、发布频率、热门内容和增长迹象。适用于账号对比，或用户提供受支持平台的账号主页链接进行竞品分析。
+  version: "1.4.0"
+description: v1.4.0｜通过 Tikin 对比多个社交媒体账号的粉丝数、互动率、发布频率、热门内容和增长迹象。适用于账号对比，或用户提供受支持平台的账号主页链接进行竞品分析。
 ---
 
 # Competitor Analysis
 
-纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并衔接 Setup 或最小回退；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
+纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并实际打开 Setup 配置网页；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
 
 ## 默认 Skill 检查
 

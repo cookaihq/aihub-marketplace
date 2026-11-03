@@ -5,12 +5,9 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Current Plugin version: **1.3.1**; all 17 Skills remain at **1.3.0**. This release updates version validation without changing business behavior. Host manifests and version metadata are checked; no new host-session acceptance is claimed. All 17 Skills share native JSON requests and automatic local error reports. Credential handoff uses the
-`setup-api-key` Skill in Setup AIHub 2.0.0. The following results apply to **1.2.0**:
-native Windows Plugin installation and Skill discovery are verified
-in Claude Code, Codex and WorkBuddy. Credential configuration passed in Codex's default sandbox
-and WorkBuddy; Claude Code natural invocation passed, while its configuration loop was not tested.
-Real social-data workflows require separate validation.
+Current Plugin version: **1.4.0**; all 17 Skills are **1.4.0**. Missing API Keys now open the local configuration page in Setup AIHub 2.3.0. The page supports direct entry or Secret Book, confirms the Key's service address, saves to the selected source, and rechecks through the business loader before resuming the original task.
+
+On macOS, all 50 regression tests and synthetic browser configuration pass. Codex 0.166.0 passes native test Plugin installation, tikin-douyin missing-Key invocation, browser save and cross-turn recovery, preserving its default sandbox with per-command approval for the local server. Claude Code 2.1.317 loads the complete Plugins, but account quota (403) blocks invocation. WorkBuddy's native window is blocked by macOS accessibility permissions. These limitations do not constitute host acceptance; native Windows, real Feishu authorization and online business calls remain unverified for this release.
 
 For 1.3.0, synthetic request/report/recovery tests pass on native Windows. WorkBuddy host
 acceptance is still incomplete; Claude Code and Codex received structure/document checks only
@@ -70,30 +67,17 @@ automatically.
 
 ## Configure API access
 
-可对当前 Agent 说“用 setup-api-key 帮我检查或更换刚才的 tikin 密钥”。Setup 统一入口不可用时，
-沿用下面的最小手填／Secret Book 流程；正确配置的业务不依赖它。完整安装请求见同包的
-[凭证衔接说明](skills/tikin-setup/references/credential-setup.md)。本版新增配置契约，配合 Setup 1.0.0 或更新的兼容版本使用。
+可对当前 Agent 说“用 setup-api-key 帮我检查或更换 tikin 密钥”。本版 1.4.0 在业务发现缺 Key 时实际打开同一个本机配置网页，使用完整 Setup Plugin 2.3.0 或更新版本；已能读取配置时直接继续业务。
 
-Secret Book 使用本人身份连接已有表，远端只读；缺列、缺 ID 或无权限不自动修复远端。
-未安装时可选安装并继续、手填或暂缓。有实际业务 Skill 的本机接入基线为 2.5.0，已通过
-Windows 合成数据测试；共享空 caller 需要 2.5.1 或更新版本。2.5.2 的 Windows 真实表配置、
-恢复及清理已通过；Codex 默认沙箱和 WorkBuddy 本机配置闭环通过，Claude Code 安装、发现
-及自然触发通过，配置闭环未实测。
-配置检查不会初始化路由、创建远端 Key 或发送业务请求。
+> 请用 tikin 查抖音数据。若缺少 API Key，请打开本机配置页；保留原需求，我填写保存后再检查并继续，不要让我把 Key 发到聊天。
 
-Get your own API key from <https://console.tikin.net>. Never paste a complete key into chat.
-`tikin-setup` can help with browser-based setup while you control login and authentication, or
-help you enter the key locally without displaying it.
+页面可手动填写 `TIKIN_API_KEY`，也可从 Secret Book 选择本人可见记录。默认服务地址为 `https://console.tikin.net`，可同时填写与 Key 对应的其他 HTTPS 地址。首次共享保存到 `~/.config/tikin-social/.env`；选择当前项目或修复已有来源时，预览会列出实际文件和替换项。
 
-> Help me configure tikin-social. Keep any configuration method I already chose, or let me
-> choose secret-book or a local .env file. Save new shared configuration in my personal
-> ~/.config/tikin-social/.env; repair existing errors in their actual source file. Tell me the
-> written file and effective sources without showing secret values.
+Secret Book 只读能力随 Setup 分发，不需额外安装独立 Skill。本人核对身份、已有表、记录与字段后确认保存；缺列、缺 ID 或权限不足由维护者处理。配置检查不初始化路由、不创建远端 Key、不发业务请求。
 
-| Field | What to provide |
-| --- | --- |
-| `TIKIN_API_KEY` | Required for API requests; the key from your tikin account. Offline endpoint search needs no key. |
-| `TIKIN_BASE_URL` | Optional API service root, default `https://console.tikin.net`; it must belong to the same service as your key. |
+Setup 缺失或本会话未加载时先核对并协助安装/加载兼容完整 Plugin，见[凭证衔接说明](skills/tikin-setup/references/credential-setup.md)。明确选择文件编辑或没有本机浏览器时保留文件填写方式。保存后用真实加载器复查并完成默认设置检查；原请求未提交且授权有效才继续，已提交或状态未知先查询原结果，不重发。
+
+### Configuration sources and repair
 
 The confirmed default for new shared credentials is the Plugin’s personal `.env` file. Existing
 project or Skill-specific choices remain valid. Each field independently uses the first nonempty

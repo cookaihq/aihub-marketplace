@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/cookaihq/secret-book",
+  "version": "2.7.0",
+  "commit": "4d72a29f3f5201e8e07e7bffdf504fab6651df21",
+  "files": {
+    "scripts/agent_rules.py": "0aea2f14458b5f9e466f8cd2b892bc04d70f0f9cca2a6909eef0dc9f28fa26e1",
+    "scripts/consumers/__init__.py": "6776ad76155530af8c508fa1e51324dfc62d4d70c803248ab3111301b6fa034e",
+    "scripts/consumers/native.py": "cc0d17fc72dba761059b7259258d66e0a020b6b8f9443a63a5fa343c1c6985c9",
+    "scripts/local_platform.py": "075a96638d04223430429fb84c5449a3a2c32bf258c3017674b42f18c790b293",
+    "scripts/secret_book.py": "12b8702d9f84cae42c9571d2e439b664e79f740de3f36c6831dc1f92509ecddc",
+    "scripts/task_runtime.py": "26d1269aef02e142fc6dbd9077c8aef710aa6b228111ce493dcd1a2b303b5112",
+    "scripts/task_state.py": "8d05e5d3d656b16b01b5a1eef0fc2f413a54394bad920a0997fac6cb6b13301e"
+  }
+}

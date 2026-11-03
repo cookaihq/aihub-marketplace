@@ -1,13 +1,13 @@
 ---
 name: aihub-document
 metadata:
-  version: "1.4.0"
-description: v1.4.0｜使用 AIhub doc2x-v3 将 PDF 识别并转换为 Markdown、LaTeX 或 DOCX 的 ZIP 结果包，下载后核验文档包。
+  version: "1.5.0"
+description: v1.5.0｜使用 AIhub doc2x-v3 将 PDF 识别并转换为 Markdown、LaTeX 或 DOCX 的 ZIP 结果包，下载后核验文档包。
 ---
 
 # AIhub Document
 
-凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)衔接 Setup 或最小回退；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开 Setup 配置网页；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
 
 Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 
