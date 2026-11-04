@@ -19,7 +19,7 @@ the dry-run output over reconstructing the fingerprint.
 
 ```text
 uv run --frozen --project "<setup>" python "<setup>/scripts/tikin-config" --skill tikin-rest-api request --request-file "<request.json>" --dry-run
-uv run --frozen --project "<setup>" python "<setup>/scripts/tikin-config" --skill tikin-rest-api request --request-file "<request.json>" --regression-approval "<shared approval.json>"
+uv run --frozen --project "<setup>" python "<setup>/scripts/tikin-config" --skill tikin-rest-api request --request-file "<request.json>" --task-name "接口回归验证" --regression-approval "<shared approval.json>"
 ```
 
 Keep the returned `--record` on continuation, along with the approval reference.

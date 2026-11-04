@@ -1,5 +1,6 @@
 """Exercise the distributed request command against synthetic local HTTP responses."""
 import json
+from datetime import datetime
 import os
 from pathlib import Path
 import subprocess
@@ -8,6 +9,7 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,7 +52,7 @@ class ErrorReportTests(unittest.TestCase):
         self.env = {**os.environ, 'TIKIN_API_KEY': 'synthetic-key-do-not-save',
                     'TIKIN_BASE_URL': f'http://127.0.0.1:{self.server.server_port}'}
 
-    def request(self, record=None, method='GET'):
+    def request(self, record=None, method='GET', task_name='抖音评论分析'):
         request = self.root / 'request.json'
         request.write_text(json.dumps({'original_request': 'synthetic private user requirement',
                                       'method': method, 'path': '/api/v1/tiktok/test',
@@ -59,6 +61,8 @@ class ErrorReportTests(unittest.TestCase):
                'request', '--request-file', str(request)]
         if record:
             cmd += ['--record', str(record)]
+        elif task_name is not None:
+            cmd += ['--task-name', task_name]
         result = subprocess.run(cmd, cwd=self.root, env=self.env, text=True, encoding='utf-8',
                                 capture_output=True, timeout=40)
         self.assertTrue(result.stdout.strip(), result.stderr)
@@ -115,7 +119,7 @@ class ErrorReportTests(unittest.TestCase):
                                        'path': '/api/v1/batch', 'body': ['one']}), encoding='utf-8')
         self.status = 503
         with patch.object(tikin_request, 'feedback', side_effect=OSError('synthetic report failure')):
-            result = tikin_request.execute(self.env, 'tikin-tiktok', request, output_dir=self.root)
+            result = tikin_request.execute(self.env, 'tikin-tiktok', request, output_dir=self.root, task_name='batch-export')
         self.assertEqual(result['status'], 'submission_unknown')
         self.assertEqual(result['http_status'], 503)
         self.assertIn('feedback_warning', result)
@@ -135,6 +139,44 @@ class ErrorReportTests(unittest.TestCase):
         self.assertEqual(result['response']['media_url'], self.payload['media_url'])
         self.assertNotIn('must-not-return', json.dumps(result))
 
+    def test_named_runs_keep_separate_histories_and_resume_the_original_directory(self):
+        self.status, self.payload = 200, {'data': {'items': []}}
+        before = datetime.now().replace(microsecond=0)
+        first = self.request(task_name='抖音评论/分析:*?')
+        second = self.request(task_name='抖音评论/分析:*?')
+        record = Path(first['record'])
+        self.assertEqual(record.parent.parent, self.root / 'data/tikin-social')
+        self.assertRegex(record.parent.name, r'^\d{14}-抖音评论-分析-run-[0-9a-f]{8}$')
+        created = datetime.strptime(record.parent.name[:14], '%Y%m%d%H%M%S')
+        self.assertLessEqual(before, created)
+        self.assertLessEqual(created, datetime.now())
+        self.assertNotEqual(first['record'], second['record'])
+        resumed = self.request(first['record'])
+        self.assertEqual(resumed['record'], first['record'])
+        state = json.loads(record.read_text(encoding='utf-8'))
+        self.assertEqual(state['task_name'], '抖音评论-分析')
+        self.assertEqual(len(state['exchanges']), 2)
+        self.assertEqual(len(json.loads(Path(second['record']).read_text())['exchanges']), 1)
+        self.assertFalse((record.parent / 'error-report.md').exists())
+
+    def test_new_run_requires_summary_before_creating_files_or_sending(self):
+        for name in (None, '  ', '///:*?', self.env['TIKIN_API_KEY']):
+            result = self.request(task_name=name)
+            self.assertEqual(result['status'], 'local_error')
+        self.assertFalse((self.root / 'data').exists())
+        self.assertEqual(self.calls, [])
+
+    def test_short_random_collision_never_reuses_an_existing_task(self):
+        with patch.object(tikin_request, 'datetime') as clock, patch.object(tikin_request.uuid, 'uuid4') as random:
+            clock.now.return_value.astimezone.return_value.strftime.return_value = '20261103143025'
+            random.side_effect = [SimpleNamespace(hex=value) for value in ('12345678', '12345678', '87654321')]
+            first = tikin_request.create_record(self.root, 'comments-analysis')
+            first.write_text('existing task', encoding='utf-8')
+            second = tikin_request.create_record(self.root, 'comments-analysis')
+        self.assertNotEqual(first, second)
+        self.assertEqual(first.read_text(encoding='utf-8'), 'existing task')
+        self.assertTrue(second.parent.name.endswith('-run-87654321'))
+
     def test_later_save_failure_still_links_the_previous_real_report(self):
         first = self.request()
         with patch.object(tikin_request, 'feedback', side_effect=OSError('synthetic later save failure')):
@@ -150,12 +192,12 @@ class ErrorReportTests(unittest.TestCase):
         request.write_text(json.dumps({'original_request': 'synthetic read', 'path': '/api/v1/read', 'side_effects': False}), encoding='utf-8')
         self.status = 503
         def recover(_):
-            reports = list(self.root.glob('tikin-run-*/error-report.md'))
+            reports = list(self.root.glob('*-run-*/error-report.md'))
             self.assertEqual(len(reports), 1)
             self.assertIn('503', reports[0].read_text(encoding='utf-8'))
             self.status, self.payload = 200, {'data': []}
         with patch.object(tikin_request.time, 'sleep', side_effect=recover):
-            result = tikin_request.execute(self.env, 'tikin-tiktok', request, output_dir=self.root)
+            result = tikin_request.execute(self.env, 'tikin-tiktok', request, output_dir=self.root, task_name='read-posts')
         self.assertEqual(result['status'], 'ok')
         self.assertEqual(result['feedback']['upstream_error_count'], 1)
         self.assertEqual(len(self.calls), 2)

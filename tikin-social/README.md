@@ -5,11 +5,19 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Candidate Plugin version: **1.6.0**, with all 17 independently versioned Skills
-at **1.6.0** because the shared execution/workflow behavior changes affect the suite.
-This second-batch development candidate contains 1029 operations; the separate
-first-batch candidate contains 919. Neither catalog is evidence of live availability.
-Native host acceptance and publication are pending.
+Plugin version: **2.0.0**. The 16 Skills using the shared business request
+entry are **2.0.0**; offline `tikin-endpoint-discovery` remains **1.6.0**. New API runs
+require the Agent to supply a concise task name; existing records resume by their saved paths.
+This release includes the previously unpublished 1.5.0/1.6.0 changes and the
+second-batch catalog of 1029 operations; the retained first-batch catalog contains
+919. Neither catalog is evidence of live availability. Native host acceptance remains partial.
+
+For the task-directory update on macOS, 119 automated behavior tests, 68 structural checks
+and all 17 official Skill schemas pass. Codex 0.166.0 loads the native test Plugin and
+creates/resumes the named local record; its default sandbox blocks loopback HTTP. Claude
+Code 2.1.318 selects the existing Opus 5.5 default but quota 403 prevents invocation.
+WorkBuddy 5.9.3 retains another task's unsent draft; no independent test window was available.
+These are partial host results; successful host HTTP calls and native Windows remain unverified.
 
 Includes the credential flow introduced in published **1.4.0**: missing API Keys
 open the local configuration page in Setup AIHub 2.3.0. The page supports direct
@@ -183,7 +191,7 @@ several accounts into one shared file without choosing which account each Skill 
 
 ## Candidate catalog and request behavior
 
-The 1.6.0 development candidate carries the frozen second-batch catalog and full
+The development candidate carries the frozen second-batch catalog and full
 offline request contracts. Read the [second-batch workflow guide](skills/tikin-endpoint-discovery/references/second-batch.md)
 for platform prerequisites, limits, asynchronous tasks and candidate scope. Read the [migration guide](skills/tikin-endpoint-discovery/references/first-batch.md)
 for method/parameter changes and retired routes. Its `catalog-identity.json` reports
@@ -235,7 +243,23 @@ URLs returned by tikin; it should not silently fetch a source social page throug
 HTTP tool when you decline tikin. Large pulls use explicit pagination and request budgets and
 may return a partial result with a resume cursor.
 
-## Local error reports
+## Local task records and error reports
+
+API calls save a task record even when they succeed. By default it is under the command's
+working folder at `data/tikin-social/`, in a directory such as
+`20261103143025-抖音评论分析-run-a1b2c3d4/`. The name combines the computer's local date/time,
+a short Chinese or English task summary chosen by the Agent, and eight random characters.
+You can ask the Agent to use another output location. New tasks get separate directories;
+pagination, queries and recovery for the same task keep its existing directory.
+
+`run.json` retains observed requests, sanitized responses, timing, retries and task state;
+`run.json.lock` coordinates access to that record. There is no automatic expiry cleanup.
+The record is not a full data backup or a transcript of the Agent's analysis. A process
+interrupted before saving a response can leave its outcome unknown. You can ask:
+
+> Read this task's run.json and explain which interfaces were actually called, what they
+> returned, what was retried, and which results still cannot be determined. Do not send
+> another API request just to reconstruct the history.
 
 The first API, protocol or remote-task failure automatically saves one readable `error-report.md`
 for the user task. It includes original requirements, submitted parameters, necessary source

@@ -53,7 +53,7 @@ class ProxyDownloadTests(unittest.TestCase):
             'body': {'video_id': 'abcdefghijk', 'proxy_url': f'http://fixture-user:proxy%3Ap%40ss@127.0.0.1:{self.ports["proxy"]}',
                      'itags': ['137', '140'], 'verify_download': verify}}))
         result = subprocess.run([sys.executable, str(SCRIPT), '--no-global-config', 'request',
-                                 '--request-file', str(self.request_file)], env=self.env, cwd=self.root,
+                                 '--request-file', str(self.request_file), '--task-name', 'download-streams'], env=self.env, cwd=self.root,
                                 capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.response_file.write_text(result.stdout)

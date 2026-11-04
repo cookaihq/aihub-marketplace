@@ -19,10 +19,28 @@ Resolve the installed `tikin-setup` directory and the actual calling Skill name.
 The same command works in native Windows PowerShell, macOS and Linux shells; quote each actual path. No POSIX shell or curl is used for API requests:
 
 ```text
-uv run --frozen --project "<installed tikin-setup directory>" python "<installed tikin-setup directory>/scripts/tikin-config" --skill tikin-tiktok request --request-file "<absolute request.json>" --output-dir "<absolute task output directory>"
+uv run --frozen --project "<installed tikin-setup directory>" python "<installed tikin-setup directory>/scripts/tikin-config" --skill tikin-tiktok request --request-file "<absolute request.json>" --task-name "TikTok视频详情"
 ```
 
+For a new run, the Agent derives a concise Chinese or English task summary and supplies
+it through `--task-name`. Use the task's purpose, without account IDs, source URLs or
+credentials; do not make another model/API request just to name a directory. The helper
+normalizes the name, keeps Chinese characters, ASCII letters and digits, converts other
+runs of characters to `-`, and limits the name to 32 characters. An absent or empty name
+fails locally before sending or creating the run. `--dry-run` creates no run and needs no name.
+
+The default parent is `data/tikin-social/`, relative to the command's working directory.
+`--output-dir "<absolute parent directory>"` can override that parent. Every new run creates
+`<YYYYMMDDHHmmss>-<task-name>-run-<8 lowercase hexadecimal characters>/run.json`, using the
+runtime computer's local time. For example: `20261103143025-抖音评论分析-run-a1b2c3d4/`.
+Exclusive directory creation retries a random collision instead of sharing a task directory.
+The normalized summary is also saved as `task_name` in `run.json`.
+
 On follow-up calls for the **same user task**, pass `--record "<absolute run.json returned by the first call>"`. Keep that caller and record for all pages, retries explicitly requested later and task-status queries. Create a new request file with the actual next cursor or query endpoint; `--record` reuses the report, it does not itself replay the previous request. Resume with the same service and credential. An ambiguous POST/PUT/PATCH/DELETE is retained and cannot be replayed automatically using the same record.
+
+Resumption needs no new name: `--record` determines the existing directory, and any supplied
+name or output parent does not rename it. Directory names are not record identities; existing
+records are opened by their returned paths. There is no automatic relocation or expiry cleanup.
 
 `--no-global-config` goes before `request` when this task disables global configuration; it skips both Plugin and ordinary Skill global files. The actual loader retains the existing precedence and does not save credentials. The `run -- <command>` subcommand remains a configuration utility; it does not capture arbitrary child HTTP traffic and is not the business request entrypoint.
 
@@ -73,6 +91,13 @@ The same record preserves the bounded query count and deadline, including in-fli
 query time. A query response for another task cannot complete the requested task.
 
 ## Every user-facing response
+
+Keep the returned `record` path available even on success. For retrospective questions, read
+its `exchanges` in order, then `events` and any asynchronous task state. Distinguish actual
+client HTTP responses, business/task outcomes, scheduled retries and missing evidence.
+These files record helper activity, not the Agent's entire analysis or every external tool.
+If the process stopped before a response was durably saved, do not infer an outcome from
+`in_flight` or a reserved attempt. Redacted/truncated evidence is not a full data export.
 
 When `feedback` exists, copy **every** `feedback.artifact_links` entry into the conversation on first failure, repeated failure/query, recovery and the final response. Each link label must show its **full absolute path** and point at that real saved file. Do not shorten it to a filename, relative path or “same directory”, and do not place links in code fences. `feedback.user_notice` contains ready-to-use Markdown.
 

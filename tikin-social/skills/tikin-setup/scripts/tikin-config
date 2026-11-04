@@ -467,7 +467,8 @@ def main():
     request_parser = subparsers.add_parser("request", help="execute one JSON API operation with durable local error reports")
     request_parser.add_argument("--request-file", required=True)
     request_parser.add_argument("--record", help="reuse the same run for pagination, queries and recovery")
-    request_parser.add_argument("--output-dir", default="data/tikin")
+    request_parser.add_argument("--output-dir", default="data/tikin-social")
+    request_parser.add_argument("--task-name", help="short Chinese or English task summary; required for a new run")
     request_parser.add_argument("--regression-approval", help="reference the existing shared regression approval and ledger")
     request_parser.add_argument("--dry-run", action="store_true", help="describe the exact request identity without sending")
     download_parser = subparsers.add_parser("download", help="verify and download existing YouTube V3 streams through their original proxy")
@@ -526,7 +527,7 @@ def main():
         values, _ = load_config(skill_name, global_enabled)
         try:
             output = execute(values, skill_name, args.request_file, args.record, args.output_dir,
-                             args.regression_approval, args.dry_run)
+                             args.regression_approval, args.dry_run, args.task_name)
         except GateError as error:
             output = {"status": "regression_blocked", "reason": error.reason}
         except (OSError, ValueError, KeyError, TypeError) as error:

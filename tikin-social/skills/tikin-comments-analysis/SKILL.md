@@ -1,8 +1,8 @@
 ---
 name: tikin-comments-analysis
 metadata:
-  version: "1.6.0"
-description: v1.6.0｜通过 Tikin 获取并分析受支持帖子或视频链接下的评论，整理情绪分布、反复出现的话题、热门评论及值得关注的问题和投诉。适用于评论分析、讨论总结，或用户提供社交媒体帖子链接的场景。
+  version: "2.0.0"
+description: v2.0.0｜通过 Tikin 获取并分析受支持帖子或视频链接下的评论，整理情绪分布、反复出现的话题、热门评论及值得关注的问题和投诉。适用于评论分析、讨论总结，或用户提供社交媒体帖子链接的场景。
 ---
 
 # Comments Analysis

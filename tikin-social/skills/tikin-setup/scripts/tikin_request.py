@@ -1,5 +1,6 @@
 """Shared JSON request transport for all tikin Skills. No business request is sent by report code."""
 import hashlib
+from datetime import datetime
 import json
 import math
 import re
@@ -11,6 +12,7 @@ import sys
 import time
 import tomllib
 import uuid
+import unicodedata
 from typing import Any, Mapping
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urlsplit
@@ -24,6 +26,34 @@ MAX_ATTEMPTS = 3
 DEFAULT_TIMEOUT = 30
 MAX_RESPONSE_BYTES = 32 * 1024 * 1024
 READ_METHODS = {'GET', 'HEAD', 'OPTIONS'}
+DEFAULT_OUTPUT_DIR = 'data/tikin-social'
+
+
+def task_directory_name(value, secrets):
+    """Use the Agent's task summary, never infer a title from private request parameters."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError('task-name is required for a new run')
+    value = unicodedata.normalize('NFKC', value.strip())
+    if redact(value, secrets) != value:
+        raise ValueError('task-name must not contain credentials or signed URLs')
+    name = re.sub(r'[^A-Za-z0-9\u3400-\u4dbf\u4e00-\u9fff]+', '-', value).strip('-')[:32].rstrip('-')
+    if not name:
+        raise ValueError('task-name must contain a short Chinese or English task summary')
+    return name
+
+
+def create_record(output_dir, task_name):
+    """Reserve a distinct directory even if short random suffixes collide."""
+    timestamp = datetime.now().astimezone().strftime('%Y%m%d%H%M%S')
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for _ in range(10):
+        directory = output_dir / f'{timestamp}-{task_name}-run-{uuid.uuid4().hex[:8]}'
+        try:
+            directory.mkdir(mode=0o700)
+        except FileExistsError:
+            continue
+        return directory / 'run.json'
+    raise FileExistsError('could not reserve a unique run directory')
 
 
 def request_fingerprint(method: str, url: str, body: Any, body_present: bool = False) -> str:
@@ -161,7 +191,7 @@ def exchange(method, url, headers, body, timeout, body_present=False):
             response.close()
 
 
-def execute(values, skill, request_file, record_input=None, output_dir='data/tikin', regression_approval=None, dry_run=False):
+def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_OUTPUT_DIR, regression_approval=None, dry_run=False, task_name=None):
     key, base = values.get('TIKIN_API_KEY'), values['TIKIN_BASE_URL'].rstrip('/')
     if not key:
         raise ValueError('missing TIKIN_API_KEY; run config-check, then follow tikin-setup/references/credential-setup.md to open the Setup 2.3.0 local configuration page. Preserve the original caller, cwd and submission state.')
@@ -205,12 +235,13 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
     headers = {'Authorization': 'Bearer ' + key, 'Accept': 'application/json'}
     if body_present:
         headers['Content-Type'] = 'application/json'
-    record = Path(record_input).resolve() if record_input else Path(output_dir).resolve() / ('tikin-run-' + str(uuid.uuid4())) / 'run.json'
+    output_root = Path(output_dir).resolve()
+    record = Path(record_input).resolve() if record_input else None
     setup_root = Path(__file__).resolve().parents[1]
     plugin_root = setup_root.parent.parent
     manifest_path = plugin_root / '.claude-plugin/plugin.json'
     installation = plugin_root if manifest_path.is_file() else setup_root
-    if record.is_relative_to(installation):
+    if (record if record is not None else output_root).is_relative_to(installation):
         raise ValueError('reports must be outside the Plugin installation')
     # Skills-only installs still carry the pinned project version, but no Plugin manifest.
     version = (json.loads(manifest_path.read_text(encoding='utf-8'))['version'] if manifest_path.is_file()
@@ -226,6 +257,9 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
     regression_ref = regression.reference if regression else None
     if regression:
         headers[GUARD_HEADER] = regression.binding
+    if record is None:
+        task_name = task_directory_name(task_name, secrets)
+        record = create_record(output_root, task_name)
     with record_lock(record):
         if record_input:
             state = json.loads(record.read_text(encoding='utf-8'))
@@ -244,7 +278,7 @@ def execute(values, skill, request_file, record_input=None, output_dir='data/tik
                 return output
         else:
             state = {'schema_version': 1, 'kind': 'tikin-run', 'plugin': 'tikin-social', 'plugin_version': version,
-                     'skill': skill, 'binding': binding, 'created_at': now(), 'updated_at': now(),
+                     'skill': skill, 'task_name': task_name, 'binding': binding, 'created_at': now(), 'updated_at': now(),
                      'original_request': redact(spec['original_request'], secrets), 'status': 'ready', 'events': [], 'exchanges': []}
             state['regression'] = regression_ref
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0 — 2026-11-03
+
+- Change the default request-record parent to `data/tikin-social/` and name each new run `<YYYYMMDDHHmmss>-<task-summary>-run-<8 lowercase hexadecimal characters>` using local time.
+- Require an Agent-supplied `--task-name` for new API runs. Normalize Chinese/English summaries, limit them to 32 characters and reserve directories exclusively so random collisions cannot mix task histories. Existing `--record` calls keep their saved path; dry runs create no directory and need no name.
+- Document successful request records as well as error reports, and distinguish client observations from unknown upstream behavior, omitted content and interrupted writes.
+- Upgrade the 16 request-using Skills to 2.0.0 for the new required input; offline endpoint discovery remains 1.6.0. Native host acceptance is partial and Windows acceptance is pending.
+- Include the previously unpublished 1.5.0/1.6.0 changes below: complete-suite identity, frozen catalogs, durable caption/LinkedIn workflows, regression budgets and same-proxy download continuation. Live service availability and real business calls remain unverified.
+- macOS validation: 119 behavior tests, 68 structural checks and 17 official Skill schemas pass. Codex loads the native test Plugin and reuses its named record, but default-sandbox loopback HTTP is blocked. Claude Code is blocked by quota 403; WorkBuddy's unrelated unsent draft is preserved.
+
 ## 1.6.0
 
 Development candidate; not published.

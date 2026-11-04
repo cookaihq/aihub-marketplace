@@ -79,6 +79,8 @@ class ExecutionSafetyTests(unittest.TestCase):
                    'request', '--request-file', str(path)]
         if record:
             command += ['--record', str(record)]
+        else:
+            command += ['--task-name', 'controlled-execution']
         if approval:
             command += ['--regression-approval', str(approval)]
         return command
