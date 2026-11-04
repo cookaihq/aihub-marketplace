@@ -4,8 +4,10 @@
 
 | Plugin | 本次本地兼容基线 | 字段与入口 |
 | --- | --- | --- |
-| `aihub-studio` | 1.2.0 | `references/credentials.json` 仅声明必填敏感字段 `AIHUB_API_KEY`；`node "<plugin>/scripts/aihub.mjs" config-check --skill <真实业务Skill> --credentials-only` |
-| `tikin-social` | 1.2.0 | `skills/tikin-setup/references/credentials.json`；`uv run --locked --no-dev --project "<tikin-setup>" python "<tikin-setup>/scripts/tikin-config" --skill <真实业务Skill> config-check` |
+| `aihub-studio` | >= 1.2.0、< 2.0.0 | `references/credentials.json` 仅声明必填敏感字段 `AIHUB_API_KEY`；`node "<plugin>/scripts/aihub.mjs" config-check --skill <真实业务Skill> --credentials-only` |
+| `tikin-social` | >= 2.0.0、< 3.0.0 | `skills/tikin-setup/references/credentials.json`；`uv run --locked --no-dev --project "<tikin-setup>" python "<tikin-setup>/scripts/tikin-config" --skill <真实业务Skill> config-check` |
+
+Setup 3.0.0 起只接入 Tikin 2.x，不保留 Tikin 1.x 配置适配。`consumer_upgrade_required` 返回当前版本、最低版本和支持范围：通过当前宿主的完整 Plugin 更新入口升级 Tikin，核对新实体后继续；已有更新授权直接沿用。版本高于支持范围返回 `incompatible_version`，先核对支持该版本的 Setup，不降级业务 Plugin、不改版本号绕过检查。已有任务更新后使用 `attach` 重新绑定产物并检查，保留原业务提交状态。
 
 两个入口没有 caller 时都使用 `--plugin-only`，与 `--skill` 互斥。tikin 身份和全局开关放在 `config-check` 前，AIhub 放在后面。`--no-global-config` 关闭两类全局目录。AIhub 的 `--credentials-only` 不检查业务模型设置/媒体工具，不能从它成功推断其他配置正确。
 

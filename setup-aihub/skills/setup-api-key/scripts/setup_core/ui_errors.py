@@ -1,5 +1,6 @@
 """Stable, value-free errors for the local browser boundary."""
 from .errors import SetupError
+import re
 
 MESSAGES = {
     "invalid_input": "请检查输入。密钥必须是非空的单行文本。",
@@ -32,12 +33,23 @@ MESSAGES = {
     "table_fields_missing": "已有表缺少必要字段，请联系表管理员处理后重新检查。",
     "no_application": "当前环境没有可用的飞书应用，请让 Agent 配置 Lark CLI 应用后回来检查。",
     "no_services": "尚未提供已安装业务 Plugin 的位置，请让 Agent 核对安装后重新打开。",
+    "consumer_upgrade_required": "业务 Plugin 版本过低，请让 Agent 升级到所需版本后继续配置。",
+    "incompatible_version": "当前业务 Plugin 版本不在 Setup 支持范围内，请让 Agent 核对可用的 Setup 版本后继续。",
 }
 
 
 def public_error(error):
     reason = error.reason if isinstance(error, SetupError) else "local_operation_failed"
     result = {"error": reason, "message": MESSAGES.get(reason, "本机操作未完成，请让 Agent 按错误编号检查后继续：" + reason)}
+    if isinstance(error, SetupError) and reason in ("consumer_upgrade_required", "incompatible_version"):
+        details = error.details
+        if (details.get("plugin") in ("aihub-studio", "tikin-social")
+                and all(isinstance(details.get(key), str) and re.fullmatch(r"\d+\.\d+\.\d+", details[key])
+                        for key in ("current_version", "minimum", "maximum_exclusive"))):
+            result["message"] = (f"{details['plugin']} 当前版本为 {details['current_version']}；"
+                                 f"本版 Setup 支持 >= {details['minimum']}、< {details['maximum_exclusive']}。"
+                                 + ("请让 Agent 升级业务 Plugin 后继续配置。" if reason == "consumer_upgrade_required"
+                                    else "请让 Agent 核对支持此版本的 Setup，不要降级业务 Plugin。"))
     if isinstance(error, SetupError):
         # Never forward arbitrary exception messages, argv, HTTP bodies or values.
         for key in ("retry_at", "source", "field", "missing_fields", "expected", "observed"):

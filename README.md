@@ -83,6 +83,6 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 | 目标 | 版本 | Release |
 |---|---|---|
 | aihub-studio | 1.5.0 | [aihub-studio/v1.5.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv1.5.0) |
-| setup-aihub | 2.3.0 | [setup-aihub/v2.3.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv2.3.0) |
-| tikin-social | 2.0.0 | [tikin-social/v2.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv2.0.0) |
+| setup-aihub | 3.0.0 | [setup-aihub/v3.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv3.0.0) |
+| tikin-social | 2.0.1 | [tikin-social/v2.0.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv2.0.1) |
 <!-- release-table:end -->

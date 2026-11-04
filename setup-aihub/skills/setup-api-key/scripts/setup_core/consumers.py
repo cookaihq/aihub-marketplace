@@ -15,7 +15,7 @@ ADAPTERS = {
         "artifacts": ["scripts/aihub.mjs", "scripts/aihub.ps1", "dist/cli.js", "dist/config.js"],
     },
     "tikin-social": {
-        "declaration": "skills/tikin-setup/references/credentials.json", "minimum": (1, 2, 0),
+        "declaration": "skills/tikin-setup/references/credentials.json", "minimum": (2, 0, 0),
         "fields": {"TIKIN_API_KEY", "TIKIN_BASE_URL"}, "runtime": "skills/tikin-setup/pyproject.toml",
         "artifacts": ["skills/tikin-setup/scripts/tikin-config", "skills/tikin-setup/scripts/_runtime_bootstrap.py",
                       "skills/tikin-setup/.python-version", "skills/tikin-setup/uv.lock"],
@@ -55,8 +55,14 @@ class Consumer:
         if not isinstance(self.version, str) or not re.fullmatch(r"\d+\.\d+\.\d+", self.version):
             raise SetupError("incompatible_version")
         version = tuple(map(int, self.version.split(".")))
-        if version < self.adapter["minimum"] or version[0] != 1:
-            raise SetupError("incompatible_version", minimum=".".join(map(str, self.adapter["minimum"])))
+        minimum = self.adapter["minimum"]
+        supported = {"plugin": name, "current_version": self.version,
+                     "minimum": ".".join(map(str, minimum)),
+                     "maximum_exclusive": f"{minimum[0] + 1}.0.0"}
+        if version < minimum:
+            raise SetupError("consumer_upgrade_required", **supported)
+        if version[0] != minimum[0]:
+            raise SetupError("incompatible_version", **supported)
         self.declaration_path = self.root / self.adapter["declaration"]
         self.declaration = _json(self.declaration_path)
         consumer = self.declaration.get("consumer", {})

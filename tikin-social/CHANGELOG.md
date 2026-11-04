@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1 — 2026-11-04
+
+- Require Setup AIHub / setup-api-key 3.0.0 or newer when a missing API Key opens the local configuration page. Setup 2.3.0 rejects Tikin 2.x.
+- Correct the shared runtime hint and credential handoff instructions; update the 16 affected Skills to 2.0.1. Offline endpoint discovery stays 1.6.0.
+- All 119 automated tests pass on macOS. Native Codex 0.166.0 passes configuration and browser recovery with Setup 3.0.0. WorkBuddy 5.9.3 installs, loads and opens the page, but its safe-delete guard blocks the save preview; Claude Code 2.1.318 is blocked by quota 403. This release retains both pending host checks; native Windows and live service calls remain unverified.
+
 ## 2.0.0 — 2026-11-03
 
 - Change the default request-record parent to `data/tikin-social/` and name each new run `<YYYYMMDDHHmmss>-<task-summary>-run-<8 lowercase hexadecimal characters>` using local time.

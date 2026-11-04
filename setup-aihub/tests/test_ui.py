@@ -139,12 +139,18 @@ class UITests(unittest.TestCase):
         self.options["services"]["tikin-social"]["caller"] = "tikin-douyin"
         ui = ConfigurationUI(self.root / "different", self.options)
         ui.action("choose", {"service": "tikin-social", "source": "manual"})
+        self.assertEqual(ui.consumer().inspect()["status"], "configuration_required")
         preview = ui.action("manual", {"values": {"TIKIN_API_KEY": self.marker, "TIKIN_BASE_URL": "https://example.invalid"}, "scope": "project"})
         done = ui.action("save", {"id": preview["preview"]["id"]})
         self.assertEqual(done["phase"], "done")
         self.assertEqual(ui.task()["result"]["local"]["skill"], "tikin-douyin")
         self.assertFalse(ui.task()["result"]["local"]["global_enabled"])
         self.assertEqual(ui.task()["result"]["default_settings"]["phase"], "skipped")
+        self.assertEqual(ui.task()["context"]["version"],
+                         json.loads((MARKET / "tikin-social/.codex-plugin/plugin.json").read_text())["version"])
+        restored = ConfigurationUI(self.root / "different", self.options)
+        self.assertEqual(restored.public()["phase"], "done")
+        self.assertEqual(restored.consumer().inspect()["status"], "ok")
 
     def test_real_launcher_restart_status_and_stop(self):
         prefix = [sys.executable, str(SKILL / "scripts/setup_ui.py")]
@@ -153,18 +159,20 @@ class UITests(unittest.TestCase):
             proc = RUN([*prefix, verb, *context, *args], capture_output=True, text=True, timeout=25)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             return json.loads(proc.stdout)
-        started = command("start", "--aihub-root", str(MARKET / "aihub-studio"))
-        session = started["session"]
-        try:
-            self.assertEqual(command("status", "--session", session)["status"], "running")
-            again = command("start", "--session", session)
-            self.assertEqual(again["url"], started["url"])
-            command("stop", "--session", session)
-            self.assertEqual(command("status", "--session", session)["status"], "stopped")
-            reopened = command("start", "--session", session)
-            self.assertNotEqual(reopened["url"], started["url"])
-        finally:
-            command("stop", "--session", session)
+        for plugin, flag in (("aihub-studio", "--aihub-root"), ("tikin-social", "--tikin-root")):
+            with self.subTest(plugin=plugin):
+                started = command("start", flag, str(MARKET / plugin), "--plugin", plugin)
+                session = started["session"]
+                try:
+                    self.assertEqual(command("status", "--session", session)["status"], "running")
+                    again = command("start", "--session", session)
+                    self.assertEqual(again["url"], started["url"])
+                    command("stop", "--session", session)
+                    self.assertEqual(command("status", "--session", session)["status"], "stopped")
+                    reopened = command("start", "--session", session)
+                    self.assertNotEqual(reopened["url"], started["url"])
+                finally:
+                    command("stop", "--session", session)
 
     def test_quotes_round_trip_and_expired_session(self):
         self.marker = "synthetic-single'quote\\double\"dollar$hash#"

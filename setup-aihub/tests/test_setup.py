@@ -96,6 +96,33 @@ class SetupTests(unittest.TestCase):
         self.assertFalse((self.user / ".config").exists())
         self.assertEqual(list(self.project.iterdir()), [])
 
+    def test_tikin_requires_upgrade_from_v1_and_rejects_unknown_major_without_writes(self):
+        from setup_core.ui_errors import public_error
+        for version, reason in (("1.4.0", "consumer_upgrade_required"),
+                                ("1.99.99", "consumer_upgrade_required"),
+                                ("3.0.0", "incompatible_version")):
+            with self.subTest(version=version):
+                root = self.root / ("Tikin " + version)
+                for folder in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
+                    manifest = root / folder / "plugin.json"
+                    manifest.parent.mkdir(parents=True)
+                    manifest.write_text(json.dumps({"name": "tikin-social", "version": version}))
+                for command, extra in (("inspect", []), ("start", ["--operation", "configure"])):
+                    result = self.call(command, "--plugin", "tikin-social", "--plugin-root", root,
+                                       "--plugin-only", *extra, ok=False)
+                    self.assertEqual(result["reason"], reason)
+                    self.assertEqual(result["current_version"], version)
+                    self.assertEqual(result["minimum"], "2.0.0")
+                    self.assertEqual(result["maximum_exclusive"], "3.0.0")
+                with self.assertRaises(SetupError) as failure:
+                    Consumer("tikin-social", root, None, self.project)
+                message = public_error(failure.exception)["message"]
+                self.assertIn(version, message)
+                self.assertIn("2.0.0", message)
+                self.assertIn("升级业务 Plugin" if version.startswith("1.") else "不要降级", message)
+        self.assertFalse((self.user / ".config").exists())
+        self.assertEqual(list(self.project.iterdir()), [])
+
     def test_manual_prepare_and_continue_reloads_the_real_business_source(self):
         task = self.start(submission="not_submitted")
         target = self.user / ".config/aihub-studio/.env"

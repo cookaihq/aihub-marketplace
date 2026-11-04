@@ -5,24 +5,32 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **2.0.0**. The 16 Skills using the shared business request
-entry are **2.0.0**; offline `tikin-endpoint-discovery` remains **1.6.0**. New API runs
+Plugin version: **2.0.1**. The 16 Skills using the shared business request
+entry are **2.0.1**; offline `tikin-endpoint-discovery` remains **1.6.0**. New API runs
 require the Agent to supply a concise task name; existing records resume by their saved paths.
 This release includes the previously unpublished 1.5.0/1.6.0 changes and the
 second-batch catalog of 1029 operations; the retained first-batch catalog contains
 919. Neither catalog is evidence of live availability. Native host acceptance remains partial.
 
-For the task-directory update on macOS, 119 automated behavior tests, 68 structural checks
+For the 2.0.0 task-directory update on macOS, 119 automated behavior tests, 68 structural checks
 and all 17 official Skill schemas pass. Codex 0.166.0 loads the native test Plugin and
 creates/resumes the named local record; its default sandbox blocks loopback HTTP. Claude
 Code 2.1.318 selects the existing Opus 5.5 default but quota 403 prevents invocation.
 WorkBuddy 5.9.3 retains another task's unsent draft; no independent test window was available.
 These are partial host results; successful host HTTP calls and native Windows remain unverified.
 
-Includes the credential flow introduced in published **1.4.0**: missing API Keys
-open the local configuration page in Setup AIHub 2.3.0. The page supports direct
+For Tikin 2.x, missing API Keys open the local configuration page in **Setup AIHub
+3.0.0 or newer**. Setup 2.3.0 rejects Tikin 2.x; update the complete Setup Plugin
+and start a new session before continuing configuration. The page supports direct
 entry or Secret Book, confirms the Key’s service address, saves to the selected
 source, and rechecks through the business loader before resuming the original task.
+
+For 2.0.1, all 119 automated tests pass on macOS. Codex 0.166.0 passes the native
+Setup 3.0.0 missing-Key, browser-save, loader-recheck and conversation-resume flow.
+WorkBuddy 5.9.3 installs and loads both Plugins and opens the page, but its safe-delete
+guard blocks the save preview. Claude Code 2.1.318 remains blocked by quota 403.
+This release retains those two pending host checks; it does not claim complete
+acceptance across all three hosts. Native Windows and live service calls remain unverified.
 
 For published 1.4.0 on macOS, all 50 regression tests and synthetic browser configuration pass. Codex 0.166.0 passes native test Plugin installation, tikin-douyin missing-Key invocation, browser save and cross-turn recovery, preserving its default sandbox with per-command approval for the local server. Claude Code 2.1.317 loads the complete Plugins, but account quota (403) blocks invocation. WorkBuddy's native window is blocked by macOS accessibility permissions. These limitations do not constitute host acceptance; native Windows, real Feishu authorization and online business calls remain unverified for this release.
 
@@ -87,7 +95,7 @@ automatically.
 
 ## Configure API access
 
-可对当前 Agent 说“用 setup-api-key 帮我检查或更换 tikin 密钥”。本版 1.4.0 在业务发现缺 Key 时实际打开同一个本机配置网页，使用完整 Setup Plugin 2.3.0 或更新版本；已能读取配置时直接继续业务。
+可对当前 Agent 说“用 setup-api-key 帮我检查或更换 tikin 密钥”。Tikin 2.x 在业务发现缺 Key 时使用完整 Setup Plugin 3.0.0 或更新版本打开本机配置网页；Setup 2.3.0 不支持当前组合，须升级后继续；已能读取配置时直接继续业务。
 
 > 请用 tikin 查抖音数据。若缺少 API Key，请打开本机配置页；保留原需求，我填写保存后再检查并继续，不要让我把 Key 发到聊天。
 
