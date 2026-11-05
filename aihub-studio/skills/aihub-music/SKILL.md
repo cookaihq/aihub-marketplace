@@ -1,8 +1,8 @@
 ---
 name: aihub-music
 metadata:
-  version: "1.5.1"
-description: v1.5.1｜通过 AIhub 的 lyria-3-pro 异步任务或独立的 Gemini 原生 lyria-3-pro-preview 协议生成音乐，保存并核验音频文件。
+  version: "2.0.0"
+description: v2.0.0｜通过 AIhub 的 lyria-3-pro 异步任务或独立的 Gemini 原生 lyria-3-pro-preview 协议生成音乐，保存并核验音频文件。
 ---
 
 # AIhub Music

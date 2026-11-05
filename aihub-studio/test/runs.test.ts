@@ -8,6 +8,7 @@ import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { AddressInfo } from 'node:net';
+import { fixtureTransport } from './fixture-transport.js';
 const exec = promisify(execFile);
 const first = 'gpt-image-2.5-flare'; const second = 'gpt-image-2.5-sunburst';
 
@@ -49,7 +50,7 @@ async function fixture(skill = 'aihub-image') {
   const request = join(dir, 'request.json');
   await writeFile(request, JSON.stringify({ operation: 'image-generate', original_request: 'A red square', prompt: 'A red square' }));
   const call = async (options: Record<string, string>, ...args: string[]) => {
-    const env = { ...process.env, AIHUB_API_KEY: 'fixture-run-secret', AIHUB_BASE_URL: base,
+    const env = { ...process.env, ...fixtureTransport(base), AIHUB_API_KEY: 'fixture-run-secret',
       AIHUB_IMAGE_MODELS: `${first},${second}`, AIHUB_MODEL_FALLBACK_POLICY: 'auto', AIHUB_MODEL_MAX_ATTEMPTS: '', ...options };
     let stdout: string; let stderr: string;
     try { ({ stdout, stderr } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', skill, '--no-global-config'], { cwd: dir, env, timeout: 20_000 })); }

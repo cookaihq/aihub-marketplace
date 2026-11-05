@@ -97,15 +97,15 @@ test('published Plugin runs outside the checkout without node_modules or origina
     await rm(join(config, 'aihub-image', '.env'));
     await writeFile(join(config, '.env'), 'AIHUB_API_KEY=""\nAIHUB_BASE_URL=https://fixture.invalid');
     const partial = await doctor('aihub-image');
-    assert.equal(partial.service_url, 'https://fixture.invalid');
-    assert.deepEqual(partial.config_sources, { AIHUB_API_KEY: ordinary, AIHUB_BASE_URL: join(config, '.env') });
+    assert.equal(partial.service_url, 'https://api.aihubmax.com');
+    assert.deepEqual(partial.config_sources, { AIHUB_API_KEY: ordinary });
     assert.deepEqual((await doctor('aihub-image', '--use-global-config')).config_sources, partial.config_sources);
 
     await rm(config, { recursive: true });
     const fallback = await doctor('aihub-image');
     assert.equal(fallback.status, 'ok');
-    assert.equal(fallback.service_url, 'https://ordinary.invalid');
-    assert.deepEqual(fallback.config_sources, { AIHUB_API_KEY: ordinary, AIHUB_BASE_URL: ordinary });
+    assert.equal(fallback.service_url, 'https://api.aihubmax.com');
+    assert.deepEqual(fallback.config_sources, { AIHUB_API_KEY: ordinary });
     await assert.rejects(doctor('aihub-image', '--no-global-config'), (error: unknown) => {
       assert.match(JSON.parse((error as { stdout: string }).stdout).error, /disabled by --no-global-config/);
       return true;
@@ -128,8 +128,8 @@ test('published Plugin runs outside the checkout without node_modules or origina
         return true;
       });
       const disabled = await doctor('aihub-image', '--no-global-config');
-      assert.equal(disabled.service_url, 'https://project.invalid');
-      assert.deepEqual(disabled.config_sources, { AIHUB_API_KEY: project, AIHUB_BASE_URL: project });
+      assert.equal(disabled.service_url, 'https://api.aihubmax.com');
+      assert.deepEqual(disabled.config_sources, { AIHUB_API_KEY: project });
       await rm(path, { recursive: true });
     }
     await assert.rejects(command('doctor'), (error: unknown) => {

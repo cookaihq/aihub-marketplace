@@ -13,7 +13,7 @@ import type { LoadedConfig } from '../src/config.js';
 import { startRun, continueRun } from '../src/runs.js';
 
 const config = (baseUrl: string): LoadedConfig => ({ skill: 'aihub-image', apiKey: 'synthetic-api-secret', baseUrl,
-  sources: { AIHUB_API_KEY: 'environment', AIHUB_BASE_URL: 'environment' } });
+  sources: { AIHUB_API_KEY: 'environment' } });
 
 test('terminal observation without transport evidence does not invent HTTP 200', async () => {
   const root = await mkdtemp(join(tmpdir(), 'aihub-http-evidence-'));

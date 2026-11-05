@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import type { AddressInfo } from 'node:net';
 import { loadConfig, inspectConfig } from '../src/config.js';
 import { assertPrivateFile } from './private-permissions.js';
+import { fixtureTransport } from './fixture-transport.js';
 const exec = promisify(execFile);
 const generator = 'gpt-image-2.5-flare';
 const checker = 'gemini-3.8-flash';
@@ -66,7 +67,7 @@ async function fixture(audio = false) {
   const call = async (env: Record<string, string>, ...args: string[]) => {
     let stdout: string;
     try { ({ stdout } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', audio ? 'aihub-music' : 'aihub-image', '--no-global-config'],
-      { cwd: dir, env: { ...process.env, AIHUB_API_KEY: 'fixture-review-secret', AIHUB_BASE_URL: base,
+      { cwd: dir, env: { ...process.env, ...fixtureTransport(base), AIHUB_API_KEY: 'fixture-review-secret',
         AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: '', AIHUB_ERROR_REPORT_THRESHOLD: '3', ...env }, timeout: 20_000 })); }
     catch (error) { stdout = (error as { stdout: string }).stdout; }
     assert.ok(!stdout!.includes('fixture-review-secret'));

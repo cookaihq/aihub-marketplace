@@ -6,7 +6,8 @@ import { join, resolve } from 'node:path';
 import { createServer } from 'node:http';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { inspectConfig, loadConfig, ConfigurationError } from '../src/config.js';
+import { inspectConfig, loadConfig } from '../src/config.js';
+import { fixtureTransport } from './fixture-transport.js';
 const exec = promisify(execFile);
 
 test('shared inspection and deletion projections use the real loader without modifying files', async () => {
@@ -47,14 +48,14 @@ test('shared inspection and deletion projections use the real loader without mod
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
-test('inspection reports missing, invalid and unreadable sources without credential values', async () => {
+test('inspection ignores retired service settings and reports missing or unreadable key sources', async () => {
   const root = await mkdtemp(join(tmpdir(), 'aihub-inspection-'));
   const options = { cwd: root, homeDirectory: join(root, 'home'), skill: 'aihub-image', env: {} };
   try {
     const missing = inspectConfig(options);
     assert.equal(missing.status, 'configuration_required');
     assert.deepEqual(missing.fields.AIHUB_API_KEY, { source: 'missing', present: false, problem: 'missing' });
-    assert.equal(missing.fields.AIHUB_BASE_URL?.source, 'built-in default');
+    assert.equal(missing.fields.AIHUB_BASE_URL, undefined);
     const credentialReport = inspectConfig(options, true);
     assert.deepEqual(Object.keys(credentialReport.fields), ['AIHUB_API_KEY']);
     assert.deepEqual(Object.keys(credentialReport.environment), ['AIHUB_API_KEY']);
@@ -62,18 +63,16 @@ test('inspection reports missing, invalid and unreadable sources without credent
     assert.equal(credentialReport.status, 'configuration_required');
     const path = join(root, '.env.local');
     await writeFile(path, 'AIHUB_API_KEY=synthetic-inspection-key\nAIHUB_BASE_URL=https://account:synthetic-url-secret@host.invalid');
-    const invalid = inspectConfig(options);
-    assert.deepEqual(invalid.fields.AIHUB_BASE_URL, { source: path, present: true, problem: 'invalid_url' });
-    for (const value of ['synthetic-inspection-key', 'synthetic-url-secret', 'account:']) assert.ok(!JSON.stringify(invalid).includes(value));
+    const inspected = inspectConfig(options);
+    assert.equal(inspected.status, 'ok');
+    assert.equal(inspected.fields.AIHUB_BASE_URL, undefined);
+    for (const value of ['synthetic-inspection-key', 'synthetic-url-secret', 'account:']) assert.ok(!JSON.stringify(inspected).includes(value));
     const keyOnly = inspectConfig(options, true);
     assert.equal(keyOnly.status, 'ok');
     assert.equal(keyOnly.fields.AIHUB_API_KEY?.source, path);
-    assert.deepEqual(keyOnly.layers, invalid.layers);
+    assert.deepEqual(keyOnly.layers, inspected.layers);
     assert.notDeepEqual(keyOnly.layers, credentialReport.layers);
-    assert.throws(() => loadConfig(options), (error: unknown) => {
-      assert.ok(error instanceof ConfigurationError);
-      assert.deepEqual(error.inspection, invalid); return true;
-    });
+    assert.equal(loadConfig(options).baseUrl, 'https://api.aihubmax.com');
     const override = inspectConfig({ ...options, env: { AIHUB_API_KEY: 'process-synthetic-key' } });
     assert.equal(override.fields.AIHUB_API_KEY?.source, 'environment');
     assert.ok(!JSON.stringify(override).includes('process-synthetic-key'));
@@ -98,7 +97,7 @@ test('CLI distinguishes authentication rejection from balance, permissions and r
   });
   await new Promise<void>(resolveListen => server.listen(0, '127.0.0.1', resolveListen));
   const port = (server.address() as { port: number }).port;
-  const env = { ...process.env, HOME: join(root, 'home'), USERPROFILE: join(root, 'home'), AIHUB_API_KEY: '', AIHUB_BASE_URL: '' };
+  const env = { ...process.env, ...fixtureTransport(`http://127.0.0.1:${port}`), HOME: join(root, 'home'), USERPROFILE: join(root, 'home'), AIHUB_API_KEY: '', AIHUB_BASE_URL: 'https://ignored.invalid' };
   const cli = resolve('scripts/aihub.mjs');
   try {
     await writeFile(config, `AIHUB_API_KEY=synthetic-cli-secret\nAIHUB_BASE_URL=http://127.0.0.1:${port}`);
@@ -123,7 +122,7 @@ test('CLI distinguishes authentication rejection from balance, permissions and r
           assert.equal(output.configuration_issue.reason, 'authentication_rejected');
           assert.deepEqual(output.configuration_issue.keys, ['AIHUB_API_KEY']);
           assert.deepEqual(output.configuration_issue.sources, { AIHUB_API_KEY: config });
-          assert.equal(output.configuration_issue.service_url, `http://127.0.0.1:${port}`);
+          assert.equal(output.configuration_issue.service_url, 'https://api.aihubmax.com');
         } else assert.equal(output.configuration_issue, undefined);
         return true;
       });

@@ -13,12 +13,13 @@ import { modelEntry, validateGeneration } from '../src/models.js';
 import { credentialId } from '../src/config.js';
 import { result } from '../src/workflow.js';
 import { assertPrivateFile } from './private-permissions.js';
+import { fixtureTransport } from './fixture-transport.js';
 
 const exec = promisify(execFile);
 const cli = resolve('scripts/aihub.mjs');
 const key = 'offline-test-key-not-a-real-secret';
 async function run(cwd: string, base: string, ...args: string[]) {
-  const child = spawn(process.execPath, [cli, ...args, '--no-global-config'], { cwd, env: { ...process.env, AIHUB_API_KEY: key, AIHUB_BASE_URL: base }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [cli, ...args, '--no-global-config'], { cwd, env: { ...process.env, ...fixtureTransport(base), AIHUB_API_KEY: key }, stdio: ['ignore', 'pipe', 'pipe'] });
   let out = ''; let err = '';
   child.stdout.on('data', chunk => { out += chunk; });
   child.stderr.on('data', chunk => { err += chunk; });
@@ -149,7 +150,7 @@ test('legacy Seedance 2.0 records and task IDs remain recoverable without model 
     await writeJob(record, {
       schema_version: 1, local_id: 'legacy', created_at: '2026-09-24', updated_at: '2026-09-24',
       skill: 'aihub-video', media: 'video', model: 'seedance-2.0-fast-text-to-video',
-      service_url: base, credential_id: credentialId(key), output_dir: join(dir, 'files'),
+      service_url: 'https://api.aihubmax.com', credential_id: credentialId(key), output_dir: join(dir, 'files'),
       submission: { state: 'known', task: { id: 'legacy-task', status: 'pending' } }, files: [], failed: [],
     });
     const resumed = await run(dir, base, 'resume', '--skill', 'aihub-video', '--record', record, '--wait-seconds', '0');
@@ -158,6 +159,30 @@ test('legacy Seedance 2.0 records and task IDs remain recoverable without model 
     const adopted = await run(dir, base, 'task', '--skill', 'aihub-video', '--task-id', 'legacy-task', '--media', 'video', '--output-dir', dir, '--wait-seconds', '0');
     assert.equal(adopted.json.status, 'waiting'); assert.equal(adopted.json.model, 'seedance-2.0-fast-text-to-video');
     assert.deepEqual(calls, [['GET', '/v1/tasks/legacy-task'], ['GET', '/v1/tasks/legacy-task']]);
+  } finally { server.closeAllConnections(); server.close(); await rm(dir, { recursive: true, force: true }); }
+});
+
+test('foreign service records are rejected before network access and remain unchanged', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aihub-foreign-service-'));
+  const record = join(dir, 'foreign-task.json');
+  let requests = 0;
+  const server = createServer((_req, res) => { requests++; res.end('{}'); });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    // A pre-existing synthetic record, not a newly submitted private task.
+    const saved = JSON.stringify({
+      schema_version: 1, local_id: 'foreign', created_at: '2026-09-24', updated_at: '2026-09-24',
+      skill: 'aihub-video', media: 'video', model: 'seedance-2.0-fast-text-to-video',
+      service_url: base, credential_id: credentialId(key), output_dir: join(dir, 'files'),
+      submission: { state: 'known', task: { id: 'foreign-task', status: 'pending' } }, files: [], failed: [],
+    });
+    await writeFile(record, saved);
+    const blocked = await run(dir, base, 'resume', '--skill', 'aihub-video', '--record', record, '--wait-seconds', '0');
+    assert.equal(blocked.json.status, 'recovery_failed');
+    assert.match(blocked.json.error, /fixed service address/);
+    assert.equal(requests, 0, 'a foreign service task must not be queried against the fixed service');
+    assert.equal(await readFile(record, 'utf8'), saved);
   } finally { server.closeAllConnections(); server.close(); await rm(dir, { recursive: true, force: true }); }
 });
 

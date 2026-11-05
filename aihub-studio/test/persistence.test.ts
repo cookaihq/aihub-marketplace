@@ -25,7 +25,7 @@ const record = join(directory, 'task.json');
 const key = 'synthetic-persistence-test-key';
 const task = { id: 'already-paid-task', status: mode === 'resume' ? 'processing' : 'completed', model: mode === 'understand' ? 'gemini-3.8-flash' : 'gpt-image-2', results: [] };
 const job = { schema_version: 1, local_id: 'fixture', skill: 'aihub-image', media: 'image', model: 'gpt-image-2',
-  service_url: 'https://fixture.invalid', credential_id: credentialId(key), output_dir: join(directory, 'files'),
+  service_url: 'https://api.aihubmax.com', credential_id: credentialId(key), output_dir: join(directory, 'files'),
   submission: { state: 'known', task }, files: [], failed: [] };
 if (mode === 'resume') await fsp.writeFile(record, JSON.stringify(job), { mode: 0o600 });
 const originalRename = fsp.rename;
@@ -45,7 +45,6 @@ AihubmaxClient.prototype.listLlmModels = async () => [{ id: 'gemini-3.8-flash', 
 AihubmaxClient.prototype.getTask = async () => { queries++; return task; };
 AihubmaxClient.prototype.pollTask = async () => { queries++; throw new PollBudgetExceededError(task.id, task); };
 process.env.AIHUB_API_KEY = key;
-process.env.AIHUB_BASE_URL = 'https://fixture.invalid';
 const params = join(directory, 'understanding.json');
 if (mode === 'understand') await fsp.writeFile(params, JSON.stringify({ model: 'gemini-3.8-flash', prompt: 'Check the image', content: [{ type: 'image_url', image_url: { url: 'https://fixture.invalid/image.png' } }] }));
 const args = mode === 'understand'

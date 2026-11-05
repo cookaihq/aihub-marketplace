@@ -53,7 +53,7 @@ test('whole-file eligibility uses actual model, format, duration and upload chan
   assert.equal(canSendWhole({ ...info, format: 'aiff' }, standard, true), false);
   assert.equal(canSendWhole({ ...info, bytes: 10000 }, audioContract('paraformer-8k-v2'), false), false);
   assert.throws(() => audioContract('scribe-v2'), /No verified/);
-  const cfg = { skill: 'aihub-audio', apiKey: 'fixture', baseUrl: 'https://fixture.invalid', sources: { AIHUB_API_KEY: 'fixture', AIHUB_BASE_URL: 'fixture' }, modelSelection: { policy: 'auto' as const, models: ['paraformer-v2','paraformer-8k-v2'], sources: {} } };
+  const cfg = { skill: 'aihub-audio', apiKey: 'fixture', baseUrl: 'https://fixture.invalid', sources: { AIHUB_API_KEY: 'fixture' }, modelSelection: { policy: 'auto' as const, models: ['paraformer-v2','paraformer-8k-v2'], sources: {} } };
   const plan = selectionPlan(cfg, { operation: 'audio-transcribe', original_request: 'Transcribe in English', inputs: { audios: ['voice.wav'] }, requirements: { language_hints: ['en'] } });
   assert.equal(plan.candidates[0]!.rejection, undefined); assert.match(plan.candidates[1]!.rejection!, /language_hints/);
 });

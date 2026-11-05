@@ -1,5 +1,5 @@
 /** HTTP contracts migrated from aihub-mcp f027798; no MCP runtime dependency. */
-import type { Config } from "./config.js";
+import { AIHUB_SERVICE_URL, type Config } from "./config.js";
 import { randomUUID } from 'node:crypto';
 import { observeExchange, observeRequestError, observeTerminalTask } from './diagnostics.js';
 import { redactEvidence, type HttpEvidence } from './diagnosticEvidence.js';
@@ -235,7 +235,7 @@ export class AihubmaxClient {
         } catch {
           const error = new ApiError(this.redact(
             `服务端返回了非 JSON 响应（HTTP ${response.status}，${method} ${path}）。` +
-            "请检查 AIHUB_BASE_URL 是否指向 API 网关。" +
+            `服务地址固定为 ${AIHUB_SERVICE_URL}，请检查网络代理或服务响应。` +
             (isWrite ? "写入结果不明，请勿自动重新提交。" : "")),
             response.status, "protocol", "invalid_response", undefined, isWrite);
           await observeRequestError(error, method, path, await capture(text));

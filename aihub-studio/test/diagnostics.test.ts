@@ -21,7 +21,7 @@ test('actual HTTP retries accumulate; later success preserves files and report l
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const cfg: LoadedConfig = { skill: 'aihub-image', apiKey: 'test-private-key', baseUrl: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
-    sources: { AIHUB_API_KEY: 'environment', AIHUB_BASE_URL: 'environment' } };
+    sources: { AIHUB_API_KEY: 'environment' } };
   try {
     const first = await collectRequestErrors(async events => {
       await assert.rejects(new AihubmaxClient(cfg).listLiveModels());
@@ -51,7 +51,7 @@ test('terminal task errors are deduplicated; capability/policy errors retain loc
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const cfg: LoadedConfig = { skill: 'aihub-video', apiKey: 'test-secret', baseUrl: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
-    sources: { AIHUB_API_KEY: 'environment', AIHUB_BASE_URL: 'environment' } };
+    sources: { AIHUB_API_KEY: 'environment' } };
   try {
     const query = () => collectRequestErrors(async events => {
       await new AihubmaxClient(cfg).getTask('private-task-id');

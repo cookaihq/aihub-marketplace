@@ -96,6 +96,31 @@ class SetupTests(unittest.TestCase):
         self.assertFalse((self.user / ".config").exists())
         self.assertEqual(list(self.project.iterdir()), [])
 
+    def test_aihub_accepts_v1_and_v2_contracts_and_ignores_retired_address(self):
+        from setup_core import consumers
+        read_json = consumers._json
+        for version in ("1.2.0", "1.5.1", "2.0.0", "2.9.9", "3.0.0"):
+            def manifest_version(path):
+                value = read_json(path)
+                return {**value, "version": version} if path.name == "plugin.json" else value
+            with self.subTest(version=version), patch.object(consumers, "_json", side_effect=manifest_version):
+                if version == "3.0.0":
+                    with self.assertRaises(SetupError) as failure:
+                        Consumer("aihub-studio", MARKET / "aihub-studio", None, self.project)
+                    self.assertEqual(failure.exception.reason, "incompatible_version")
+                else:
+                    consumer = Consumer("aihub-studio", MARKET / "aihub-studio", None, self.project)
+                    self.assertEqual(consumer.version, version)
+                    self.assertEqual(consumer.adapter["fields"], {"AIHUB_API_KEY"})
+        target = self.project / ".env.local"
+        original = "AIHUB_API_KEY=" + self.marker + "\nAIHUB_BASE_URL=not-a-service-url\n"
+        target.write_text(original, encoding="utf-8")
+        report = self.inspect()
+        self.assertEqual(report["status"], "ok")
+        self.assertEqual(set(report["fields"]), {"AIHUB_API_KEY"})
+        self.assertEqual(report["fields"]["AIHUB_API_KEY"]["source"], str(target))
+        self.assertEqual(target.read_text(encoding="utf-8"), original)
+
     def test_tikin_requires_upgrade_from_v1_and_rejects_unknown_major_without_writes(self):
         from setup_core.ui_errors import public_error
         for version, reason in (("1.4.0", "consumer_upgrade_required"),

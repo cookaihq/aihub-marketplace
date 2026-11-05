@@ -8,6 +8,7 @@ import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { AddressInfo } from 'node:net';
+import { fixtureTransport } from './fixture-transport.js';
 const exec = promisify(execFile);
 async function fixture(large = false) {
   const dir = await mkdtemp(join(tmpdir(), 'aihub-audio-run-'));
@@ -54,7 +55,7 @@ async function fixture(large = false) {
     const command = process.platform === 'win32' ? ['-NoProfile','-NonInteractive','-File',resolve('scripts/aihub.ps1')] : [resolve('scripts/aihub.mjs')];
     let stdout: string;
     try { ({ stdout } = await exec(entry, [...command,...args,'--skill','aihub-audio','--no-global-config'], { cwd:dir, timeout:90_000, windowsHide:true,
-      env: { ...process.env, AIHUB_API_KEY:'synthetic-audio-key', AIHUB_BASE_URL:base, AIHUB_AUDIO_MODELS:'paraformer-v2,paraformer-8k-v2', AIHUB_MODEL_FALLBACK_POLICY:'auto', AIHUB_MODEL_MAX_ATTEMPTS:'', AIHUB_RESULT_CHECK_ENABLED:'1', AIHUB_RESULT_CHECK_PROVIDER:'host' } })); }
+      env: { ...process.env, ...fixtureTransport(base), AIHUB_API_KEY:'synthetic-audio-key', AIHUB_AUDIO_MODELS:'paraformer-v2,paraformer-8k-v2', AIHUB_MODEL_FALLBACK_POLICY:'auto', AIHUB_MODEL_MAX_ATTEMPTS:'', AIHUB_RESULT_CHECK_ENABLED:'1', AIHUB_RESULT_CHECK_PROVIDER:'host' } })); }
     catch(error) { stdout = (error as {stdout:string}).stdout; }
     assert.ok(!stdout.includes('synthetic-audio-key')); return JSON.parse(stdout);
   };

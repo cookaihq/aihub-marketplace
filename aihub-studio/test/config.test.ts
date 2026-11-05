@@ -20,6 +20,7 @@ test('Plugin global files are automatic, with project, Skill and process overrid
     await writeFile(join(plugin, '.env'), 'AIHUB_API_KEY=shared-home-key\nAIHUB_BASE_URL=https://fixture.invalid');
     for (const skill of ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document']) {
       assert.equal(loadConfig({ ...options, skill }).apiKey, 'shared-home-key');
+      assert.equal(loadConfig({ ...options, skill }).baseUrl, 'https://api.aihubmax.com');
     }
     // Add increasingly specific sources, then remove them to check both override and fallback.
     const overrides = [
@@ -32,14 +33,22 @@ test('Plugin global files are automatic, with project, Skill and process overrid
       [join(project, '.env.aihub-image'), 'project-image-key'],
     ] as const;
     for (const [path, key] of overrides) {
-      await writeFile(path, `AIHUB_API_KEY=${key}\nAIHUB_BASE_URL=""`);
+      await writeFile(path, `AIHUB_API_KEY=${key}\nAIHUB_BASE_URL=https://ignored-override.invalid`);
       const config = loadConfig(options);
       assert.equal(config.apiKey, key);
       assert.equal(config.sources.AIHUB_API_KEY, path);
-      assert.equal(config.baseUrl, 'https://fixture.invalid');
-      assert.equal(config.sources.AIHUB_BASE_URL, join(plugin, '.env'));
+      assert.equal(config.baseUrl, 'https://api.aihubmax.com');
+      assert.deepEqual(config.sources, { AIHUB_API_KEY: path });
     }
     assert.equal(loadConfig({ ...options, env: { AIHUB_API_KEY: 'process-key' } }).apiKey, 'process-key');
+    for (const address of ['https://other-service.invalid', 'http://127.0.0.1:1', 'not a URL']) {
+      const overridden = { ...options, env: { AIHUB_API_KEY: 'process-key', AIHUB_BASE_URL: address } };
+      assert.equal(loadConfig(overridden).baseUrl, 'https://api.aihubmax.com');
+      const report = inspectConfig(overridden);
+      assert.equal(report.status, 'ok');
+      assert.equal(report.fields.AIHUB_BASE_URL, undefined);
+      assert.equal(report.environment.AIHUB_BASE_URL, undefined);
+    }
     assert.equal(loadConfig({ ...options, skill: 'aihub-video' }).apiKey, 'project-local-key');
     for (let i = overrides.length - 1; i >= 0; i--) {
       await writeFile(overrides[i]![0], 'AIHUB_API_KEY=""');
@@ -66,8 +75,8 @@ test('ordinary Skill globals fill missing fields when Plugin files are absent, p
     await writeFile(ordinary, 'AIHUB_API_KEY=ordinary-key\nAIHUB_BASE_URL=https://ordinary.invalid');
     const fallback = loadConfig(options);
     assert.equal(fallback.apiKey, 'ordinary-key');
-    assert.equal(fallback.baseUrl, 'https://ordinary.invalid');
-    assert.deepEqual(fallback.sources, { AIHUB_API_KEY: ordinary, AIHUB_BASE_URL: ordinary });
+    assert.equal(fallback.baseUrl, 'https://api.aihubmax.com');
+    assert.deepEqual(fallback.sources, { AIHUB_API_KEY: ordinary });
 
     await mkdir(join(plugin, 'aihub-image'), { recursive: true });
     assert.deepEqual(loadConfig(options), fallback, 'empty Plugin and Skill directories must not stop fallback');
@@ -75,14 +84,14 @@ test('ordinary Skill globals fill missing fields when Plugin files are absent, p
     await writeFile(shared, 'AIHUB_BASE_URL=https://plugin.invalid');
     const missingKey = loadConfig(options);
     assert.equal(missingKey.apiKey, 'ordinary-key');
-    assert.equal(missingKey.baseUrl, 'https://plugin.invalid');
-    assert.deepEqual(missingKey.sources, { AIHUB_API_KEY: ordinary, AIHUB_BASE_URL: shared });
+    assert.equal(missingKey.baseUrl, 'https://api.aihubmax.com');
+    assert.deepEqual(missingKey.sources, { AIHUB_API_KEY: ordinary });
 
     await writeFile(shared, 'AIHUB_API_KEY=plugin-key\nAIHUB_BASE_URL=""');
     const emptyUrl = loadConfig(options);
     assert.equal(emptyUrl.apiKey, 'plugin-key');
-    assert.equal(emptyUrl.baseUrl, 'https://ordinary.invalid');
-    assert.deepEqual(emptyUrl.sources, { AIHUB_API_KEY: shared, AIHUB_BASE_URL: ordinary });
+    assert.equal(emptyUrl.baseUrl, 'https://api.aihubmax.com');
+    assert.deepEqual(emptyUrl.sources, { AIHUB_API_KEY: shared });
 
     await writeFile(shared, 'AIHUB_API_KEY=" "\nAIHUB_BASE_URL=""');
     assert.deepEqual(loadConfig(options), fallback, 'empty values must not hide the ordinary Skill file');
@@ -171,7 +180,7 @@ test('renamed Plugin ignores the old Plugin configuration and reports its new id
 
 test('dotenv is literal, uses last duplicate, and only reads declared variables', () => {
   assert.deepEqual(parseEnv('# comment\nAIHUB_API_KEY=first\nAIHUB_API_KEY="$(echo literal)${TEST}"\nPATH=/bad\nAIHUB_BASE_URL = \'https://example.invalid\''), {
-    AIHUB_API_KEY: '$(echo literal)${TEST}', AIHUB_BASE_URL: 'https://example.invalid',
+    AIHUB_API_KEY: '$(echo literal)${TEST}',
   });
 });
 

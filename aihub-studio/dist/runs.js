@@ -22,8 +22,10 @@ export async function readRun(cfg, record) {
     if (run.kind !== 'aihub-run' || run.schema_version !== 1 || !run.plan || !Array.isArray(run.attempts) || !Array.isArray(run.approvals) ||
         !Number.isInteger(run.cursor) || run.cursor < 0 || run.cursor > run.plan.candidates.length || run.plan_hash !== hash(run.plan))
         throw new Error('Invalid or modified run plan. Create a new request instead of editing an active record.');
-    if (run.skill !== cfg.skill || run.service_url !== cfg.baseUrl || run.credential_id !== credentialId(cfg.apiKey))
-        throw new Error('This run belongs to another Skill, service or credential. Restore its original configuration.');
+    if (run.service_url !== cfg.baseUrl)
+        throw new Error('This run belongs to another service. AIhub Studio uses a fixed service address; continue this run with its original service client.');
+    if (run.skill !== cfg.skill || run.credential_id !== credentialId(cfg.apiKey))
+        throw new Error('This run belongs to another Skill or credential. Restore its original configuration.');
     return run;
 }
 async function saveRun(cfg, record, run) {

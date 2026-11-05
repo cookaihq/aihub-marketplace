@@ -174,7 +174,7 @@ export async function feedback(cfg: LoadedConfig, output: Record<string, unknown
     const hasContext = await stat(contextPath).then(s => s.isFile()).catch(() => false);
     const links = [reportPath, path, draftPath, ...(hasContext ? [contextPath] : [])].map(localLink);
     const account = saved.events.some(e => [401, 402, 403].includes(e.http_status ?? 0));
-    const advice = account ? '请核对实际服务地址、账号权限或余额；不要为生成报告重发请求。'
+    const advice = account ? '请核对 AIhub API Key、账号权限或余额；不要为生成报告重发请求。'
       : 'service_unavailable 仅是服务返回的错误分类，不能证明上游宕机。未暴露的供应商状态、路由和内部重试应由管理员按 task_id/request_id 查询后台日志。';
     const report = '# AIHub Studio 本地请求与错误汇总\n\n' +
       `首次记录：${saved.created_at}\n\n更新时间：${now}\n\n独立错误数：${saved.events.length}\n\n` +

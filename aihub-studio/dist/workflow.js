@@ -336,8 +336,11 @@ export async function resume(cfg, recordInput, waitSeconds) {
     assertOutsideInstallation(record);
     return withJobLock(record, async () => {
         const job = await readJob(record);
-        if (job.skill !== cfg.skill || job.service_url !== cfg.baseUrl || job.credential_id !== credentialId(cfg.apiKey)) {
-            throw new Error('This record belongs to a different Skill, API address or key. Restore its original configuration; to query with a deliberately changed key, use task with the known task ID.');
+        if (job.service_url !== cfg.baseUrl) {
+            throw new Error('This record belongs to another service. AIhub Studio uses a fixed service address; continue this task with its original service client.');
+        }
+        if (job.skill !== cfg.skill || job.credential_id !== credentialId(cfg.apiKey)) {
+            throw new Error('This record belongs to a different Skill or key. Restore its original configuration; to query with a deliberately changed key, use task with the known task ID.');
         }
         await bindDiagnosticRecord(cfg, record);
         if (job.submission.state !== 'known')

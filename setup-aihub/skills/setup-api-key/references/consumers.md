@@ -4,7 +4,7 @@
 
 | Plugin | 本次本地兼容基线 | 字段与入口 |
 | --- | --- | --- |
-| `aihub-studio` | >= 1.2.0、< 2.0.0 | `references/credentials.json` 仅声明必填敏感字段 `AIHUB_API_KEY`；`node "<plugin>/scripts/aihub.mjs" config-check --skill <真实业务Skill> --credentials-only` |
+| `aihub-studio` | >= 1.2.0、< 3.0.0 | `references/credentials.json` 仅声明必填敏感字段 `AIHUB_API_KEY`；`node "<plugin>/scripts/aihub.mjs" config-check --skill <真实业务Skill> --credentials-only` |
 | `tikin-social` | >= 2.0.0、< 3.0.0 | `skills/tikin-setup/references/credentials.json`；`uv run --locked --no-dev --project "<tikin-setup>" python "<tikin-setup>/scripts/tikin-config" --skill <真实业务Skill> config-check` |
 
 Setup 3.0.0 起只接入 Tikin 2.x，不保留 Tikin 1.x 配置适配。`consumer_upgrade_required` 返回当前版本、最低版本和支持范围：通过当前宿主的完整 Plugin 更新入口升级 Tikin，核对新实体后继续；已有更新授权直接沿用。版本高于支持范围返回 `incompatible_version`，先核对支持该版本的 Setup，不降级业务 Plugin、不改版本号绕过检查。已有任务更新后使用 `attach` 重新绑定产物并检查，保留原业务提交状态。
@@ -15,7 +15,7 @@ Windows 原生 AIhub 使用 `& "<plugin>/scripts/aihub.ps1" config-check ...`；
 
 删除投影在同一 `config-check` 增加 `--delete-from "<已知来源路径>" --delete-fields <逗号分隔字段>`，两边返回 `config-deletion-preview/v1`，内含真实 `before` 和投影 `after`。文件字节不变，修订哈希仍指向真实文件。投影不能作为已生效检查交给 Secret Book。
 
-AIhub 首配只处理 Key，默认服务为 `https://api.aihubmax.com`；不增加 `AIHUB_BASE_URL` 可选配置。有旧地址覆盖时由业务诊断核对，不借配置任务改写。tikin Key 必填，`TIKIN_BASE_URL` 可选且默认 `https://console.tikin.net`，两项在声明中关联。加载器按字段独立读取，关联声明不意味着强制填地址或允许把不同服务的 Key 与地址拼配。删除/更换任一项后，说明另一个字段的来源并核对服务对应关系。
+AIhub 配置只处理 Key。AIhub Studio 2.x 固定使用 `https://api.aihubmax.com`，旧 `AIHUB_BASE_URL` 不再生效；Setup 不展示或保存服务地址字段。既有 AIhub 1.x 仍按其原加载器提供 Key 的来源报告。tikin Key 必填，`TIKIN_BASE_URL` 可选且默认 `https://console.tikin.net`，两项在声明中关联。加载器按字段独立读取，关联声明不意味着强制填地址或允许把不同服务的 Key 与地址拼配。删除/更换任一项后，说明另一个字段的来源并核对服务对应关系。
 
 报告 `secret-book.config-inspection/v1` 包含 consumer、真实 caller 或 null、cwd、global_enabled、layers/revision、字段存在性/来源/问题和环境哈希。缺项返回 `3`；运行失败、超时、输出损坏、未知 schema 各自处理。未知字段/原始异常不进入用户回复或任务记录。Setup 自身不生成一份配置优先级。
 

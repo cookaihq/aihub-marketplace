@@ -8,15 +8,15 @@ const BEHAVIOR_DEFAULTS = {
     AIHUB_ERROR_REPORT_THRESHOLD: '3',
 };
 const BEHAVIOR_KEYS = [...Object.keys(BEHAVIOR_DEFAULTS), 'AIHUB_SUPPORT_URL'];
-const KEYS = ['AIHUB_API_KEY', 'AIHUB_BASE_URL'];
+const KEYS = ['AIHUB_API_KEY'];
 export const MODEL_KEYS = Object.fromEntries(['image', 'video', 'audio', 'music', 'understanding', 'document'].map(kind => [`aihub-${kind}`, `AIHUB_${kind.toUpperCase()}_MODELS`]));
 const SELECTION_KEYS = ['AIHUB_MODEL_FALLBACK_POLICY', 'AIHUB_MODEL_MAX_ATTEMPTS'];
 const DECLARED_KEYS = new Set([...KEYS, ...Object.values(MODEL_KEYS), ...SELECTION_KEYS, ...BEHAVIOR_KEYS]);
 // Stable Plugin manifest name; independent of the installation directory or host Agent.
 const PLUGIN_NAME = 'aihub-studio';
-// Retained from the source client's configuration. This is the API root, not /v1.
-const DEFAULT_BASE_URL = 'https://api.aihubmax.com';
-export const CREDENTIAL_SETUP_HINT = 'Follow references/credential-setup.md: launch the local configuration page through setup-aihub:setup-api-key 2.3.0 or newer and give the user its clickable link. The page offers direct API Key entry or Secret Book; honor an existing source and scope choice. If Setup is unavailable, follow the bundled minimal fallback. Keep Secret Book untranslated. Preserve caller, cwd, global option and business submission state; after saving, recheck with the original loader and check default settings before resuming. Local inspection never authorizes a business retry.';
+// Fixed service identity shared by all Skills; configuration cannot redirect it.
+export const AIHUB_SERVICE_URL = 'https://api.aihubmax.com';
+export const CREDENTIAL_SETUP_HINT = 'Follow references/credential-setup.md: launch the local configuration page through setup-aihub:setup-api-key 3.1.0 or newer and give the user its clickable link. The page offers direct API Key entry or Secret Book; honor an existing source and scope choice. If Setup is unavailable, follow the bundled minimal fallback. Keep Secret Book untranslated. Preserve caller, cwd, global option and business submission state; after saving, recheck with the original loader and check default settings before resuming. Local inspection never authorizes a business retry.';
 export function parseEnv(text) {
     const values = {};
     for (const line of text.split(/\r?\n/)) {
@@ -95,17 +95,13 @@ function resolveConfiguration(options) {
         for (const layer of layers) {
             if (layer.values[key]?.trim()) {
                 values[key] = layer.values[key];
-                if (key === 'AIHUB_API_KEY' || key === 'AIHUB_BASE_URL')
+                if (key === 'AIHUB_API_KEY')
                     sources[key] = layer.name;
                 else
                     selectionSources[key] = layer.name;
                 break;
             }
         }
-    }
-    if (!values.AIHUB_BASE_URL) {
-        values.AIHUB_BASE_URL = DEFAULT_BASE_URL;
-        sources.AIHUB_BASE_URL = 'built-in default';
     }
     const fields = Object.fromEntries(KEYS.map(key => [key, {
             source: sources[key] ?? 'missing', present: Boolean(values[key]),
@@ -145,15 +141,6 @@ function resolveConfiguration(options) {
         fields.AIHUB_API_KEY.problem = 'missing';
         problems.push({ key: 'AIHUB_API_KEY', source: 'missing', reason: 'missing' });
     }
-    let url;
-    try {
-        url = new URL(values.AIHUB_BASE_URL);
-    }
-    catch { /* reported without the value */ }
-    if (!url || !['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
-        fields.AIHUB_BASE_URL.problem = 'invalid_url';
-        problems.push({ key: 'AIHUB_BASE_URL', source: sources.AIHUB_BASE_URL, reason: 'invalid_url' });
-    }
     const inspection = {
         schema: 'secret-book.config-inspection/v1', status: problems.length ? 'configuration_required' : 'ok',
         consumer: { kind: 'plugin', name: PLUGIN_NAME }, skill, cwd, global_enabled: useGlobalConfig,
@@ -161,7 +148,7 @@ function resolveConfiguration(options) {
         ...(!values.AIHUB_API_KEY ? { next_step: CREDENTIAL_SETUP_HINT } : {}),
         environment: Object.fromEntries([...KEYS, ...BEHAVIOR_KEYS].map(key => [key, env[key]?.trim() ? credentialId(env[key]) : null])),
     };
-    return { values, sources, selectionSources, modelKey, url, inspection };
+    return { values, sources, selectionSources, modelKey, inspection };
 }
 /** Read the same layers as loadConfig, including failures. Never returns credential values. */
 export function inspectConfig(options, credentialsOnly = false) {
@@ -178,7 +165,7 @@ export function inspectConfig(options, credentialsOnly = false) {
 export function loadConfig(options) {
     if (!options.skill || options.deletion)
         throw new Error('Business calls require a real Skill and cannot use deletion projections.');
-    const { values, sources, selectionSources, modelKey, url, inspection } = resolveConfiguration(options);
+    const { values, sources, selectionSources, modelKey, inspection } = resolveConfiguration(options);
     const unreadable = inspection.problems.find(problem => problem.reason === 'unreadable');
     if (unreadable)
         throw new ConfigurationError(`Cannot read configuration file: ${unreadable.source}`, inspection);
@@ -210,7 +197,7 @@ export function loadConfig(options) {
     const behaviorSources = Object.fromEntries(BEHAVIOR_KEYS.map(key => [key, selectionSources[key] ?? 'not configured']));
     for (const key of BEHAVIOR_KEYS)
         delete selectionSources[key];
-    return { skill: options.skill, baseUrl: url.toString().replace(/\/+$/, ''), apiKey: values.AIHUB_API_KEY, sources,
+    return { skill: options.skill, baseUrl: AIHUB_SERVICE_URL, apiKey: values.AIHUB_API_KEY, sources,
         resultCheck: { enabled: values.AIHUB_RESULT_CHECK_ENABLED.trim() === '1', provider: values.AIHUB_RESULT_CHECK_PROVIDER.trim(),
             models: values.AIHUB_RESULT_CHECK_MODELS.split(',').map(item => item.trim()), sources: Object.fromEntries(Object.entries(behaviorSources).filter(([key]) => key.startsWith('AIHUB_RESULT_CHECK_'))) },
         feedback: { threshold: Number(values.AIHUB_ERROR_REPORT_THRESHOLD), ...(values.AIHUB_SUPPORT_URL ? { supportUrl: values.AIHUB_SUPPORT_URL.trim() } : {}),

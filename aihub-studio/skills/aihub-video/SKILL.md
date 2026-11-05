@@ -1,8 +1,8 @@
 ---
 name: aihub-video
 metadata:
-  version: "1.5.1"
-description: v1.5.1｜通过 AIhub 使用 Seedance 2.5，基于文字、首帧图片或多模态参考素材生成视频；也支持 C1 视频口型同步和 C2 图片加音频数字人。检查各类任务的限制，支持继续已有任务并交付核验后的视频文件。
+  version: "2.0.0"
+description: v2.0.0｜通过 AIhub 使用 Seedance 2.5，基于文字、首帧图片或多模态参考素材生成视频；也支持 C1 视频口型同步和 C2 图片加音频数字人。检查各类任务的限制，支持继续已有任务并交付核验后的视频文件。
 compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 

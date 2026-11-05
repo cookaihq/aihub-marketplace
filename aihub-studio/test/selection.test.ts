@@ -7,7 +7,7 @@ import { loadConfig, type LoadedConfig } from '../src/config.js';
 import { selectionPlan } from '../src/selection.js';
 
 const cfg = (skill: string, models?: string[]): LoadedConfig => ({ skill, apiKey: 'fixture', baseUrl: 'https://fixture.invalid',
-  sources: { AIHUB_API_KEY: 'fixture', AIHUB_BASE_URL: 'fixture' }, modelSelection: { policy: 'auto', models, sources: {} } });
+  sources: { AIHUB_API_KEY: 'fixture' }, modelSelection: { policy: 'auto', models, sources: {} } });
 
 test('model lists use caller-specific layering, replace lower lists and disclose sources', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'aihub-selection-'));

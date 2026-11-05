@@ -37,7 +37,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" doctor --skill "${AIHUB_CALLER}"
 9. `~/.config/aihub-studio/.env`。
 10. `~/.config/<skill-name>/.env`，只补齐以上来源中缺失或为空的字段。
 
-`<skill-name>` 必须是当前调用方的真实名称，与其 `SKILL.md` frontmatter `name` 一致。Plugin 名固定为 manifest 的 `aihub-studio`，不随安装目录、Agent 或版本变化。缺项、空值及空子目录继续回退；Plugin 目录存在或其中已有部分字段，也不阻断其他缺项读取第 10 层。文件存在但无法读取时明确报错。不向父目录搜索，不读取普通 Skill 目录的 `.env.local`，不扫描兄弟 Skill、旧产品别名目录、其他 Plugin 或任意 `.env.*`。普通字段分别取值，须确认最终密钥属于最终服务地址。业务命令要求有效的 `--skill`。无调用方的配置检查显式使用 `config-check --plugin-only`，只读项目和 Plugin 共享文件，跳过所有 Skill 专属层；与 `--skill` 互斥。
+`<skill-name>` 必须是当前调用方的真实名称，与其 `SKILL.md` frontmatter `name` 一致。Plugin 名固定为 manifest 的 `aihub-studio`，不随安装目录、Agent 或版本变化。缺项、空值及空子目录继续回退；Plugin 目录存在或其中已有部分字段，也不阻断其他缺项读取第 10 层。文件存在但无法读取时明确报错。不向父目录搜索，不读取普通 Skill 目录的 `.env.local`，不扫描兄弟 Skill、旧产品别名目录、其他 Plugin 或任意 `.env.*`。普通字段分别取值；密钥须属于固定 AIhub 服务。业务命令要求有效的 `--skill`。无调用方的配置检查显式使用 `config-check --plugin-only`，只读项目和 Plugin 共享文件，跳过所有 Skill 专属层；与 `--skill` 互斥。
 
 首次新增配置时，个人全局配置是 AIhub 已确认的默认方案，共享配置保存到 `~/.config/aihub-studio/.env`。需要一个 Skill 使用不同值时可写根 `.env.<skill-name>`，只有明确需要时才创建对应子目录。写入前确认具体作用域并保留已有内容；仅提供凭证或允许读取不代表授权持久化。首次选择项目保存使用调用工作目录的 `.env.local`；修复已有字段写回其实际来源文件。写入 Secret 前检查未跟踪且被忽略。
 
@@ -47,7 +47,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" doctor --skill "${AIHUB_CALLER}"
 
 从旧 `aihub` Plugin 迁移时另行处理 `~/.config/aihub/`：新加载器只认 manifest 的 `aihub-studio`，旧 Plugin 目录不会作为回退来源。用户确认迁移后，将实际选定的旧文件映射到 `~/.config/aihub-studio/` 下相同相对位置，保留共享与专用覆盖关系。先检查目标文件和更高优先级来源，列出新增或替换项；不得自动搬迁、覆盖新配置或将不同账号合并。普通 Skill 文件、项目文件及 `AIHUB_*` key 无需因 Plugin 改名而移动或改名。写完运行 `config-check` 核对新 consumer 与实际来源；配置迁移不授权重发业务请求。
 
-服务默认地址为 `https://api.aihubmax.com`，首次凭证配置无需用户填写地址。加载器仍识别已有的 `AIHUB_BASE_URL` 覆盖以兼容既有任务；仅在来源诊断或旧任务恢复时核对实际服务，不将其列为手填或 Secret Book 的配置选项，不自动新增、迁移或覆盖。配置缺失或鉴权失败时明确报告，不能换用其他服务或账号。
+服务地址固定为 `https://api.aihubmax.com`。用户只配置 `AIHUB_API_KEY`；环境变量和各层配置文件中的旧 `AIHUB_BASE_URL` 均被忽略，来源报告不再将地址列为配置字段。原文件保持不变。官方固定地址的已有任务仍可恢复；其他服务地址的旧记录在联网前拒绝恢复，提示使用原服务客户端继续。配置缺失或鉴权失败时明确报告。
 
 `.env` 文件只解析 `KEY=value`、单引号或双引号包裹的值、整行注释和空行；同名项取最后一次，不执行 shell 展开或命令替换。不要用 `source` 加载配置，不把 API Key 放入命令行参数、参数 JSON、任务记录或聊天回复。
 

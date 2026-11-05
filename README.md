@@ -79,12 +79,12 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 
 版本标签随代码同步到 CNB，下表链接到对应的 GitHub Release。
 
-本次 aihub-studio 1.5.1、setup-aihub 3.0.1 与 tikin-social 2.0.2 更新默认设置交互。按用户明确指令发布，保留原生宿主、macOS 及 Tikin 完整测试的未完成项，具体状态见各 Plugin README。
+当前开发候选为 aihub-studio 2.0.0（固定服务地址）与 setup-aihub 3.1.0（适配 AIhub 2.x），尚未发布；表中这两项的 Release 链接在发布前不可用。tikin-social 仍为已发布的 2.0.2。各版本的实际验收范围见对应 Plugin README。
 
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 1.5.1 | [aihub-studio/v1.5.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv1.5.1) |
-| setup-aihub | 3.0.1 | [setup-aihub/v3.0.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv3.0.1) |
+| aihub-studio | 2.0.0 | [aihub-studio/v2.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv2.0.0) |
+| setup-aihub | 3.1.0 | [setup-aihub/v3.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv3.1.0) |
 | tikin-social | 2.0.2 | [tikin-social/v2.0.2](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv2.0.2) |
 <!-- release-table:end -->
