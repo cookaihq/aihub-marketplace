@@ -67,10 +67,9 @@ def arguments():
     host(defaults)
     defaults.add_argument("--action", required=True, choices=("catalog", "record", "status", "choose", "preview", "verify", "finish"))
     defaults.add_argument("--task")
-    defaults.add_argument("--input", help="无凭证 JSON 报告或预览参数文件")
-    defaults.add_argument("--choice", choices=("1", "2", "3", "设为默认", "本次跳过", "不再提醒"))
+    defaults.add_argument("--input", help="无凭证 JSON 报告或内部写入计划参数文件")
+    defaults.add_argument("--choice", choices=("1", "2", "3", "设为默认", "设为默认 (推荐)", "设为默认（推荐）", "本次跳过", "不再提醒"))
     defaults.add_argument("--targets", help="用户明确选定的 eligible 子集，逗号分隔 ID；省略表示整个菜单")
-    defaults.add_argument("--confirm", help="用户已确认的完整默认规则预览指纹")
     for name in ("status", "attach", "source", "select", "plan", "apply", "continue", "reconcile", "cancel", "forget", "handoff", "handoff-result"):
         command = sub.add_parser(name)
         task(command)
@@ -148,7 +147,7 @@ def run(args):
             elif args.action == "choose":
                 result = default_settings.choose(state, args.choice, args.targets.split(",") if args.targets else None)
             else:
-                result = default_settings.verify(state, args.confirm)
+                result = default_settings.verify(state)
             tasks.save(state)
             return {"task": state["id"], "credential_phase": state["phase"], "default_settings": result}
         if args.command == "cancel":

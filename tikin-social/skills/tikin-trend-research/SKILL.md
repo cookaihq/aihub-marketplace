@@ -1,8 +1,8 @@
 ---
 name: tikin-trend-research
 metadata:
-  version: "2.0.1"
-description: v2.0.1｜通过 Tikin 发现受支持平台的热点趋势，包括热门内容、上升话题标签、热门音频和排行榜。适用于查询当前热点、生成地区或垂直领域趋势报告，或以受支持链接作为趋势研究线索。
+  version: "2.0.2"
+description: v2.0.2｜通过 Tikin 发现受支持平台的热点趋势，包括热门内容、上升话题标签、热门音频和排行榜。适用于查询当前热点、生成地区或垂直领域趋势报告，或以受支持链接作为趋势研究线索。
 ---
 
 # Trend Research
@@ -11,7 +11,7 @@ description: v2.0.1｜通过 Tikin 发现受支持平台的热点趋势，包括
 
 ## 默认 Skill 检查
 
-每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则按该流程的固定顺序和推荐项提供选择；选择设为默认后直接设置，完成后展示内容。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 Surface trending content, hashtags, sounds, and rankings, optionally scoped to a region or niche.
 

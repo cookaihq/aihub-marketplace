@@ -1,8 +1,8 @@
 ---
 name: tikin-social-listening
 metadata:
-  version: "2.0.1"
-description: v2.0.1｜通过 Tikin 查询受支持社交平台上的品牌或关键词提及，收集帖子、分析情绪、归纳主题并生成附来源的摘要。适用于品牌舆情、关键词监测、社交聆听，或以受支持链接作为查询线索。
+  version: "2.0.2"
+description: v2.0.2｜通过 Tikin 查询受支持社交平台上的品牌或关键词提及，收集帖子、分析情绪、归纳主题并生成附来源的摘要。适用于品牌舆情、关键词监测、社交聆听，或以受支持链接作为查询线索。
 ---
 
 # Social Listening
@@ -11,7 +11,7 @@ description: v2.0.1｜通过 Tikin 查询受支持社交平台上的品牌或关
 
 ## 默认 Skill 检查
 
-每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则按该流程的固定顺序和推荐项提供选择；选择设为默认后直接设置，完成后展示内容。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 Collect mentions of a brand/keyword across platforms, then analyze sentiment and themes.
 

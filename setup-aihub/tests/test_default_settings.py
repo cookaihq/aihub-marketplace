@@ -148,7 +148,7 @@ class DefaultSettingsTests(unittest.TestCase):
             changed["targets"][0]["default_message"] += "Changed"
             path.write_text(json.dumps(changed))
             with self.assertRaises(SetupError):
-                defaults.verify(self.state, plan["confirmation"])
+                defaults.verify(self.state)
             for data in ('{"schema_version":1,"schema_version":2,"targets":[]}',
                          '{"schema_version":2,"targets":[]}',
                          json.dumps({"schema_version":1,"targets":[original["targets"][0]] * 2})):
@@ -216,27 +216,27 @@ class DefaultSettingsTests(unittest.TestCase):
         self.assertEqual(self.rule.read_text(), "# Existing user instructions\n")
         self.assertFalse((self.user / ".config").exists())
 
-    def test_preview_confirmation_change_detection_and_combined_rule_readback(self):
+    def test_single_choice_change_detection_and_combined_rule_readback(self):
         defaults.record(self.state, self.report)
         with self.assertRaises(SetupError):
-            defaults.verify(self.state, "1")
+            defaults.verify(self.state)
         defaults.choose(self.state, "设为默认")
         preview = defaults.preview(self.state, {"shared_with": ["ChatGPT/Codex", "Claude Code"]})["preview"]
         self.assertEqual(len(preview["writes"]), 2)
         self.assertEqual(self.rule.read_text(), "# Existing user instructions\n")
-        with self.assertRaises(SetupError):
-            defaults.verify(self.state, "wrong")
+        self.assertEqual(self.state["result"]["default_settings"]["phase"], "ready_to_apply")
+        self.assertNotIn("confirmation", preview)
         self.project_rule.write_text("New project override")
         with self.assertRaisesRegex(SetupError, "default_settings_changed_recheck"):
-            defaults.verify(self.state, preview["confirmation"])
+            defaults.verify(self.state)
         defaults.record(self.state, self.report)
         defaults.choose(self.state, "1")
         preview = defaults.preview(self.state, {"shared_with": []})["preview"]
-        defaults.verify(self.state, preview["confirmation"])
+        defaults.verify(self.state)
         outcomes = {"outcomes": [{"id": w["id"], "status": "written", "session_loaded": "not_verified", "evidence": "synthetic file readback"} for w in preview["writes"]]}
         with self.assertRaises(SetupError):
             defaults.finish(self.state, outcomes)
-        # Simulate the host edit after explicit full-preview approval, one edit per entity.
+        # Simulate the host edit after the single menu choice, one edit per entity.
         self.rule.write_text(self.rule.read_text() + "\n".join(w["rule"] for w in preview["writes"]))
         result = defaults.finish(self.state, outcomes)
         self.assertEqual(result["phase"], "completed")
@@ -258,7 +258,54 @@ class DefaultSettingsTests(unittest.TestCase):
         alias.unlink()
         alias.symlink_to(self.project_rule)
         with self.assertRaises(SetupError):
-            defaults.verify(self.state, plan["confirmation"])
+            defaults.verify(self.state)
+
+    def test_old_preview_request_does_not_authorize_direct_setting(self):
+        defaults.record(self.state, self.report)
+        defaults.choose(self.state, "1")
+        defaults.preview(self.state, {"shared_with": []})
+        self.state["result"]["default_settings"]["phase"] = "waiting_confirmation"
+        before = copy.deepcopy(self.state)
+        with self.assertRaisesRegex(SetupError, "default_settings_not_ready"):
+            defaults.verify(self.state)
+        self.assertEqual(self.state, before)
+        self.assertTrue(defaults.pending(self.state))
+        self.assertEqual(self.rule.read_text(), "# Existing user instructions\n")
+
+    def test_recommended_choice_resumes_and_applies_without_second_confirmation(self):
+        for host in defaults.AGENT_NAMES:
+            with self.subTest(host=host):
+                self.rule.write_text("# Existing user instructions\n", encoding="utf-8")
+                state = copy.deepcopy(self.state)
+                state["context"]["host"] = host
+                with patch("pathlib.Path.home", return_value=self.user):
+                    Tasks().save(state)
+                report = self.root / "report.json"
+                report.write_text(json.dumps(self.report), encoding="utf-8")
+                shared = self.root / "shared.json"
+                shared.write_text('{"shared_with": []}', encoding="utf-8")
+                self.call("defaults", "--action", "record", "--task", state["id"], "--input", report, host=host)
+                self.call("defaults", "--action", "choose", "--task", state["id"],
+                          "--choice", "设为默认 (推荐)", "--targets", "plugin:aihub-studio", host=host)
+                prepared = self.call("defaults", "--action", "preview", "--task", state["id"], "--input", shared, host=host)
+                self.assertEqual(prepared["default_settings"]["phase"], "ready_to_apply")
+                self.assertEqual(self.rule.read_text(), "# Existing user instructions\n")
+                self.assertEqual(self.call("list", host=host)["tasks"][0]["phase"], "default_settings:ready_to_apply")
+                applied = self.call("defaults", "--action", "verify", "--task", state["id"], host=host)
+                self.assertEqual(applied["default_settings"]["phase"], "applying")
+                write, = applied["default_settings"]["preview"]["writes"]
+                self.rule.write_text(self.rule.read_text() + write["rule"], encoding="utf-8")
+                outcome = self.root / "outcome.json"
+                outcome.write_text(json.dumps({"outcomes": [{"id": write["id"], "status": "written",
+                    "session_loaded": "not_verified", "evidence": "synthetic host write and readback"}]}), encoding="utf-8")
+                completed = self.call("defaults", "--action", "finish", "--task", state["id"], "--input", outcome, host=host)
+                self.assertEqual(completed["credential_phase"], "completed")
+                self.assertEqual(completed["default_settings"]["phase"], "completed")
+                self.assertEqual(completed["default_settings"]["preview"]["writes"][0]["rule"], write["rule"])
+                self.assertIn(write["rule"], self.rule.read_text(encoding="utf-8"))
+                other = next(row for row in completed["default_settings"]["targets"] if row["id"] == "plugin:tikin-social")
+                self.assertEqual(other["status"], "missing")
+                self.assertEqual(self.call("list", host=host)["tasks"], [])
 
     def test_native_target_reminder_commands_are_offline_and_isolated_for_three_host_arguments(self):
         for host in defaults.AGENT_NAMES:

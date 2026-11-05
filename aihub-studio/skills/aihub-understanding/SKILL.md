@@ -1,8 +1,8 @@
 ---
 name: aihub-understanding
 metadata:
-  version: "1.5.0"
-description: v1.5.0｜通过 AIhub llm-custom 模型理解图片、音频、视频或文件内容，返回文本结果并支持中断后继续任务。
+  version: "1.5.1"
+description: v1.5.1｜通过 AIhub llm-custom 模型理解图片、音频、视频或文件内容，返回文本结果并支持中断后继续任务。
 ---
 
 # AIhub Understanding
@@ -13,7 +13,7 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 
 ## 默认 Skill 检查
 
-每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../../references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../../references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则按该流程的固定顺序和推荐项提供选择；选择设为默认后直接设置，完成后展示内容。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 执行本 Skill 时，使用当前宿主提供的实际完整调用标识并核对来源，按下述流程实际调用 AIHub；不能只加载说明后改用其他通道完成同一任务。提示词整理、确定性文件处理和按流程进行的宿主结果检查仍可使用适用工具。用户已对本任务明确选择或授权其他通道时沿用该决定。
 

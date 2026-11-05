@@ -1,8 +1,8 @@
 ---
 name: tikin-setup
 metadata:
-  version: "2.0.1"
-description: v2.0.1｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
+  version: "2.0.2"
+description: v2.0.2｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
 ---
 
 # tikin Setup
@@ -15,7 +15,7 @@ Setup 不可用时，按同一引用的最小回退办理。此凭证分支以�
 
 ## 默认 Skill 检查
 
-每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则按该流程的固定顺序和推荐项提供选择；选择设为默认后直接设置，完成后展示内容。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 Use this entry for the specific installation, credential, routing or update task requested. A credential-only request follows the linked credential flow and returns without the other setup stages.
 

@@ -26,11 +26,11 @@ uv run --locked --no-dev --project "<setup-api-key Skill 实体目录>" python "
 
 ## 配置成功后的默认设置
 
-按 [Plugin默认设置检查](default-settings.md) 执行。`defaults --action catalog` 只读开发者清单并替换展示名称，不查凭证、不判断安装、不创建进度。其他 `defaults` 操作使用已完成的 `configure/repair` 任务：`record --input <检查报告>`、`status`、`choose --choice 1|2|3|选项文字`、`preview --input <共享影响>`、`verify --confirm <指纹>`、`finish --input <结果>`，均另带 `--task <id> --host <实际宿主> --cwd <业务目录>`。
+按 [Plugin默认设置检查](default-settings.md) 执行。`defaults --action catalog` 只读开发者清单并替换展示名称，不查凭证、不判断安装、不创建进度。其他 `defaults` 操作使用已完成的 `configure/repair` 任务：`record --input <检查报告>`、`status`、`choose --choice 1|2|3|选项文字`、`preview --input <共享影响>`、`verify`、`finish --input <结果>`，均另带 `--task <id> --host <实际宿主> --cwd <业务目录>`。
 
-helper 接收 Agent 根据实际宿主取得的安装证据及语义检查结果，不把脚本运行当作原生安装或加载验证。它冻结菜单范围并持久化完整规则预览与文件指纹；规则写入和提醒关闭复用目标对象已有流程。`verify` 仅核对已获确认的预览，没有自动写规则或代替用户授权的能力。
+helper 接收 Agent 根据实际宿主取得的安装证据及语义检查结果，不把脚本运行当作原生安装或加载验证。它冻结菜单范围并持久化用户选择、内部写入计划与文件指纹；规则写入和提醒关闭复用目标对象已有流程。用户选择“设为默认”后，`preview` 准备计划并进入 `ready_to_apply`，随后直接 `verify` 检查文件变化并进入 `applying`，由 Agent 写入、回读并展示完整内容。两条命令都不增加用户确认步骤，也不自动写规则。
 
-`result.default_settings` 独立于凭证 `phase=completed`；`list` 会返回尚待默认设置检查、选项或确认的已完成凭证任务，阶段带 `default_settings:` 前缀。`continue` 返回当前结果，不重放密钥保存。待办结束后才能 `forget`；取消默认设置用选项 2，保留已保存凭证。
+`result.default_settings` 独立于凭证 `phase=completed`；`list` 会返回尚待默认设置检查、选项或执行的已完成凭证任务，阶段带 `default_settings:` 前缀。`continue` 返回当前结果，不重放密钥保存。待办结束后才能 `forget`；取消默认设置用选项 2，保留已保存凭证。
 
 ## 手填与清除
 

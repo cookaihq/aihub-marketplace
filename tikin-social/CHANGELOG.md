@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.2
+
+2026-11-06
+
+- 默认设置首项固定为“设为默认 (推荐)”。用户选择后直接设置，完成后展示回读到的完整规则、文件位置和影响范围，不再二次确认。
+- 保留文件变化检查、已有规则去重、同一实体文件合并编辑及跨轮恢复；未答复不写配置。
+- Windows 默认规则、分发与版本定向回归 13 项通过；Codex 隔离文件的菜单、写入、恢复与完整展示通过，原生安装及真实全局加载未验证。Claude Code 额度 403、WorkBuddy 输入与发送受阻，macOS 待验；按用户明确要求发布，保留上述待验项。
+- Windows 完整行为套件未通过并达到 300 秒上限；代理测试依赖和轮询断言问题在基线复现，其他执行安全用例仍待定位。补充本机已有 OpenSSL 的测试进程路径后，代理双流代表用例通过。
+
 ## 2.0.1 — 2026-11-04
 
 - Require Setup AIHub / setup-api-key 3.0.0 or newer when a missing API Key opens the local configuration page. Setup 2.3.0 rejects Tikin 2.x.

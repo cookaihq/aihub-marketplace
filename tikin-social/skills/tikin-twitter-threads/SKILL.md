@@ -1,8 +1,8 @@
 ---
 name: tikin-twitter-threads
 metadata:
-  version: "2.0.1"
-description: v2.0.1｜通过 Tikin 处理 Twitter/X 与 Threads 链接和数据，获取帖子详情、用户资料、用户时间线、粉丝与关注列表，搜索时间线、查询评论回复及 X 热门话题。用户提供相关链接或任务针对任一平台时使用；覆盖 Twitter-Web 与 Threads-Web 接口。
+  version: "2.0.2"
+description: v2.0.2｜通过 Tikin 处理 Twitter/X 与 Threads 链接和数据，获取帖子详情、用户资料、用户时间线、粉丝与关注列表，搜索时间线、查询评论回复及 X 热门话题。用户提供相关链接或任务针对任一平台时使用；覆盖 Twitter-Web 与 Threads-Web 接口。
 ---
 
 # Twitter / X & Threads (via tikin)
@@ -11,7 +11,7 @@ description: v2.0.1｜通过 Tikin 处理 Twitter/X 与 Threads 链接和数据�
 
 ## 默认 Skill 检查
 
-每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则按该流程的固定顺序和推荐项提供选择；选择设为默认后直接设置，完成后展示内容。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 Coverage of Twitter/X and Threads (both microblog platforms). Exhaustive endpoints via the
 `tikin-endpoint-discovery` skill: `tikin-find-endpoint "<goal>" --platform twitter` or

@@ -2,7 +2,7 @@
 
 The host supplies installation evidence and semantic rule findings. Native target
 guides own checking, rule edits, and reminder storage; this module freezes the menu
-and full preview so a later numeric reply cannot select a different set of targets.
+and write plan so a later numeric reply cannot select a different set of targets.
 """
 import json
 import hashlib
@@ -17,7 +17,7 @@ AGENT_NAMES = {"codex": "ChatGPT/Codex", "claude-code": "Claude Code", "workbudd
 INSTALLED = {"installed", "disabled", "unloaded"}
 INSTALLATIONS = INSTALLED | {"not_installed", "unknown", "source_conflict"}
 STATUSES = {"missing", "configured_global", "configured_project", "conflict", "unknown", "skipped"}
-PENDING = {"pending_check", "waiting_choice", "set_default_requested", "dismiss_requested", "waiting_confirmation", "applying"}
+PENDING = {"pending_check", "waiting_choice", "set_default_requested", "dismiss_requested", "waiting_confirmation", "ready_to_apply", "applying"}
 
 
 def read_json(path):
@@ -192,6 +192,7 @@ def choose(state, choice, selected=None):
     if defaults.get("phase") != "waiting_choice":
         raise SetupError("no_default_settings_choice")
     choices = {"1": "set_default_requested", "设为默认": "set_default_requested",
+               "设为默认 (推荐)": "set_default_requested", "设为默认（推荐）": "set_default_requested",
                "2": "skipped", "本次跳过": "skipped", "3": "dismiss_requested", "不再提醒": "dismiss_requested"}
     if choice not in choices:
         raise SetupError("invalid_default_settings_choice")
@@ -221,18 +222,17 @@ def preview(state, request):
                            "rule": Path(row["artifacts"]["rule_template"]).read_text(encoding="utf-8")})
     plan = {"context": state["context"], "catalog_revision": defaults["catalog_revision"],
             "writes": writes, "shared_with": request["shared_with"]}
-    plan["confirmation"] = fingerprint(plan)
-    defaults.update(phase="waiting_confirmation", preview=plan)
+    defaults.update(phase="ready_to_apply", preview=plan)
     return defaults
 
 
-def verify(state, confirmation):
+def verify(state):
     defaults = checkpoint(state)
-    if defaults.get("phase") != "waiting_confirmation" or defaults["preview"]["confirmation"] != confirmation:
-        raise SetupError("default_settings_confirmation_required")
+    if defaults.get("phase") != "ready_to_apply":
+        raise SetupError("default_settings_not_ready")
     fresh(state, defaults)
-    # This verifies a human-approved preview; it does not obtain user consent or
-    # edit files. The Agent now follows each target's native documented workflow.
+    # The menu choice authorizes the selected defaults. This is a freshness check,
+    # not a second user confirmation; the Agent performs and reports the edit.
     defaults["phase"] = "applying"
     return defaults
 

@@ -1,12 +1,16 @@
 # tikin Social
 
+当前版本 **2.0.2**：默认设置采用“设为默认 (推荐)”，选择一次后直接设置并展示实际内容。Windows 默认规则、分发与版本定向回归 13 项通过；Codex 已在隔离测试文件中完成菜单、写入、恢复及完整内容展示。Claude Code 因额度 403 受阻，WorkBuddy 的输入与发送未能完成；本版原生安装及真实全局加载、macOS 仍待验，本次按用户明确指令发布，以上待验项继续保留。以下历史验收记录仅覆盖各自所列版本。
+
+本轮 Windows 完整行为套件未通过并在 300 秒上限停止：代理测试依赖和轮询断言问题已在基线复现；仅在测试进程补充已有 OpenSSL 路径后，代理双流代表用例通过。其余执行安全用例失败仍待定位，定向回归结果不代表全量通过。
+
 tikin Social targets Claude Code, Codex and WorkBuddy to retrieve social-media
 posts, profiles, comments, search results and trends, download media, and analyze accounts across
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **2.0.1**. The 16 Skills using the shared business request
-entry are **2.0.1**; offline `tikin-endpoint-discovery` remains **1.6.0**. New API runs
+Plugin version: **2.0.2**. The 16 Skills using the shared business request
+entry are **2.0.2**; offline `tikin-endpoint-discovery` is **1.6.1**. New API runs
 require the Agent to supply a concise task name; existing records resume by their saved paths.
 This release includes the previously unpublished 1.5.0/1.6.0 changes and the
 second-batch catalog of 1029 operations; the retained first-batch catalog contains
@@ -42,9 +46,9 @@ that assert POSIX file-mode bits; the same failures reproduce on the 1.2.1 basel
 
 ## Default Skills and reminders
 
-On the first use of any tikin-social Skill in a session, the Agent checks its active global and project instructions for an equivalent default-Skill preference. Existing equivalent rules need no prompt. Otherwise it offers **Set as default / Skip this time / Do not remind again**, at most once per Plugin per session, while continuing your original task.
+On the first use of any tikin-social Skill in a session, the Agent checks its active global and project instructions for an equivalent default-Skill preference. Existing equivalent rules need no prompt. Otherwise it offers **Set as default (Recommended) / Skip this time / Do not remind again**, in that order, at most once per Plugin per session, while continuing your original task.
 
-“Set as default” shows the exact task-to-Skill mapping, complete proposed text and actual global rule file before asking for your confirmation. It prioritizes the applicable tikin-social Skills only when you have not chosen another tool. Shared rule files and conflicts are explained before any edit. Saving a rule and verifying that a new host session loads it are reported separately.
+Choosing “Set as default” authorizes the Agent to write the current Agent’s global rules directly, without a second confirmation. After reading the result back, it shows the complete saved rules, actual file and scope. It prioritizes the applicable tikin-social Skills only when you have not chosen another tool. Shared rule files and conflicts are explained before the choice. Saving a rule and verifying that a new host session loads it are reported separately.
 
 “Do not remind again” only saves the reminder choice; it does not install or remove default rules. You can ask:
 

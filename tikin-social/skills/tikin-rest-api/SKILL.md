@@ -1,8 +1,8 @@
 ---
 name: tikin-rest-api
 metadata:
-  version: "2.0.1"
-description: v2.0.1｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
+  version: "2.0.2"
+description: v2.0.2｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
 ---
 
 # tikin — REST API
@@ -11,7 +11,7 @@ description: v2.0.1｜通过共享请求工具调用 Tikin REST API，并保存�
 
 ## 默认 Skill 检查
 
-每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则提供“设为默认 / 本次跳过 / 不再提醒”。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
+每次会话首次使用本 Plugin 时，先按[默认 Skill 检查与提醒](../tikin-setup/references/default-skills.md)核对当前 Agent 的实际规则。已有等效默认规则或已关闭提醒时不询问；否则按该流程的固定顺序和推荐项提供选择；选择设为默认后直接设置，完成后展示内容。同一 Plugin 本会话只提示一次，不阻塞当前任务；禁用全局配置时跳过。
 
 Direct HTTP access to all 1,000+ tikin endpoints. Use `tikin-endpoint-discovery` to find the
 right path, then call it here.
