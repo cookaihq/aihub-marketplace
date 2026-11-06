@@ -16,10 +16,16 @@ MARKET = Path(os.environ.get('AIHUB_UI_TEST_MARKET', Path(__file__).resolve().pa
 
 class ServiceLifetime(unittest.TestCase):
     def test_native_background_launcher_exits_when_its_page_stops(self):
+        self.check_background_launcher('workbuddy')
+
+    def test_hermes_background_launcher_exits_when_its_page_stops(self):
+        self.check_background_launcher('hermes')
+
+    def check_background_launcher(self, host):
         with tempfile.TemporaryDirectory(dir=os.environ['TEMP'], prefix='attached-ui-') as temporary:
             package = MARKET / 'aihub-studio'
             command = [sys.executable, str(package / 'scripts/ui.py'), 'start', '--project', temporary,
-                       '--page', 'artifacts', '--agent', 'workbuddy', '--no-global-config']
+                       '--page', 'artifacts', '--agent', host, '--no-global-config']
             environment = {key: value for key, value in os.environ.items() if not key.startswith(('AIHUB_', 'TIKIN_'))}
             environment.pop('UV_PROJECT_ENVIRONMENT', None)
             process = subprocess.Popen(command + ['--keep-running'], env=environment,

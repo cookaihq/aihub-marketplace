@@ -21,7 +21,18 @@ ADAPTERS = {
                       "skills/tikin-setup/.python-version", "skills/tikin-setup/uv.lock"],
     },
 }
-HOSTS = ("claude-code", "codex", "workbuddy")
+HOSTS = ("claude-code", "codex", "workbuddy", "hermes")
+
+
+def host_context(host):
+    # Hermes profiles share business configuration, but not task confirmations.
+    if host == "hermes":
+        suffix = os.environ.get("HERMES_DATA_DIR_SUFFIX", "")
+        default = ((Path(os.environ.get("LOCALAPPDATA", "").strip() or Path.home() / "AppData/Local") / ("hermes" + suffix))
+                   if os.name == "nt" else Path.home() / (".hermes" + suffix))
+        directory = os.path.expandvars(str(os.environ.get("HERMES_HOME", "").strip() or default))
+        return {"hermes_home": path_id(Path(directory).expanduser().resolve())}
+    return {}
 
 
 def path_id(path):
@@ -210,7 +221,7 @@ class Consumer:
     def context(self, host):
         return {"host": host, "platform": os.name, "home": str(Path.home().resolve()), "cwd": str(self.cwd),
                 "plugin": self.name, "root": str(self.root), "version": self.version, "artifact_revision": self.revision,
-                "caller": self.caller, "global_enabled": self.global_enabled}
+                "caller": self.caller, "global_enabled": self.global_enabled, **host_context(host)}
 
     @classmethod
     def from_context(cls, context):

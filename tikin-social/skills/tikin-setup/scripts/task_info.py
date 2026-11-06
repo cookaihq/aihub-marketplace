@@ -24,11 +24,12 @@ def actor_context(value=None, environment=None):
            for item in value.values()):
         raise ValueError('invalid execution context value')
     actor = {key: value.get(key) or None for key in ACTOR_FIELDS}
-    actor['host'] = actor['host'] or ('Codex' if environment.get('CODEX_THREAD_ID') else None)
-    if actor['host'] not in (None, 'Codex', 'Claude Code', 'WorkBuddy'):
+    detected = [name for name, key in (('Codex', 'CODEX_THREAD_ID'), ('Hermes', 'HERMES_SESSION_ID')) if environment.get(key)]
+    actor['host'] = actor['host'] or (detected[0] if len(detected) == 1 else None)
+    if actor['host'] not in (None, 'Codex', 'Claude Code', 'WorkBuddy', 'Hermes'):
         raise ValueError('unknown execution host')
     keys = {'Codex': ('CODEX_THREAD_ID', 'CODEX_SESSION_ID'), 'Claude Code': ('CLAUDE_SESSION_ID',),
-            'WorkBuddy': ('CODEBUDDY_SESSION_ID',)}
+            'WorkBuddy': ('CODEBUDDY_SESSION_ID',), 'Hermes': ('HERMES_SESSION_ID',)}
     actor['conversation_id'] = actor['conversation_id'] or next(
         (environment[key] for key in keys.get(actor['host'], ()) if environment.get(key)), None)
     if actor['relationship'] not in (None, 'child', 'fork'):

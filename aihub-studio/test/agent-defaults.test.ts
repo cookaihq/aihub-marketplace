@@ -10,8 +10,8 @@ function fixture(run: (root: string) => void) {
   const root = mkdtempSync(join(tmpdir(), 'aihub-defaults-'));
   try { run(root); } finally { rmSync(root, { recursive: true, force: true }); }
 }
-test('fresh checks are read-only, credential-free and require semantic review in all three hosts', () => fixture(root => {
-  for (const agent of ['codex', 'claude-code', 'workbuddy']) {
+test('fresh checks are read-only, credential-free and require semantic review in all hosts', () => fixture(root => {
+  for (const agent of ['codex', 'claude-code', 'workbuddy', 'hermes']) {
     const result = agentDefaults({ agent, homeDirectory: root, env: {} });
     assert.equal(result.status, 'review_required');
     assert.equal(result.session_loaded, 'not_verified');
@@ -19,6 +19,22 @@ test('fresh checks are read-only, credential-free and require semantic review in
     assert.match(String(result.proposed_rule), /aihub-image/);
     assert.match(String(result.proposed_rule), /实际完整调用标识/);
   }
+}));
+test('Hermes uses the active profile SOUL and isolates reminders without editing it', () => fixture(root => {
+  const profile = join(root, 'Hermes profile 中文');
+  mkdirSync(profile);
+  writeFileSync(join(profile, 'SOUL.md'), 'Existing identity');
+  const options = { agent: 'hermes', homeDirectory: root, env: { HERMES_HOME: profile } };
+  const result = agentDefaults(options);
+  assert.equal(result.primary_rule, join(profile, 'SOUL.md'));
+  assert.equal(result.additional_rules_directory, null);
+  assert.equal(agentDefaults({ ...options, env: { HERMES_HOME: '${HERMES_TEST_PROFILE}', HERMES_TEST_PROFILE: profile } }).config_dir, profile);
+  assert.equal(agentDefaults({ ...options, action: 'dismiss' }).status, 'dismissed');
+  assert.equal(agentDefaults({ ...options, configDir: join(root, 'other') }).status, 'review_required');
+  assert.equal(agentDefaults({ ...options, agent: 'codex' }).status, 'review_required');
+  assert.equal(readFileSync(join(profile, 'SOUL.md'), 'utf8'), 'Existing identity');
+  const fallback = agentDefaults({ agent: 'hermes', homeDirectory: root, env: { HERMES_DATA_DIR_SUFFIX: '-dev' } });
+  assert.equal(fallback.config_dir, process.platform === 'win32' ? join(root, 'AppData', 'Local', 'hermes-dev') : join(root, '.hermes-dev'));
 }));
 test('dismissal survives separate calls, isolates host profiles and preserves unrelated settings', () => fixture(root => {
   const path = join(root, '.config/aihub-studio/settings.json');

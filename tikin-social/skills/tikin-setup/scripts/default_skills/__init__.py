@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import uuid
 
-AGENTS = ("codex", "claude-code", "workbuddy")
+AGENTS = ("codex", "claude-code", "workbuddy", "hermes")
 PLUGIN = "tikin-social"
 
 
@@ -83,9 +83,15 @@ def run(agent, action="check", config_dir=None, global_enabled=True):
         return {"status": "skipped", "reason": "global_config_disabled", "plugin": PLUGIN, "agent": agent}
     if agent == "workbuddy" and not config_dir and os.environ.get("WORKBUDDY_CONFIG_DIR") and os.environ.get("CODEBUDDY_CONFIG_DIR") and Path(os.environ["WORKBUDDY_CONFIG_DIR"]).resolve() != Path(os.environ["CODEBUDDY_CONFIG_DIR"]).resolve():
         raise ValueError("WorkBuddy configuration directories disagree; pass the active directory with --config-dir.")
-    configured = (os.environ.get("CODEX_HOME") if agent == "codex" else os.environ.get("CLAUDE_CONFIG_DIR") if agent == "claude-code" else os.environ.get("WORKBUDDY_CONFIG_DIR") or os.environ.get("CODEBUDDY_CONFIG_DIR"))
-    default_dir = {"codex": ".codex", "claude-code": ".claude", "workbuddy": ".workbuddy"}[agent]
-    directory = Path(config_dir or configured or Path.home() / default_dir).expanduser().resolve()
+    configured = (os.environ.get("CODEX_HOME") if agent == "codex" else os.environ.get("CLAUDE_CONFIG_DIR") if agent == "claude-code" else os.environ.get("HERMES_HOME") if agent == "hermes" else os.environ.get("WORKBUDDY_CONFIG_DIR") or os.environ.get("CODEBUDDY_CONFIG_DIR"))
+    default_dir = {"codex": ".codex", "claude-code": ".claude", "workbuddy": ".workbuddy", "hermes": ".hermes"}[agent]
+    fallback = Path.home() / default_dir
+    if agent == "hermes":
+        suffix = os.environ.get("HERMES_DATA_DIR_SUFFIX", "")
+        fallback = ((Path(os.environ.get("LOCALAPPDATA", "").strip() or Path.home() / "AppData/Local") / ("hermes" + suffix))
+                    if os.name == "nt" else Path.home() / (".hermes" + suffix))
+    directory_value = str(config_dir or (configured or "").strip() or fallback)
+    directory = Path(os.path.expandvars(directory_value) if agent == "hermes" else directory_value).expanduser().resolve()
     settings_file = Path.home() / ".config" / PLUGIN / "settings.json"
     if action not in ("check", "preference"):
         save_preference(settings_file, agent, directory, action == "enable")
@@ -99,7 +105,7 @@ def run(agent, action="check", config_dir=None, global_enabled=True):
         return dict(base, status="dismissed")
     if action == "enable":
         return dict(base, status="enabled", next_step="Run check and review the active instructions.")
-    names = ["AGENTS.override.md", "AGENTS.md"] if agent == "codex" else ["CLAUDE.md" if agent == "claude-code" else "CODEBUDDY.md"]
+    names = ["AGENTS.override.md", "AGENTS.md"] if agent == "codex" else ["CLAUDE.md" if agent == "claude-code" else "SOUL.md" if agent == "hermes" else "CODEBUDDY.md"]
     candidates = [directory / name for name in names]
     primary = candidates[-1]
     for candidate in candidates:
@@ -113,6 +119,6 @@ def run(agent, action="check", config_dir=None, global_enabled=True):
     rule = (Path(__file__).resolve().parents[2] / "references" / "default-skills-rule.md").read_text(encoding="utf-8").strip()
     return dict(base, status="review_required", global_candidates=[str(path) for path in candidates],
                 primary_rule=str(primary), primary_real_path=str(primary.resolve()),
-                additional_rules_directory=None if agent == "codex" else str(directory / "rules"),
+                additional_rules_directory=None if agent in ("codex", "hermes") else str(directory / "rules"),
                 proposed_rule=rule, session_loaded="not_verified",
                 next_step="Read the active global and project instructions, imports and host overrides. Decide semantic equivalence before offering a default. Never infer missing rules from this report alone.")

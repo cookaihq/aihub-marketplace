@@ -1,8 +1,14 @@
-# AIhub Studio Plugin 2.0.0
+# AIhub Studio Plugin 2.1.0
+
+2.1.0 新增 Hermes 原生入口，完整注册六个 Skill，继续使用共享业务脚本。默认规则与提醒识别当前 Hermes Profile；缺 Key 配置可交由 Setup AIHub 4.1.0 的 setup-api-key。
+
+本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
+
+以下为历史 2.0.0 的功能与验收记录。
 
 2.0.0 自带配置中心与三种产物视图；新任务保存到 `data/aihub-studio/YYYYMMDDHHmmss-任务摘要-run-8hex/`，包含 `task-info.json`、会话/Agent 关联和最终文件。图片与视频显示封面，任务卡采用最多三个不同格式的预览。旧任务不索引或迁移。
 
-本轮 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
+2.0.0 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
 
 以下历史记录只覆盖各自所列版本。
 
@@ -12,7 +18,7 @@
 
 1.5.0 在 macOS 通过 135 项回归及合成凭证网页保存、原加载器复查。Codex 0.166.0 已通过原生测试 Plugin 安装、业务缺 Key 触发、网页保存与跨轮恢复，默认沙箱保留，启动使用单次命令审批；Claude Code 2.1.317 成功加载完整 Plugin，实际调用被账号额度不足（403）阻断；WorkBuddy 原生窗口因辅助功能权限不可操作，本版会话流程未验证。Windows 原生、真实飞书授权与线上业务仍待验收。
 
-让 Claude Code、Codex 或 WorkBuddy 通过 AIhub 帮你生成和编辑图片、制作视频与音频、理解素材内容，或把 PDF 转成可编辑文档。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
+让 Claude Code、Codex、WorkBuddy 或 Hermes 通过 AIhub 帮你生成和编辑图片、制作视频与音频、理解素材内容，或把 PDF 转成可编辑文档。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
 
 ## 默认使用与提醒
 
@@ -30,7 +36,7 @@
 
 偏好自动读取并保存到运行用户的 `~/.config/aihub-studio/settings.json`，按 Agent 类型和实际配置目录分别记录；同一 Plugin 的六个 Skill 与后续版本共用，另一个 Plugin 独立。这个偏好不从环境变量或 `.env` 读取。文件缺失默认开启，检查不创建文件；只有你要求关闭或重新开启才保存。禁用本次全局配置会一起跳过提醒检查并禁止保存。检查不需要 API key、不联网；未知宿主或检查失败会说明情况并继续原任务。
 
-本次提供 Codex、Claude Code、WorkBuddy 的规则入口和提醒流程。AIhub 既有业务运行支持范围不因这项检查扩大。macOS/Linux 按实际运行用户目录保存；Windows 原生使用 Node 运行时用户目录下的 `.config/aihub-studio/settings.json`，WSL 使用 Linux 用户目录，两者不自动共享。宿主真实会话加载须单独核验。
+本版提供 Codex、Claude Code、WorkBuddy、Hermes 的规则入口和提醒流程。Hermes 使用当前 Profile 的 SOUL.md；提醒选择按实际 HERMES_HOME 隔离。AIhub 既有业务运行支持范围不因这项检查扩大。macOS/Linux 按实际运行用户目录保存；Windows 原生使用 Node 运行时用户目录下的 `.config/aihub-studio/settings.json`，WSL 使用 Linux 用户目录，两者不自动共享。宿主真实会话加载须单独核验。
 
 ## 能做什么
 
@@ -63,7 +69,7 @@
 
 ## 开始前准备
 
-- **Agent：**本版提供 Claude Code、Codex 与 WorkBuddy 的完整 Plugin 入口；各宿主的实际验证范围见下文。
+- **Agent：**本版提供 Claude Code、Codex、WorkBuddy 与 Hermes 的完整 Plugin 入口；各宿主的实际验证范围见下文。
 - **账号：**只需配置 `AIHUB_API_KEY`（调用服务的密钥），服务地址固定为 `https://api.aihubmax.com`。模型访问权限和额度由账号决定。
 - **运行工具：**添加插件市场需要 Git；运行任务需要 Node.js 18 或更新版本，以及 FFmpeg 中的 `ffprobe`；录音转写还需要 `ffmpeg` 分析与处理音频。可以让 Agent 检查并指导安装；Plugin 本身不会自动安装系统工具或本机模型，也不需要另行启动 MCP 服务。
 - **Windows 文件保护：**保存私有任务、诊断或检查记录时需要系统自带的 Windows PowerShell 5.1 和支持访问权限的文件系统。程序在写入内容前限制为当前用户与 SYSTEM 可访问；无法设置或回读权限时停止保存并报告原因。只读配置检查不要求 FFmpeg 或这一步保存能力。
@@ -90,6 +96,12 @@ AIhub 通过 CNB 与 GitHub 来源分发。请按当前使用的 Agent 选择对
 ```text
 请在 Codex 中安装完整的 AIhub Studio Plugin（aihub-studio@aihub-marketplace）：优先用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，CNB 网络故障时改用 https://github.com/cookaihq/aihub-marketplace.git，保持同一 Plugin 和版本。先阅读仓库 README 和 aihub-studio/README.md，使用 Codex 的原生插件管理入口添加或复用 aihub-marketplace，再安装 aihub-studio，保留已有设置。分别报告市场添加、Plugin 安装、Skill 发现与调用的结果；如需新会话，请指导我操作。
 ```
+
+### Hermes：通过原生 Plugin 管理安装
+
+> 请在当前 Hermes Profile 安装完整 aihub-studio Plugin。先读仓库及 aihub-studio 的 README，通过 Hermes 原生安装入口使用 https://github.com/cookaihq/aihub-marketplace.git#aihub-studio；网络故障时换为 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git#aihub-studio 的同一版本。保留已有设置和本地修改，启用后核对六个 Skill。显式加载 aihub-studio:aihub-image，运行本机配置检查，分别报告发现、执行与业务请求结果。缺 Key 时使用完整 Setup AIHub 4.1.0 或更新版，不单独复制 Skill 文件。
+
+固定版本先核对已发布的 `aihub-studio/v2.1.0` tag，再使用安装器的 `--ref`。更新先检查 `hermes plugins check-updates`，你要求更新后由原生 `hermes plugins update aihub-studio` 更新完整包。当前 Profile 的安装、显式加载与自然请求选择分别核对；[Profile 与默认规则](references/default-skills.md#hermes-入口与-profile)说明实际目录。业务配置仍使用原有 `.config/aihub-studio/`，不会自动搬入 Profile。
 
 ### WorkBuddy：通过原生套件管理安装
 

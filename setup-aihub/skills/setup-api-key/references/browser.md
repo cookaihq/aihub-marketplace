@@ -3,7 +3,7 @@
 读取主 Skill，核对真实宿主、已选 Plugin 实体、caller、业务 cwd 和提交状态。`setup_ui.py` 保存 Setup 任务关联，然后委托该 Plugin 自带的配置中心。业务包必须包含 `scripts/ui.py`：Studio 位于 Plugin 根，Tikin 位于 `skills/tikin-setup/`。没有该入口时更新对应完整 Plugin；不使用另一宿主缓存冒充已安装版本。
 
 ```text
-uv run --frozen --project "<setup-api-key实体>" python "<setup-api-key实体>/scripts/setup_ui.py" start --host <claude-code|codex|workbuddy> --cwd "<原业务cwd>" --aihub-root "<AIhub Plugin实体>" --plugin aihub-studio --skill <真实caller> --submission <not_submitted|submitted|unknown> --open
+uv run --frozen --project "<setup-api-key实体>" python "<setup-api-key实体>/scripts/setup_ui.py" start --host <claude-code|codex|workbuddy|hermes> --cwd "<原业务cwd>" --aihub-root "<AIhub Plugin实体>" --plugin aihub-studio --skill <真实caller> --submission <not_submitted|submitted|unknown> --open
 ```
 
 Tikin 改用 `--tikin-root "<Tikin Plugin实体>" --plugin tikin-social`。没有 caller 省略 `--skill`；同时传两根时必须先明确 `--plugin`。`--no-global-config` 与业务一致，已有范围传 `--scope project|global`，已有业务引用传 `--business-record` / `--business-task-id`。不传 Key 或业务正文。

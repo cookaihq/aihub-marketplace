@@ -7,7 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { sanitized } from './config.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord } from './state.js';
 const execution = new AsyncLocalStorage();
-const allowedHosts = new Set(['Codex', 'Claude Code', 'WorkBuddy']);
+const allowedHosts = new Set(['Codex', 'Claude Code', 'WorkBuddy', 'Hermes']);
 const VERSION = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version;
 export function actorContext(input = {}, env = process.env) {
     const keys = ['host', 'conversation_id', 'conversation_title', 'agent_id', 'agent_name', 'agent_role', 'agent_model', 'parent_conversation_id', 'relationship'];
@@ -23,9 +23,10 @@ export function actorContext(input = {}, env = process.env) {
     };
     const suppliedHost = string('host');
     if (suppliedHost && !allowedHosts.has(suppliedHost))
-        throw new Error('Context host must be Codex, Claude Code or WorkBuddy.');
-    const host = suppliedHost ?? (env.CODEX_THREAD_ID ? 'Codex' : null);
-    const conversation_id = string('conversation_id') ?? (host === 'Codex' ? env.CODEX_THREAD_ID || env.CODEX_SESSION_ID : host === 'WorkBuddy' ? env.CODEBUDDY_SESSION_ID : host === 'Claude Code' ? env.CLAUDE_SESSION_ID : null) ?? null;
+        throw new Error('Context host must be Codex, Claude Code, WorkBuddy or Hermes.');
+    const detected = [env.CODEX_THREAD_ID ? 'Codex' : null, env.HERMES_SESSION_ID ? 'Hermes' : null].filter(Boolean);
+    const host = suppliedHost ?? (detected.length === 1 ? detected[0] : null);
+    const conversation_id = string('conversation_id') ?? (host === 'Codex' ? env.CODEX_THREAD_ID || env.CODEX_SESSION_ID : host === 'WorkBuddy' ? env.CODEBUDDY_SESSION_ID : host === 'Claude Code' ? env.CLAUDE_SESSION_ID : host === 'Hermes' ? env.HERMES_SESSION_ID : null) ?? null;
     const relationship = string('relationship');
     if (relationship && relationship !== 'child' && relationship !== 'fork')
         throw new Error('Context relationship must be child or fork.');

@@ -8,7 +8,7 @@ import re
 import tempfile
 import uuid
 
-from .consumers import Consumer, HOSTS, fingerprint, path_id
+from .consumers import Consumer, HOSTS, fingerprint, path_id, host_context
 from .errors import SetupError
 from .local_config import checked_path, edit, snapshot, validate_target, transform
 from .local_platform import exclusive_lock, private_directory, private_permissions, sync_replaced_file
@@ -104,7 +104,8 @@ class Tasks:
             if state["phase"] in ("completed", "cancelled") and not defaults_pending(state):
                 continue
             context = state["context"]
-            if (context["host"] == host and context["platform"] == os.name and path_id(context["cwd"]) == path_id(cwd)
+            if (all(context.get(key) == value for key, value in host_context(host).items())
+                    and context["host"] == host and context["platform"] == os.name and path_id(context["cwd"]) == path_id(cwd)
                     and path_id(context["home"]) == path_id(Path.home()) and (plugin is None or context["plugin"] == plugin)):
                 phase = "default_settings:" + state["result"]["default_settings"]["phase"] if defaults_pending(state) else state["phase"]
                 results.append({"id": state["id"], "plugin": context["plugin"], "phase": phase, "updated": state["updated"]})
@@ -113,7 +114,8 @@ class Tasks:
 
 def guard_context(state, host, cwd):
     context = state["context"]
-    if (host not in HOSTS or context["host"] != host or context["platform"] != os.name
+    if (not all(context.get(key) == value for key, value in host_context(host).items())
+            or host not in HOSTS or context["host"] != host or context["platform"] != os.name
             or path_id(context["home"]) != path_id(Path.home().resolve()) or path_id(context["cwd"]) != path_id(Path(cwd).resolve())):
         raise SetupError("task_context_mismatch")
 

@@ -1,9 +1,9 @@
 ---
 name: aihub-audio
 metadata:
-  version: "2.0.0"
-description: v2.0.0｜通过 AIhub D1 合成语音、转写本地或 URL 录音，以及执行用户明确要求的声音克隆；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
-compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
+  version: "2.1.0"
+description: v2.1.0｜通过 AIhub D1 合成语音、转写本地或 URL 录音，以及执行用户明确要求的声音克隆；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
+compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 
 # AIhub 音频与语音任务

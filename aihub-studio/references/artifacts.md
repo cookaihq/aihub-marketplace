@@ -14,7 +14,7 @@
 {"host":"Codex","conversation_id":"实际会话ID","conversation_title":"实际会话标题","agent_id":"实际Agent实例ID","agent_role":"实际角色","agent_model":"实际Agent模型"}
 ```
 
-值必须来自当前宿主事实；未知字段省略。`host` 只用 `Codex`、`Claude Code` 或 `WorkBuddy`；Agent 模型不是业务生成模型。真实子 Agent 可提供 `parent_conversation_id` 和 `relationship: "child"`，fork 用 `"fork"`。没有可靠父子关系就省略。Codex 可自动读取 `CODEX_THREAD_ID`；仅有 Claude 兼容环境变量不足以判断宿主。缺身份不阻塞任务，页面归入“未关联会话”；不扫描聊天历史、不补猜 ID。上下文文件不包含聊天正文、请求内容或密钥，不登记为成果。
+值必须来自当前宿主事实；未知字段省略。`host` 只用 `Codex`、`Claude Code`、`WorkBuddy` 或 `Hermes`；Agent 模型不是业务生成模型。真实子 Agent 可提供 `parent_conversation_id` 和 `relationship: "child"`，fork 用 `"fork"`。没有可靠父子关系就省略。Codex 可自动读取 `CODEX_THREAD_ID`，Hermes 可自动读取 `HERMES_SESSION_ID`；同时存在两类会话变量时不猜宿主，须提供可靠的显式 host；仅有 Claude 兼容环境变量不足以判断宿主。缺身份不阻塞任务，页面归入“未关联会话”；不扫描聊天历史、不补猜 ID。上下文文件不包含聊天正文、请求内容或密钥，不登记为成果。
 
 ## 文件和交付
 

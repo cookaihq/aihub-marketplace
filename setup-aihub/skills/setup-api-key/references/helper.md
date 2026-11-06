@@ -10,7 +10,7 @@ uv run --locked --no-dev --project "<setup-api-key Skill 实体目录>" python "
 
 ## 只读与开始
 
-所有命令接收 `--host claude-code|codex|workbuddy --cwd "<实际工作文件夹>"`；宿主来自当前会话事实，不能通过目录存在推断。
+所有命令接收 `--host claude-code|codex|workbuddy|hermes --cwd "<实际工作文件夹>"`；宿主来自当前会话事实，不能通过目录存在推断。
 
 | 子命令 | 参数与结果 |
 | --- | --- |
@@ -48,6 +48,6 @@ Git 中目标及含剩余配置的原子替换临时文件必须未跟踪且实�
 
 `source --task <id> --source manual` 沿用本人填写来源，丢弃旧待执行计划。`select --task <id> --target "<文件>" --fields <字段>` 保存明确的目标和字段；它不是写入确认。网页入口由 [browser.md](browser.md) 管理，保存后用 `continue` 重新读取真实加载器。
 
-`continue` 对待确认或待安装状态仅返回待办，不重放。`reconcile` 对中断/结果不明先读当前文件和来源，撤销旧执行计划，再决定后续动作。`cancel` 关闭任务并保留已保存配置；用户要求清理进度时，关闭后 `forget` 仅移除该任务记录。多服务各用自己的编号。
+`continue` 对待确认或待安装状态仅返回待办，不重放。`reconcile` 对中断/结果不明先读当前文件和来源，撤销旧执行计划，再决定后续动作。`cancel` 关闭任务并保留已保存配置；用户要求清理进度时，关闭后 `forget` 仅移除该任务记录。多服务各用自己的编号。Hermes 任务还绑定实际 `HERMES_HOME`；切换 Profile 后不能消费原任务确认，需回到原 Profile 继续。业务配置仍可由同一系统用户共享。
 
 退出 `0` 表示 helper 命令完成，仍须查看嵌套的本机状态；`2` 是需要处理的参数、兼容或安全条件，`1` 是本机运行错误。错误仅输出稳定原因码，不透传可能含值的子进程 stdout/stderr。`sources_changed` 重新检查与规划，`artifact_changed_refresh_required` 核对版本后 `attach`，`reconcile_before_retry` 先核对实际结果。

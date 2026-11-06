@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0 — 2026-11-07
+
+- 新增 Hermes 原生 plugin.yaml / register 入口，注册原六个 Skill，继续共享业务脚本与完整包资源。
+- 默认规则检查支持当前 HERMES_HOME / 平台默认 Profile 的 SOUL.md；提醒按 Profile 隔离，保留三宿主入口与业务配置来源。
+- 六个 Skill 升至 2.1.0，补充完整包安装、固定 ref 与原生更新说明。
+- 共享配置/产物网页接受 Hermes 宿主参数；任务元数据支持 Hermes 会话身份，多宿主环境变量并存时要求显式身份。
+- 本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
+
 ## 2.0.0 — 2026-11-06
 
 - 固定 API 服务地址为 `https://api.aihubmax.com`，删除 `AIHUB_BASE_URL` 的环境变量及文件覆盖能力，配置检查只报告仍支持的字段。原配置文件保留。

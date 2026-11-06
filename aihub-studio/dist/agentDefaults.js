@@ -3,7 +3,7 @@ import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 const PLUGIN = 'aihub-studio';
-const AGENTS = ['codex', 'claude-code', 'workbuddy'];
+const AGENTS = ['codex', 'claude-code', 'workbuddy', 'hermes'];
 function canonical(path, depth = 0) {
     if (depth > 40)
         throw new Error('Too many symbolic links in configuration path.');
@@ -88,7 +88,7 @@ function savePreference(path, agent, configDir, enabled) {
 export function agentDefaults(options) {
     const { agent, action = 'check', env = process.env, globalEnabled = true } = options;
     if (!AGENTS.includes(agent))
-        throw new Error('--agent must identify the current host: codex, claude-code or workbuddy.');
+        throw new Error('--agent must identify the current host: codex, claude-code, workbuddy or hermes.');
     if (!['check', 'dismiss', 'enable', 'preference'].includes(action))
         throw new Error('--action must be check, dismiss or enable.');
     if (!globalEnabled) {
@@ -100,9 +100,18 @@ export function agentDefaults(options) {
     if (agent === 'workbuddy' && !options.configDir && env.WORKBUDDY_CONFIG_DIR && env.CODEBUDDY_CONFIG_DIR && canonical(resolve(env.WORKBUDDY_CONFIG_DIR)) !== canonical(resolve(env.CODEBUDDY_CONFIG_DIR))) {
         throw new Error('WorkBuddy configuration directories disagree; pass the active directory with --config-dir.');
     }
-    const defaultDirs = { codex: '.codex', 'claude-code': '.claude', workbuddy: '.workbuddy' };
-    const configured = agent === 'codex' ? env.CODEX_HOME : agent === 'claude-code' ? env.CLAUDE_CONFIG_DIR : env.WORKBUDDY_CONFIG_DIR || env.CODEBUDDY_CONFIG_DIR;
-    const configDir = canonical(resolve(options.configDir || configured || join(userDirectory, defaultDirs[agent])));
+    const defaultDirs = { codex: '.codex', 'claude-code': '.claude', workbuddy: '.workbuddy', hermes: '.hermes' };
+    const hermesDefault = process.platform === 'win32'
+        ? join(env.LOCALAPPDATA?.trim() || join(userDirectory, 'AppData', 'Local'), `hermes${env.HERMES_DATA_DIR_SUFFIX ?? ''}`)
+        : join(userDirectory, `.hermes${env.HERMES_DATA_DIR_SUFFIX ?? ''}`);
+    const configured = agent === 'codex' ? env.CODEX_HOME : agent === 'claude-code' ? env.CLAUDE_CONFIG_DIR : agent === 'hermes' ? env.HERMES_HOME?.trim() : env.WORKBUDDY_CONFIG_DIR || env.CODEBUDDY_CONFIG_DIR;
+    let directory = options.configDir || configured || (agent === 'hermes' ? hermesDefault : join(userDirectory, defaultDirs[agent]));
+    if (agent === 'hermes') {
+        directory = directory.replace(/\$([A-Za-z0-9_]+)|\$\{([^}]+)\}/g, (original, plain, braced) => env[plain || braced] ?? original);
+        if (process.platform === 'win32')
+            directory = directory.replace(/%([^%]+)%/g, (original, name) => env[name] ?? original);
+    }
+    const configDir = canonical(resolve(directory.replace(/^~(?=[/\\]|$)/, userDirectory)));
     const settingsFile = join(userDirectory, '.config', PLUGIN, 'settings.json');
     if (!['check', 'preference'].includes(action))
         savePreference(settingsFile, agent, configDir, action === 'enable');
@@ -115,7 +124,7 @@ export function agentDefaults(options) {
         return { ...base, status: 'dismissed' };
     if (action === 'enable')
         return { ...base, status: 'enabled', next_step: 'Run check and review the active instructions.' };
-    const names = agent === 'codex' ? ['AGENTS.override.md', 'AGENTS.md'] : [agent === 'claude-code' ? 'CLAUDE.md' : 'CODEBUDDY.md'];
+    const names = agent === 'codex' ? ['AGENTS.override.md', 'AGENTS.md'] : [agent === 'claude-code' ? 'CLAUDE.md' : agent === 'hermes' ? 'SOUL.md' : 'CODEBUDDY.md'];
     const candidates = names.map(name => join(configDir, name));
     let primary = candidates[candidates.length - 1];
     for (const candidate of candidates) {
@@ -130,7 +139,7 @@ export function agentDefaults(options) {
     }
     const rule = readFileSync(new URL('../references/default-skills-rule.md', import.meta.url), 'utf8').trim();
     return { ...base, status: 'review_required', global_candidates: candidates, primary_rule: primary,
-        primary_real_path: canonical(primary), additional_rules_directory: agent === 'codex' ? null : join(configDir, 'rules'),
+        primary_real_path: canonical(primary), additional_rules_directory: ['codex', 'hermes'].includes(agent) ? null : join(configDir, 'rules'),
         proposed_rule: rule, session_loaded: 'not_verified',
         next_step: 'Read the active global and project instructions, imports and host overrides. Decide semantic equivalence before offering a default. Never infer missing rules from this report alone.' };
 }

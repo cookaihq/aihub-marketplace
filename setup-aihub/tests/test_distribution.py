@@ -33,6 +33,9 @@ class DistributionTests(unittest.TestCase):
             for folder in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
                 manifest = json.loads((root / folder / "plugin.json").read_text(encoding="utf-8"))
                 self.assertEqual((manifest["name"], manifest["version"]), (plugin, version))
+            hermes = (root / "plugin.yaml").read_text(encoding="utf-8")
+            self.assertEqual(re.search(r'^name: "?([^"\s]+)"?$', hermes, re.M)[1], plugin)
+            self.assertEqual(re.search(r'^version: "?([^"\s]+)"?$', hermes, re.M)[1], version)
             for source in (".claude-plugin", ".codebuddy-plugin", ".agents/plugins"):
                 market = json.loads((MARKET / source / "marketplace.json").read_text(encoding="utf-8"))
                 entry, = [entry for entry in market["plugins"] if entry["name"] == plugin]

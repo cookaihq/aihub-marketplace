@@ -1,24 +1,30 @@
 # tikin Social
 
+3.1.0 新增 Hermes 原生入口，完整注册 17 个 Skill，共用请求、配置与离线索引；默认规则和提醒识别当前 Hermes Profile。
+
+本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
+
+以下为历史 3.0.0 的功能与验收记录。
+
 3.0.0 自带配置中心、`task-info.json` 和按任务、会话、文件查看的产物页。任务卡采用不同格式的横排预览，图片/视频显示封面；页面显示当前 Git 分支。具名任务继续保存在 `data/tikin-social/`，历史任务不索引或迁移。
 
-本轮 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
+3.0.0 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
 
 历史版本 **2.0.2**：默认设置采用“设为默认 (推荐)”，选择一次后直接设置并展示实际内容。Windows 默认规则、分发与版本定向回归 13 项通过；Codex 已在隔离测试文件中完成菜单、写入、恢复及完整内容展示。Claude Code 因额度 403 受阻，WorkBuddy 的输入与发送未能完成；本版原生安装及真实全局加载、macOS 仍待验，本次按用户明确指令发布，以上待验项继续保留。以下历史验收记录仅覆盖各自所列版本。
 
 2.0.2 的 Windows 完整行为套件未通过并在 300 秒上限停止：代理测试依赖和轮询断言问题已在基线复现；仅在测试进程补充已有 OpenSSL 路径后，代理双流代表用例通过。其余执行安全用例失败仍待定位，定向回归结果不代表全量通过。
 
-tikin Social targets Claude Code, Codex and WorkBuddy to retrieve social-media
+tikin Social targets Claude Code, Codex, WorkBuddy and Hermes to retrieve social-media
 posts, profiles, comments, search results and trends, download media, and analyze accounts across
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **3.0.0**. The 16 Skills using the shared business request
-entry are **3.0.0**; offline `tikin-endpoint-discovery` is **2.0.0**. New API runs
+Plugin version: **3.1.0**. The 16 Skills using the shared business request
+entry are **3.1.0**; offline `tikin-endpoint-discovery` is **2.1.0**. New API runs
 require the Agent to supply a concise task name; existing records resume by their saved paths.
 This release includes the previously unpublished 1.5.0/1.6.0 changes and the
 second-batch catalog of 1029 operations; the retained first-batch catalog contains
-919. Neither catalog is evidence of live availability. This release has native Windows Codex/WorkBuddy acceptance; macOS and live requests remain pending.
+919. Neither catalog is evidence of live availability. The previous 3.0.0 release has native Windows Codex/WorkBuddy acceptance; current host checks are recorded separately. macOS and live requests remain pending.
 
 For the 2.0.0 task-directory update on macOS, 119 automated behavior tests, 68 structural checks
 and all 17 official Skill schemas pass. Codex 0.166.0 loads the native test Plugin and
@@ -58,7 +64,7 @@ Choosing “Set as default” authorizes the Agent to write the current Agent’
 
 The choice is automatically read from `~/.config/tikin-social/settings.json`, separately for each Agent type and actual configuration directory. All 17 Skills and future versions share that Plugin preference; aihub-studio is independent. Existing routing and other settings are preserved. This preference does not come from environment variables or `.env` files. Missing preferences mean reminders are enabled; read-only checks create no files. Only an explicit disable/enable request saves a choice. Running without global configuration also skips this check and refuses preference writes.
 
-The check needs no API key or network. Codex, Claude Code and WorkBuddy have rule-entry guidance; unknown hosts or failed checks are reported without blocking the task. The configuration helper now selects Windows `Scripts/python.exe` or POSIX `bin/python`. Linux/WSL use their own runtime user directory and do not read Windows preferences. Real host-session loading and non-credential workflows require separate validation.
+The check needs no API key or network. Codex, Claude Code, WorkBuddy and Hermes have rule-entry guidance; Hermes uses the active Profile’s SOUL.md and records reminders separately per HERMES_HOME; unknown hosts or failed checks are reported without blocking the task. The configuration helper now selects Windows `Scripts/python.exe` or POSIX `bin/python`. Linux/WSL use their own runtime user directory and do not read Windows preferences. Real host-session loading and non-credential workflows require separate validation.
 
 ## Install through your agent
 
@@ -74,6 +80,8 @@ Claude Code and Codex have native Plugin installations. WorkBuddy uses the **套
 **专家·技能·连接器 → 技能 → 套件 → circular ＋ beside the marketplace names**. This opens the
 **添加市场** dialog. After adding the repository, click the ＋ on the **tikin-social** card to
 install it. Adding the market and installing its Plugin are separate steps.
+
+Hermes installs the complete native Plugin from `https://github.com/cookaihq/aihub-marketplace.git#tikin-social` (same-version CNB fallback: `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git#tikin-social`). Ask your Agent to preserve existing settings, install and enable the package, and verify all 17 Skills in the active Profile. Explicitly load `tikin-social:tikin-endpoint-discovery` for an offline search before reporting a business result. Fixed refs and native updates are described in the [packaged installation guide](skills/tikin-setup/references/installation.md); [Profile rules](skills/tikin-setup/references/default-skills.md#hermes-入口与-profile) identify the active SOUL.md and reminder scope. Missing-Key recovery through Setup requires its Hermes-capable 4.1.0 release.
 
 Other Agent Skills clients can install the **complete 17-Skill suite** from this same
 repository's `tikin-social/` directory and one fixed Plugin release. Setup, discovery,

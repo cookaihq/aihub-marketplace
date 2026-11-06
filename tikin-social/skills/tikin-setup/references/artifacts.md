@@ -12,7 +12,7 @@
 {"host":"WorkBuddy","conversation_id":"实际会话ID","conversation_title":"实际标题","agent_id":"实际Agent实例ID","agent_role":"实际角色","agent_model":"实际Agent模型"}
 ```
 
-`host` 只用 `Codex`、`Claude Code` 或 `WorkBuddy`；未知值省略，不用标题或项目推断 ID，不扫描聊天历史。Codex 可以自动读取 `CODEX_THREAD_ID`。已知子 Agent 可加可靠的 `parent_conversation_id`、`relationship: "child"`；fork 用 `"fork"`，独立显示。缺身份照常执行，页面归入“未关联会话”。上下文只含身份，不放聊天正文或密钥；首次创建者保留，真实继续者追加。
+`host` 只用 `Codex`、`Claude Code`、`WorkBuddy` 或 `Hermes`；未知值省略，不用标题或项目推断 ID，不扫描聊天历史。Codex 可以自动读取 `CODEX_THREAD_ID`，Hermes 可以自动读取 `HERMES_SESSION_ID`；同时存在两类会话变量时须明确当前 host。已知子 Agent 可加可靠的 `parent_conversation_id`、`relationship: "child"`；fork 用 `"fork"`，独立显示。缺身份照常执行，页面归入“未关联会话”。上下文只含身份，不放聊天正文或密钥；首次创建者保留，真实继续者追加。
 
 ## 数据与最终报告
 

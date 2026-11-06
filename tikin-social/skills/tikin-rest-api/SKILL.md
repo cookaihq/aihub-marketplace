@@ -1,8 +1,8 @@
 ---
 name: tikin-rest-api
 metadata:
-  version: "3.0.0"
-description: v3.0.0｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
+  version: "3.1.0"
+description: v3.1.0｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
 ---
 
 # tikin — REST API

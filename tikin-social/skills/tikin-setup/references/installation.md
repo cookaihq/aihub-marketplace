@@ -48,6 +48,16 @@ the existing installation and change only tikin-social. WorkBuddy's native UI is
 supported entry, not its embedded CLI. Use the commands/UI described in the parent
 Skill; inspect current help where syntax differs.
 
+Hermes uses the native complete Plugin, not the Skills-only installer below. Check
+the current `hermes plugins install --help`, then install
+`https://github.com/cookaihq/aihub-marketplace.git#tikin-social` with `--ref <exact commit> --enable`.
+Use the same `#tikin-social` fragment on the CNB mirror for network fallback.
+Record the active Profile/HERMES_HOME. Verify `plugins list`, then `skills_list` and
+`skill_view("tikin-social:tikin-endpoint-discovery")` in a fresh session. Keep all
+17 Skills and shared resources together. Check updates with `plugins check-updates`;
+apply an authorized update through `plugins update tikin-social`, then verify the
+actual version, content identity and newly loaded source.
+
 For another Agent Skills client, take **all 17 Skill directories together** from the
 same fixed `tikin-social/skills/` tree, including setup and discovery. Stage an exact
 commit archive/check-out in the task's temporary directory, record its provenance,

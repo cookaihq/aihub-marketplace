@@ -14,7 +14,7 @@ import os
 import re
 from pathlib import Path
 
-from setup_core.consumers import ADAPTERS, HOSTS, Consumer
+from setup_core.consumers import ADAPTERS, HOSTS, Consumer, host_context
 from setup_core.errors import SetupError
 from setup_core import default_settings
 from setup_core.progress import (Tasks, active, apply_plan, consumer_for, guard_context, make_plan,
@@ -102,7 +102,7 @@ def run(args):
         else:
             context = {"host": args.host, "platform": os.name, "home": str(Path.home().resolve()), "cwd": str(cwd),
                        "plugin": args.plugin, "root": None, "version": None, "artifact_revision": None,
-                       "caller": args.skill, "global_enabled": not args.no_global_config}
+                       "caller": args.skill, "global_enabled": not args.no_global_config, **host_context(args.host)}
         if args.command == "inspect":
             return {"context": context, "mode": "skill" if args.skill else "plugin_shared",
                     "inspection": consumer.inspect(), "online_authentication": "not_performed",
