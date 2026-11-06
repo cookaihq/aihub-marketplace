@@ -101,7 +101,7 @@ AIhub 通过 CNB 与 GitHub 来源分发。请按当前使用的 Agent 选择对
 
 > 请在当前 Hermes Profile 安装完整 aihub-studio Plugin。先读仓库及 aihub-studio 的 README，通过 Hermes 原生安装入口使用 https://github.com/cookaihq/aihub-marketplace.git#aihub-studio；网络故障时换为 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git#aihub-studio 的同一版本。保留已有设置和本地修改，启用后核对六个 Skill。显式加载 aihub-studio:aihub-image，运行本机配置检查，分别报告发现、执行与业务请求结果。缺 Key 时使用完整 Setup AIHub 4.1.0 或更新版，不单独复制 Skill 文件。
 
-固定版本先核对已发布的 `aihub-studio/v2.1.0` tag，再使用安装器的 `--ref`。更新先检查 `hermes plugins check-updates`，你要求更新后由原生 `hermes plugins update aihub-studio` 更新完整包。当前 Profile 的安装、显式加载与自然请求选择分别核对；[Profile 与默认规则](references/default-skills.md#hermes-入口与-profile)说明实际目录。业务配置仍使用原有 `.config/aihub-studio/`，不会自动搬入 Profile。
+固定版本时，让 Agent 将已发布的 `aihub-studio/v2.1.0` tag 解析为完整 40 位提交 SHA，再传给安装器的 `--ref`；不能直接传 tag 名。未固定版本的安装可先检查 `hermes plugins check-updates`，你要求更新后由原生 `hermes plugins update aihub-studio` 更新完整包。固定版本不会随普通更新移动；更换版本时确认新提交，再由原生安装器使用同一来源、`--force --ref` 替换。当前 Profile 的安装、显式加载与自然请求选择分别核对；[Profile 与默认规则](references/default-skills.md#hermes-入口与-profile)说明实际目录。业务配置仍使用原有 `.config/aihub-studio/`，不会自动搬入 Profile。
 
 ### WorkBuddy：通过原生套件管理安装
 

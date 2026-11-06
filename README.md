@@ -50,7 +50,7 @@ Claude Code 和 Codex 支持原生 Plugin 管理。将下面这段话复制到�
 请在当前 Hermes Profile 安装 AIhub Marketplace 的 aihub-studio、tikin-social、setup-aihub 三个完整 Plugin。先阅读仓库 README 与各 Plugin README，核对本机 hermes plugins install 的子目录及固定 ref 支持。来源为 https://github.com/cookaihq/aihub-marketplace.git#aihub-studio、https://github.com/cookaihq/aihub-marketplace.git#tikin-social、https://github.com/cookaihq/aihub-marketplace.git#setup-aihub；网络故障时使用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git 的相同 #子目录和同一版本。保留已有配置和本地修改，通过 Hermes 原生入口安装并启用，不单独复制 SKILL.md。分别报告来源、Plugin 版本、25 个 Skill 的发现与实际调用结果。未加载时开启新会话，显式使用 aihub-studio:aihub-image、tikin-social:tikin-endpoint-discovery 或 setup-aihub:setup-api-key 检查；不得以安装成功代替业务通过。
 ```
 
-Hermes 支持 Git URL 的 `#子目录`，固定版本可使用已发布的 Plugin tag，例如 Studio 的 `--ref aihub-studio/v2.1.0`。先核对该 tag 可取得；更新时先检查 `hermes plugins check-updates`，你要求更新后再由原生 `hermes plugins update <plugin>` 更新完整包。自然请求的 Skill 选择与显式加载分别核对。
+Hermes 支持 Git URL 的 `#子目录`。需要固定版本时，让 Agent 将已发布的 Plugin tag（如 `aihub-studio/v2.1.0`）解析为完整 40 位提交 SHA，再传给安装器的 `--ref`；不能直接传 tag 名。未固定版本的安装可先检查 `hermes plugins check-updates`，你要求更新后由原生 `hermes plugins update <plugin>` 更新完整包。固定版本不会随普通更新移动；更换版本时先确认新提交，再由原生安装器使用同一来源、`--force --ref` 替换。自然请求的 Skill 选择与显式加载分别核对。
 
 安装与默认规则属于当前 Hermes Profile：优先使用实际 `HERMES_HOME`，默认 Windows 为 `%LOCALAPPDATA%/hermes`，macOS 为 `~/.hermes`，并尊重 `HERMES_DATA_DIR_SUFFIX`。默认规则写入当前 Profile 的 `SOUL.md`，保留已有身份内容；业务 Key 继续读取两个 Plugin 原有的 `~/.config/` 配置，不随 Profile 自动迁移。配置任务和提醒按 Profile 隔离，共享 Key 的修改仍可能影响其他宿主。
 
