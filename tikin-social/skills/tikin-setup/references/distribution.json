@@ -39,15 +39,15 @@
     "tikin-endpoint-discovery/agents/openai.yaml": "88f62d40d150df11450c331fa91e0440430832adabfd335e352eaca8603d7911",
     "tikin-endpoint-discovery/pyproject.toml": "b438190d1c0d2c6d2fd399fa8cfa6690519980c101615adba5f559057163085d",
     "tikin-endpoint-discovery/references/catalog-cohorts.json": "3bd0e963e155be9b81bb1731d585f350106ae37e31421f0edef074145ba2846b",
-    "tikin-endpoint-discovery/references/catalog-identity.json": "7ed3ddec8615ce8f58e3831a0edbcf936744948d3f4b44f3c6ff1d92786601f2",
+    "tikin-endpoint-discovery/references/catalog-identity.json": "93a67df11c7f989e124df59b0b7a7717d1341b14516e2b0873625e75f259681a",
     "tikin-endpoint-discovery/references/catalog-prices.json": "650bea26d463e6db042f4bfbfc111c912a5c84550db939ae7e85caff92c83675",
     "tikin-endpoint-discovery/references/endpoint-index.json": "285a879c2e134a7925a9985feac4f4897d806e59c53062e98076b3fb8ae2bbb7",
     "tikin-endpoint-discovery/references/first-batch.md": "d67fd86d42b10d9e48ac9df0cb1f8bcaa38696a8a3368f84c5133772dee3ea44",
-    "tikin-endpoint-discovery/references/openapi.json": "2db51d5ff4b9a8db0160c212795ee4126581efc156e08ccb700506f0467dc484",
+    "tikin-endpoint-discovery/references/openapi.json": "599f85b43cbf9d9124041250ce59d5ae9629a2ec31f35cea45805d1abb6192be",
     "tikin-endpoint-discovery/references/request-changes.json": "a13ed3eb62f2a547490c7489d1f8c08f0fd56303e95362cfb789d2d7e78966b9",
     "tikin-endpoint-discovery/references/second-batch.md": "e7ef80bec268f97dfc65550c8288024846f715aa731124733a2d56e2f87bb091",
     "tikin-endpoint-discovery/scripts/tikin-find-endpoint": "18af6bb560ee0db79fe0ab756d0a6d56cb384d9a33de12f6e46f250b9122839f",
-    "tikin-endpoint-discovery/SKILL.md": "e0103273f231373d92437801f3bb9ebfafab47b514f8522ba562227eed63ca7a",
+    "tikin-endpoint-discovery/SKILL.md": "6b21964be938eaf17472e32b275808a947eacab22ef216a315598b45ac057002",
     "tikin-endpoint-discovery/uv.lock": "f3dbc16521f5bb595af409f3aebdfc8e8c7157283f30ca521e5dd5dbb05b5913",
     "tikin-hashtag-research/agents/openai.yaml": "fb215a1b727e4e18cbbbfb9aa84279a727682a8aca8d1039e450f9ba2dc3f731",
     "tikin-hashtag-research/SKILL.md": "21fab748fafe1e02cf1268005a1f04e7a3fa02c973709c5a6469c360665c8ce4",
@@ -121,6 +121,6 @@
     "tikin-youtube/agents/openai.yaml": "31112f8be0d028534f0fb46756b156ec7909fd968fa5d97cd700706026454786",
     "tikin-youtube/SKILL.md": "a107f4ddd8f7ce5900dc6128783964d88dba922474f6ff7f95f58c612f60c758"
   },
-  "suite_sha256": "8f295b2bd87d49376c450ec96c546a928a2e4c1aaa3d5f2039f707dfcd7655c1",
+  "suite_sha256": "cf91da7ba694b3a35436e8eb457bd01f99f4379ee32d42df6a8ed32d7b8e673e",
   "index_sha256": "285a879c2e134a7925a9985feac4f4897d806e59c53062e98076b3fb8ae2bbb7"
 }

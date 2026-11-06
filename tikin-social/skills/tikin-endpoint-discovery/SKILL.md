@@ -86,6 +86,9 @@ uv run --frozen --project "<this-skill-dir>" python "<this-skill-dir>/scripts/ti
 
 The JSON includes the operation, referenced components, required fields, defaults,
 constraints, catalog identity and snapshot price/rate. Preserve `$ref` siblings.
+Catalog identity retains the frozen source hashes and records distributed hashes and
+documentation-only changes separately. Placeholder-host credential-request examples
+are removed; construct requests through `tikin-rest-api` with the confirmed service.
 Use the method from discovery; old methods and retired operations return an explicit
 local absence with migration information. Catalog `candidate` status is not service
 publication evidence. A snapshot zero price does not establish current live billing.

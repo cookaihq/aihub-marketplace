@@ -20,5 +20,22 @@
   },
   "cohorts_sha256": "3bd0e963e155be9b81bb1731d585f350106ae37e31421f0edef074145ba2846b",
   "selection_sha256": "b058619e84c6947723d0986933f754069493b5b697d9df88b4b7e88a8fa4e1f3",
-  "request_diff_sha256": "d1122947fa8cb7b2048c515722aa4404a262ec896c02b5b5b84e023ae61265c3"
+  "request_diff_sha256": "d1122947fa8cb7b2048c515722aa4404a262ec896c02b5b5b84e023ae61265c3",
+  "distributed_outputs": {
+    "endpoint-index.json": {
+      "sha256": "285a879c2e134a7925a9985feac4f4897d806e59c53062e98076b3fb8ae2bbb7"
+    },
+    "openapi.json": {
+      "sha256": "599f85b43cbf9d9124041250ce59d5ae9629a2ec31f35cea45805d1abb6192be"
+    }
+  },
+  "documentation_changes": [
+    {
+      "operation": "POST /api/v1/douyin/creator_v2/fetch_item_list_download",
+      "field": "description",
+      "reason": "remove credential requests to an unconfigured placeholder host",
+      "source_description_sha256": "5587141b8450b0d92e0ce85a41c3aca2e1b699fda607c3fac8c075c6c400eef9",
+      "distributed_description_sha256": "1a2500f67e608348a567a0f95d8e1292bc314690e766d5b559db94f90a9ca4b7"
+    }
+  ]
 }
