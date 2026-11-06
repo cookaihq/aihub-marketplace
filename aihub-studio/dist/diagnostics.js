@@ -41,7 +41,7 @@ function directory(c, output) {
     const record = c?.record ?? [output.run_record, output.source_record, output.record].find(v => typeof v === 'string');
     if (typeof record === 'string')
         return dirname(resolve(record));
-    const dir = resolve('data/aihub', `diagnostic-${randomUUID()}`);
+    const dir = resolve('data/aihub-studio', `diagnostic-${randomUUID()}`);
     if (c)
         c.record = join(dir, 'request-context.json');
     return dir;

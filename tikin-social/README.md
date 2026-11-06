@@ -1,20 +1,24 @@
 # tikin Social
 
-当前版本 **2.0.2**：默认设置采用“设为默认 (推荐)”，选择一次后直接设置并展示实际内容。Windows 默认规则、分发与版本定向回归 13 项通过；Codex 已在隔离测试文件中完成菜单、写入、恢复及完整内容展示。Claude Code 因额度 403 受阻，WorkBuddy 的输入与发送未能完成；本版原生安装及真实全局加载、macOS 仍待验，本次按用户明确指令发布，以上待验项继续保留。以下历史验收记录仅覆盖各自所列版本。
+3.0.0 自带配置中心、`task-info.json` 和按任务、会话、文件查看的产物页。任务卡采用不同格式的横排预览，图片/视频显示封面；页面显示当前 Git 分支。具名任务继续保存在 `data/tikin-social/`，历史任务不索引或迁移。
 
-本轮 Windows 完整行为套件未通过并在 300 秒上限停止：代理测试依赖和轮询断言问题已在基线复现；仅在测试进程补充已有 OpenSSL 路径后，代理双流代表用例通过。其余执行安全用例失败仍待定位，定向回归结果不代表全量通过。
+本轮 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
+
+历史版本 **2.0.2**：默认设置采用“设为默认 (推荐)”，选择一次后直接设置并展示实际内容。Windows 默认规则、分发与版本定向回归 13 项通过；Codex 已在隔离测试文件中完成菜单、写入、恢复及完整内容展示。Claude Code 因额度 403 受阻，WorkBuddy 的输入与发送未能完成；本版原生安装及真实全局加载、macOS 仍待验，本次按用户明确指令发布，以上待验项继续保留。以下历史验收记录仅覆盖各自所列版本。
+
+2.0.2 的 Windows 完整行为套件未通过并在 300 秒上限停止：代理测试依赖和轮询断言问题已在基线复现；仅在测试进程补充已有 OpenSSL 路径后，代理双流代表用例通过。其余执行安全用例失败仍待定位，定向回归结果不代表全量通过。
 
 tikin Social targets Claude Code, Codex and WorkBuddy to retrieve social-media
 posts, profiles, comments, search results and trends, download media, and analyze accounts across
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **2.0.2**. The 16 Skills using the shared business request
-entry are **2.0.2**; offline `tikin-endpoint-discovery` is **1.6.1**. New API runs
+Plugin version: **3.0.0**. The 16 Skills using the shared business request
+entry are **3.0.0**; offline `tikin-endpoint-discovery` is **2.0.0**. New API runs
 require the Agent to supply a concise task name; existing records resume by their saved paths.
 This release includes the previously unpublished 1.5.0/1.6.0 changes and the
 second-batch catalog of 1029 operations; the retained first-batch catalog contains
-919. Neither catalog is evidence of live availability. Native host acceptance remains partial.
+919. Neither catalog is evidence of live availability. This release has native Windows Codex/WorkBuddy acceptance; macOS and live requests remain pending.
 
 For the 2.0.0 task-directory update on macOS, 119 automated behavior tests, 68 structural checks
 and all 17 official Skill schemas pass. Codex 0.166.0 loads the native test Plugin and
@@ -23,11 +27,7 @@ Code 2.1.318 selects the existing Opus 5.5 default but quota 403 prevents invoca
 WorkBuddy 5.9.3 retains another task's unsent draft; no independent test window was available.
 These are partial host results; successful host HTTP calls and native Windows remain unverified.
 
-For Tikin 2.x, missing API Keys open the local configuration page in **Setup AIHub
-3.0.0 or newer**. Setup 2.3.0 rejects Tikin 2.x; update the complete Setup Plugin
-and start a new session before continuing configuration. The page supports direct
-entry or Secret Book, confirms the Key’s service address, saves to the selected
-source, and rechecks through the business loader before resuming the original task.
+Missing API Keys now open this Plugin’s own configuration center. Existing Setup tasks can continue through Setup AIHub 4.0.0 or newer; the business Plugin remains the configuration loader and writer.
 
 For 2.0.1, all 119 automated tests pass on macOS. Codex 0.166.0 passes the native
 Setup 3.0.0 missing-Key, browser-save, loader-recheck and conversation-resume flow.
@@ -90,8 +90,8 @@ needs network access; endpoint search then works offline. Skills-only installati
 
 YouTube V3 same-proxy downloads use the same pinned Python runtime. Other final media
 downloads need an available download tool (`curl.exe` on native Windows).
-Saving private reports on Windows requires the built-in Windows PowerShell 5.1 and a filesystem
-supporting Windows access controls. Files are restricted before private contents are written;
+Saving private reports on Windows uses native access controls and requires a filesystem
+supporting them. Files are restricted before private contents are written;
 a report save failure does not cause another API request. A WorkBuddy card does not prove runtime
 compatibility. This version's local synthetic tests and host acceptance are recorded separately;
 real social-data business, Linux and WSL flows remain unverified. Do not switch Windows tasks to WSL
@@ -99,15 +99,15 @@ automatically.
 
 ## Configure API access
 
-可对当前 Agent 说“用 setup-api-key 帮我检查或更换 tikin 密钥”。Tikin 2.x 在业务发现缺 Key 时使用完整 Setup Plugin 3.0.0 或更新版本打开本机配置网页；Setup 2.3.0 不支持当前组合，须升级后继续；已能读取配置时直接继续业务。
+> 打开 Tikin Social 的配置中心。我会在网页填写 API Key，保存后请检查本机配置，再继续原任务。
 
-> 请用 tikin 查抖音数据。若缺少 API Key，请打开本机配置页；保留原需求，我填写保存后再检查并继续，不要让我把 Key 发到聊天。
+无需另装 Setup 即可打开。Key 下提供 [Tikin 控制台](https://console.tikin.net) 链接及“或联系团队负责人分配”。页面按用途分组，提供必要/全部设置，底部固定保存栏可查看变更摘要并一次保存。页面不展示服务地址；既有地址配置仍按原加载器读取。
 
-页面可手动填写 `TIKIN_API_KEY`，也可从 Secret Book 选择本人可见记录。默认服务地址为 `https://console.tikin.net`，可同时填写与 Key 对应的其他 HTTPS 地址。首次共享保存到 `~/.config/tikin-social/.env`；选择当前项目或修复已有来源时，预览会列出实际文件和替换项。
+首次新增默认个人全局 `~/.config/tikin-social/.env`；明确项目保存时使用 `.env.local`，已有值写回真实来源，环境变量在原注入处修复。密钥直接在浏览器填写，不放入聊天。业务配置不再提供 Secret Book 方式，既有本机文件继续读取，不迁移或删除。
 
-Secret Book 只读能力随 Setup 分发，不需额外安装独立 Skill。本人核对身份、已有表、记录与字段后确认保存；缺列、缺 ID 或权限不足由维护者处理。配置检查不初始化路由、不创建远端 Key、不发业务请求。
+已有 Setup 任务沿用原编号打开同一配置中心，保存后用真实加载器复查，再核对原业务提交状态。已提交或结果不明先查原结果，不重发；没有浏览器或明确选择文件编辑时，沿用[本机配置流程](skills/tikin-setup/references/credential-setup.md)。
 
-Setup 缺失或本会话未加载时先核对并协助安装/加载兼容完整 Plugin，见[凭证衔接说明](skills/tikin-setup/references/credential-setup.md)。明确选择文件编辑或没有本机浏览器时保留文件填写方式。保存后用真实加载器复查并完成默认设置检查；原请求未提交且授权有效才继续，已提交或状态未知先查询原结果，不重发。
+默认同机访问、闲置 60 分钟结束。**📱 手机或其他设备访问需要 FRP / Tailscale，实际配置状态由 Agent 核对。**
 
 ### Configuration sources and repair
 
@@ -254,6 +254,16 @@ Supported source-platform pages are accessed through tikin. The agent can downlo
 URLs returned by tikin; it should not silently fetch a source social page through a generic
 HTTP tool when you decline tikin. Large pulls use explicit pagination and request budgets and
 may return a partial result with a resume cursor.
+
+## 浏览任务、会话和文件
+
+> 打开当前项目的 Tikin Social 产物页面。
+
+默认按任务显示文件夹，点击后看该任务的报告、数据或媒体，再进入详情；按会话在桌面左边选择会话、右边查看任务，手机逐层进入；按文件平铺全部成果。顶部显示当前项目真实 Git 分支。任务卡片最多横排 3 个不同格式的缩略图，图片和视频使用封面。
+
+每项新任务的 `task-info.json` 记录创建者、可靠会话和实际参与 Agent。未知会话放入“未关联会话”；继续原任务追加参与者，不覆盖创建者。完整成功响应保存在 `files/`，最终分析结论默认另存 Markdown，CSV/JSON 保存完整数据；这些文件由工具自动关联或由 Agent 本地登记。源素材、诊断和 `.part` 不计最终成果。失败、部分和零成果任务也会显示。
+
+只展示当前项目的新规范任务，不补历史记录。外置任务目录由 Agent 显式指定，文件仍可保存在你明确要求的位置。配置和产物服务独立，产物可选择本次常驻；结束页面不删除文件。**📱 跨设备访问需要 FRP / Tailscale，实际配置状态由 Agent 核对。**
 
 ## Local task records and error reports
 

@@ -37,7 +37,7 @@ CONFIG_KEYS = ("TIKIN_API_KEY", "TIKIN_BASE_URL")
 # remains available when an Agent Skills client installs only Skill directories.
 PLUGIN_NAME = "tikin-social"
 DEFAULT_BASE_URL = "https://console.tikin.net"
-CREDENTIAL_SETUP_HINT = 'follow tikin-setup/references/credential-setup.md to launch the local configuration page through setup-aihub:setup-api-key 3.0.0 or newer and return its clickable link. Preserve caller, cwd, global option and submission state; recheck after saving and check default settings before resuming. If Setup is unavailable, use the documented minimal local fallback.'
+CREDENTIAL_SETUP_HINT = 'follow tikin-setup/references/credential-setup.md to launch this Plugin\'s bundled configuration center and return its clickable link. Preserve caller, cwd, global option and submission state. Continue an existing setup-api-key task through its bound page; recheck configuration after saving before resuming the original business task.'
 SKILL_NAMES = frozenset({
     "tikin-bulk-data-export", "tikin-comments-analysis", "tikin-competitor-analysis",
     "tikin-creator-analytics", "tikin-douyin", "tikin-endpoint-discovery",
@@ -72,6 +72,12 @@ def check_plugin_identity():
 
 
 def restrict_permissions(path=None, fd=None):
+    if os.name == 'nt':
+        if path is None:
+            raise ValueError('Windows private writes require the empty temporary file path')
+        from private_platform import private_permissions
+        private_permissions(Path(path), fd=fd)
+        return
     if fd is not None:
         fchmod = getattr(os, "fchmod", None)
         if fchmod is not None:
@@ -88,7 +94,7 @@ def atomic_write(path, content):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
     try:
-        restrict_permissions(fd=fd)
+        restrict_permissions(path=temporary_name, fd=fd)
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(content)
         os.replace(temporary_name, path)
@@ -114,6 +120,7 @@ def initialize():
     if not settings_path.exists():
         from default_skills import update_settings
         update_settings(settings_path, lambda settings: settings.setdefault("routing", {"default": "auto", "platforms": {}}))
+        restrict_permissions(path=settings_path)
     elif settings_path.is_file():
         restrict_permissions(path=settings_path)
 
@@ -152,7 +159,7 @@ def configuration_paths(skill_name, global_enabled):
     return paths
 
 
-def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None):
+def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None, file_overrides=None):
     """Read only fixed sources. Report each file revision and field source, never values."""
     check_plugin_identity()
     layers = [("environment", os.environ)]
@@ -166,7 +173,10 @@ def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None)
     for path in paths:
         source = str(path)
         try:
-            content = path.read_bytes()
+            override = (file_overrides or {}).get(str(path), ...)
+            if override is None:
+                raise FileNotFoundError()
+            content = path.read_bytes() if override is ... else override.encode('utf-8')
             parsed = parse_env(content.decode("utf-8-sig"))
             if deletion and path.resolve() == Path(deletion[0]).resolve():
                 for key in deletion[1]:
@@ -469,13 +479,21 @@ def main():
     request_parser.add_argument("--record", help="reuse the same run for pagination, queries and recovery")
     request_parser.add_argument("--output-dir", default="data/tikin-social")
     request_parser.add_argument("--task-name", help="short Chinese or English task summary; required for a new run")
+    request_parser.add_argument("--context-file", help="verified host, conversation and Agent identity; no chat content")
     request_parser.add_argument("--regression-approval", help="reference the existing shared regression approval and ledger")
     request_parser.add_argument("--dry-run", action="store_true", help="describe the exact request identity without sending")
     download_parser = subparsers.add_parser("download", help="verify and download existing YouTube V3 streams through their original proxy")
     download_parser.add_argument("--request-file", required=True)
     download_parser.add_argument("--response-file", required=True)
-    download_parser.add_argument("--output-dir", required=True)
+    download_parser.add_argument("--output-dir", help="explicit media location; defaults to the associated task's files directory")
     download_parser.add_argument("--exit-check-url", required=True, help="explicit JSON ip check URL, accessed only through the same proxy")
+    download_parser.add_argument("--context-file")
+    artifacts_parser = subparsers.add_parser("artifact-register", help="register saved final files and local delivery without network requests")
+    artifacts_parser.add_argument("--record", required=True)
+    artifacts_parser.add_argument("--files-file", help="JSON array of saved output paths")
+    artifacts_parser.add_argument("--delivery", choices=("completed", "partial", "failed"))
+    artifacts_parser.add_argument("--reason", default="")
+    artifacts_parser.add_argument("--context-file")
     set_routing_parser = subparsers.add_parser("set-routing")
     set_routing_parser.add_argument("--default", choices=MODES)
     set_routing_parser.add_argument("--platform", action="append", default=[])
@@ -516,18 +534,33 @@ def main():
         config_check(skill_name, global_enabled, deletion)
     elif args.command == "run":
         run_with_config(skill_name, args.argv, global_enabled)
+    elif args.command == "artifact-register":
+        import task_info
+        try:
+            files = json.loads(Path(args.files_file).read_text(encoding="utf-8-sig")) if args.files_file else []
+            if not isinstance(files, list) or any(not isinstance(item, str) for item in files):
+                raise ValueError("files-file must contain an array of output paths")
+            with task_info.execution_context(args.context_file):
+                output = task_info.register(args.record, files, args.delivery, args.reason)
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        except (OSError, ValueError) as error:
+            parser.error(str(error))
     elif args.command == "download":
         from proxy_download import download
-        output = download(args.request_file, args.response_file, args.output_dir, args.exit_check_url)
+        from task_info import execution_context
+        with execution_context(args.context_file):
+            output = download(args.request_file, args.response_file, args.output_dir, args.exit_check_url)
         print(json.dumps(output, ensure_ascii=False, indent=2))
         raise SystemExit(0 if output["status"] == "complete" else 1)
     elif args.command == "request":
         from tikin_request import execute
+        from task_info import execution_context
         from regression import GateError
         values, _ = load_config(skill_name, global_enabled)
         try:
-            output = execute(values, skill_name, args.request_file, args.record, args.output_dir,
-                             args.regression_approval, args.dry_run, args.task_name)
+            with execution_context(args.context_file):
+                output = execute(values, skill_name, args.request_file, args.record, args.output_dir,
+                                 args.regression_approval, args.dry_run, args.task_name)
         except GateError as error:
             output = {"status": "regression_blocked", "reason": error.reason}
         except (OSError, ValueError, KeyError, TypeError) as error:

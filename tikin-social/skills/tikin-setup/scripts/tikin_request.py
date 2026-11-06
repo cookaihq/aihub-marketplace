@@ -21,6 +21,7 @@ from request_reporting import atomic_write, existing_feedback, feedback, now, re
 from regression import GateError, GUARD_HEADER, Regression
 from catalog import side_effects as catalog_side_effects
 import async_tasks
+import task_info
 
 MAX_ATTEMPTS = 3
 DEFAULT_TIMEOUT = 30
@@ -260,6 +261,7 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
     if record is None:
         task_name = task_directory_name(task_name, secrets)
         record = create_record(output_root, task_name)
+        task_info.create(record, task_name, skill, version, secrets)
     with record_lock(record):
         if record_input:
             state = json.loads(record.read_text(encoding='utf-8'))
@@ -338,6 +340,7 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
             state['retry_attempts'][fingerprint] = attempt
             async_tasks.reserve_query(state, canonical_path, query)
             state['status'] = 'in_flight'
+            task_info.participate(record, secrets, invalidate_delivery=True)
             save()
             start, at = time.monotonic(), now()
             status, response_headers, result_body, error, timeout_stage = exchange(method, url, headers, body, min(timeout, remaining_time), body_present)
@@ -402,6 +405,14 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
                 else:
                     state['events'].append(event)
             try:
+                if not failed:
+                    # Preserve the complete business result, separately from truncated diagnostic evidence.
+                    result_file = record.parent / 'files' / ('response-' + fingerprint[:16] + '.json')
+                    result_text = json.dumps(public_result(result_body, secrets, False, canonical_path), ensure_ascii=False, indent=2) + '\n'
+                    atomic_write(result_file, result_text)
+                    state['outputs'] = [item for item in state.get('outputs', []) if item['path'] != str(result_file)] + [{
+                        'path': str(result_file), 'bytes': len(result_text.encode('utf-8')), 'mime_type': 'application/json',
+                        'sha256': hashlib.sha256(result_text.encode('utf-8')).hexdigest(), 'at': now()}]
                 save()
                 if regression and reservation:
                     regression.finish(reservation, 'unknown' if ambiguous else 'not_sent' if not_sent else 'received',
@@ -432,4 +443,5 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
             output['feedback'] = latest_feedback
         if warning:
             output['feedback_warning'] = warning
+        output['files'] = state.get('outputs', [])
         return output

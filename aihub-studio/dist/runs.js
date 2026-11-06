@@ -8,6 +8,7 @@ import { assertOutsideInstallation, withJobLock, writePrivateRecord } from './st
 import { generate, resume, understand, nativeMusic, failureInfo, TaskPersistenceError } from './workflow.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { runTranscription } from './audioRun.js';
+import { createTask, participate } from './taskInfo.js';
 function canonical(value) {
     if (Array.isArray(value))
         return `[${value.map(canonical).join(',')}]`;
@@ -81,7 +82,7 @@ function disposition(result) {
 export async function startRun(cfg, request, outputDir, waitSeconds) {
     const plan = sanitized(selectionPlan(cfg, request), [cfg.apiKey]);
     const id = randomUUID();
-    const record = join(resolve(outputDir), `aihub-run-${id}`, 'run.json');
+    const { record } = await createTask(outputDir, cfg.skill, 'aihub-run', 'run.json', [cfg.apiKey]);
     assertOutsideInstallation(record);
     const run = { schema_version: 1, kind: 'aihub-run', id, created_at: new Date().toISOString(),
         skill: cfg.skill, service_url: cfg.baseUrl, credential_id: credentialId(cfg.apiKey),
@@ -94,6 +95,7 @@ export async function continueRun(cfg, recordInput, waitSeconds, confirmation) {
     assertOutsideInstallation(record);
     return withJobLock(record, async () => {
         const run = await readRun(cfg, record);
+        await participate(record, [cfg.apiKey]);
         await bindDiagnosticRecord(cfg, record, run.plan.request, true);
         const expectedToken = (index) => hash({ plan: run.plan_hash, index, candidate: run.plan.candidates[index] });
         if (run.confirmation && (run.confirmation.index !== run.cursor || run.confirmation.token !== expectedToken(run.cursor) ||

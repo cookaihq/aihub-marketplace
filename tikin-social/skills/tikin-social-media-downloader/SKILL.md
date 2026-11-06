@@ -1,13 +1,15 @@
 ---
 name: tikin-social-media-downloader
 metadata:
-  version: "2.0.2"
-description: v2.0.2｜从一个或多个社交媒体链接下载视频、音频或图片，平台支持时获取无水印素材。适用于用户提供 TikTok、抖音、Instagram、YouTube、Twitter/X、小红书链接并要求下载视频、保存无水印素材或提取音频；调用对应平台的 Tikin 接口。
+  version: "3.0.0"
+description: v3.0.0｜从一个或多个社交媒体链接下载视频、音频或图片，平台支持时获取无水印素材。适用于用户提供 TikTok、抖音、Instagram、YouTube、Twitter/X、小红书链接并要求下载视频、保存无水印素材或提取音频；调用对应平台的 Tikin 接口。
 ---
 
 # Social Media Downloader
 
-纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并实际打开 Setup 配置网页；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
+新建、继续或交付业务任务前，读取并遵守[任务保存与产物页面](../tikin-setup/references/artifacts.md)；它规定任务命名、可靠会话/Agent 身份、最终文件登记与页面入口。离线查询或配置本身不创建成果任务。
+
+纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并实际打开本 Plugin 配置中心；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
 
 ## 默认 Skill 检查
 

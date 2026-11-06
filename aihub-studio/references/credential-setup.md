@@ -1,55 +1,35 @@
-# AIhub 凭证缺项、修复与 Setup 衔接
+# aihub-studio 配置检查与配置中心
 
-所有六个业务 Skill 共用本流程。Windows 原生环境通过随包 PowerShell 入口运行真实 caller 的无网络检查，入口自动检查 Node 版本和设置模块加载选项，保留业务 cwd：
+保留真实业务 cwd、caller、全局开关和原任务提交状态。已有可读配置直接执行业务；首次缺项、主动配置或有依据的修复才打开页面。配置检查不联网、不执行生成或完整安装流程。
 
-```powershell
+```text
 & "<Plugin实体>/scripts/aihub.ps1" config-check --skill <实际业务Skill> --credentials-only
 ```
 
-macOS / Linux 使用同一业务程序：
+AIhub 的 macOS/Linux 入口使用 `node scripts/aihub.mjs`；Windows 用随包 PowerShell 入口。无真实 caller 的共享检查使用 `--plugin-only`，不借用其他 Skill。业务禁用全局时检查和页面都传 `--no-global-config`。退出 3 表示缺项/不可读；其他执行错误不等同缺 Key。402/403/429、网络和权限问题分别核对，不直接要求换 Key。
+
+## 实际打开页面
+
+从实际项目目录调用本 Plugin 自带配置中心，无需额外安装 Setup 或开发 UI Skill：
 
 ```text
-node "<Plugin实体>/scripts/aihub.mjs" config-check --skill <实际业务Skill> --credentials-only
+uv run --frozen --project "<Plugin实体>" python "<Plugin实体>/scripts/ui.py" start --project "<真实业务cwd>" --page configuration --skill <实际业务Skill> --agent <codex|claude-code|workbuddy>
 ```
 
-保留实际业务 cwd 和 `--no-global-config`。只管理 [credentials.json](credentials.json) 的 `AIHUB_API_KEY`；首配不增加地址字段。没有 caller 的主动共享检查使用 `--plugin-only`，与 `--skill` 互斥；不要借用 `aihub-image`。退出 `3` 是缺项/不可读；执行失败不是缺 Key。凭证检查不依赖媒体工具，`doctor` 不是配置前提。
+没有 caller 省略 `--skill`。已明确项目保存时加 `--save-scope project`；首次新增默认个人全局。已有配置按真实加载器来源写回，环境变量只读并在原注入位置修复。API Key 下提供获取控制台链接及“或联系团队负责人分配”；页面不展示服务地址。
 
-配置已可读时继续正常任务。首次配置、实际缺项或有依据需要修复时，先报告字段与实际来源；402、403、429、网络问题分别核对余额、权限、限流、连接，不直接要求换 Key。401 也要核对 Key 所属账号与最终服务组合。
+WorkBuddy 使用宿主 `Bash` 工具的 `run_in_background: true` 执行 `start`，并增加 `--keep-running`。启动入口立即输出 URL，然后保持该后台任务直到页面停止；用 `TaskOutput` 获取结果，并在独立工具调用里检查 `status`。不要用普通短工具调用交付一个随后被宿主回收的页面，也不要脱离宿主进程控制。结束时先用同参数 `stop`，后台启动入口会自行退出。
 
-## 缺 Key 时实际打开配置页
+用户在页面直接填写 `AIHUB_API_KEY`，检查分组和变更摘要后点击底部固定保存栏，一次保存。密钥不经聊天、argv、日志或进度文件，Agent 不截图已填写的真实 Key。页面调用原加载器校验、检测文件冲突、事务保存并回读；这不等于在线鉴权。
 
-本机加载器报告缺 Key，或用户主动配置/修复时，**实际调用当前宿主的 `setup-aihub:setup-api-key` 3.1.0 或更新版本，打开其本机网页**。保留原业务需求、真实 caller、cwd、全局开关与提交状态。读取 Setup 的 `references/browser.md`，执行 `setup_ui.py start` 并给出它返回的可点击链接；不能只说“已转交”或把编辑 `.env` 当作默认下一步。
+将返回的 URL 作为可点击链接交付，旁边注明 **📱 跨设备访问需要 FRP / Tailscale，当前配置状态未核实时明确说明。** 默认本机访问，实际活动续期 60 分钟；轮询不续期。`status` 和 `stop` 使用相同项目、页面、caller、Agent 和保存范围参数。服务失效后重新 `start`，保留原业务上下文。
 
-用户在同一页面手动填写 Key 或选择 Secret Book，预览实际来源与目标后保存。Key 不经聊天、模型、argv、日志或进度文件。保存后用当前业务的真实加载器无值复查，完成 Setup 的默认设置检查，再按原任务状态继续：未提交且原授权有效才执行，已提交/未知先查原结果。
+## Setup 任务与接续
 
-Setup 未安装、版本不足或本会话未加载时，先说明实际状态，提供安装/更新兼容完整 Plugin 后继续的入口；已有相应安装授权直接沿用。只增加市场条目不代表 Plugin 已安装。仅用户选择文件编辑或当前运行环境无浏览器时使用下述最小回退；不阻断配置已正常的业务。
+已在 `setup-aihub:setup-api-key` 中开始的任务沿用其网页入口和任务编号；新 wrapper 打开同一业务配置中心并绑定原任务。先读取该 Skill 的 `references/browser.md`，使用其 `start/status/stop --task <编号>`；不要再启动一个独立保存流程。旧业务包没有 `scripts/ui.py` 时报告需要更新该完整 Plugin，不恢复已退出的配置方式。
 
-## Setup 可用时
+保存后运行上面的真实无值检查。Setup 任务再用其 helper `continue` 完成本机复查和原有默认设置检查。返回原业务前核对关联：未提交且内容、原授权仍有效才继续；已提交或状态不明先查询原结果，修复不授权重发。
 
-核对当前宿主已发现的 `setup-aihub:setup-api-key` 来自正确完整 Plugin 且兼容，再进入其凭证流程。交付 consumer `aihub-studio`、实际版本/实体、caller、真实 cwd、全局开关、声明与无值报告、已有来源/范围选择，以及原业务记录引用和提交状态。只保留无密钥元数据。Setup 的配置检查不再次转回本流程，避免递归。
+明确选择本机文件编辑或环境无浏览器时，沿用相同来源规则：新增共享 `~/.config/aihub-studio/.env`，明确项目新增 `.env.local`，已有值修复原文件。给出完整本机路径和字段，由用户本机填写；保存前明确目标与影响，保护权限、Git 忽略及无关内容。Setup 可用时复用其 `start → plan → apply → continue` 安全准备。业务配置不提供 Secret Book 入口、备用或委托分支；已经存在的本机配置仍按原顺序读取，不迁移或删除。
 
-实际读取 Setup 的 Skill 并执行流程；宿主没有跨 Skill 调用能力时按可用的文件读取/技能入口衔接，不能只声称“已转交”。一个配置操作只有一个当前负责人；Setup/Secret Book 完成后，AIhub 用真实加载器复查，不重复写文件或确认同一摘要。
-
-Setup 尚未发布、未安装、未加载或不可调用时，保留原任务，提供安装完整 Plugin 的请求或下面的最小回退。不能因为未安装的 Setup 没有 description，就声称用户中文请求必然能触发它。
-
-> 请从 https://github.com/cookaihq/aihub-marketplace.git 安装完整的 setup-aihub Plugin；网络故障时使用同版本 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，安装后用 setup-api-key 继续刚才的 AIhub 凭证配置。
-
-先核对 Setup AIHub 3.1.0 或更新的兼容版本可取得，不以旧条目代替新功能。WorkBuddy 沿用[原生套件指引与截图](workbuddy-install.md)，只将安装对象换成获授权的完整 `setup-aihub`，不另起 CLI 或手写注册表。
-
-## Setup 不可用时的最小回退
-
-沿用选择，或提供 **自行填写本机文件／从 Secret Book 选择配置并保存**。Secret Book 保留英文名；“继续用 AIhub”只选择服务，不表示选择手填。
-
-手填直接给完整路径与字段，用户本机编辑，不查表、不要求安装 Secret Book。首次共享默认为 `~/.config/aihub-studio/.env`；修复写回真实来源，环境变量先查注入位置，已有作用域沿用。保存前确认具体目标、替换项与影响；Git 中目标须未跟踪且已忽略，保护权限与无关内容，不要求用户回贴 Key。
-
-Secret Book 分支读取它的当前公开 Skill 流程，以凭证使用者处理；身份、已有表、记录、映射、目标确认及实际保存归它负责。只读配置报告按原样交给兼容的 `configure/configure-status`，不得改成投影报告或拼造 caller。所需角色/只读连接能力未核实时说明不兼容，提供手填/暂缓；2.4.0 的 Windows 支持不证明新角色能力。使用者不补列/ID、不自动建表。确认未安装时提供安装并继续/手填/暂缓；独立来源 https://github.com/cookaihq/secret-book，网络故障同版本回退 https://cnb.cool/zhidateam/tannt/secret-book.git，不当作 Plugin Marketplace。
-
-Secret Book 的共享空 caller 需要已发布 2.5.1 或更新版本，真实 caller 仍兼容 2.5.0；保持原始报告，不虚构或更换 caller。按实际安装包的 `references/roles.md` 创建或恢复 `consumer` 任务，业务命令带公开 workflow 参数，确认使用 `workflow status` 的最新任务 token。2.5.1、2.5.2、2.5.4 已有配置契约联调，两个服务已通过 2.5.2 本人真实表到临时项目的保存、恢复和本机复查；客户端加载、线上鉴权与业务完成仍分别报告。
-
-保存后只用 `config-check --credentials-only` 完成本机凭证复查；业务工具检查按实际任务需要另做。线上鉴权仅用户要求且已核实接口非计费时执行，不能因代码有 `models` 就假定免费，不生成媒体来验 Key。来源、保存、本机读取、线上鉴权和真实业务分别报告。
-
-原任务未提交且原授权/内容仍有效才继续；已提交或状态未知先查原结果。修复不授权重发。正常业务继续读本机，表轮换不自动同步；仅本轮使用才走安全进程注入，不擅自保存。
-
-## 删除投影
-
-`config-check --skill <实际Skill> --credentials-only --delete-from "<已知来源文件>" --delete-fields AIHUB_API_KEY` 返回 `config-deletion-preview/v1` 的 `before/after`，磁盘不变。共享检查可换 `--plugin-only`。只能清除经用户选定的本机字段，不将投影作为真实写后报告；字段可能回退到低层或仍被高层覆盖。
+仅用户要求清除时，先用原加载器的 `--delete-from` / `--delete-fields` 投影说明会暴露的来源，再清除选定字段。仅本轮使用采用已有安全进程注入，不转成持久保存。来源、本机读取、线上鉴权和真实业务结果分别报告。

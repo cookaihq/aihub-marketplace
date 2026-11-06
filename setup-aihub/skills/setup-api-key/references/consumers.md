@@ -5,15 +5,15 @@
 | Plugin | 本次本地兼容基线 | 字段与入口 |
 | --- | --- | --- |
 | `aihub-studio` | >= 1.2.0、< 3.0.0 | `references/credentials.json` 仅声明必填敏感字段 `AIHUB_API_KEY`；`node "<plugin>/scripts/aihub.mjs" config-check --skill <真实业务Skill> --credentials-only` |
-| `tikin-social` | >= 2.0.0、< 3.0.0 | `skills/tikin-setup/references/credentials.json`；`uv run --locked --no-dev --project "<tikin-setup>" python "<tikin-setup>/scripts/tikin-config" --skill <真实业务Skill> config-check` |
+| `tikin-social` | >= 2.0.0、< 4.0.0 | `skills/tikin-setup/references/credentials.json`；`uv run --locked --no-dev --project "<tikin-setup>" python "<tikin-setup>/scripts/tikin-config" --skill <真实业务Skill> config-check` |
 
-Setup 3.0.0 起只接入 Tikin 2.x，不保留 Tikin 1.x 配置适配。`consumer_upgrade_required` 返回当前版本、最低版本和支持范围：通过当前宿主的完整 Plugin 更新入口升级 Tikin，核对新实体后继续；已有更新授权直接沿用。版本高于支持范围返回 `incompatible_version`，先核对支持该版本的 Setup，不降级业务 Plugin、不改版本号绕过检查。已有任务更新后使用 `attach` 重新绑定产物并检查，保留原业务提交状态。
+Setup 4.0.0 接入 Tikin 2.x / 3.x，不保留 Tikin 1.x 配置适配。`consumer_upgrade_required` 返回当前版本、最低版本和支持范围：通过当前宿主的完整 Plugin 更新入口升级 Tikin，核对新实体后继续；已有更新授权直接沿用。版本高于支持范围返回 `incompatible_version`，先核对支持该版本的 Setup，不降级业务 Plugin、不改版本号绕过检查。已有任务更新后使用 `attach` 重新绑定产物并检查，保留原业务提交状态。
 
 两个入口没有 caller 时都使用 `--plugin-only`，与 `--skill` 互斥。tikin 身份和全局开关放在 `config-check` 前，AIhub 放在后面。`--no-global-config` 关闭两类全局目录。AIhub 的 `--credentials-only` 不检查业务模型设置/媒体工具，不能从它成功推断其他配置正确。
 
 Windows 原生 AIhub 使用 `& "<plugin>/scripts/aihub.ps1" config-check ...`；Setup 的适配器自动调用这一入口。它检查 Node 版本并固定路径解析选项，保持默认沙箱及真实 cwd/caller。上表的直接 Node 形式用于 macOS / Linux，不能在 Windows 配置回退中绕过随包入口。
 
-删除投影在同一 `config-check` 增加 `--delete-from "<已知来源路径>" --delete-fields <逗号分隔字段>`，两边返回 `config-deletion-preview/v1`，内含真实 `before` 和投影 `after`。文件字节不变，修订哈希仍指向真实文件。投影不能作为已生效检查交给 Secret Book。
+删除投影在同一 `config-check` 增加 `--delete-from "<已知来源路径>" --delete-fields <逗号分隔字段>`，两边返回 `config-deletion-preview/v1`，内含真实 `before` 和投影 `after`。文件字节不变，修订哈希仍指向真实文件。投影不能代替写后真实加载器复查。
 
 AIhub 配置只处理 Key。AIhub Studio 2.x 固定使用 `https://api.aihubmax.com`，旧 `AIHUB_BASE_URL` 不再生效；Setup 不展示或保存服务地址字段。既有 AIhub 1.x 仍按其原加载器提供 Key 的来源报告。tikin Key 必填，`TIKIN_BASE_URL` 可选且默认 `https://console.tikin.net`，两项在声明中关联。加载器按字段独立读取，关联声明不意味着强制填地址或允许把不同服务的 Key 与地址拼配。删除/更换任一项后，说明另一个字段的来源并核对服务对应关系。
 
@@ -23,7 +23,7 @@ AIhub 配置只处理 Key。AIhub Studio 2.x 固定使用 `https://api.aihubmax.
 
 ## 用户没有 Key
 
-沿用业务随包文档已给出的服务入口。tikin 控制台为 <https://console.tikin.net>，让用户在自己的账号界面找到既有 API Key；具体控件按当时可见界面核对，不猜路径。AIhub 可从 <https://docs.aihubmax.com> 的官方说明找到其服务入口；若当前公开文档不能确认密钥页面，明确请用户向服务管理员取得已有 Key 或准确控制台链接。首版不代为开户、创建或撤销 Key，也不请求用户把 Key 发到聊天。
+沿用业务随包文档已给出的服务入口。tikin 控制台为 <https://console.tikin.net>，让用户在自己的账号界面找到既有 API Key；具体控件按当时可见界面核对，不猜路径。AIhub 控制台为 <https://api.aihubmax.com/console>；也可联系团队负责人分配。首版不代为开户、创建或撤销 Key，也不请求用户把 Key 发到聊天。
 
 ## 线上鉴权
 

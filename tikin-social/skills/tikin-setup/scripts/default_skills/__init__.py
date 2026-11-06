@@ -12,9 +12,9 @@ AGENTS = ("codex", "claude-code", "workbuddy")
 PLUGIN = "tikin-social"
 
 
-def read_settings(path):
+def read_settings(path, contents=None):
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        value = json.loads(path.read_text(encoding="utf-8") if contents is None else contents)
     except FileNotFoundError:
         return {"routing": {"default": "auto", "platforms": {}}}
     except (OSError, ValueError):
@@ -47,7 +47,11 @@ def update_settings(path, change):
         settings = read_settings(target)
         change(settings)
         with os.fdopen(os.open(str(temporary), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600), "w", encoding="utf-8") as stream:
+            from private_platform import private_permissions
+            private_permissions(temporary, fd=stream.fileno())
             stream.write(json.dumps(settings, ensure_ascii=False, indent=2) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
         current = target.read_bytes() if target.exists() else None
         if current != original:
             raise ValueError("settings.json changed concurrently; inspect it before retrying.")
@@ -71,10 +75,10 @@ def save_preference(path, agent, config_dir, enabled):
 
 
 def run(agent, action="check", config_dir=None, global_enabled=True):
-    if agent not in AGENTS or action not in ("check", "dismiss", "enable"):
+    if agent not in AGENTS or action not in ("check", "dismiss", "enable", "preference"):
         raise ValueError("Explicit current Agent and a valid reminder action are required.")
     if not global_enabled:
-        if action != "check":
+        if action not in ("check", "preference"):
             raise ValueError("Cannot save reminder preferences with --no-global-config.")
         return {"status": "skipped", "reason": "global_config_disabled", "plugin": PLUGIN, "agent": agent}
     if agent == "workbuddy" and not config_dir and os.environ.get("WORKBUDDY_CONFIG_DIR") and os.environ.get("CODEBUDDY_CONFIG_DIR") and Path(os.environ["WORKBUDDY_CONFIG_DIR"]).resolve() != Path(os.environ["CODEBUDDY_CONFIG_DIR"]).resolve():
@@ -83,12 +87,14 @@ def run(agent, action="check", config_dir=None, global_enabled=True):
     default_dir = {"codex": ".codex", "claude-code": ".claude", "workbuddy": ".workbuddy"}[agent]
     directory = Path(config_dir or configured or Path.home() / default_dir).expanduser().resolve()
     settings_file = Path.home() / ".config" / PLUGIN / "settings.json"
-    if action != "check":
+    if action not in ("check", "preference"):
         save_preference(settings_file, agent, directory, action == "enable")
     preferences = read_settings(settings_file).get("default_skill_reminders", {"agents": []})
     entry = next((item for item in preferences["agents"] if item["agent"] == agent and item["config_dir"] == str(directory)), None)
     enabled = entry["enabled"] if entry else True
     base = {"plugin": PLUGIN, "agent": agent, "config_dir": str(directory), "settings_file": str(settings_file), "reminder_enabled": enabled}
+    if action == "preference":
+        return base
     if not enabled:
         return dict(base, status="dismissed")
     if action == "enable":

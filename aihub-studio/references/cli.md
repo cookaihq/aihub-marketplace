@@ -165,7 +165,7 @@ outputs/
 
 程序写入 `task.json` 供下一次 `resume` 读取；下载成功的媒体或文档 ZIP 放在 `files/`；E1 文本理解结果同时保存为 `files/result-<local-id>.txt`。恢复时继续使用该目录，不把已成功文件重新生成。任务记录、输入 JSON 和生成文件均放在用户任务目录，不能写入 Plugin 安装目录。
 
-新 `run` 默认在调用项目 `data/aihub/aihub-run-UUID/` 保存 `run.json`；异步候选各自的 `task.json` 和 `files/` 位于其 `attempt-N/aihub-UUID/` 下。原生音乐也保存 run 与返回文件，但没有可查询任务 ID，提交不明时不能自动重发。旧 `native-music` 直接保存返回文件，没有上述任务记录。
+新 `run` 默认在调用项目 `data/aihub-studio/20261106143025-任务摘要-run-a1b2c3d4/` 保存 `run.json`；异步候选各自的 `task.json` 和 `files/` 位于其 `attempt-N/aihub-UUID/` 下。原生音乐也保存 run 与返回文件，但没有可查询任务 ID，提交不明时不能自动重发。旧 `native-music` 直接保存返回文件，没有上述任务记录。
 
 交付后的 `review.json`、远端检查的 `review-task/`、首次错误生成的 `error-report.md`、`diagnostic.json`、`issue-draft.md` 和请求证据 `request-context.json` 均放在同一 run 目录。每次存在报告时 `feedback.show_notice=true`；首次/再次失败、恢复及最终总结都须逐条转述 `feedback.artifact_links`，保留完整绝对路径作为链接文字。只有真实存在的文件才提供链接。报告不自动发送，不改变生成或检查状态。证据语义与旧报告说明见 [本地错误报告](error-reports.md)，检查命令见 [结果检查](result-checks.md)。
 

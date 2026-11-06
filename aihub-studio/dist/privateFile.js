@@ -6,29 +6,33 @@ const restrictWindowsFile = `
 $ErrorActionPreference = 'Stop'
 $path = $env:AIHUB_PRIVATE_FILE_PATH
 $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
-$system = New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')
+$project = [System.IO.Directory]::GetAccessControl($env:AIHUB_PRIVATE_PROJECT_PATH)
+$owner = $project.GetOwner([System.Security.Principal.SecurityIdentifier])
+$allowed = @(@($user.Value, 'S-1-5-18', $owner.Value) | Select-Object -Unique)
 $acl = New-Object System.Security.AccessControl.FileSecurity
-$acl.SetOwner($user)
+# Preserve the newly created file's owner. Setting it again requires WRITE_OWNER,
+# while the creator can safely restrict its DACL without transferring ownership.
 $acl.SetAccessRuleProtection($true, $false)
-foreach ($identity in @($user, $system)) {
+foreach ($sid in $allowed) {
+  $identity = New-Object System.Security.Principal.SecurityIdentifier($sid)
   $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($identity, 'FullControl', 'Allow')
   $acl.AddAccessRule($rule)
 }
 [System.IO.File]::SetAccessControl($path, $acl)
 $actual = [System.IO.File]::GetAccessControl($path)
 $rules = @($actual.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier]))
-if (-not $actual.AreAccessRulesProtected -or $rules.Count -ne 2) { exit 2 }
+if (-not $actual.AreAccessRulesProtected -or $rules.Count -ne $allowed.Count) { exit 2 }
 foreach ($rule in $rules) {
   if ($rule.IsInherited -or $rule.AccessControlType -ne 'Allow' -or
       $rule.FileSystemRights -ne 'FullControl' -or
-      $rule.IdentityReference.Value -notin @($user.Value, 'S-1-5-18')) { exit 2 }
+      $rule.IdentityReference.Value -notin $allowed) { exit 2 }
 }
 `;
 /** Restrict the empty temporary file before any private contents are written. */
 export async function preparePrivateFile(path) {
     if (process.platform !== 'win32')
         return; // The creator already uses mode 0600.
-    const env = { ...process.env, AIHUB_PRIVATE_FILE_PATH: path };
+    const env = { ...process.env, AIHUB_PRIVATE_FILE_PATH: path, AIHUB_PRIVATE_PROJECT_PATH: process.cwd() };
     // A parent PowerShell 7 module path is not a Windows PowerShell 5.1 runtime.
     delete env.PSModulePath;
     const powershell = join(process.env.SystemRoot || process.env.WINDIR || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
@@ -36,6 +40,6 @@ export async function preparePrivateFile(path) {
         await exec(powershell, ['-NoProfile', '-NonInteractive', '-Command', restrictWindowsFile], { env, windowsHide: true, timeout: 10_000 });
     }
     catch {
-        throw new Error('Could not restrict the private file to this user and SYSTEM. Windows PowerShell 5.1 (powershell.exe) and file ACL support are required; no private content was written.');
+        throw new Error('Could not restrict the private file to the execution account, project owner and SYSTEM. Windows PowerShell 5.1 (powershell.exe) and file ACL support are required; no private content was written.');
     }
 }

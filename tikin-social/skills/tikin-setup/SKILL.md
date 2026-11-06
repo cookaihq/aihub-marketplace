@@ -1,11 +1,13 @@
 ---
 name: tikin-setup
 metadata:
-  version: "2.0.2"
-description: v2.0.2｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
+  version: "3.0.0"
+description: v3.0.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
 ---
 
 # tikin Setup
+
+新建、继续或交付业务任务前，读取并遵守[任务保存与产物页面](references/artifacts.md)；它规定任务命名、可靠会话/Agent 身份、最终文件登记与页面入口。离线查询或配置本身不创建成果任务。
 
 ## 先确定当前任务
 

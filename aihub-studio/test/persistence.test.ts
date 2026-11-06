@@ -33,7 +33,8 @@ let saveAttempts = 0;
 fsp.rename = async (from, to) => {
   if (basename(String(to)) === 'task.json') {
     saveAttempts++;
-    if (mode !== 'understand' || saveAttempts > 1) throw Object.assign(new Error('simulated ENOSPC saving known task'), { code: 'ENOSPC' });
+    const attempted = JSON.parse(await fsp.readFile(from, 'utf8'));
+    if (attempted.submission?.state === 'known') throw Object.assign(new Error('simulated ENOSPC saving known task'), { code: 'ENOSPC' });
   }
   return originalRename(from, to);
 };
@@ -83,7 +84,7 @@ test('adopting an existing task preserves its ID when the first record write fai
   assert.equal(output.status, 'persistence_failed');
   assert.equal(output.task_id, 'already-paid-task');
   assert.equal(output.remote_status, 'completed');
-  assert(relative(observed.directory, String(output.record)).startsWith('aihub-'));
+  assert.match(relative(observed.directory, String(output.record)), /^\d{14}-.+-run-[a-f0-9]{8}/);
   assert.equal(basename(String(output.record)), 'task.json');
   assert.match(String(output.error), /ENOSPC/);
   assert.equal(observed.code, 2);

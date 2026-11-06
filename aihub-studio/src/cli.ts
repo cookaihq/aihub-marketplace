@@ -10,11 +10,13 @@ import { startRun, continueRun } from './runs.js';
 import { collectRequestErrors, configureDiagnostics, existingFeedback, feedback } from './diagnostics.js';
 import { reviewTask, DISABLE_CHECK_HINT } from './review.js';
 import { agentDefaults } from './agentDefaults.js';
+import { artifactWarnings, registerOutputs, touchTask, withArtifactContext } from './taskInfo.js';
 
 const SKILLS = ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document'];
 const FLAGS: Record<string, string[]> = {
   doctor: [], 'config-check': ['credentials-only', 'plugin-only', 'delete-from', 'delete-fields'], models: ['media', 'keyword'], describe: ['model'],
   'default-skills': ['agent', 'action', 'config-dir'],
+  'artifact-register': ['record', 'files-file', 'delivery', 'reason'],
   generate: ['media', 'model', 'params-file', 'output-dir', 'wait-seconds'],
   understand: ['model', 'params-file', 'output-dir', 'wait-seconds'],
   'native-music': ['model', 'params-file', 'output-dir'],
@@ -57,7 +59,7 @@ Do not combine --no-global-config with --use-global-config. Only the current Ski
 JSON output; exit 0 = success or known running task, 1 = definite failure, 2 = needs recovery,
 3 = config-check found missing, invalid or unreadable configuration.
 generate defaults to no waiting; resume/task default to 30 seconds. Resume never creates a task.
-run defaults to data/aihub/ and no waiting. continue resumes the saved plan and may submit
+run defaults to data/aihub-studio/ and no waiting. continue resumes the saved plan and may submit
 the next compatible model under its saved fallback policy. --confirm is only for a user's
 explicit approval of the pending model and parameters. plan performs no network requests.
 Optional model configuration: AIHUB_<IMAGE|VIDEO|AUDIO|MUSIC|UNDERSTANDING|DOCUMENT>_MODELS
@@ -79,7 +81,7 @@ function parse(argv: string[]) {
     const token = argv[i]!;
     if (!token.startsWith('--')) throw new Error('Expected a named option. Use --help.');
     const key = token.slice(2);
-    if (![...FLAGS[command]!, 'skill', 'use-global-config', 'no-global-config'].includes(key) || key in flags) throw new Error(`Unknown or duplicate option: --${key}`);
+    if (![...FLAGS[command]!, 'skill', 'use-global-config', 'no-global-config', 'task-name', 'context-file'].includes(key) || key in flags) throw new Error(`Unknown or duplicate option: --${key}`);
     if (key === 'use-global-config' || key === 'no-global-config' || key === 'recheck' || key === 'credentials-only' || key === 'plugin-only') flags[key] = true;
     else {
       const value = argv[++i];
@@ -111,7 +113,15 @@ async function jsonFile(path: string): Promise<Record<string, unknown>> {
 }
 
 export async function main(argv: string[]): Promise<number> {
-  return collectRequestErrors(events => mainWithDiagnostics(argv, events));
+  let flags: Record<string, string | boolean> = {};
+  try { if (argv.length && argv[0] !== '--help' && argv[0] !== 'help') flags = parse(argv).flags; } catch { /* Original dispatcher returns the error. */ }
+  try {
+    return await withArtifactContext(flags['context-file'] as string | undefined, flags['task-name'] as string | undefined,
+      () => collectRequestErrors(events => mainWithDiagnostics(argv, events)));
+  } catch (error) {
+    process.stdout.write(JSON.stringify({ status: 'not_submitted', error: error instanceof Error ? error.message : 'Invalid execution context.' }) + '\n');
+    return 1;
+  }
 }
 async function mainWithDiagnostics(argv: string[], events: Parameters<typeof feedback>[2]): Promise<number> {
   if (!argv.length || argv[0] === '--help' || argv[0] === 'help') { process.stdout.write(HELP); return 0; }
@@ -125,7 +135,12 @@ async function mainWithDiagnostics(argv: string[], events: Parameters<typeof fee
     const skill = flags['plugin-only'] ? null : required(flags, 'skill');
     if (skill !== null && !SKILLS.includes(skill)) throw new Error(`--skill must be one of ${SKILLS.join(', ')}.`);
     // describe reads only bundled data; it can run before credentials are configured.
-    if (command === 'default-skills') output = agentDefaults({ agent: required(flags, 'agent'),
+    if (command === 'artifact-register') {
+      const files = flags['files-file'] ? JSON.parse(await readFile(required(flags, 'files-file'), 'utf8')) : [];
+      if (!Array.isArray(files) || files.some(f => typeof f !== 'string')) throw new Error('files-file must contain an array of saved output paths.');
+      output = await registerOutputs(required(flags, 'record'), files, flags.delivery as string | undefined, flags.reason as string | undefined);
+    }
+    else if (command === 'default-skills') output = agentDefaults({ agent: required(flags, 'agent'),
       action: flags.action as string | undefined, configDir: flags['config-dir'] as string | undefined,
       globalEnabled: flags['no-global-config'] !== true });
     else if (command === 'config-check') {
@@ -146,7 +161,7 @@ async function mainWithDiagnostics(argv: string[], events: Parameters<typeof fee
         output = { schema_version: 1, status: 'ok', skill, node: process.version, media_tools: 'available', service_url: cfg.baseUrl, config_sources: cfg.sources, model_selection: cfg.modelSelection,
           result_check: cfg.resultCheck, error_feedback: cfg.feedback, note: 'Local preflight only; key authentication and generation channel availability have not been tested.' };
       } else if (command === 'plan') output = { schema_version: 1, status: 'ok', ...selectionPlan(cfg, await jsonFile(required(flags, 'request-file'))), model_selection: cfg.modelSelection };
-      else if (command === 'run') output = await startRun(cfg, await jsonFile(required(flags, 'request-file')), typeof flags['output-dir'] === 'string' ? flags['output-dir'] : 'data/aihub', wait(flags, 0));
+      else if (command === 'run') output = await startRun(cfg, await jsonFile(required(flags, 'request-file')), typeof flags['output-dir'] === 'string' ? flags['output-dir'] : 'data/aihub-studio', wait(flags, 0));
       else if (command === 'continue') output = await continueRun(cfg, required(flags, 'record'), wait(flags, 30), flags.confirm as string | undefined);
       else if (command === 'review' || command === 'review-submit') {
         if (flags.provider && !['host', 'aihub'].includes(String(flags.provider))) throw new Error('--provider must be host or aihub.');
@@ -213,6 +228,9 @@ async function mainWithDiagnostics(argv: string[], events: Parameters<typeof fee
       keys: ['AIHUB_API_KEY'], sources: { AIHUB_API_KEY: cfg.sources.AIHUB_API_KEY }, service_url: cfg.baseUrl,
       next_step: `Check the key's account access to the reported service. ${CREDENTIAL_SETUP_HINT} Repair the effective source file. Do not replay a business request automatically.` };
   }
+  const activityRecord = output.run_record ?? output.record;
+  if (cfg && typeof activityRecord === 'string') await touchTask(activityRecord);
+  if (artifactWarnings().length) output.metadata_warnings = [...new Set(artifactWarnings())];
   process.stdout.write(JSON.stringify(output, null, 2) + '\n');
   if (output.schema === 'config-deletion-preview/v1') return 0;
   if (parsed?.command === 'default-skills' && ['review_required', 'dismissed', 'enabled', 'skipped'].includes(String(output.status))) return 0;

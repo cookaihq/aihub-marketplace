@@ -69,22 +69,7 @@ class SetupTests(unittest.TestCase):
     def apply(self, planned, **kwargs):
         return self.call("apply", "--task", planned["id"], "--confirm", planned["plan"]["confirmation"], **kwargs)
 
-    def dependency(self, version="2.5.1"):
-        """Metadata fixture only; the opt-in suite exercises the real release."""
-        root = self.root / ("Secret Book " + version)
-        root.mkdir(exist_ok=True)
-        (root / "pyproject.toml").write_text('[project]\nname = "secret-book"\nversion = "' + version + '"\n')
-        (root / "SKILL.md").write_text("---\nname: secret-book\nversion: " + version + "\n---\n")
-        for name in ("scripts/secret_book.py", "references/roles.md", "references/consumer-setup.md",
-                     ".python-version", "uv.lock"):
-            path = root / name
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("synthetic metadata fixture\n")
-        return root
 
-    def handoff(self, task, root=None, **kwargs):
-        return self.call("handoff", "--task", task["id"], "--availability", "available",
-                         "--secret-book-root", root or self.dependency(), **kwargs)
 
     def test_read_only_shared_inspection_does_not_create_progress(self):
         for plugin in ("aihub-studio", "tikin-social"):
@@ -122,10 +107,9 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(target.read_text(encoding="utf-8"), original)
 
     def test_tikin_requires_upgrade_from_v1_and_rejects_unknown_major_without_writes(self):
-        from setup_core.ui_errors import public_error
         for version, reason in (("1.4.0", "consumer_upgrade_required"),
                                 ("1.99.99", "consumer_upgrade_required"),
-                                ("3.0.0", "incompatible_version")):
+                                ("4.0.0", "incompatible_version")):
             with self.subTest(version=version):
                 root = self.root / ("Tikin " + version)
                 for folder in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
@@ -138,13 +122,11 @@ class SetupTests(unittest.TestCase):
                     self.assertEqual(result["reason"], reason)
                     self.assertEqual(result["current_version"], version)
                     self.assertEqual(result["minimum"], "2.0.0")
-                    self.assertEqual(result["maximum_exclusive"], "3.0.0")
+                    self.assertEqual(result["maximum_exclusive"], "4.0.0")
                 with self.assertRaises(SetupError) as failure:
                     Consumer("tikin-social", root, None, self.project)
-                message = public_error(failure.exception)["message"]
-                self.assertIn(version, message)
-                self.assertIn("2.0.0", message)
-                self.assertIn("升级业务 Plugin" if version.startswith("1.") else "不要降级", message)
+                self.assertEqual(failure.exception.reason, reason)
+                self.assertEqual(failure.exception.details['current_version'], version)
         self.assertFalse((self.user / ".config").exists())
         self.assertEqual(list(self.project.iterdir()), [])
 
@@ -268,26 +250,6 @@ class SetupTests(unittest.TestCase):
             self.assertIn({"source": str(unreadable), "reason": "unreadable"}, projection["after"]["problems"])
             self.assertEqual(target.read_bytes(), raw)
 
-    def test_secret_book_missing_and_mock_handoff_have_one_writer(self):
-        task = self.start(source="secret-book", caller="aihub-image")
-        missing = self.call("handoff", "--task", task["id"], "--availability", "missing")
-        self.assertEqual(len(missing["options"]), 3)
-        self.assertEqual(missing["minimum_verified_release"], "2.5.0")
-        handoff = self.handoff(task)
-        self.assertEqual(handoff["handoff"]["writer"], "secret-book")
-        self.assertEqual(handoff["handoff"]["remote_access"], "read_only")
-        target = self.user / ".config/aihub-studio/.env"
-        denied = self.call("plan", "--task", task["id"], "--target", target, "--fields", "AIHUB_API_KEY", ok=False)
-        self.assertEqual(denied["reason"], "secret_book_owns_write")
-        # A delegated success without a real saved field cannot finish Setup.
-        false_success = self.call("handoff-result", "--task", task["id"], "--status", "completed", "--reference", "mock-public-ref")
-        self.assertEqual(false_success["phase"], "inspection")
-        self.assertFalse(target.exists())
-        self.handoff(task)
-        self.global_file("aihub-studio").write_text("AIHUB_API_KEY=" + self.marker)
-        done = self.call("handoff-result", "--task", task["id"], "--status", "completed")
-        self.assertEqual(done["phase"], "completed")
-        self.assertEqual(done["result"]["online_authentication"], "not_performed")
 
     def test_cross_host_and_corrupt_progress_are_read_only_errors(self):
         task = self.start()
@@ -379,33 +341,15 @@ class SetupTests(unittest.TestCase):
         result = self.call("list", "--unknown", self.marker, ok=False)
         self.assertEqual(result["reason"], "invalid_arguments")
 
-    def test_delegated_unknown_outcome_must_be_resolved_by_original_writer(self):
-        task = self.start(source="secret-book", caller="aihub-image")
-        self.handoff(task)
-        self.call("handoff-result", "--task", task["id"], "--status", "pending", "--reference", "mock-resume-id")
-        unknown = self.call("handoff-result", "--task", task["id"], "--status", "unknown")
-        self.assertEqual(unknown["secret_book"]["reference"], "mock-resume-id")
-        self.assertEqual(unknown["secret_book"]["dependency"]["version"], "2.5.1")
-        for command, args in (("source", ["--source", "manual"]), ("reconcile", []), ("cancel", []),
-                              ("handoff", ["--availability", "available"])):
-            denied = self.call(command, "--task", task["id"], *args, ok=False)
-            self.assertEqual(denied["reason"], "secret_book_owns_write")
-        self.assertEqual(self.call("continue", "--task", task["id"])["phase"], "waiting_secret_book")
-        cancelled = self.call("handoff-result", "--task", task["id"], "--status", "cancelled")
-        self.assertEqual(cancelled["phase"], "cancelled")
-        self.assertFalse((self.user / ".config/aihub-studio").exists())
 
-    def test_business_reference_and_secret_book_selection_survive_resumption(self):
+    def test_business_reference_and_selection_survive_resumption(self):
         record = self.project / "business.json"
         record.write_text('{"request":"synthetic-sensitive-never-log"}')
         task = self.call("start", "--plugin", "aihub-studio", "--plugin-root", MARKET / "aihub-studio",
-                         "--skill", "aihub-image", "--operation", "repair", "--source", "secret-book",
+                         "--skill", "aihub-image", "--operation", "repair", "--source", "manual",
                          "--submission", "submitted", "--business-record", record, "--business-task-id", "job_123")
         target = self.global_file("aihub-studio")
         self.call("select", "--task", task["id"], "--target", target, "--fields", "AIHUB_API_KEY")
-        handoff = self.handoff(task)
-        self.assertEqual(handoff["handoff"]["selection"], {"target": str(target), "fields": ["AIHUB_API_KEY"]})
-        self.assertEqual(handoff["handoff"]["skill"], "aihub-image")
         state = self.call("status", "--task", task["id"])
         self.assertEqual(state["business"], {"record": str(record), "task_id": "job_123"})
         self.assertFalse(target.exists())
@@ -416,48 +360,13 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(current["phase"], "inspection")
         self.assertEqual(current["result"]["business_next_step"], "reconcile_submission")
 
-    def test_shared_caller_requires_251_and_preserves_null(self):
-        for plugin in ("aihub-studio", "tikin-social"):
-            task = self.start(plugin, source="secret-book")
-            denied = self.handoff(task, self.dependency("2.5.0"), ok=False)
-            self.assertEqual(denied["reason"], "secret_book_version_incompatible")
-            self.assertEqual(denied["compatibility"]["minimum_verified_release"], "2.5.1")
-            current = self.call("status", "--task", task["id"])
-            self.assertEqual(current, task)
-            accepted = self.handoff(task)["handoff"]
-            self.assertIsNone(accepted["skill"])
-            self.assertIsNone(accepted["inspection"]["skill"])
-            self.assertEqual(accepted["caller_mode"], "plugin_shared")
-            self.assertEqual(accepted["dependency"]["version"], "2.5.1")
-            self.assertEqual(accepted["cwd"], str(self.project))
 
-    def test_old_incomplete_installation_offers_two_upgrades_and_manual_configuration(self):
-        root = self.dependency("2.0.1")
-        # An actual old release predates these files. It must still be identified
-        # by its valid metadata, rather than reported as an unknown installation.
-        (root / "references/roles.md").unlink()
-        (root / "references/consumer-setup.md").unlink()
-        for caller, minimum in ((None, "2.5.1"), ("aihub-image", "2.5.0")):
-            for availability in ("available", "incompatible"):
-                with self.subTest(caller=caller, availability=availability):
-                    task = self.start(source="secret-book", caller=caller)
-                    denied = self.call("handoff", "--task", task["id"], "--availability", availability,
-                                       "--secret-book-root", root, ok=False)
-                    self.assertEqual(denied["reason"], "secret_book_version_incompatible")
-                    self.assertEqual(denied["dependency"]["root"], str(root))
-                    self.assertEqual(denied["dependency"]["version"], "2.0.1")
-                    self.assertIn("v2.0.1", denied["message"])
-                    self.assertIn("v" + minimum, denied["message"])
-                    self.assertEqual(denied["options"], ["升级到最新版", "升级到最低可用版本（v" + minimum + "）", "手动配置"])
-                    self.assertEqual(self.call("status", "--task", task["id"]), task)
-                    self.assertFalse((self.user / ".config/aihub-studio").exists())
 
-    def test_manual_fallback_names_the_original_file_and_fields_and_resumes(self):
+    def test_manual_input_names_the_original_file_and_fields_and_resumes(self):
         target = self.global_file("tikin-social")
         target.write_text("TIKIN_API_KEY=" + self.marker + "\nTIKIN_BASE_URL=https://console.tikin.net\nOTHER=keep\n")
-        task = self.start("tikin-social", operation="repair", source="secret-book")
+        task = self.start("tikin-social", operation="repair", source="manual")
         self.call("select", "--task", task["id"], "--target", target, "--fields", "TIKIN_API_KEY,TIKIN_BASE_URL")
-        self.handoff(task, self.dependency("2.0.1"), ok=False)
         changed = self.call("source", "--task", task["id"], "--source", "manual")
         prepared = self.apply(self.plan(changed, changed["selection"]["target"], ",".join(changed["selection"]["fields"])))
         guide = prepared["result"]["manual_input"]
@@ -472,73 +381,9 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(done["result"]["local"]["fields"]["TIKIN_API_KEY"]["source"], str(target))
         self.assertIn("OTHER=keep", target.read_text())
 
-    def test_real_caller_keeps_250_compatibility_but_check_cannot_delegate(self):
-        task = self.start(source="secret-book", caller="aihub-image")
-        accepted = self.handoff(task, self.dependency("2.5.0"))["handoff"]
-        self.assertEqual(accepted["minimum_verified_release"], "2.5.0")
-        self.assertEqual(accepted["dependency"]["version"], "2.5.0")
-        check = self.start(source="secret-book", operation="check", caller="aihub-image")
-        denied = self.handoff(check, ok=False)
-        self.assertEqual(denied["reason"], "invalid_secret_book_operation")
 
-    def test_dependency_errors_leave_task_available_for_manual_fallback(self):
-        task = self.start(source="secret-book")
-        missing = self.call("handoff", "--task", task["id"], "--availability", "available", ok=False)
-        self.assertEqual(missing["reason"], "secret_book_location_required")
-        for problem in ("inconsistent", "unreadable", "incomplete", "unstable"):
-            with self.subTest(problem=problem):
-                root = self.dependency("2.5.1rc1" if problem == "unstable" else "2.5.1")
-                if problem == "inconsistent":
-                    (root / "SKILL.md").write_text("---\nname: secret-book\nversion: 2.5.0\n---\n")
-                elif problem == "unreadable":
-                    (root / "pyproject.toml").write_text(self.marker)
-                elif problem == "incomplete":
-                    (root / "references/roles.md").unlink()
-                denied = self.handoff(task, root, ok=False)
-                self.assertEqual(denied["reason"], "secret_book_artifact_invalid")
-                self.assertEqual(self.call("status", "--task", task["id"]), task)
-        self.call("source", "--task", task["id"], "--source", "manual")
-        self.assertFalse((self.user / ".config/aihub-studio").exists())
 
-    def test_dependency_accepts_published_metadata_version_and_legacy_format(self):
-        root = self.dependency("2.5.4")
-        for fields in (
-            'metadata:\n  version: "2.5.4"\n',
-            'metadata: # public artifact metadata\n  version: "2.5.4" # stable\n',
-            "version: 2.5.4\n",
-            'version: 2.5.4\nmetadata:\n  version: "2.5.4"\n',
-        ):
-            with self.subTest(fields=fields):
-                (root / "SKILL.md").write_text("---\nname: secret-book\n" + fields
-                                               + "description: >-\n  v2.5.4｜public artifact\n---\n", encoding="utf-8")
-                task = self.start("tikin-social", source="secret-book")
-                accepted = self.handoff(task, root)["handoff"]
-                self.assertEqual(accepted["dependency"]["version"], "2.5.4")
-                self.assertIsNone(accepted["skill"])
-                self.assertEqual(accepted["cwd"], str(self.project))
 
-    def test_invalid_metadata_versions_do_not_fall_back_or_change_task(self):
-        root = self.dependency("2.5.4")
-        task = self.start("tikin-social", source="secret-book")
-        for fields in (
-            "metadata:\n  author: fixture\n",
-            'metadata:\n  version: "2.5.3"\n',
-            'metadata:\n  version: "2.5.4"\n  version: "2.5.4"\n',
-            'metadata:\n  version: "2.5.4"\nmetadata:\n  version: "2.5.4"\n',
-            "version: 2.5.4\nversion: 2.5.4\n",
-            'version: 2.5.4\nmetadata:\n  version: "2.5.3"\n',
-            'version: 2.5.4\nmetadata:\n  version: "invalid"\n',
-            'version: invalid\nmetadata:\n  version: "2.5.4"\n',
-            "version: 2.5.4\nmetadata:\n  version:\n",
-            'metadata:\n  version: "2.5.4" trailing\n',
-            'metadata:\n  nested:\n    version: "2.5.4"\n',
-        ):
-            with self.subTest(fields=fields):
-                (root / "SKILL.md").write_text("---\nname: secret-book\n" + fields + "---\n")
-                denied = self.handoff(task, root, ok=False)
-                self.assertEqual(denied["reason"], "secret_book_artifact_invalid")
-                self.assertEqual(self.call("status", "--task", task["id"]), task)
-        self.assertFalse((self.user / ".config/tikin-social").exists())
 
 
 if __name__ == "__main__":

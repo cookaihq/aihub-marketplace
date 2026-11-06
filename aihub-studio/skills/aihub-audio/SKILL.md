@@ -8,7 +8,9 @@ compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, FFmpeg and
 
 # AIhub 音频与语音任务
 
-凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开 Setup 配置网页；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+新建、继续或交付业务任务前，读取并遵守[任务保存与产物页面](../../references/artifacts.md)；它规定任务命名、可靠会话/Agent 身份、最终文件登记与页面入口。离线查询或配置本身不创建成果任务。
+
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开本 Plugin 配置中心；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
 
 Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 
@@ -34,7 +36,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" models --skill aihub-audio --media 
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" describe --skill aihub-audio --model "<线上模型 ID>"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" plan --skill aihub-audio --request-file "/任务目录/audio-request.json"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill aihub-audio \
-  --request-file "/任务目录/audio-request.json" --output-dir "/任务目录/data/aihub" --wait-seconds 30
+  --request-file "/任务目录/audio-request.json" --output-dir "/任务目录/data/aihub-studio" --wait-seconds 30
 ```
 
 用返回的 `run_record` 继续任务。`confirmation_required` 必须展示下一模型与参数，用户同意后才传 `--confirm`；不能直接执行含 token 的 `next_action`。只交付已检查的文件及实际转写结果，报告最终模型和尝试摘要。声音克隆不保证返回可下载音频，按服务实际结果说明。提交结果不明、查询/下载失败或试听不符合要求不触发替换生成。

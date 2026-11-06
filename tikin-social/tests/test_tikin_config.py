@@ -20,6 +20,17 @@ VENV_PY = VENV_DIR / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 
 BUILD_HINT = f"uv sync --no-dev --project {SKILL_DIR}"
 
+def assert_private(test, path):
+    if os.name == 'nt':
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('tikin_private_platform_test', SKILL_DIR / 'scripts/private_platform.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.verify_private_permissions(path)
+    else:
+        test.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+
+
 
 def _venv_is_valid():
     # Mirrors the bootstrap check inside tikin-config: bin/python alone is not
@@ -213,7 +224,7 @@ class TikinConfigTests(unittest.TestCase):
             json.loads(settings_path.read_text()),
             {"routing": {"default": "auto", "platforms": {}}},
         )
-        self.assertEqual(stat.S_IMODE(settings_path.stat().st_mode), 0o600)
+        assert_private(self, settings_path)
 
     def test_empty_xdg_config_home_uses_home_default(self):
         process_env = self.env.copy()
@@ -249,7 +260,7 @@ class TikinConfigTests(unittest.TestCase):
 
         env_path = self.config_home / "tikin-social" / ".env"
         self.assertIn("TIKIN_API_KEY=secret-from-stdin", env_path.read_text())
-        self.assertEqual(stat.S_IMODE(env_path.stat().st_mode), 0o600)
+        assert_private(self, env_path)
         report = json.loads(status_result.stdout)
         self.assertTrue(report["key_configured"])
         self.assertEqual(report["key_source"], str(env_path))
@@ -309,7 +320,7 @@ class TikinConfigTests(unittest.TestCase):
 
         result = self.run_config("init")
 
-        self.assertEqual(stat.S_IMODE(env_path.stat().st_mode), 0o600)
+        assert_private(self, env_path)
         self.assertNotIn(secret, result.stdout)
         self.assertNotIn(secret, result.stderr)
 
@@ -321,11 +332,12 @@ class TikinConfigTests(unittest.TestCase):
         legacy_path.write_text("TIKIN_API_KEY=legacy-secret\n")
         env_path.write_text("TIKIN_API_KEY=current-secret\n")
         legacy_path.chmod(0o644)
+        original_mode = legacy_path.stat().st_mode
 
         self.run_config("init")
 
         self.assertEqual(env_path.read_text(), "TIKIN_API_KEY=current-secret\n")
-        self.assertEqual(stat.S_IMODE(legacy_path.stat().st_mode), 0o644)
+        self.assertEqual(legacy_path.stat().st_mode, original_mode)
 
     def test_routing_supports_global_defaults_and_platform_overrides(self):
         self.run_config("init")

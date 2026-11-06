@@ -6,7 +6,7 @@
 uv run --locked --no-dev --project "<setup-api-key Skill 实体目录>" python "<setup-api-key Skill 实体目录>/scripts/setup_api_key.py" <子命令> <参数>
 ```
 
-先核对 uv >= 0.8。Skill 自带 Python 3.13、锁文件和 Windows/POSIX bootstrap；自有环境缺失自动准备。系统 uv/Node 缺失时按实际报错给安装引导。`UV_PROJECT_ENVIRONMENT` 的相对值按每个 Skill 自己的目录解析；不要把 Setup 已解析的 venv 路径注入 tikin 或 Secret Book 子进程。业务检查在传入的真实 `--cwd` 中执行，不因 `--project` 改变 cwd。
+先核对 uv >= 0.8。Skill 自带 Python 3.13、锁文件和 Windows/POSIX bootstrap；自有环境缺失自动准备。系统 uv/Node 缺失时按实际报错给安装引导。`UV_PROJECT_ENVIRONMENT` 的相对值按每个 Skill 自己的目录解析；不要把 Setup 已解析的 venv 路径注入 tikin 子进程。业务检查在传入的真实 `--cwd` 中执行，不因 `--project` 改变 cwd。
 
 ## 只读与开始
 
@@ -15,7 +15,7 @@ uv run --locked --no-dev --project "<setup-api-key Skill 实体目录>" python "
 | 子命令 | 参数与结果 |
 | --- | --- |
 | `inspect` | `--plugin aihub-studio|tikin-social --plugin-root "<实际实体>"`；必选真实 `--skill <name>` 或 `--plugin-only`；可加 `--no-global-config`。返回真实无值来源报告，不创建任何任务或配置 |
-| `start` | 同上，安装未完成可省略 `--plugin-root`；另传 `--operation configure|repair|clear|check`，已有来源才传 `--source manual|secret-book`。`--installation installed|not_installed|disabled|unloaded|unknown` 由原生管理记录提供，默认未知；helper 不把目录当安装证据 |
+| `start` | 同上，安装未完成可省略 `--plugin-root`；另传 `--operation configure|repair|clear|check`，已有来源才传 `--source manual`。`--installation installed|not_installed|disabled|unloaded|unknown` 由原生管理记录提供，默认未知；helper 不把目录当安装证据 |
 | `list` | 可按 `--plugin` 过滤；只读当前宿主、运行环境和 cwd 的未完成任务，不自动选择 |
 | `status` | `--task <id>`；返回进度，不消费确认，不执行待办 |
 | `attach` | `--task <id> --plugin-root "<实体>" --installation <实际状态>`；安装或更新后绑定真实产物，旧计划与确认失效，重新检查 |
@@ -44,18 +44,10 @@ Git 中目标及含剩余配置的原子替换临时文件必须未跟踪且实�
 
 文件保留 UTF-8/BOM、LF/CRLF 和无关行；不可靠的编码或多行赋值拒绝自动改写。写前验证限制性 Windows DACL/POSIX 权限；拒绝 symlink、junction 和硬链接目标。临时文件权限先于内容写入，完成后清理。锁只能协调本 helper，最终校验与替换间仍存在外部程序竞争窗口；检测到变化或回读失败就核对现状，不承诺跨所有编辑器的事务隔离。
 
-## 选择、委托与恢复
+## 选择与恢复
 
-`source --task <id> --source manual|secret-book` 切换用户已决定的来源，丢弃旧的待执行计划。已有明确目标/字段可用 `select --task <id> --target "<文件>" --fields <字段>` 保存选择；这不是写入确认，Secret Book 仍自行核对映射和目标。
+`source --task <id> --source manual` 沿用本人填写来源，丢弃旧待执行计划。`select --task <id> --target "<文件>" --fields <字段>` 保存明确的目标和字段；它不是写入确认。网页入口由 [browser.md](browser.md) 管理，保存后用 `continue` 重新读取真实加载器。
 
-`handoff --task <id> --availability missing|unknown|unloaded|incompatible|available`：缺失时给出安装/手填/暂缓三项；`available` 和 `incompatible` 均须传 `--secret-book-root "<当前宿主选用的完整 Skill 实体>"` 只读核对元数据。只有 `available` 且检查通过才生成 `credentials.json` 路径及原生检查报告；`incompatible` 不委托写入。它不安装或执行 Secret Book；宿主加载与运行能力仍由 Agent 核实。所需角色与升级流程见 [Secret Book](secret-book.md)。
-
-只对 `configure/repair` 委托写入。真实 caller 最低 2.5.0，共享模式最低 2.5.1，空 caller 原样保留。位置缺失、版本不兼容或产物元数据不一致分别返回 `secret_book_location_required`、`secret_book_version_incompatible`、`secret_book_artifact_invalid`，不创建已委托状态，仍可转手填或保留任务。版本过低时 `message` 明确当前版本及最低要求，`options` 依次为“升级到最新版／升级到最低可用版本（具体版本）／手动配置”；不要替换回“安装／手填／暂缓”。`dependency` 记录所选实体路径与版本；测试提交和验证范围另列，不作为宿主安装证据。
-
-委托实际返回后用 `handoff-result --task <id> --status completed|cancelled|pending|failed|unknown`，有公开不透明引用才传 `--reference`。仅传状态/引用，不传 Secret Book 私有状态路径。成功后由业务加载器复查；模拟成功没有实际字段不会完成配置。失败、取消或待操作不由 Setup 重写文件。
-
-实际委托处于 `pending/unknown` 时，禁止切换写入方、重复委托或用本机 `reconcile/cancel` 代替 Secret Book 的公开核对/取消。先由原写入方返回明确结果，再继续 Setup；仅安装状态未知且尚未委托时可以改选手填。后续状态更新未提供新引用会保留原公开引用。已返回完成但本机复查失败时，只重试复查，不让 Secret Book 重复保存。
-
-`continue` 对待确认、待 Secret Book、待安装状态只返回当前待办；不会重放。`reconcile` 对写入中断/结果不明仅报告当前文件与来源，撤销旧执行计划，随后再决定是否需要新计划。`cancel` 关闭任务且保留已经保存的业务配置；用户要求清理进度时，关闭后 `forget` 只移除该任务记录。多服务分别执行，不使用一个全局“当前任务”。
+`continue` 对待确认或待安装状态仅返回待办，不重放。`reconcile` 对中断/结果不明先读当前文件和来源，撤销旧执行计划，再决定后续动作。`cancel` 关闭任务并保留已保存配置；用户要求清理进度时，关闭后 `forget` 仅移除该任务记录。多服务各用自己的编号。
 
 退出 `0` 表示 helper 命令完成，仍须查看嵌套的本机状态；`2` 是需要处理的参数、兼容或安全条件，`1` 是本机运行错误。错误仅输出稳定原因码，不透传可能含值的子进程 stdout/stderr。`sources_changed` 重新检查与规划，`artifact_changed_refresh_required` 核对版本后 `attach`，`reconcile_before_retry` 先核对实际结果。

@@ -16,10 +16,9 @@ from pathlib import Path
 
 from setup_core.consumers import ADAPTERS, HOSTS, Consumer
 from setup_core.errors import SetupError
-from setup_core.secret_book import inspect_dependency
 from setup_core import default_settings
 from setup_core.progress import (Tasks, active, apply_plan, consumer_for, guard_context, make_plan,
-                                 pending_delegation, recheck, secret_book_compatibility, secret_book_handoff, secret_book_result)
+                                 recheck)
 
 
 class Parser(argparse.ArgumentParser):
@@ -55,7 +54,7 @@ def arguments():
     context(start, False)
     host(start)
     start.add_argument("--operation", choices=("configure", "repair", "clear", "check"), required=True)
-    start.add_argument("--source", choices=("manual", "secret-book"))
+    start.add_argument("--source", choices=("manual",))
     start.add_argument("--installation", choices=("installed", "not_installed", "disabled", "unloaded", "unknown"), default="unknown")
     start.add_argument("--submission", choices=("not_submitted", "submitted", "unknown"), default="unknown")
     start.add_argument("--business-record", help="既有业务记录的本机路径；只存引用，不复制内容")
@@ -70,7 +69,7 @@ def arguments():
     defaults.add_argument("--input", help="无凭证 JSON 报告或内部写入计划参数文件")
     defaults.add_argument("--choice", choices=("1", "2", "3", "设为默认", "设为默认 (推荐)", "设为默认（推荐）", "本次跳过", "不再提醒"))
     defaults.add_argument("--targets", help="用户明确选定的 eligible 子集，逗号分隔 ID；省略表示整个菜单")
-    for name in ("status", "attach", "source", "select", "plan", "apply", "continue", "reconcile", "cancel", "forget", "handoff", "handoff-result"):
+    for name in ("status", "attach", "source", "select", "plan", "apply", "continue", "reconcile", "cancel", "forget"):
         command = sub.add_parser(name)
         task(command)
         host(command)
@@ -78,19 +77,12 @@ def arguments():
             command.add_argument("--plugin-root", required=True)
             command.add_argument("--installation", choices=("installed", "disabled", "unloaded", "unknown"), required=True)
         elif name == "source":
-            command.add_argument("--source", choices=("manual", "secret-book"), required=True)
+            command.add_argument("--source", choices=("manual",), required=True)
         elif name in ("plan", "select"):
             command.add_argument("--target", required=True)
             command.add_argument("--fields", required=True, help="逗号分隔的声明字段名；不接收值")
         elif name == "apply":
             command.add_argument("--confirm", required=True, help="使用者已授权的当前计划指纹")
-        elif name == "handoff":
-            command.add_argument("--availability", required=True,
-                                 choices=("missing", "unknown", "unloaded", "incompatible", "available"))
-            command.add_argument("--secret-book-root", help="可用或不兼容时必填：当前宿主选用的 Secret Book 完整 Skill 实体")
-        elif name == "handoff-result":
-            command.add_argument("--status", required=True, choices=("completed", "cancelled", "pending", "failed", "unknown"))
-            command.add_argument("--reference", help="Secret Book 公开的不透明恢复引用；不传其状态文件")
     return parser.parse_args()
 
 
@@ -151,8 +143,6 @@ def run(args):
             tasks.save(state)
             return {"task": state["id"], "credential_phase": state["phase"], "default_settings": result}
         if args.command == "cancel":
-            if pending_delegation(state):
-                raise SetupError("secret_book_owns_write")
             if state["phase"] == "completed" and default_settings.pending(state):
                 state["result"]["default_settings"].update(phase="skipped", eligible=[])
                 tasks.save(state)
@@ -206,26 +196,9 @@ def run(args):
         if args.command in ("continue", "reconcile"):
             if state["phase"] in ("completed", "cancelled"):
                 return state
-            delegated_complete = state.get("secret_book", {}).get("status") == "completed"
-            if args.command == "continue" and (state["phase"] in ("waiting_confirmation", "installation")
-                    or state["phase"] == "waiting_secret_book" and not delegated_complete):
-                return state  # "继续" is not a new write authorization or delegated result.
+            if args.command == "continue" and state["phase"] in ("waiting_confirmation", "installation"):
+                return state
             return recheck(tasks, state, args.command == "reconcile")
-        if args.command == "handoff":
-            active(state)
-            if state["source"] != "secret-book" or state["operation"] not in ("configure", "repair"):
-                raise SetupError("invalid_secret_book_operation")
-            if args.availability == "incompatible":
-                inspect_dependency(args.secret_book_root, state["context"]["caller"])
-            if args.availability != "available":
-                state["phase"] = "waiting_secret_book"
-                state["secret_book"] = {"status": args.availability, "reference": None, "contract": "not_delegated", "delegated": False}
-                tasks.save(state)
-                options = ["安装并继续", "自行填写本机文件", "暂不配置"] if args.availability == "missing" else ["核对当前宿主的安装、加载与能力", "自行填写本机文件", "暂不配置"]
-                return {"task": state, "options": options, **secret_book_compatibility(state["context"]["caller"])}
-            return secret_book_handoff(tasks, state, args.secret_book_root)
-        if args.command == "handoff-result":
-            return secret_book_result(tasks, state, args.status, args.reference)
     raise SetupError("unknown_command")
 
 

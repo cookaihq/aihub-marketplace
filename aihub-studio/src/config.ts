@@ -37,7 +37,7 @@ const DECLARED_KEYS = new Set<string>([...KEYS, ...Object.values(MODEL_KEYS), ..
 const PLUGIN_NAME = 'aihub-studio';
 // Fixed service identity shared by all Skills; configuration cannot redirect it.
 export const AIHUB_SERVICE_URL = 'https://api.aihubmax.com';
-export const CREDENTIAL_SETUP_HINT = 'Follow references/credential-setup.md: launch the local configuration page through setup-aihub:setup-api-key 3.1.0 or newer and give the user its clickable link. The page offers direct API Key entry or Secret Book; honor an existing source and scope choice. If Setup is unavailable, follow the bundled minimal fallback. Keep Secret Book untranslated. Preserve caller, cwd, global option and business submission state; after saving, recheck with the original loader and check default settings before resuming. Local inspection never authorizes a business retry.';
+export const CREDENTIAL_SETUP_HINT = 'Follow references/credential-setup.md: launch this Plugin\'s bundled configuration center and give the user its clickable link. Continue an existing setup-api-key task through its bound page. Preserve caller, cwd, global option, save scope and business submission state; after saving, recheck with the original loader before resuming the authorized task. Local inspection never authorizes a business retry.';
 
 export function parseEnv(text: string): Record<string, string> {
   const values: Record<string, string> = {};
@@ -55,6 +55,7 @@ export interface ConfigOptions {
   skill: string | null; useGlobalConfig?: boolean; cwd?: string;
   env?: NodeJS.ProcessEnv; homeDirectory?: string;
   deletion?: { path: string; fields: string[] };
+  fileOverrides?: Record<string, string | null>;
 }
 export interface ConfigInspection {
   schema: 'secret-book.config-inspection/v1';
@@ -71,7 +72,7 @@ export class ConfigurationError extends Error {
   constructor(message: string, public inspection: ConfigInspection) { super(message); }
 }
 
-function resolveConfiguration(options: ConfigOptions) {
+export function resolveConfiguration(options: ConfigOptions) {
   const { skill, useGlobalConfig = true, env = process.env } = options;
   const cwd = resolve(options.cwd ?? process.cwd());
   const homeDirectory = resolve(options.homeDirectory ?? homedir());
@@ -98,7 +99,9 @@ function resolveConfiguration(options: ConfigOptions) {
   const problems: ConfigInspection['problems'] = [];
   const addFile = (path: string) => {
     try {
-      const bytes = readFileSync(path);
+      const replacement = options.fileOverrides?.[path];
+      if (replacement === null) { files.push({ path, revision: null }); return; }
+      const bytes = replacement === undefined ? readFileSync(path) : Buffer.from(replacement, 'utf8');
       files.push({ path, revision: createHash('sha256').update(bytes).digest('hex') });
       const parsed = parseEnv(bytes.toString('utf8'));
       if (deletion && identity(path) === identity(deletion.path)) for (const key of deletion.fields) delete parsed[key];
@@ -165,7 +168,7 @@ function resolveConfiguration(options: ConfigOptions) {
 export function inspectConfig(options: ConfigOptions, credentialsOnly = false): ConfigInspection {
   const inspection = resolveConfiguration(options).inspection;
   if (!credentialsOnly) return inspection;
-  // Secret Book requires an exact match between the declared keys and the report.
+  // The shared inspection contract requires the declared keys to match the report.
   // Preserve every layer revision so confirmation still detects concurrent edits.
   const problems = inspection.problems.filter(problem => !problem.key || problem.key === 'AIHUB_API_KEY');
   return { ...inspection, status: problems.length ? 'configuration_required' : 'ok', problems,

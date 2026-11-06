@@ -8,7 +8,9 @@ compatibility: Claude Code, Codex and WorkBuddy; Node.js 18 or newer, ffprobe on
 
 # AIhub 图片任务
 
-凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开 Setup 配置网页；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+新建、继续或交付业务任务前，读取并遵守[任务保存与产物页面](../../references/artifacts.md)；它规定任务命名、可靠会话/Agent 身份、最终文件登记与页面入口。离线查询或配置本身不创建成果任务。
+
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开本 Plugin 配置中心；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
 
 Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 
@@ -52,9 +54,9 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" models --skill aihub-image --media 
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" describe --skill aihub-image --model "gpt-image-2.5-flare"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" plan --skill aihub-image --request-file "/任务目录/image-request.json"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill aihub-image \
-  --request-file "/任务目录/image-request.json" --output-dir "/任务目录/data/aihub" --wait-seconds 30
+  --request-file "/任务目录/image-request.json" --output-dir "/任务目录/data/aihub-studio" --wait-seconds 30
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" continue --skill aihub-image \
-  --record "/任务目录/data/aihub/aihub-run-UUID/run.json" --wait-seconds 30
+  --record "/任务目录/data/aihub-studio/20261106143025-任务摘要-run-a1b2c3d4/run.json" --wait-seconds 30
 ```
 
 模型列表可见不等于生成渠道已通过验收。提交结果不明、仍在运行、查询/下载失败或画面不符合要求时，不触发替换生成；保留记录及已知任务 ID，按共用状态表继续。

@@ -191,14 +191,16 @@ class ProxyDownloadTests(unittest.TestCase):
 
     def test_killed_process_leaves_partial_state_and_resumes_without_new_metadata(self):
         self.configure(mode='interrupt')
-        self.metadata()
+        metadata = self.metadata()
+        task_root = Path(metadata['record']).parent
+        task_id = json.loads((task_root / 'task-info.json').read_text())['task_id']
         process = subprocess.Popen(self.command(), env=self.env, cwd=self.root,
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             until = time.monotonic() + 5
             partial = None
             while time.monotonic() < until:
-                candidates = list(self.output.glob('*/stream-140-*.part'))
+                candidates = list(self.output.glob('stream-140-*.part'))
                 if candidates and candidates[0].stat().st_size:
                     partial = candidates[0]
                     break
@@ -207,7 +209,7 @@ class ProxyDownloadTests(unittest.TestCase):
         finally:
             process.terminate()
             process.wait(timeout=5)
-        saved = json.loads(next(self.output.glob('*/download.json')).read_text())
+        saved = json.loads(next(task_root.glob('downloads/*/download.json')).read_text())
         self.assertEqual(saved['status'], 'partial')
         content = partial.read_bytes()
         self.configure(mode='ok')
@@ -215,6 +217,7 @@ class ProxyDownloadTests(unittest.TestCase):
         self.assertEqual(result['status'], 'complete')
         self.assertEqual(partial.read_bytes(), content)
         self.assertEqual(len(result['streams']), 2)
+        self.assertEqual(json.loads((task_root / 'task-info.json').read_text())['task_id'], task_id)
         self.assertEqual(sum(row['peer'] == 'api' for row in self.calls()), 1)
 
     def test_completed_files_are_reused_but_never_overwritten_after_local_edits(self):

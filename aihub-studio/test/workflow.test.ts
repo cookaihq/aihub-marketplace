@@ -4,7 +4,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { once } from 'node:events';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, readFile, writeFile, rm, stat, symlink } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, writeFile, rm, stat, symlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { AddressInfo } from 'node:net';
@@ -132,6 +132,9 @@ test('CLI rejects invalid Seedance 2.5 inputs before HTTP and never falls back t
     const unavailable = await command();
     assert.equal(unavailable.json.status, 'not_submitted'); assert.match(unavailable.json.error, /exact model ID is not present/);
     assert.equal(requests, 1); assert.equal(posts, 0);
+    const folder = (await readdir(dir)).find(name => /^\d{14}-.+-run-[a-f0-9]{8}$/.test(name));
+    assert.ok(folder);
+    assert.equal((await readJob(join(dir, folder, 'task.json'))).submission.state, 'not_submitted');
   } finally { server.closeAllConnections(); server.close(); await rm(dir, { recursive: true, force: true }); }
 });
 
@@ -159,6 +162,18 @@ test('legacy Seedance 2.0 records and task IDs remain recoverable without model 
     const adopted = await run(dir, base, 'task', '--skill', 'aihub-video', '--task-id', 'legacy-task', '--media', 'video', '--output-dir', dir, '--wait-seconds', '0');
     assert.equal(adopted.json.status, 'waiting'); assert.equal(adopted.json.model, 'seedance-2.0-fast-text-to-video');
     assert.deepEqual(calls, [['GET', '/v1/tasks/legacy-task'], ['GET', '/v1/tasks/legacy-task']]);
+    const pointer = join(dir, '.task-links', (await readdir(join(dir, '.task-links'))).find(name => name.endsWith('.json'))!);
+    const saved = JSON.parse(await readFile(pointer, 'utf8'));
+    const adoptedJob = await readJob(adopted.json.record);
+    adoptedJob.submission = { state: 'known', task: { id: 'another-paid-task', status: 'pending' } };
+    await writeJob(adopted.json.record, adoptedJob);
+    const refused = await run(dir, base, 'task', '--skill', 'aihub-video', '--task-id', 'legacy-task', '--media', 'video', '--output-dir', dir);
+    assert.match(refused.json.error, /another remote task/);
+    assert.equal(calls.length, 2);
+    saved.record = join(dir, 'missing-directory', 'task.json');
+    await writeFile(pointer, JSON.stringify(saved));
+    await run(dir, base, 'task', '--skill', 'aihub-video', '--task-id', 'legacy-task', '--media', 'video', '--output-dir', dir);
+    assert.equal(calls.length, 2, 'a damaged pointer must not create another query task');
   } finally { server.closeAllConnections(); server.close(); await rm(dir, { recursive: true, force: true }); }
 });
 

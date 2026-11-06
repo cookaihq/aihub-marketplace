@@ -7,7 +7,9 @@ description: v2.0.0｜通过 AIhub llm-custom 模型理解图片、音频、视�
 
 # AIhub Understanding
 
-凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开 Setup 配置网页；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
+新建、继续或交付业务任务前，读取并遵守[任务保存与产物页面](../../references/artifacts.md)；它规定任务命名、可靠会话/Agent 身份、最终文件登记与页面入口。离线查询或配置本身不创建成果任务。
+
+凭证缺失、主动配置或有依据需修复时，先按[统一凭证流程](../../references/credential-setup.md)实际打开本 Plugin 配置中心；已有可读配置正常执行业务。保留真实 caller、cwd、全局开关与原任务提交状态。
 
 Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `scripts/aihub.ps1` 入口；下方 Bash 示例用于说明相同的业务参数。
 
@@ -29,7 +31,7 @@ AIHUB_PLUGIN_DIR="<实际 Plugin 目录>"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" doctor --skill aihub-understanding
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" models --skill aihub-understanding --media understanding
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" plan --skill aihub-understanding --request-file "/任务目录/understanding-request.json"
-node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill aihub-understanding --request-file "/任务目录/understanding-request.json" --output-dir "/任务目录/data/aihub" --wait-seconds 30
+node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill aihub-understanding --request-file "/任务目录/understanding-request.json" --output-dir "/任务目录/data/aihub-studio" --wait-seconds 30
 ```
 
 已有 `run.json` 用 `continue`；旧 `task.json` / 任务 ID 用 `resume` / `task`。`confirmation_required` 时展示下一模型及参数，用户同意后才传 `--confirm`，不能直接执行含 token 的 `next_action`。完成后交付内层 `result.text` 与文本文件，说明实际模型、尝试摘要及无法从素材证实的结论。提交结果不明、查询/下载失败或答案不符合要求不触发替换生成。

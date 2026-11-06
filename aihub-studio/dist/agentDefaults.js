@@ -27,10 +27,10 @@ function canonical(path, depth = 0) {
         return join(canonical(parent, depth + 1), basename(path));
     }
 }
-function readSettings(path) {
+export function readSettings(path, contents) {
     let value;
     try {
-        value = JSON.parse(readFileSync(path, 'utf8'));
+        value = JSON.parse(contents ?? readFileSync(path, 'utf8'));
     }
     catch (error) {
         if (error.code === 'ENOENT')
@@ -89,10 +89,10 @@ export function agentDefaults(options) {
     const { agent, action = 'check', env = process.env, globalEnabled = true } = options;
     if (!AGENTS.includes(agent))
         throw new Error('--agent must identify the current host: codex, claude-code or workbuddy.');
-    if (!['check', 'dismiss', 'enable'].includes(action))
+    if (!['check', 'dismiss', 'enable', 'preference'].includes(action))
         throw new Error('--action must be check, dismiss or enable.');
     if (!globalEnabled) {
-        if (action !== 'check')
+        if (!['check', 'preference'].includes(action))
             throw new Error('Cannot save reminder preferences with --no-global-config.');
         return { status: 'skipped', reason: 'global_config_disabled', plugin: PLUGIN, agent };
     }
@@ -104,11 +104,13 @@ export function agentDefaults(options) {
     const configured = agent === 'codex' ? env.CODEX_HOME : agent === 'claude-code' ? env.CLAUDE_CONFIG_DIR : env.WORKBUDDY_CONFIG_DIR || env.CODEBUDDY_CONFIG_DIR;
     const configDir = canonical(resolve(options.configDir || configured || join(userDirectory, defaultDirs[agent])));
     const settingsFile = join(userDirectory, '.config', PLUGIN, 'settings.json');
-    if (action !== 'check')
+    if (!['check', 'preference'].includes(action))
         savePreference(settingsFile, agent, configDir, action === 'enable');
     const preferences = readSettings(settingsFile).default_skill_reminders;
     const enabled = preferences?.agents.find(item => item.agent === agent && item.config_dir === configDir)?.enabled ?? true;
     const base = { plugin: PLUGIN, agent, config_dir: configDir, settings_file: settingsFile, reminder_enabled: enabled };
+    if (action === 'preference')
+        return base;
     if (!enabled)
         return { ...base, status: 'dismissed' };
     if (action === 'enable')

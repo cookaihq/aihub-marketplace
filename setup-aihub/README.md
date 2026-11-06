@@ -1,12 +1,14 @@
 # Setup AIHub
 
-开发版本 **3.1.0**：新增 AIhub Studio 2.x 的配置适配，继续支持 AIhub >= 1.2.0、< 3.0.0。AIhub 2.x 使用固定服务地址，配置页只需填写 Key。本版尚未发布。Windows 配置、页面后端与分发回归共 48 项通过；Codex、WorkBuddy 原生安装与加载通过，WorkBuddy 只读问答确认 AIhub 不提供地址输入。Codex 的 helper 检查因 uv 启动权限受限而未执行，完整宿主配置流程和本版 macOS 仍待验收。
+4.0.0 的 setup-api-key 保留业务任务与恢复编号，打开目标 Plugin 自带的配置页面。业务密钥配置退出 Secret Book 入口；既有文件继续按原优先级读取。setup-agent-model 的客户端模型配置流程独立保留。
+
+本轮 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
 
 已发布的 **3.0.1**：默认设置采用“设为默认 (推荐)”，选择一次后直接设置并展示实际内容。Windows 默认设置测试 15 项通过、1 项既有 symlink 用例跳过，凭证回归 26 项及分发检查 7 项通过。Codex 已验证两个业务 Plugin 的开发流程与隔离规则文件；Setup 完整原生流程仍待验，Claude Code 因额度 403、WorkBuddy 因输入与发送受阻。本版 macOS 待验，本次按用户明确指令发布，以上待验项继续保留。以下历史验收记录仅覆盖各自所列版本。
 
-通过对话管理业务服务密钥和客户端模型接入。`setup-api-key` 检查、配置、更换或清除 **AIhub 创作与文档服务**、**tikin 社交媒体数据服务**的本机接口密钥。你可以在本机网页直接填写，也可以在同一页选择 Secret Book；配置仍由原业务 Plugin 读取，Setup 不建立集中 Key 库。
+通过对话管理业务服务密钥和客户端模型接入。`setup-api-key` 检查、配置、更换或清除 **AIhub 创作与文档服务**、**tikin 社交媒体数据服务**的本机接口密钥。你可以在目标 Plugin 的本机配置页面直接填写；配置仍由原业务 Plugin 读取，Setup 不建立集中 Key 库。
 
-当前开发版本为 **3.1.0**，包含两个独立入口：
+当前 Plugin 版本为 **4.0.0**（setup-api-key 4.0.0、setup-agent-model 2.2.1），包含两个独立入口：
 
 | Skill | 用途 |
 | --- | --- |
@@ -17,15 +19,15 @@
 
 以下历史验证、配置位置和使用流程针对 **setup-api-key**。模型配置的六宿主、两系统、原生字段与恢复步骤见上方独立入口。
 
-2.3.0 将业务凭证配置接入本机网页。AIhub / tikin 执行业务发现缺 Key 时也进入同一页面，保存后复查并接续原任务。手填值直接从浏览器写入已确认的配置位置；Secret Book 的只读连接、身份和字段映射使用随包固定依赖，不需要另装独立 Skill。原有文件编辑、清除、仅本轮使用及旧任务恢复继续可用。
+业务配置页面由 AIhub Studio / Tikin Social 自带，Setup 负责选择已安装服务、保存任务关联及配置后的检查。业务 Plugin 没有新页面入口时先更新完整 Plugin；本机文件编辑、清除和仅本轮使用仍可用。
 
-3.0.0 接入 **Tikin Social 2.x（最低 2.0.0）**，不再支持 Tikin 1.x。旧版会提示先升级完整 Tikin Plugin，随后继续原配置任务；不会降级或迁移既有密钥。该版 AIhub Studio 支持 1.x（最低 1.2.0）；3.1.0 同时支持 AIhub 2.x。Tikin 2.x 不能搭配 Setup 2.3.0 的旧版本检查。
+本版支持 **AIhub Studio 1.x / 2.x（最低 1.2.0）** 和 **Tikin Social 2.x / 3.x（最低 2.0.0）** 的配置检查；网页需要业务 Plugin 自带新入口。Tikin 3.x 使用 Setup 4.0.0 或更新版本。旧版提示先更新完整 Plugin，随后继续原配置任务；不会降级或迁移既有密钥。
 
 3.0.0 在 macOS 通过 93 项回归，另 10 项 Windows 或可选独立 Secret Book 集成跳过。Codex 0.166.0 已用原生安装的 Setup 3.0.0 与 Tikin 2.0.1 验证缺 Key、网页预览保存、原加载器复查与跨轮恢复，保留默认沙箱并使用单次命令审批。Claude Code 2.1.318 因账号额度不足（403）未完成调用；WorkBuddy 5.9.3 已通过原生安装、加载、缺 Key 检查与网页启动，但预览时被宿主安全删除机制阻断。本次发布保留这两项待验；Windows 原生、真实飞书授权及线上业务也待验，不能视为三宿主全流程通过。
 
 ## 让 Agent 帮你安装
 
-将下面一段复制到你使用的 Claude Code、Codex 或 WorkBuddy，让 Agent 核对来源和版本后安装。Tikin 2.x 网页配置需要 setup-api-key / Setup Plugin 3.0.0；setup-agent-model 需要 2.1.0 或更新版本。若仍加载旧版，先让 Agent 核对并更新实际安装，再在新会话继续。
+将下面一段复制到你使用的 Claude Code、Codex 或 WorkBuddy，让 Agent 核对来源和版本后安装。Tikin 3.x 配置续接需要 setup-api-key / Setup Plugin 4.0.0；setup-agent-model 需要 2.1.0 或更新版本。若仍加载旧版，先让 Agent 核对并更新实际安装，再在新会话继续。
 
 > 请安装完整的 setup-aihub Plugin：优先从 https://github.com/cookaihq/aihub-marketplace.git 的 setup-aihub/ 获取，网络故障时同版本回退到 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。保留已有设置，并按当前宿主的原生 Plugin 入口安装，告诉我实际来源、版本以及是否能发现和调用本次所需的 setup-api-key 或 setup-agent-model。
 
@@ -51,19 +53,15 @@ Claude Code 使用实际技能选择器，可能显示完整的 `/setup-aihub:se
 
 ## 配置密钥
 
-> 请用 setup-api-key 打开本机配置页，让我选择手动填写或 Secret Book，并在页面预览保存范围和实际文件位置。不要让我把 Key 发到聊天；保存后检查原业务是否已能读取，再继续原任务。
+> 请用 setup-api-key 打开 AIhub 的配置中心。我会在网页填写 Key；保存后检查原业务能否读取，再继续原任务。
 
-Agent 给出可点击的配置链接。请在运行 Agent 的同一电脑浏览器打开，直接输入 API Key，选择个人全局或当前项目，点击“预览保存”核对实际位置，再确认保存。已有错误写回实际生效的来源；配置被环境变量覆盖时，Agent 会协助修复注入位置。网页空闲 60 分钟退出，结束配置也可立即停止服务。
+Agent 给出可点击链接，在运行 Agent 的同一电脑打开。字段按用途分组，必要/全部配置共享同一草稿；页面底部固定保存栏显示变更摘要，点击一次保存。首次新增默认个人全局，明确项目保存使用 `.env.local`；已有值写回真实生效来源，环境变量在原注入处修复。
 
-AIhub 只需 `AIHUB_API_KEY`，AIhub Studio 2.x 的服务地址固定为 `https://api.aihubmax.com`。tikin 需要 `TIKIN_API_KEY`；关联地址默认 `https://console.tikin.net`，可以在页面同时配置其他 HTTPS 服务地址，保存前核对 Key 对应该服务。没有 Key 时请从业务服务的官方入口或管理员取得。
+页面不展示服务地址。AIhub Key 下可打开 [AIhub 控制台](https://api.aihubmax.com/console)，Tikin Key 下可打开 [Tikin 控制台](https://console.tikin.net)，也可联系团队负责人分配。完整 Key 不进入聊天、argv 或进度记录。
 
-选择 Secret Book 后，在同一页选择本人账号或已有连接、核对身份、连接已有多维表格，再选择可见记录和字段。页面不回显 Key。需要登录时点击飞书官方授权链接，完成后回来检查。首次缺少 Lark CLI 时会准备本机依赖；没有应用配置则由 Agent 协助本人配置。缺列、缺 ID 或无权限需表管理员处理，页面不创建或修改远端表。
+网页闲置 60 分钟退出，也可结束配置立即停止。**📱 手机或其他设备访问需要 FRP / Tailscale，实际配置状态由 Agent 核对。** 保存后回到 Agent 回复“继续”；服务重启不会保留未保存的手填值。文件冲突时先重新载入并核对，保留其他操作的修改。
 
-连接身份不匹配时，可以恢复原账号，或选择“修复所选连接的身份”并预览改绑。项目/环境中的来源由 Agent 在原处修复，不另建低层配置掩盖。连接和业务 Key 分别确认保存。
-
-完成后回到 Agent 回复“继续”。刷新会保留本轮选择；服务重启会清除未保存的手填值和旧确认，需要重新填写、预览。上次保存结果不明时先“核对实际结果”，不会重放。明确选择本机编辑器或当前环境没有可用浏览器时，Agent 也可提供完整文件位置供本人填写。
-
-后续业务直接读取本机，不必每次运行 Setup 或查 Secret Book。表中轮换不会自动同步。仅本轮使用、不允许落盘时直接说明，Agent 按实际可用的安全输入方式处理。
+明确选择文件编辑或环境没有浏览器时，Agent 提供完整本机路径及字段供本人填写。仅本轮使用时请说明不允许落盘。业务配置已退出 Secret Book 方式，既有本机配置继续可读；客户端模型配置的独立流程见上方 `setup-agent-model`。
 
 ## 配置完成后的默认设置
 
@@ -89,7 +87,7 @@ AIhub 只需 `AIHUB_API_KEY`，AIhub Studio 2.x 的服务地址固定为 `https:
 | Windows 原生 | `%USERPROFILE%\.config\aihub-studio\.env` | `%USERPROFILE%\.config\tikin-social\.env` |
 | WSL | Linux 用户的 `~/.config/aihub-studio/.env` | Linux 用户的 `~/.config/tikin-social/.env` |
 
-例如 Windows 用户文件夹为 `C:\Users\你的用户名`，WSL 通常为 `/home/你的Linux用户名`。Windows 原生与 WSL 不自动互读；本版已在 macOS 测试本机配置；Windows 原生、Linux 和 WSL 待验。脚本通过不等于三宿主会话通过。
+例如 Windows 用户文件夹为 `C:\Users\你的用户名`，WSL 通常为 `/home/你的Linux用户名`。Windows 原生与 WSL 不自动互读；本版本机配置已在 Windows 原生验证；本轮 macOS 待验，Linux 和 WSL 未验。脚本通过不等于三宿主会话通过。
 
 普通字段各自取首个非空值。以真实调用方 `aihub-image` 为例，按以下顺序读取：
 
@@ -123,8 +121,7 @@ Agent 先只读预览，再按你确认的文件和字段清除；同一字段�
 | --- | --- |
 | 改了密钥仍无效 | “只检查这个项目和真实业务 Skill 的来源，看看是否被覆盖。” |
 | 提示文件变了或结果不明 | “先核对现在的文件和来源，再决定下一步，保留别人的修改。” |
-| Tikin 提示版本不兼容或网页无法打开 | “核对完整 Setup Plugin 是否为 3.0.0、Tikin 是否为 2.x；升级到支持的组合，保留配置和原任务后继续。” |
-| Secret Book 读取失败 | “保留原任务，检查 Lark CLI、实际身份、原连接与可见范围，再回到页面重试。” |
+| Tikin 提示版本不兼容或网页无法打开 | “核对业务 Plugin 是否包含自带配置中心，以及 Setup 的实际版本；保留配置和原任务，更新支持的完整组合后继续。” |
 | WorkBuddy 找不到入口 | “请展示同包截图，核对当前页面和版本，指导我走原生套件入口。” |
 | 想配置客户端的 AIhub 模型 | “请用 setup-agent-model，先列出现有原生配置。” |
 

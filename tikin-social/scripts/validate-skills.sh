@@ -9,6 +9,11 @@ cd "$ROOT" || exit 2
 # tikin-social ships as one plugin inside the cookaihq/aihub-marketplace repo, so the
 # Claude, Codex and WorkBuddy marketplace manifests live one level up at the marketplace root.
 MARKET_ROOT="$(cd "$ROOT/.." && pwd)"
+# Native Python on Windows cannot open Git Bash's /c/... paths embedded in
+# source code or environment variables. Mixed paths also work in Git Bash.
+if command -v cygpath >/dev/null 2>&1; then
+  MARKET_ROOT="$(cygpath -m "$MARKET_ROOT")"
+fi
 export CLAUDE_MARKETPLACE="$MARKET_ROOT/.claude-plugin/marketplace.json"
 export CODEX_MARKETPLACE="$MARKET_ROOT/.agents/plugins/marketplace.json"
 export WORKBUDDY_MARKETPLACE="$MARKET_ROOT/.codebuddy-plugin/marketplace.json"

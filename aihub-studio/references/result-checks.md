@@ -27,12 +27,12 @@
 
 ```bash
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" review --skill "${AIHUB_CALLER}" \
-  --record "/任务目录/data/aihub/aihub-run-UUID/run.json"
+  --record "/任务目录/data/aihub-studio/20261106143025-任务摘要-run-a1b2c3d4/run.json"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" review-submit --skill "${AIHUB_CALLER}" \
-  --record "/任务目录/data/aihub/aihub-run-UUID/run.json" \
+  --record "/任务目录/data/aihub-studio/20261106143025-任务摘要-run-a1b2c3d4/run.json" \
   --review-file "/任务目录/实际检查报告.json" --review-token "<review 返回的 token>"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" review --skill "${AIHUB_CALLER}" \
-  --record "/任务目录/data/aihub/aihub-run-UUID/run.json" --provider aihub --wait-seconds 30
+  --record "/任务目录/data/aihub-studio/20261106143025-任务摘要-run-a1b2c3d4/run.json" --provider aihub --wait-seconds 30
 ```
 
 图片报告示例，仅在实际观察后填写；全部检查项都必须出现：

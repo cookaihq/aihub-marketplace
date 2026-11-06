@@ -1,13 +1,15 @@
 ---
 name: tikin-douyin
 metadata:
-  version: "2.0.2"
-description: v2.0.2｜通过 Tikin 处理抖音链接与数据，获取视频、用户资料、作品列表和视频评论，并使用抖音专用搜索接口搜索视频、用户或综合内容。用户提供抖音链接或任务针对抖音时使用；覆盖 App-V3 与抖音搜索系列接口。
+  version: "3.0.0"
+description: v3.0.0｜通过 Tikin 处理抖音链接与数据，获取视频、用户资料、作品列表和视频评论，并使用抖音专用搜索接口搜索视频、用户或综合内容。用户提供抖音链接或任务针对抖音时使用；覆盖 App-V3 与抖音搜索系列接口。
 ---
 
 # Douyin / 抖音 (via tikin)
 
-纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并实际打开 Setup 配置网页；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
+新建、继续或交付业务任务前，读取并遵守[任务保存与产物页面](../tikin-setup/references/artifacts.md)；它规定任务命名、可靠会话/Agent 身份、最终文件登记与页面入口。离线查询或配置本身不创建成果任务。
+
+纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并实际打开本 Plugin 配置中心；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
 
 ## 默认 Skill 检查
 

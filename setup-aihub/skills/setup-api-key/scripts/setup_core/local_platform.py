@@ -32,6 +32,8 @@ if os.name == "nt":
         ctypes.POINTER(wintypes.BOOL), ctypes.POINTER(ctypes.c_void_p), ctypes.POINTER(wintypes.BOOL)]
     _security.GetSecurityDescriptorControl.argtypes = [ctypes.c_void_p,
         ctypes.POINTER(wintypes.WORD), ctypes.POINTER(wintypes.DWORD)]
+    _security.GetSecurityDescriptorOwner.argtypes = [ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_void_p), ctypes.POINTER(wintypes.BOOL)]
 
     def _checked(ok):
         if not ok:
@@ -68,20 +70,33 @@ if os.name == "nt":
         size = ctypes.c_ushort.from_address(acl.value + 2).value
         return ctypes.string_at(acl.value, size)
 
-    def _read_security(path):
+    def _read_security(path, information=0x0004):
         size = wintypes.DWORD()
-        _security.GetFileSecurityW(str(path), 0x0004, None, 0, ctypes.byref(size))
+        _security.GetFileSecurityW(str(path), information, None, 0, ctypes.byref(size))
         if not size.value:
             raise ctypes.WinError(ctypes.get_last_error())
         data = ctypes.create_string_buffer(size.value)
-        _checked(_security.GetFileSecurityW(str(path), 0x0004, data, size, ctypes.byref(size)))
+        _checked(_security.GetFileSecurityW(str(path), information, data, size, ctypes.byref(size)))
         return data
 
+    def _owner_sid(path):
+        security = _read_security(path, 0x0001)
+        owner, defaulted = ctypes.c_void_p(), wintypes.BOOL()
+        _checked(_security.GetSecurityDescriptorOwner(security, ctypes.byref(owner), ctypes.byref(defaulted)))
+        text = wintypes.LPWSTR()
+        _checked(_security.ConvertSidToStringSidW(owner, ctypes.byref(text)))
+        try:
+            return text.value
+        finally:
+            _kernel.LocalFree(text)
+
     @contextlib.contextmanager
-    def _private_descriptor(directory):
+    def _private_descriptor(directory, owner_path=None):
         flags = "OICI" if directory else ""
-        # Protected DACL: only the current account and SYSTEM. No inherited grants.
-        sddl = "D:P(A;%s;FA;;;%s)(A;%s;FA;;;SY)" % (flags, _current_sid(), flags)
+        # UI files remain readable by the selected project's owner when a
+        # sandbox account writes them. Other callers retain their original ACL.
+        owners = {_current_sid(), _owner_sid(owner_path) if owner_path is not None else 'SY'}
+        sddl = 'D:P' + ''.join('(A;%s;FA;;;%s)' % (flags, sid) for sid in sorted(owners))
         descriptor = ctypes.c_void_p()
         _checked(_security.ConvertStringSecurityDescriptorToSecurityDescriptorW(
             sddl, 1, ctypes.byref(descriptor), None))
@@ -97,23 +112,23 @@ if os.name == "nt":
         if not control.value & 0x1000 or _dacl_bytes(actual) != _dacl_bytes(expected):
             raise OSError("Windows 文件权限回读不一致；拒绝写入凭证")
 
-    def verify_private_permissions(path, *, directory=False):
-        with _private_descriptor(directory) as descriptor:
+    def verify_private_permissions(path, *, directory=False, owner_path=None):
+        with _private_descriptor(directory, owner_path) as descriptor:
             _verify_private(path, descriptor)
 
 else:
     import fcntl
 
-    def verify_private_permissions(path, *, directory=False):
+    def verify_private_permissions(path, *, directory=False, owner_path=None):
         import stat
         if stat.S_IMODE(path.stat().st_mode) != (0o700 if directory else 0o600):
             raise OSError("文件权限不是仅当前用户可访问")
 
 
-def private_permissions(path, *, directory=False, fd=None):
+def private_permissions(path, *, directory=False, fd=None, owner_path=None):
     """Apply and verify permissions before writing any secret bytes."""
     if os.name == "nt":
-        with _private_descriptor(directory) as descriptor:
+        with _private_descriptor(directory, owner_path) as descriptor:
             _checked(_security.SetFileSecurityW(str(path), 0x80000004, descriptor))
             _verify_private(path, descriptor)
     elif fd is not None:
@@ -164,11 +179,11 @@ def exclusive_lock(fd, *, timeout=30):
         msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
 
 
-def sync_replaced_file(path, expected):
+def sync_replaced_file(path, expected, *, owner_path=None):
     if os.name == "nt":
         # Windows cannot open/fsync a directory using POSIX os.open. The temp
         # file was already flushed before rename; verify content and ACL after it.
-        verify_private_permissions(path)
+        verify_private_permissions(path, owner_path=owner_path)
         if path.read_bytes() != expected:
             raise OSError("本地文件替换后回读不一致")
     else:
@@ -177,6 +192,6 @@ def sync_replaced_file(path, expected):
             os.fsync(fd)
         finally:
             os.close(fd)
-        verify_private_permissions(path)
+        verify_private_permissions(path, owner_path=owner_path)
         if path.read_bytes() != expected:
             raise OSError("本地文件替换后回读不一致")

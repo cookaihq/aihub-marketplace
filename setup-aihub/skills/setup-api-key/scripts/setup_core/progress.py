@@ -12,11 +12,10 @@ from .consumers import Consumer, HOSTS, fingerprint, path_id
 from .errors import SetupError
 from .local_config import checked_path, edit, snapshot, validate_target, transform
 from .local_platform import exclusive_lock, private_directory, private_permissions, sync_replaced_file
-from .secret_book import compatibility as secret_book_compatibility, inspect_dependency
 from .default_settings import pending as defaults_pending
 
 SCHEMA = "setup-aihub.task/v1"
-PHASES = {"installation", "inspection", "waiting_manual", "waiting_secret_book", "waiting_confirmation",
+PHASES = {"installation", "inspection", "waiting_manual", "waiting_confirmation",
           "applying", "recheck", "completed", "cancelled", "result_unknown"}
 
 
@@ -44,7 +43,7 @@ class Tasks:
         except (OSError, ValueError):
             raise SetupError("invalid_progress") from None
         allowed = {"schema", "id", "created", "updated", "context", "operation", "source", "phase", "installation",
-                   "submission", "plan", "authorization", "result", "secret_book", "last_reason", "business", "selection"}
+                   "submission", "plan", "authorization", "result", "last_reason", "business", "selection", "ui"}
         if (not isinstance(state, dict) or set(state) - allowed or state.get("schema") != SCHEMA
                 or state.get("id") != task_id or state.get("phase") not in PHASES):
             raise SetupError("unsupported_progress_schema")
@@ -88,7 +87,7 @@ class Tasks:
 
     def start(self, context, operation, source, installation, submission, business=None):
         state = {"schema": SCHEMA, "id": uuid.uuid4().hex, "created": now(), "context": context,
-                 "operation": operation, "source": source, "installation": installation,
+                 "operation": operation, "source": source or "manual", "installation": installation,
                  "submission": submission, "business": business or {},
                  "phase": "inspection" if context.get("root") else "installation"}
         self.save(state)
@@ -129,24 +128,15 @@ def consumer_for(state):
     return consumer
 
 
-def pending_delegation(state):
-    delegation = state.get("secret_book", {})
-    return delegation.get("delegated") is True and delegation.get("status") in ("pending", "unknown")
-
-
-def active(state, *, accept_delegated_result=False):
+def active(state):
     if state["phase"] in ("completed", "cancelled"):
         raise SetupError("task_closed")
     if state["phase"] in ("applying", "result_unknown"):
         raise SetupError("reconcile_before_retry")
-    if pending_delegation(state) and not accept_delegated_result:
-        raise SetupError("secret_book_owns_write")
 
 
 def make_plan(tasks, state, target, fields):
     active(state)
-    if state["source"] != "manual":
-        raise SetupError("secret_book_owns_write")
     action = "clear" if state["operation"] == "clear" else "prepare"
     if state["operation"] == "check":
         raise SetupError("check_is_read_only")
@@ -234,8 +224,6 @@ def result_layers(state, report):
 def recheck(tasks, state, reconcile=False):
     if state["phase"] in ("applying", "result_unknown") and not reconcile:
         raise SetupError("reconcile_before_retry")
-    if pending_delegation(state):
-        raise SetupError("secret_book_owns_write")
     consumer = consumer_for(state)
     report = consumer.inspect()
     previous = state.get("result", {})
@@ -277,44 +265,4 @@ def recheck(tasks, state, reconcile=False):
                 "reason": "inspect_designated_installed_targets" if state["context"]["global_enabled"] else "global_disabled",
             })
     tasks.save(state)
-    return state
-
-
-def secret_book_handoff(tasks, state, dependency_root):
-    active(state)
-    if state["source"] != "secret-book" or state["operation"] not in ("configure", "repair"):
-        raise SetupError("invalid_secret_book_operation")
-    consumer = consumer_for(state)
-    dependency = inspect_dependency(dependency_root, consumer.caller)
-    report = consumer.inspect()
-    state["phase"] = "waiting_secret_book"
-    state["secret_book"] = {"status": "pending", "contract": "secret-book/" + secret_book_compatibility(consumer.caller)["minimum_verified_release"],
-                            "reference": None, "delegated": True, "dependency": dependency}
-    tasks.save(state)
-    return {"task": state, "handoff": {"consumer": report["consumer"], "version": consumer.version,
-            "skill": consumer.caller, "cwd": str(consumer.cwd), "global_enabled": consumer.global_enabled,
-            "declaration_path": str(consumer.declaration_path), "inspection": report,
-            "operation": state["operation"], "selection": state.get("selection"), "role": "consumer", "remote_access": "read_only",
-            "writer": "secret-book", "dependency": dependency, **secret_book_compatibility(consumer.caller),
-            "required_capabilities": ["consumer_role", "read_only_existing_table_connection", "no_record_id_backfill", "public_resume"]}}
-
-
-def secret_book_result(tasks, state, status, reference=None):
-    active(state, accept_delegated_result=True)
-    if (state["source"] != "secret-book" or state["phase"] != "waiting_secret_book"
-            or state.get("secret_book", {}).get("delegated") is not True):
-        raise SetupError("no_secret_book_handoff")
-    if reference is not None and not re.fullmatch(r"[A-Za-z0-9_.:/-]{1,200}", reference):
-        raise SetupError("invalid_public_reference")
-    state["secret_book"] = {**state["secret_book"], "status": status,
-                            "reference": reference or state["secret_book"].get("reference")}
-    # Persist a public completion before the local read. If that read fails, the
-    # next turn must retry verification, not ask the other writer to save again.
-    tasks.save(state)
-    if status == "completed":
-        # A reported save is independently checked, even in contract simulations.
-        state = recheck(tasks, state)
-    else:
-        state["phase"] = "cancelled" if status == "cancelled" else "waiting_secret_book"
-        tasks.save(state)
     return state

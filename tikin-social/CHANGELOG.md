@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.0.0
+
+2026-11-06
+
+- Add a self-contained configuration center with a fixed save bar and API Key acquisition guidance. Business configuration uses this page and local files; its Secret Book entrypoints are retired without moving existing settings.
+- Record each new task in `task-info.json`, including reliable conversation/Agent identity, participants, final outputs and delivery status. Keep named run directories under `data/tikin-social/`; old tasks are not indexed or migrated.
+- Add task, conversation and file views, current Git branch, folder drill-down and up to three previews of different file formats. Images and videos show covers; other formats show content summaries.
+- Register complete responses and Agent-authored reports, preserving request recovery and preventing duplicate submissions. Repair native Windows test and private-file handling.
+- The 16 business Skills are 3.0.0; offline endpoint discovery is 2.0.0 because its configuration entrypoint changed. Setup delegation requires Setup AIHub 4.0.0 for Tikin 3.x.
+- Native Windows regression and Codex/WorkBuddy acceptance are recorded in the README. macOS and live service calls remain unverified for this release.
+
 ## 2.0.2
 
 2026-11-06

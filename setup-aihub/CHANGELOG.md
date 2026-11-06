@@ -1,10 +1,12 @@
 # Changelog
 
-## 3.1.0 — 2026-11-06（开发候选）
+## 4.0.0 — 2026-11-06
 
-- 配置适配增加 AIhub Studio 2.x，支持范围为 >= 1.2.0、< 3.0.0；AIhub 只管理 API Key，不提供服务地址输入。Tikin 2.x 的配置契约保持原有范围。
-- setup-api-key 升至 3.1.0，setup-agent-model 保持 2.2.0。
-- 开发候选，尚未发布。Windows 配置、页面后端与分发回归 48 项通过；Codex、WorkBuddy 原生安装与加载通过。Codex 的 helper 检查受 uv 启动权限限制，WorkBuddy 只读问答通过，完整宿主配置流程及 macOS 未验收。
+- 业务密钥配置改为委托目标 Plugin 自带页面，保留任务、caller、保存范围、提交状态和恢复绑定。退出业务 Secret Book 及旧网页入口，不搬移或删除已有配置。
+- 配置适配支持 AIhub Studio >= 1.2.0、< 3.0.0 和 Tikin >= 2.0.0、< 4.0.0；新版网页需要业务 Plugin 自带 UI。页面不显示服务地址。
+- 修复 Windows 私有文件对项目所有者的访问，支持 WorkBuddy 原生后台工具的持续运行及即时启动回执。
+- setup-api-key 升至 4.0.0；setup-agent-model 因共用私有文件权限修复升至 2.2.1，其客户端模型配置及 Secret Book 契约不变。
+- Windows 本机回归与 Codex/WorkBuddy 验收范围见 README。本轮 macOS、真实鉴权和线上业务待验。
 
 ## 3.0.1 — 2026-11-06
 

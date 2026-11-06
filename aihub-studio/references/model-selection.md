@@ -77,10 +77,10 @@ AIHUB_PLUGIN_DIR="<实际 Plugin 目录>"
 AIHUB_CALLER="aihub-image"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" plan --skill "${AIHUB_CALLER}" --request-file "/任务目录/request.json"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill "${AIHUB_CALLER}" --request-file "/任务目录/request.json" --wait-seconds 30
-node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" continue --skill "${AIHUB_CALLER}" --record "/任务目录/data/aihub/aihub-run-UUID/run.json" --wait-seconds 30
+node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" continue --skill "${AIHUB_CALLER}" --record "/任务目录/data/aihub-studio/20261106143025-任务摘要-run-a1b2c3d4/run.json" --wait-seconds 30
 ```
 
-`plan` 只读配置和随包契约，不联网；转写的实际音频探测、快照与分片在 `run` 中完成。先检查输出的 `candidates` 与 `excluded` 是否忠实于用户需求。`run` 默认写调用项目的 `data/aihub/`，也可传 `--output-dir`。在 Git 项目中开始写任务文件前确认输出目录被忽略。`run.json` 保存原始需求、候选请求、策略、尝试历史和确认；每次异步尝试在其 `attempt-N/aihub-UUID/` 下保存自己的 `task.json` 和 `files/`。
+`plan` 只读配置和随包契约，不联网；转写的实际音频探测、快照与分片在 `run` 中完成。先检查输出的 `candidates` 与 `excluded` 是否忠实于用户需求。`run` 默认写调用项目的 `data/aihub-studio/`，也可传 `--output-dir`。在 Git 项目中开始写任务文件前确认输出目录被忽略。`run.json` 保存原始需求、候选请求、策略、尝试历史和确认；每次异步尝试在其 `attempt-N/aihub-UUID/` 下保存自己的 `task.json` 和 `files/`。
 
 `continue` 读取已保存计划，不用新配置替换候选或策略；仍核对原 Skill、服务地址和密钥。每次调用的轮询预算由全部候选共享，最高 600 秒。进程中断后仍然恢复原任务；原生音乐无可查询任务 ID，提交结果不明时不能自动重发。
 

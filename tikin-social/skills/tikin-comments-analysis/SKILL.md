@@ -1,13 +1,15 @@
 ---
 name: tikin-comments-analysis
 metadata:
-  version: "2.0.2"
-description: v2.0.2｜通过 Tikin 获取并分析受支持帖子或视频链接下的评论，整理情绪分布、反复出现的话题、热门评论及值得关注的问题和投诉。适用于评论分析、讨论总结，或用户提供社交媒体帖子链接的场景。
+  version: "3.0.0"
+description: v3.0.0｜通过 Tikin 获取并分析受支持帖子或视频链接下的评论，整理情绪分布、反复出现的话题、热门评论及值得关注的问题和投诉。适用于评论分析、讨论总结，或用户提供社交媒体帖子链接的场景。
 ---
 
 # Comments Analysis
 
-纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并实际打开 Setup 配置网页；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
+新建、继续或交付业务任务前，读取并遵守[任务保存与产物页面](../tikin-setup/references/artifacts.md)；它规定任务命名、可靠会话/Agent 身份、最终文件登记与页面入口。离线查询或配置本身不创建成果任务。
+
+纯凭证请求、首次配置或实际配置错误时，先按[统一凭证流程](../tikin-setup/references/credential-setup.md)检查真实来源并实际打开本 Plugin 配置中心；不为检查密钥执行整套 tikin-setup。已有可读配置正常执行业务，保留实际 caller、cwd、全局开关和原任务提交状态。
 
 ## 默认 Skill 检查
 

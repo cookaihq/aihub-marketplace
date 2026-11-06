@@ -6,6 +6,7 @@ import { credentialId, sanitized, type LoadedConfig } from './config.js';
 import { downloadAssets } from './download.js';
 import { audioContract, audioHash, checkAudioTools, prepareParts, probeAudio, remoteAudio, snapshotAudio, SOURCE_MAX_BYTES, type AudioContract, type AudioInfo, type AudioPart } from './audioMedia.js';
 import { mergeTranscripts } from './transcript.js';
+import { outputDirectory, withAuxiliaryOutputs } from './taskInfo.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord, writePrivateText, type SavedFile } from './state.js';
 import { adoptTask, failureInfo, generate, resume, TaskPersistenceError } from './workflow.js';
 
@@ -126,9 +127,9 @@ export async function runTranscription(cfg: LoadedConfig, options: {
       }
       try {
         if (part.result?.status === 'persistence_failed' && typeof part.result.task_id === 'string') {
-          part.result = await adoptTask(cfg, part.result.task_id, 'audio', join(options.outputDir, `task-${part.index+1}`), remaining());
+          part.result = await withAuxiliaryOutputs(() => adoptTask(cfg, part.result!.task_id as string, 'audio', join(options.outputDir, `task-${part.index+1}`), remaining()));
           if (typeof part.result.record === 'string') part.task_record = part.result.record;
-        } else if (part.task_record) part.result = await resume(cfg, part.task_record, remaining());
+        } else if (part.task_record) part.result = await withAuxiliaryOutputs(() => resume(cfg, part.task_record!, remaining()));
         else {
           if (await audioHash(part.path) !== part.sha256 || (await stat(part.path)).size !== part.bytes) return finish('preprocessing_failed', { error: 'Prepared audio changed; restore saved fragments before continuing.' });
           if (part.upload && part.upload.state !== 'known') return finish(part.upload.state === 'rejected' ? 'upload_rejected' : 'upload_unknown', part.upload.result);
@@ -155,9 +156,9 @@ export async function runTranscription(cfg: LoadedConfig, options: {
             }
             await save();
           }
-          part.result = await generate(cfg, { media: 'audio', model: options.model, params: { ...options.params, file_urls: [part.upload.url!] },
+          part.result = await withAuxiliaryOutputs(() => generate(cfg, { media: 'audio', model: options.model, params: { ...options.params, file_urls: [part.upload!.url!] },
             outputDir: join(options.outputDir, `task-${part.index+1}`), waitSeconds: remaining(),
-            onRecord: async path => { part.task_record = path; await save(); await options.onSubmit(); } });
+            onRecord: async path => { part.task_record = path; await save(); await options.onSubmit(); } }));
         }
       } catch (error) {
         if (error instanceof TaskPersistenceError) part.result = error.output();
@@ -182,7 +183,7 @@ export async function runTranscription(cfg: LoadedConfig, options: {
         pieces.push({ part, global_start: value.sources[part.source_index]!.global_start, results });
       }
       const merged = mergeTranscripts(pieces);
-      const directory = join(options.outputDir, 'merged'); await mkdir(directory, { recursive: true, mode: 0o700 });
+      const directory = await outputDirectory(record, join(options.outputDir, 'merged')); await mkdir(directory, { recursive: true, mode: 0o700 });
       const json = join(directory, 'transcript.json'); const text = join(directory, 'transcript.txt');
       await writePrivateRecord(json, { ...merged, sources: value.sources, fragments: value.parts.map(p => ({ ...p, raw_files: p.result?.files })) });
       await writePrivateText(text, merged.text + '\n');

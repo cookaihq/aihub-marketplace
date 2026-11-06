@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { readFile, stat, writeFile, mkdir } from 'node:fs/promises';
-import { basename, dirname, join, resolve } from 'node:path';
+import { readFile, realpath, stat, writeFile, mkdir } from 'node:fs/promises';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { AihubmaxClient, ApiError, PollBudgetExceededError } from './apiClient.js';
 import { credentialId, sanitized } from './config.js';
 import { checkMediaTools, downloadAssets, downloadJsonAssets, validateLocalMedia } from './download.js';
@@ -8,7 +8,8 @@ import { validateGeneration } from './models.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { UPLOAD_MAX_BYTES } from './audioMedia.js';
 import { transcriptText } from './transcript.js';
-import { assertOutsideInstallation, readJob, recordPath, withJobLock, writeJob, writePrivateText } from './state.js';
+import { assertOutsideInstallation, readJob, recordPath, withJobLock, writeJob, writePrivateText, writePrivateRecord } from './state.js';
+import { createTask, findTaskInfo, outputDirectory, participate, readTaskInfo, touchTask } from './taskInfo.js';
 function cleanError(error, cfg) {
     return sanitized(error instanceof Error ? error.message : String(error), [cfg.apiKey]);
 }
@@ -61,14 +62,15 @@ function resultMetadata(task) {
     }
     return Object.keys(metadata).length ? metadata : undefined;
 }
-function newJob(cfg, media, model, outputDir) {
+async function newJob(cfg, media, model, outputDir, existingRecord) {
     const id = randomUUID();
-    const record = recordPath(outputDir, id);
+    const parent = await findTaskInfo(outputDir);
+    const record = existingRecord ?? (parent ? recordPath(outputDir, id) : (await createTask(outputDir, cfg.skill, 'aihub-job', 'task.json', [cfg.apiKey])).record);
     assertOutsideInstallation(record);
     const now = new Date().toISOString();
     return { record, job: { schema_version: 1, local_id: id, created_at: now, updated_at: now,
             skill: cfg.skill, media, model, service_url: cfg.baseUrl, credential_id: credentialId(cfg.apiKey),
-            output_dir: join(dirname(record), 'files'), submission: { state: 'submitting' }, files: [], failed: [] } };
+            output_dir: await outputDirectory(record, join(dirname(record), 'files')), submission: { state: 'submitting' }, files: [], failed: [] } };
 }
 export function result(job, record, statusOverride) {
     const sub = job.submission;
@@ -284,12 +286,22 @@ export async function generate(cfg, options) {
     assertOutsideInstallation(options.outputDir);
     if (options.media !== 'document')
         await checkMediaTools();
-    const { job, record } = newJob(cfg, options.media, options.model, options.outputDir);
+    const { job, record } = await newJob(cfg, options.media, options.model, options.outputDir);
     await bindDiagnosticRecord(cfg, record, { model: options.model, parameters: options.params, original_request: null });
     const client = new AihubmaxClient(cfg);
-    const live = await client.listLiveModels();
-    if (!live.has(options.model))
-        throw new Error('The exact model ID is not present in the current key model list. Run models and use its unchanged ID. No generation was submitted.');
+    job.submission = { state: 'not_submitted', error: 'Model availability has not been verified. No generation was submitted.' };
+    await save(record, job, cfg);
+    try {
+        const live = await client.listLiveModels();
+        if (!live.has(options.model))
+            throw new Error('The exact model ID is not present in the current key model list. Run models and use its unchanged ID. No generation was submitted.');
+    }
+    catch (error) {
+        job.submission = { state: 'not_submitted', error: cleanError(error, cfg) };
+        await save(record, job, cfg);
+        throw error;
+    }
+    job.submission = { state: 'submitting' };
     await save(record, job, cfg);
     await options.onRecord?.(record);
     process.stderr.write(`AIhub task record: ${record}\n`);
@@ -342,6 +354,7 @@ export async function resume(cfg, recordInput, waitSeconds) {
         if (job.skill !== cfg.skill || job.credential_id !== credentialId(cfg.apiKey)) {
             throw new Error('This record belongs to a different Skill or key. Restore its original configuration; to query with a deliberately changed key, use task with the known task ID.');
         }
+        await participate(record, [cfg.apiKey]);
         await bindDiagnosticRecord(cfg, record);
         if (job.submission.state !== 'known')
             return result(job, record);
@@ -350,36 +363,75 @@ export async function resume(cfg, recordInput, waitSeconds) {
 }
 export async function adoptTask(cfg, id, media, outputDir, waitSeconds) {
     assertOutsideInstallation(outputDir);
-    const { job } = newJob(cfg, media, '', outputDir);
     const identity = createHash('sha256').update(`${cfg.baseUrl}\0${cfg.skill}\0${credentialId(cfg.apiKey)}\0${id}`).digest('hex');
-    const record = recordPath(outputDir, `task-${identity}`);
-    if (await stat(record).then(s => s.isFile()).catch(() => false))
-        return resume(cfg, record, waitSeconds);
-    await bindDiagnosticRecord(cfg, record, { task_id: id, original_request: null });
-    const client = new AihubmaxClient(cfg);
-    let task;
-    try {
-        task = await client.getTask(id);
-    }
-    catch (error) {
-        return { schema_version: 1, status: 'query_failed', task_id: id, error: cleanError(error, cfg), failure: failureInfo(error, cfg) };
-    }
-    job.model = task.model ?? '';
-    job.submission = { state: 'known', task: sanitized(task, [cfg.apiKey]) };
-    await save(record, job, cfg);
-    return withJobLock(record, async () => {
-        if (waitSeconds && task.status !== 'completed' && task.status !== 'failed')
-            return queryAndDeliver(client, cfg, job, record, waitSeconds);
+    const links = join(resolve(outputDir), '.task-links');
+    await mkdir(links, { recursive: true, mode: 0o700 });
+    const pointer = join(links, identity + '.json');
+    return withJobLock(pointer, async () => {
+        let record;
+        const contents = await readFile(pointer, 'utf8').catch(error => {
+            if (error.code === 'ENOENT')
+                return undefined;
+            throw error;
+        });
+        if (contents !== undefined) {
+            const saved = JSON.parse(contents);
+            if (saved.identity !== identity || typeof saved.record !== 'string')
+                throw new Error('Invalid adoption pointer.');
+            record = resolve(saved.record);
+            assertOutsideInstallation(record);
+            const root = await realpath(resolve(outputDir));
+            const delta = relative(root, await realpath(dirname(record)));
+            if (isAbsolute(delta) || delta === '..' || delta.startsWith('..' + sep))
+                throw new Error('Adoption pointer is outside its output directory.');
+            const metadata = await findTaskInfo(dirname(record));
+            if (!metadata)
+                throw new Error('Adopted task metadata is missing; repair locally before querying again.');
+            const info = await readTaskInfo(metadata);
+            if (info.task_id !== saved.task_id || info.skill !== cfg.skill || await realpath(info.project_root) !== await realpath(process.cwd()))
+                throw new Error('Adoption pointer task binding is invalid.');
+            if (await stat(record).then(s => s.isFile()).catch(() => false)) {
+                const job = await readJob(record);
+                if (job.submission.state !== 'known' || job.submission.task.id !== id || job.media !== media)
+                    throw new Error('Adoption pointer refers to another remote task.');
+                return resume(cfg, record, waitSeconds);
+            }
+        }
+        else {
+            record = (await findTaskInfo(outputDir)) ? recordPath(outputDir, `task-${identity}`)
+                : (await createTask(outputDir, cfg.skill, 'aihub-job', 'task.json', [cfg.apiKey])).record;
+            const metadata = await findTaskInfo(dirname(record));
+            if (!metadata)
+                throw new Error('Adoption task metadata is missing.');
+            await writePrivateRecord(pointer, { identity, record, task_id: (await readTaskInfo(metadata)).task_id });
+        }
+        const { job } = await newJob(cfg, media, '', outputDir, record);
+        await bindDiagnosticRecord(cfg, record, { task_id: id, original_request: null });
+        const client = new AihubmaxClient(cfg);
+        let task;
         try {
-            await finishResult(job, record, cfg);
+            task = await client.getTask(id);
         }
         catch (error) {
-            if (error instanceof TaskPersistenceError)
-                throw error;
-            job.last_error = cleanError(error, cfg);
-            return result(job, record, 'download_failed');
+            return { schema_version: 1, status: 'query_failed', task_id: id, record, error: cleanError(error, cfg), failure: failureInfo(error, cfg) };
         }
-        return result(job, record);
+        job.model = task.model ?? '';
+        job.submission = { state: 'known', task: sanitized(task, [cfg.apiKey]) };
+        await save(record, job, cfg);
+        return withJobLock(record, async () => {
+            if (waitSeconds && task.status !== 'completed' && task.status !== 'failed')
+                return queryAndDeliver(client, cfg, job, record, waitSeconds);
+            try {
+                await finishResult(job, record, cfg);
+            }
+            catch (error) {
+                if (error instanceof TaskPersistenceError)
+                    throw error;
+                job.last_error = cleanError(error, cfg);
+                return result(job, record, 'download_failed');
+            }
+            return result(job, record);
+        });
     });
 }
 function extractText(task) {
@@ -414,16 +466,25 @@ export async function understand(cfg, options) {
             throw new Error(`understand 的 ${type} 内容块必须是 {"url":"https://..."} 对象。`);
         }
     }
-    const { job, record } = newJob(cfg, 'understanding', options.model, options.outputDir);
+    const { job, record } = await newJob(cfg, 'understanding', options.model, options.outputDir);
     await bindDiagnosticRecord(cfg, record, { model: options.model, prompt: options.prompt, content: options.content, original_request: null });
     const client = new AihubmaxClient(cfg);
-    const available = await client.listLlmModels();
-    const live = available.find((item) => item.id === options.model);
-    if (!live)
-        throw new Error(`模型 ${options.model} 不在 /v1/configs/llm_generations_models 返回的当前账号清单中。`);
-    const needed = new Set(options.content.map((item) => String(item.type).replace('_url', '').replace('image', 'vision')));
-    if (live.capabilities && [...needed].some((cap) => !live.capabilities.includes(cap)))
-        throw new Error(`模型 ${options.model} 不具备所需多模态能力；不会静默切换模型。`);
+    job.submission = { state: 'not_submitted', error: 'Model capabilities have not been verified. No generation was submitted.' };
+    await save(record, job, cfg);
+    try {
+        const available = await client.listLlmModels();
+        const live = available.find((item) => item.id === options.model);
+        if (!live)
+            throw new Error(`模型 ${options.model} 不在 /v1/configs/llm_generations_models 返回的当前账号清单中。`);
+        const needed = new Set(options.content.map((item) => String(item.type).replace('_url', '').replace('image', 'vision')));
+        if (live.capabilities && [...needed].some((cap) => !live.capabilities.includes(cap)))
+            throw new Error(`模型 ${options.model} 不具备所需多模态能力；不会静默切换模型。`);
+    }
+    catch (error) {
+        job.submission = { state: 'not_submitted', error: cleanError(error, cfg) };
+        await save(record, job, cfg);
+        throw error;
+    }
     const body = { model: options.model, messages: [{ role: 'user', content: [{ type: 'text', text: options.prompt }, ...options.content] }] };
     if (options.systemPrompt)
         body.system_prompt = options.systemPrompt;
@@ -431,6 +492,7 @@ export async function understand(cfg, options) {
         body.max_tokens = options.maxTokens;
     if (options.temperature !== undefined)
         body.temperature = options.temperature;
+    job.submission = { state: 'submitting' };
     await save(record, job, cfg);
     await options.onRecord?.(record);
     return withJobLock(record, async () => {
@@ -476,32 +538,57 @@ export async function nativeMusic(cfg, options) {
     }
     assertOutsideInstallation(options.outputDir);
     await checkMediaTools();
-    await bindDiagnosticRecord(cfg, join(resolve(options.outputDir), 'request-context.json'), { model: options.model, parameters: options.body, original_request: null });
-    await options.onSubmit?.();
-    const response = await new AihubmaxClient(cfg).generateGeminiMusic(options.model, options.body);
-    const parts = response.candidates?.flatMap((candidate) => candidate.content?.parts ?? []) ?? [];
-    const audio = parts.find((item) => item.inlineData?.data);
-    if (!audio?.inlineData?.data)
-        throw new Error('Gemini 音乐响应没有 inlineData 音频结果。');
-    const mime = audio.inlineData.mimeType ?? 'audio/mpeg';
-    const ext = mime === 'audio/wav' ? '.wav' : '.mp3';
-    const dir = resolve(options.outputDir);
-    await mkdir(dir, { recursive: true });
-    const path = join(dir, `lyria-${randomUUID()}${ext}`);
-    const bytes = Buffer.from(audio.inlineData.data, 'base64');
-    if (!bytes.length)
-        throw new Error('Gemini 音乐 inlineData 为空。');
-    await writeFile(path, bytes, { mode: 0o600, flag: 'wx' });
-    let file;
+    const parent = await findTaskInfo(options.outputDir);
+    const record = parent ? join(resolve(options.outputDir), 'native-music.json')
+        : (await createTask(options.outputDir, cfg.skill, 'aihub-native-music', 'native-music.json', [cfg.apiKey])).record;
+    await bindDiagnosticRecord(cfg, record, { model: options.model, parameters: options.body, original_request: null });
+    const saveStatus = (status, error) => writePrivateRecord(record, sanitized({ schema_version: 1, kind: 'aihub-native-music', model: options.model, status, files: [], updated_at: new Date().toISOString(), ...(error ? { error: cleanError(error, cfg) } : {}) }, [cfg.apiKey]));
+    await saveStatus('not_submitted');
+    let submitted = false, received = false;
     try {
-        file = await validateLocalMedia(path, 'audio');
+        await options.onSubmit?.();
+        await saveStatus('submission_unknown');
+        submitted = true;
+        const response = await new AihubmaxClient(cfg).generateGeminiMusic(options.model, options.body);
+        received = true;
+        const parts = response.candidates?.flatMap((candidate) => candidate.content?.parts ?? []) ?? [];
+        const audio = parts.find((item) => item.inlineData?.data);
+        if (!audio?.inlineData?.data)
+            throw new Error('Gemini 音乐响应没有 inlineData 音频结果。');
+        const mime = audio.inlineData.mimeType ?? 'audio/mpeg';
+        const ext = mime === 'audio/wav' ? '.wav' : '.mp3';
+        const dir = await outputDirectory(record, join(dirname(record), 'files'));
+        await mkdir(dir, { recursive: true });
+        const path = join(dir, `lyria-${randomUUID()}${ext}`);
+        const bytes = Buffer.from(audio.inlineData.data, 'base64');
+        if (!bytes.length)
+            throw new Error('Gemini 音乐 inlineData 为空。');
+        await writeFile(path, bytes, { mode: 0o600, flag: 'wx' });
+        let file;
+        try {
+            file = await validateLocalMedia(path, 'audio');
+        }
+        catch (error) {
+            await import('node:fs/promises').then(fs => fs.unlink(path)).catch(() => { });
+            throw error;
+        }
+        const text = parts.find((item) => item.text)?.text;
+        const delivered = { schema_version: 1, kind: 'aihub-native-music', status: 'delivered', record, model: options.model, files: [file], updated_at: new Date().toISOString(), ...(text ? { text } : {}) };
+        try {
+            await writePrivateRecord(record, sanitized(delivered, [cfg.apiKey]));
+            await touchTask(record);
+        }
+        catch {
+            return { ...delivered, metadata_warning: 'Music was saved, but its record needs local repair. Do not regenerate.' };
+        }
+        return delivered;
     }
     catch (error) {
-        await import('node:fs/promises').then(fs => fs.unlink(path)).catch(() => { });
+        const status = !submitted || (error instanceof ApiError && !error.ambiguous) ? 'not_submitted' : received ? 'failed' : 'submission_unknown';
+        await saveStatus(status, error).catch(() => { });
+        await touchTask(record);
         throw error;
     }
-    const text = parts.find((item) => item.text)?.text;
-    return { schema_version: 1, status: 'delivered', model: options.model, files: [file], ...(text ? { text } : {}) };
 }
 // Retained from the source upload guard: the endpoint accepts whole-file base64 JSON.
 export async function upload(cfg, input) {

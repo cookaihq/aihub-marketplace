@@ -17,9 +17,11 @@ import time
 from typing import Any, Iterator
 from urllib.parse import SplitResult, unquote, urlsplit
 import uuid
+import tomllib
 
 from request_reporting import atomic_write, record_lock, restrict_private
-from tikin_request import request_fingerprint, retry_after
+from tikin_request import create_record, request_fingerprint, retry_after
+import task_info
 
 STREAMS_PATH = '/api/v1/youtube/web_v2/get_video_streams_v3'
 MAX_STREAM_SECONDS = 300
@@ -219,6 +221,31 @@ def transfer(proxy: Proxy, stream: dict[str, Any], partial: Path, deadline: floa
     return count, digest.hexdigest(), full_media(partial, content_type)
 
 
+def download_record(destination, run_id, response, setup_root, explicit_output=False):
+    source = task_info.find(response['record']) if isinstance(response.get('record'), str) else None
+    if source:
+        require(Path(task_info.read(source)['project_root']).resolve() == Path.cwd().resolve(), 'task_project_mismatch')
+        record = source.parent / 'downloads' / run_id / 'download.json'
+        task_info.link_record(source, record, 'tikin-download')
+        return record, destination if explicit_output else source.parent / 'files'
+    pointer = destination / '.task-links' / ('download-' + run_id + '.json')
+    with record_lock(pointer):
+        if pointer.exists():
+            saved = json.loads(pointer.read_text(encoding='utf-8'))
+            record = Path(saved['record'])
+            require(saved.get('identity') == run_id and record.resolve().is_relative_to(destination)
+                    and task_info.find(record) is not None, 'download_pointer_invalid')
+            require(Path(task_info.read(task_info.find(record))['project_root']).resolve() == Path.cwd().resolve(), 'task_project_mismatch')
+        else:
+            record = create_record(destination, '媒体下载').with_name('download.json')
+            manifest = setup_root.parent.parent / '.claude-plugin/plugin.json'
+            version = (json.loads(manifest.read_text(encoding='utf-8'))['version'] if manifest.exists()
+                       else tomllib.loads((setup_root / 'pyproject.toml').read_text(encoding='utf-8'))['project']['version'])
+            task_info.create(record, '媒体下载', 'tikin-social-media-downloader', version, kind='tikin-download')
+            atomic_write(pointer, json.dumps({'identity': run_id, 'record': str(record)}) + '\n')
+        return record, record.parent / 'files'
+
+
 def download(request_file: str, response_file: str, output_dir: str, exit_check_url: str) -> dict[str, Any]:
     state: dict[str, Any] | None = None
     record: Path | None = None
@@ -267,7 +294,7 @@ def download(request_file: str, response_file: str, output_dir: str, exit_check_
                 require(data.get('download_verification_requested') is True and data.get('all_selected_streams_verified') is True
                         and stream.get('verified') is True and verification.get('ok') is True,
                         'metadata_verification_missing')
-        destination = Path(output_dir).resolve()
+        destination = Path(output_dir or 'data/tikin-social').resolve()
         setup_root = Path(__file__).resolve().parents[1]
         plugin_root = setup_root.parent.parent
         installation = plugin_root if (plugin_root / '.claude-plugin/plugin.json').is_file() else setup_root
@@ -276,7 +303,9 @@ def download(request_file: str, response_file: str, output_dir: str, exit_check_
                     'proxy_sha256': hashlib.sha256(body['proxy_url'].encode()).hexdigest(),
                     'exit_check_sha256': hashlib.sha256(exit_check_url.encode()).hexdigest()}
         run_id = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:24]
-        record = destination / ('tikin-download-' + run_id) / 'download.json'
+        record, files_dir = download_record(destination, run_id, response, setup_root, explicit_output=bool(output_dir))
+        files_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        task_info.participate(record)
         with record_lock(record):
             if record.exists():
                 state = json.loads(record.read_text())
@@ -309,7 +338,7 @@ def download(request_file: str, response_file: str, output_dir: str, exit_check_
                 stream_deadline = min(deadline, time.monotonic() + MAX_STREAM_SECONDS,
                                       time.monotonic() + stream['expires_at'] - time.time())
                 entry = {'itag': itag, 'status': 'partial', 'complete_transfer_verified': False,
-                         'file': str(record.parent / ('stream-' + itag + '-' + uuid.uuid4().hex + '.part'))}
+                         'file': str(files_dir / ('stream-' + itag + '-' + uuid.uuid4().hex + '.part'))}
                 previous = [item for item in state['streams'] if item['itag'] == itag]
                 state.setdefault('partial_files', []).extend(previous)
                 state['streams'] = [item for item in state['streams'] if item['itag'] != itag] + [entry]

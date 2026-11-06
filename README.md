@@ -2,7 +2,7 @@
 
 这个市场提供 AIhub 创作与文档处理、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
 
-当前版本为 Setup AIHub 2.2.0、AIhub Studio 1.3.1 和 tikin Social 1.3.1。Setup 包含 `setup-api-key` 与新增的 `setup-agent-model`，安装的 Plugin 仍叫 `setup-aihub`。新入口与历史版本的验证范围见 [Setup 使用说明](setup-aihub/README.md)。
+当前版本为 AIhub Studio **2.0.0**、Tikin Social **3.0.0** 和 Setup AIHub **4.0.0**。业务 Plugin 自带配置中心与按任务、会话、文件查看的产物页；Setup 保留业务配置续接和独立客户端模型配置。实际验证范围见各 Plugin 使用说明。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
@@ -79,12 +79,12 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 
 版本标签随代码同步到 CNB，下表链接到对应的 GitHub Release。
 
-当前开发候选为 aihub-studio 2.0.0（固定服务地址）与 setup-aihub 3.1.0（适配 AIhub 2.x），尚未发布；表中这两项的 Release 链接在发布前不可用。tikin-social 仍为已发布的 2.0.2。各版本的实际验收范围见对应 Plugin README。
+本轮 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
 
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
 | aihub-studio | 2.0.0 | [aihub-studio/v2.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv2.0.0) |
-| setup-aihub | 3.1.0 | [setup-aihub/v3.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv3.1.0) |
-| tikin-social | 2.0.2 | [tikin-social/v2.0.2](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv2.0.2) |
+| setup-aihub | 4.0.0 | [setup-aihub/v4.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv4.0.0) |
+| tikin-social | 3.0.0 | [tikin-social/v3.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv3.0.0) |
 <!-- release-table:end -->

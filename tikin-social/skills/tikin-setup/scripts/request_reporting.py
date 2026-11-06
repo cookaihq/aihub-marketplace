@@ -79,37 +79,9 @@ def now():
 
 
 def restrict_private(path: Path) -> None:
-    if os.name != 'nt':
-        os.chmod(path, 0o600)
-        return
-    script = r'''
-$ErrorActionPreference = 'Stop'
-$path = $env:TIKIN_PRIVATE_FILE_PATH
-$user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
-$system = New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')
-$acl = New-Object System.Security.AccessControl.FileSecurity
-$acl.SetOwner($user)
-$acl.SetAccessRuleProtection($true, $false)
-foreach ($identity in @($user, $system)) {
-  $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($identity, 'FullControl', 'Allow')
-  $acl.AddAccessRule($rule)
-}
-[System.IO.File]::SetAccessControl($path, $acl)
-$actual = [System.IO.File]::GetAccessControl($path)
-$rules = @($actual.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier]))
-if (-not $actual.AreAccessRulesProtected -or $rules.Count -ne 2) { exit 2 }
-foreach ($rule in $rules) {
-  if ($rule.IsInherited -or $rule.AccessControlType -ne 'Allow' -or $rule.FileSystemRights -ne 'FullControl' -or
-      $rule.IdentityReference.Value -notin @($user.Value, 'S-1-5-18')) { exit 2 }
-}
-'''
-    environment = dict(os.environ, TIKIN_PRIVATE_FILE_PATH=str(path))
-    environment.pop('PSModulePath', None)
-    powershell = Path(os.environ.get('SystemRoot', r'C:\Windows')) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
-    result = subprocess.run([str(powershell), '-NoProfile', '-NonInteractive', '-Command', script],
-                            env=environment, capture_output=True, timeout=10, creationflags=0x08000000)
-    if result.returncode:
-        raise OSError('Could not restrict private report permissions; no private content written')
+    # Native DACL API avoids starting PowerShell for every task-state write.
+    from private_platform import private_permissions
+    private_permissions(path, owner_path=Path.cwd())
 
 
 def atomic_write(path: Path, text: str) -> None:
