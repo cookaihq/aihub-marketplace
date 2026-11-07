@@ -161,7 +161,14 @@ export function resolveConfiguration(options: ConfigOptions) {
     ...(!values.AIHUB_API_KEY ? { next_step: CREDENTIAL_SETUP_HINT } : {}),
     environment: Object.fromEntries([...KEYS, ...BEHAVIOR_KEYS].map(key => [key, env[key]?.trim() ? credentialId(env[key]!) : null])),
   };
-  return { values, sources, selectionSources, modelKey, inspection };
+  // Private UI consumers need each file's explicit values as well as the winner.
+  // Keep inspectConfig's public, value-free contract unchanged; never expose the
+  // complete process environment through this local pipe.
+  const layerValues = [
+    { path: 'environment', values: Object.fromEntries([...DECLARED_KEYS].filter(key => env[key] !== undefined).map(key => [key, env[key]])) },
+    ...files.map(file => ({ ...file, values: layers.find(layer => layer.name === file.path)?.values ?? {} })),
+  ];
+  return { values, sources, selectionSources, modelKey, inspection, layerValues };
 }
 
 /** Read the same layers as loadConfig, including failures. Never returns credential values. */

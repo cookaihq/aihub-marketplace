@@ -1,8 +1,8 @@
 ---
 name: tikin-xiaohongshu
 metadata:
-  version: "3.1.1"
-description: v3.1.1｜通过 Tikin 处理小红书 / RedNote 链接与数据，获取图文或视频笔记详情、用户资料、已发布笔记，搜索笔记、用户、商品和图片，查询评论及子评论。用户提供小红书链接、分享文本或任务针对小红书时使用；覆盖 Xiaohongshu App-V2 接口。
+  version: "3.2.0"
+description: v3.2.0｜通过 Tikin 处理小红书 / RedNote 链接与数据，获取图文或视频笔记详情、用户资料、已发布笔记，搜索笔记、用户、商品和图片，查询评论及子评论。用户提供小红书链接、分享文本或任务针对小红书时使用；覆盖 Xiaohongshu App-V2 接口。
 ---
 
 # Xiaohongshu / RedNote / 小红书 (via tikin)

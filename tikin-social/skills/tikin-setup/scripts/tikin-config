@@ -159,7 +159,7 @@ def configuration_paths(skill_name, global_enabled):
     return paths
 
 
-def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None, file_overrides=None):
+def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None, file_overrides=None, layer_values=None):
     """Read only fixed sources. Report each file revision and field source, never values."""
     check_plugin_identity()
     layers = [("environment", os.environ)]
@@ -227,6 +227,10 @@ def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None,
     }
     if not values.get("TIKIN_API_KEY"):
         inspection["next_step"] = CREDENTIAL_SETUP_HINT
+    if layer_values is not None:
+        # Opt-in private UI output. Public config-check stays value-free.
+        layer_values.extend([{"path": "environment", "values": {key: os.environ[key] for key in CONFIG_KEYS if key in os.environ}},
+                             *[dict(file, values=dict(layers).get(file["path"], {})) for file in files]])
     return values, sources, inspection
 
 

@@ -33,8 +33,11 @@ class MarketplaceAdapter(Adapter):
     def config(self):
         return self.configuration.snapshot()
 
-    def save(self, changes, revision):
-        return self.configuration.save(changes, revision)
+    def preview(self, changes, revision, target):
+        return self.configuration.preview(changes, revision, target)
+
+    def save(self, changes, revision, target):
+        return self.configuration.save(changes, revision, target)
 
     def artifacts(self):
         return self.catalog.snapshot()

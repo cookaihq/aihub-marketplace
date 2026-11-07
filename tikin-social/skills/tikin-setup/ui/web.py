@@ -1,4 +1,5 @@
 """Marketplace additions around the pinned Skill UI handler; vendored files remain unchanged."""
+import json
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
@@ -20,6 +21,8 @@ class MarketplaceHandler(CoreHandler):
             # Prevent the core's single-file shortcut before its bootstrap runs.
             prelude = ("if(!new URL(location.href).searchParams.has('view')){const u=new URL(location.href);u.searchParams.set('view','collection');history.replaceState({},'',u);}\n"
                        if name.endswith('.js') else '')
+            if name.endswith('.js'):
+                prelude += 'const marketplaceSaveScope=' + json.dumps(self.server.adapter.options.get('save_scope', 'global')) + ';\n'
             content = prelude + original + '\n' + '\n'.join((ASSETS / file).read_text(encoding='utf-8') for file in extras)
             return self.send(200, content.encode(), ('text/javascript' if name.endswith('.js') else 'text/css') + '; charset=utf-8')
         if parsed.path == '/api/artifacts':

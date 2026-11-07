@@ -19,9 +19,11 @@ def main():
     spec = importlib.util.spec_from_loader(loader.name, loader)
     module = importlib.util.module_from_spec(spec)
     loader.exec_module(module)
+    layers = []
     values, sources, inspection = module.resolve_config(options.get('skill'), options['global_enabled'],
-                                                       file_overrides=options.get('overrides'))
-    result = {'shared': {'values': values, 'sources': sources, 'inspection': inspection}}
+                                                       file_overrides=options.get('overrides'), layer_values=layers)
+    result = {'shared': {'values': values, 'sources': sources, 'inspection': inspection, 'layerValues': layers},
+              'home_directory': str(Path.home())}
     if options['global_enabled']:
         from default_skills import read_settings, run
         path = module.config_dir() / 'settings.json'
@@ -29,7 +31,7 @@ def main():
         module.validate_routing(settings)
         result.update(settings=settings, settings_path=str(path))
         if options.get('agent'):
-            result['reminder'] = run(options['agent'], 'preference', options.get('config_dir'))
+            result['reminder'] = {'config_dir': run(options['agent'], 'preference', options.get('config_dir'))['config_dir']}
     return result
 
 

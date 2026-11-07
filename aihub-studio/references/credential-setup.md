@@ -16,11 +16,11 @@ AIhub 的 macOS/Linux 入口使用 `node scripts/aihub.mjs`；Windows 用随包 
 uv run --frozen --project "<Plugin实体>" python "<Plugin实体>/scripts/ui.py" start --project "<真实业务cwd>" --page configuration --skill <实际业务Skill> --agent <codex|claude-code|workbuddy|hermes>
 ```
 
-没有 caller 省略 `--skill`。已明确项目保存时加 `--save-scope project`；首次新增默认个人全局。已有配置按真实加载器来源写回，环境变量只读并在原注入位置修复。API Key 下提供获取控制台链接及“或联系团队负责人分配”；页面不展示服务地址。
+没有 caller 省略 `--skill`。已明确项目保存时加 `--save-scope project`；首次新增默认个人全局。首页展示当前生效配置与逐项来源；编辑时选择项目／全局范围及具体文件。保存范围不改变读取优先级，环境变量只读并在原注入位置修复。API Key 下提供获取控制台链接及“或联系团队负责人分配”；页面不展示服务地址。
 
 WorkBuddy 使用宿主 `Bash` 工具的 `run_in_background: true` 执行 `start`，并增加 `--keep-running`。启动入口立即输出 URL，然后保持该后台任务直到页面停止；用 `TaskOutput` 获取结果，并在独立工具调用里检查 `status`。不要用普通短工具调用交付一个随后被宿主回收的页面，也不要脱离宿主进程控制。结束时先用同参数 `stop`，后台启动入口会自行退出。
 
-用户在页面直接填写 `AIHUB_API_KEY`，检查分组和变更摘要后点击底部固定保存栏，一次保存。密钥不经聊天、argv、日志或进度文件，Agent 不截图已填写的真实 Key。页面调用原加载器校验、检测文件冲突、事务保存并回读；这不等于在线鉴权。
+用户在页面直接填写 `AIHUB_API_KEY`，先查看项目覆盖／继承全局标签，再在字段抽屉选择文件。保存前查看原加载器计算的结果：移除或空值的回退来源、低层保存后仍被覆盖的提示。点击固定底栏“保存此文件”一次提交；其他文件的草稿保留。密钥不经聊天、argv、日志或进度文件，Agent 不截图已填写的真实 Key。页面调用原加载器校验、检测文件冲突、单文件事务保存并回读；这不等于在线鉴权。
 
 将返回的 URL 作为可点击链接交付，旁边注明 **📱 跨设备访问需要 FRP / Tailscale，当前配置状态未核实时明确说明。** 默认本机访问，实际活动续期 60 分钟；轮询不续期。`status` 和 `stop` 使用相同项目、页面、caller、Agent 和保存范围参数。服务失效后重新 `start`，保留原业务上下文。
 

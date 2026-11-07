@@ -1,8 +1,8 @@
 ---
 name: tikin-competitor-analysis
 metadata:
-  version: "3.1.1"
-description: v3.1.1｜通过 Tikin 对比多个社交媒体账号的粉丝数、互动率、发布频率、热门内容和增长迹象。适用于账号对比，或用户提供受支持平台的账号主页链接进行竞品分析。
+  version: "3.2.0"
+description: v3.2.0｜通过 Tikin 对比多个社交媒体账号的粉丝数、互动率、发布频率、热门内容和增长迹象。适用于账号对比，或用户提供受支持平台的账号主页链接进行竞品分析。
 ---
 
 # Competitor Analysis

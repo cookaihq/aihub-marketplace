@@ -1,5 +1,11 @@
 # tikin Social
 
+3.2.0 接入新版分层配置中心：查看当前生效值及逐项来源，辨认项目覆盖与全局继承，选择具体文件编辑，并在保存或移除覆盖前预览真实结果。一次只保存选中的文件，其他草稿继续保留。
+
+本版已在 Windows 原生通过 Codex CLI 0.166.0 的开发源显式调用、两套随包服务启动、HTTP 配置预览/保存、原加载器回读和停止检查；独立浏览器完成桌面与 390×844 窄屏验证。71 项定向回归通过。按本次用户决定，WorkBuddy 不作为验收要求；macOS 待验。未替换现用 Plugin 安装，未验证原生重新安装、隐式触发、线上鉴权或付费业务。
+
+以下为历史 3.1.1 的功能与验收记录。
+
 3.1.1 修复 Markdown 产物的图片与富文本预览；共享入口缺少解析依赖时，会按锁文件恢复运行环境。
 
 本版在 Windows 通过 Codex 0.166.0 的开发源显式调用、两套服务的启动/资源/下载检查，以及独立浏览器的图片显示与手机视口检查。原业务文档 29 张图片全部显示，真实文件保持不变。按本次用户决定，WorkBuddy 不要求实测；macOS 待验。未复测原生安装发现、隐式触发或线上业务；Codex 子会话自身的浏览器控制受限，独立浏览器结果另行记录。
@@ -25,8 +31,8 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **3.1.1**. The 16 Skills using the shared business request
-entry are **3.1.1**; offline `tikin-endpoint-discovery` is **2.1.1**. New API runs
+Plugin version: **3.2.0**. The 16 Skills using the shared business request
+entry are **3.2.0**; offline `tikin-endpoint-discovery` is **2.2.0**. New API runs
 require the Agent to supply a concise task name; existing records resume by their saved paths.
 This release includes the previously unpublished 1.5.0/1.6.0 changes and the
 second-batch catalog of 1029 operations; the retained first-batch catalog contains
@@ -115,9 +121,9 @@ automatically.
 
 > 打开 Tikin Social 的配置中心。我会在网页填写 API Key，保存后请检查本机配置，再继续原任务。
 
-无需另装 Setup 即可打开。Key 下提供 [Tikin 控制台](https://console.tikin.net) 链接及“或联系团队负责人分配”。页面按用途分组，提供必要/全部设置，底部固定保存栏可查看变更摘要并一次保存。页面不展示服务地址；既有地址配置仍按原加载器读取。
+无需另装 Setup 即可打开。页面先展示当前生效配置，逐项标出项目覆盖、继承全局或其他来源。点击“编辑”可选择保存范围和具体文件，在保存或移除设置前预览实际生效值及来源；“来源与优先级”显示该项真实的读取顺序。Key 下提供 [Tikin 控制台](https://console.tikin.net) 链接及“或联系团队负责人分配”。页面不展示服务地址；既有地址配置仍按原加载器读取。
 
-首次新增默认个人全局 `~/.config/tikin-social/.env`；明确项目保存时使用 `.env.local`，已有值写回真实来源，环境变量在原注入处修复。密钥直接在浏览器填写，不放入聊天。业务配置不再提供 Secret Book 方式，既有本机文件继续读取，不迁移或删除。
+首次新增默认个人全局 `~/.config/tikin-social/.env`；新增项目密钥使用 `.env.local`，已有密钥可选择原文件修复或移除，环境变量在原注入处修复。每次只保存所选文件，其他文件的草稿继续保留；保存较低优先级的文件时，预览会说明是否仍被上层覆盖。路由与提醒偏好保存在独立的全局 `settings.json`，平台路由可移除后继承默认方式，默认方式移除时重置为 `auto`。密钥直接在浏览器填写，不放入聊天。本页校验本机配置，不验证在线鉴权；既有文件继续读取，不迁移或删除。
 
 已有 Setup 任务沿用原编号打开同一配置中心，保存后用真实加载器复查，再核对原业务提交状态。已提交或结果不明先查原结果，不重发；没有浏览器或明确选择文件编辑时，沿用[本机配置流程](skills/tikin-setup/references/credential-setup.md)。
 

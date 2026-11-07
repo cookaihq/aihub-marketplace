@@ -38,7 +38,7 @@ def definitions(plugin):
             field("TIKIN_API_KEY", "Tikin API Key", "服务连接", sensitive=True, required=True,
                   help="用于访问 Tikin 社交媒体数据服务。"),
             field("routing.default", "默认调用方式", "平台调用", "select", default="auto", choices=["auto", "confirm"],
-                  help="auto 按当前任务直接调用；confirm 按现有 Tikin 路由规则先确认。"),
+                  help="auto 按当前任务直接调用；confirm 按现有 Tikin 路由规则先确认。此字段为 settings.json 必需结构，移除设置会重置为 auto。"),
         ]
         for platform, label in [("douyin", "抖音"), ("instagram", "Instagram"), ("threads", "Threads"),
                                 ("tiktok", "TikTok"), ("twitter", "X / Twitter"),

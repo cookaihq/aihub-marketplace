@@ -1,8 +1,8 @@
 ---
 name: tikin-youtube
 metadata:
-  version: "3.1.1"
-description: v3.1.1｜通过 Tikin 处理 YouTube 链接与数据，获取视频信息、可下载的媒体流链接、字幕、评论与回复及频道资料，执行综合搜索或 Shorts 搜索。用户提供 YouTube 链接或任务针对该平台时使用；覆盖 YouTube Web-V2 接口。
+  version: "3.2.0"
+description: v3.2.0｜通过 Tikin 处理 YouTube 链接与数据，获取视频信息、可下载的媒体流链接、字幕、评论与回复及频道资料，执行综合搜索或 Shorts 搜索。用户提供 YouTube 链接或任务针对该平台时使用；覆盖 YouTube Web-V2 接口。
 ---
 
 # YouTube (via tikin)

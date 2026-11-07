@@ -1,8 +1,8 @@
 ---
 name: tikin-tiktok
 metadata:
-  version: "3.1.1"
-description: v3.1.1｜通过 Tikin 处理 TikTok 链接与数据，获取视频、用户资料、作品列表，搜索内容，并查询趋势、广告洞察、创作者分析、评论关键词和商店搜索结果。用户提供 TikTok 链接或任务针对该平台时使用；覆盖 App-V3、Ads、Creator、Analytics 与 Shop 接口。
+  version: "3.2.0"
+description: v3.2.0｜通过 Tikin 处理 TikTok 链接与数据，获取视频、用户资料、作品列表，搜索内容，并查询趋势、广告洞察、创作者分析、评论关键词和商店搜索结果。用户提供 TikTok 链接或任务针对该平台时使用；覆盖 App-V3、Ads、Creator、Analytics 与 Shop 接口。
 ---
 
 # TikTok (via tikin)

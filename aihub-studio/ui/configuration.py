@@ -71,83 +71,162 @@ class Configuration:
             raise UIError('configuration', '无法读取配置。请检查配置文件格式、调用 Skill 和 Agent 身份。', 422) from None
         return data
 
+    @staticmethod
+    def _layer_id(path):
+        return 'process' if path == 'environment' else 'file_' + hashlib.sha256(path.encode()).hexdigest()[:20]
+
+    def _layer(self, path, home, enabled=True):
+        target = Path(path)
+        if path == 'environment':
+            return dict(id='process', name='进程环境变量', scope='process', scope_label='本次启动注入，只读。',
+                        path='进程环境变量', readonly=True, enabled=True, rank=0)
+        plugin_root = home / '.config' / self.plugin
+        if target.parent == self.project:
+            scope, name, label = 'project', '项目 · ' + target.name, '仅影响当前项目；共享文件也会影响本项目其他 Skill。'
+            rank = 20 if target.name == '.env.local' else 30 if target.name == '.env' else 10
+        else:
+            scope, label = 'global', '同一用户的多个项目与 Agent 共用；Skill 专用文件仅影响对应 Skill。'
+            name = '全局 · ' + str(target.relative_to(home / '.config')).replace('\\', '/') if target.is_relative_to(home / '.config') else '全局 · ' + target.name
+            if target.parent == plugin_root:
+                rank = 70 if target.name == '.env.local' else 80 if target.name == '.env' else 60
+            elif target.parent.parent == plugin_root:
+                rank = 40 if target.name == '.env.local' else 50
+            else:
+                rank = 90
+        if target.name == 'settings.json':
+            rank = 100
+            label = 'Plugin 全局偏好；提醒按当前 Agent 和配置目录绑定，与 dotenv 文件独立保存。'
+        return dict(id=self._layer_id(path), name=name, scope=scope, scope_label=label,
+                    path=path, readonly=not enabled, enabled=enabled, rank=rank)
+
+    @staticmethod
+    def _typed(field, raw):
+        if not isinstance(raw, str) or raw == '':
+            return raw
+        if field['type'] == 'boolean':
+            return raw.strip() == '1' if raw.strip() in ('0', '1') else raw
+        if field['type'] == 'list':
+            return [part.strip() for part in raw.split(',')]
+        if field['type'] == 'number':
+            return int(raw.strip()) if re.fullmatch(r'\d+', raw.strip()) else raw
+        if field['type'] == 'select':
+            return raw.strip()
+        return raw
+
     def _state(self, overrides=None):
         data = self._load(overrides)
         shared = data['shared']
         loads = [shared, *data.get('models', {}).values()]
-        if any(p['reason'] == 'unreadable' for load in loads for p in load['inspection']['problems']):
-            raise UIError('configuration', '某个配置文件不可读取，请修复权限或文件后重新载入。', 422)
+        home = Path(data['home_directory'])
         paths = {layer['path']: layer['revision'] for load in loads for layer in load['inspection']['layers']}
-        settings_path = data.get('settings_path')
-        if settings_path:
-            raw = (overrides[settings_path].encode('utf-8') if overrides and settings_path in overrides
-                   else read(settings_path))
+        layers = {self._layer_id(path): self._layer(path, home) for path in ['environment', *paths]}
+        settings_path = data.get('settings_path') or str(home / '.config' / self.plugin / 'settings.json')
+        settings_id = self._layer_id(settings_path)
+        settings_enabled = bool(self.options['global_enabled'])
+        layers[settings_id] = self._layer(settings_path, home, settings_enabled)
+        if settings_enabled:
+            raw = (overrides[settings_path].encode('utf-8') if overrides and settings_path in overrides else read(settings_path))
             paths[settings_path] = digest(raw)
         fields = []
+        errors = []
         for definition in self.definitions:
             field = deepcopy(definition)
             key = field['id']
-            readonly = False
-            if key.startswith('routing.') or key == 'default_skill_reminders':
-                target = settings_path or str(Path.home() / '.config' / self.plugin / 'settings.json')
+            rows = []
+            targets = []
+            is_settings = key.startswith('routing.') or key == 'default_skill_reminders'
+            if is_settings:
                 settings = data.get('settings', {})
+                explicit = False
+                value = field.get('default')
                 if key.startswith('routing.'):
                     routing = settings.get('routing', {})
                     if key == 'routing.default':
-                        value, explicit = routing.get('default', 'auto'), 'default' in routing
+                        explicit, value = 'default' in routing, routing.get('default', 'auto')
                     else:
                         platform = key.rsplit('.', 1)[-1]
-                        value = routing.get('platforms', {}).get(platform, 'inherit')
                         explicit = platform in routing.get('platforms', {})
+                        value = routing.get('platforms', {}).get(platform, 'inherit')
+                        field['help'] += ' 当前实际调用方式：' + (routing.get('default', 'auto') if value == 'inherit' else value) + '。'
                 else:
                     reminder = data.get('reminder', {})
                     entry = next((e for e in settings.get('default_skill_reminders', {}).get('agents', [])
                                   if e['agent'] == self.options.get('agent') and e['config_dir'] == reminder.get('config_dir')), None)
-                    value, explicit = (entry['enabled'], True) if entry else (True, False)
-                    readonly = not bool(reminder)
-                readonly = readonly or not self.options['global_enabled']
-                scope = '个人全局偏好'
+                    explicit, value = (True, entry['enabled']) if entry else (False, True)
+                explicit = explicit and paths.get(settings_path) is not None
+                readonly = not settings_enabled or (key == 'default_skill_reminders' and not data.get('reminder'))
+                field['readonly'] = readonly
                 if readonly:
-                    field['help'] += ' 当前未启用全局配置或未指定 Agent，仅展示默认值。'
+                    field['help'] += ' 本次未启用全局配置或未指定 Agent，此项只读。'
+                else:
+                    targets = [settings_id]
+                for layer in layers.values():
+                    applies = layer['id'] == settings_id and settings_enabled
+                    rows.append(dict(layer=layer['id'], present=explicit if applies else False,
+                                     status=('effective' if explicit else 'missing') if applies else 'skipped',
+                                     value=value if applies and explicit else None,
+                                     **({} if applies else {'message': '此文件不参与该偏好的读取。'})))
+                effective = dict(source=settings_id if explicit else 'default', status='set' if explicit else 'default', value=value)
             else:
                 load = data.get('models', {}).get(key, shared)
                 source = load['sources'].get(key, load.get('selectionSources', {}).get(key, 'missing'))
-                raw = load['values'].get(key)
+                value = self._typed(field, load['values'].get(key, field.get('default', '')))
                 explicit = source not in ('missing', 'built-in default')
-                value = raw if raw is not None else field.get('default', '')
-                if field['type'] == 'boolean' and raw is not None:
-                    value = raw.strip() == '1'
-                elif field['type'] == 'list' and raw is not None:
-                    value = [part.strip() for part in raw.split(',')]
-                elif field['type'] == 'number' and raw is not None:
+                effective = dict(source=self._layer_id(source) if explicit else ('default' if 'default' in field else None),
+                                 status='set' if explicit else ('default' if 'default' in field else 'missing' if field.get('required') else 'optional'),
+                                 value=value)
+                layer_values = {self._layer_id(row['path']): row for row in load['layerValues']}
+                for layer in layers.values():
+                    row = layer_values.get(layer['id'])
+                    present = row is not None and key in row['values']
+                    raw = row['values'].get(key) if row else None
+                    if row is None:
+                        status, message = 'skipped', '此文件不参与该项读取（其他 Skill 专用或独立偏好文件）。'
+                    elif row.get('error'):
+                        status, message = 'error', '文件无法读取；原业务加载器会报错，请修复后重新载入。'
+                        effective.update(status='error', message=message)
+                        errors.append(message)
+                    elif not present:
+                        status, message = 'missing', ''
+                    elif not str(raw).strip():
+                        status, message = 'empty', '空值继续向下回退。'
+                    else:
+                        status, message = ('effective' if layer['id'] == effective['source'] else 'shadowed'), ''
+                    rows.append(dict(layer=layer['id'], present=present, status=status, value=self._typed(field, raw),
+                                     **({'message': message} if message else {})))
+                    if row is not None and not layer['readonly']:
+                        # New project secrets go only to .env.local. Existing
+                        # explicit keys may be removed or repaired in their own file.
+                        if not field.get('sensitive') or layer['scope'] != 'project' or Path(layer['path']).name == '.env.local' or present:
+                            targets.append(layer['id'])
+                if effective['status'] != 'error' and value not in (None, ''):
                     try:
-                        value = int(raw)
-                    except ValueError:
-                        value = None
-                        field['help'] += ' 当前值不是正整数，请修复。'
-                if source == 'environment':
-                    target, scope, readonly = '进程环境变量', '当前进程（只读）', True
-                    field['help'] += ' 请修改启动 Agent 或服务时注入的环境变量，再重启本页。'
-                elif explicit:
-                    target = source
-                    scope = '当前项目' if Path(source).is_relative_to(self.project) else '个人全局配置'
-                elif self.options.get('save_scope') == 'project' or not self.options['global_enabled']:
-                    target, scope = str(self.project / '.env.local'), '当前项目'
-                else:
-                    target, scope = str(Path(data['settings_path']).with_name('.env')), '个人全局配置'
-                if not readonly and target not in paths:
-                    raise UIError('target', '保存目标不在原加载器的读取范围内。', 422)
-                field.setdefault('clear_help', '移除标明文件中的显式值；之后使用下一层配置或内置默认值。')
-            field.update(value=value, explicit=explicit, readonly=readonly, path=target, scope=scope)
+                        self._validate(field, value)
+                    except UIError as error:
+                        effective.update(status='invalid', message=error.message)
+                        errors.append(error.message)
+                # Keep inherited files editable under a read-only environment winner.
+                field['readonly'] = False
+            field.update(effective=effective, rows=rows, targets=targets)
             fields.append(field)
-        # Includes every consulted layer, preferences, caller and all effective values.
-        fingerprint = {'data': data, 'paths': paths, 'options': self.options,
-                       'environment': {f['id']: (self.environment if self.environment is not None else os.environ).get(f['id']) for f in self.definitions if f['id'].isupper()}}
+        values = {f['id']: f['effective']['value'] for f in fields}
+        for field in fields:
+            field['active'] = active(field, values)
+        # Revision covers all consulted files, actual values, private explicit
+        # layers, preferences and caller/options, including the injected process.
+        fingerprint = {'data': data, 'paths': paths, 'options': self.options}
         revision = hmac.new(self.secret, json.dumps(fingerprint, sort_keys=True, ensure_ascii=False).encode(), hashlib.sha256).hexdigest()
         task = self.options.get('task') or {'id': self.plugin + '-configuration', 'binding': str(self.project),
             'continuation': '请在项目 ' + str(self.project) + ' 中重新检查 ' + self.plugin + ' 配置，并继续此前已授权的任务。'}
-        snapshot = {'revision': revision, 'fields': fields, 'validation': '本地格式、原加载器回读与必需项检查；未验证在线鉴权',
-                    'note': '修改已有值会写回当前生效文件；新值按下方标明范围保存。保存后由 Agent 继续原任务。', 'task': task}
+        defaults = {'project': self._layer_id(str(self.project / '.env.local'))}
+        if settings_enabled:
+            defaults['global'] = self._layer_id(str(home / '.config' / self.plugin / '.env'))
+        snapshot = {'revision': revision, 'layers': sorted(layers.values(), key=lambda layer: (layer['rank'], layer['path'])),
+                    'fields': fields, 'default_targets': defaults, 'validation_errors': sorted(set(errors)),
+                    'validation': '本地格式、原加载器回读与必需项检查',
+                    'note': '按项展示当前生效来源。编辑与保存只作用于所选文件；更高层仍可覆盖它。仅校验本机配置，不验证在线鉴权。' +
+                            (' 全局配置本次已关闭。' if not settings_enabled else ''),
+                    'task': task}
         return snapshot, data, paths
 
     def snapshot(self):
@@ -177,29 +256,39 @@ class Configuration:
         if field.get('required') and (not value or isinstance(value, str) and not value.strip()):
             raise UIError('validation', '请填写 ' + field['label'] + '，或使用“清除”。', 422)
 
-    def save(self, changes, revision):
+    def _candidate(self, changes, revision, target):
         if not isinstance(changes, dict) or not changes:
             raise UIError('changes', '没有待保存的修改。')
-        self.transaction.recover()
         current, data, paths = self._state()
         if current['revision'] != revision:
             raise UIError('conflict', '配置已被其他操作修改。草稿仍保留，请重新载入后核对。', 409)
+        layer = next((layer for layer in current['layers'] if layer['id'] == target), None)
+        if not layer or layer['readonly'] or layer['path'] not in paths:
+            raise UIError('target', '请选择原加载器允许写入的具体配置文件。', 422)
         fields = {f['id']: f for f in current['fields']}
         updates, settings = {}, deepcopy(data.get('settings', {}))
         settings_changed = False
         for key, change in changes.items():
             field = fields.get(key)
-            if not field or field['readonly']:
-                raise UIError('readonly', '变更包含未知或只读字段。', 422)
+            if not field or target not in field['targets']:
+                raise UIError('readonly', '此文件不允许保存所选字段。', 422)
             if not isinstance(change, dict) or change.get('op') not in ('set', 'unset'):
                 raise UIError('changes', '变更格式无效。')
             value = change.get('value') if change['op'] == 'set' else None
             if change['op'] == 'set':
-                self._validate(field, value)
+                # Empty dotenv values have the loader's fall-through semantics,
+                # including numeric/boolean settings. settings.json remains typed.
+                if not (key.isupper() and value == ''):
+                    self._validate(field, value)
+                if field.get('sensitive') and layer['scope'] == 'project' and Path(layer['path']).name != '.env.local':
+                    old = next(row for row in field['rows'] if row['layer'] == target)
+                    if value and not old.get('value'):
+                        raise UIError('target', '新增项目密钥只能保存到 .env.local；此文件仅允许修复已有密钥或移除设置。', 422)
             if key.startswith('routing.'):
                 settings_changed = True
                 routing = settings.setdefault('routing', {'default': 'auto', 'platforms': {}})
                 if key == 'routing.default':
+                    # The real Tikin settings schema requires this member.
                     routing['default'] = value or 'auto'
                 else:
                     platforms = routing.setdefault('platforms', {})
@@ -223,39 +312,41 @@ class Configuration:
                     value = ','.join(value)
                 elif value is not None:
                     value = str(value)
-                updates.setdefault(field['path'], {})[key] = value
-        modifications = {}
-        for path, values in updates.items():
-            before = read(path)
-            if digest(before) != paths[path]:
-                raise UIError('conflict', '配置文件已变化，请重新载入。', 409)
-            modifications[path] = (before, dotenv(before, values))
-        if settings_changed:
-            path = data['settings_path']
-            before = read(path)
-            if digest(before) != paths[path]:
-                raise UIError('conflict', '偏好文件已变化，请重新载入。', 409)
-            modifications[path] = (before, (json.dumps(settings, ensure_ascii=False, indent=2) + '\n').encode())
-        overrides = {path: after.decode('utf-8') for path, (_, after) in modifications.items()}
-        candidate, projected, _ = self._state(overrides)
-        values = {f['id']: f['value'] for f in candidate['fields']}
+                updates[key] = value
+        path = layer['path']
+        before = read(path)
+        if digest(before) != paths[path]:
+            raise UIError('conflict', '配置文件已变化，请重新载入。', 409)
+        after = ((json.dumps(settings, ensure_ascii=False, indent=2) + '\n').encode() if settings_changed else dotenv(before, updates))
+        candidate, projected, _ = self._state({path: after.decode('utf-8')})
+        errors = list(candidate['validation_errors'])
+        values = {f['id']: f['effective']['value'] for f in candidate['fields']}
         for field in candidate['fields']:
             key = field['id']
-            if field.get('required') and not values[key] and changes.get(key, {}).get('op') != 'unset':
-                raise UIError('validation', '请补齐 ' + field['label'] + '。', 422)
+            explicitly_cleared = changes.get(key, {}).get('op') == 'unset' or changes.get(key) == {'op': 'set', 'value': ''}
+            if field.get('required') and not values[key] and not explicitly_cleared:
+                errors.append('请补齐 ' + field['label'] + '。')
             if key in changes and changes[key]['op'] == 'set' and not active(field, values):
-                raise UIError('validation', field['label'] + '当前不适用，请核对关联设置。', 422)
-            if active(field, values) and not (values[key] is None and not field['explicit']) and not (field.get('required') and not values[key] and changes.get(key, {}).get('op') == 'unset'):
-                self._validate(field, values[key])
+                errors.append(field['label'] + '当前不适用，请核对关联设置。')
         for load in [projected['shared'], *projected.get('models', {}).values()]:
             if any(p['reason'] not in ('missing',) for p in load['inspection']['problems']):
-                raise UIError('validation', '修改后的配置未通过原加载器校验；未保存任何字段。', 422)
-        expected_fields = {f['id']: f['value'] for f in candidate['fields']}
+                errors.append('修改后的配置未通过原加载器校验；请修复配置后保存。')
+        candidate['validation_errors'] = sorted(set(errors))
+        return candidate, {path: (before, after)}
+
+    def preview(self, changes, revision, target):
+        # No recovery or persistence here: preview is strictly side-effect free.
+        return self._candidate(changes, revision, target)[0]
+
+    def save(self, changes, revision, target):
+        self.transaction.recover()
+        candidate, modifications = self._candidate(changes, revision, target)
+        if candidate['validation_errors']:
+            raise UIError('validation', '；'.join(candidate['validation_errors']), 422)
         def verify(written):
             fresh = self._state()[0]
-            if not written and fresh['revision'] != revision:
-                raise UIError('conflict', '保存前配置已变化，请重新载入。', 409)
-            if written and {f['id']: f['value'] for f in fresh['fields']} != expected_fields:
-                raise UIError('conflict', '回读结果与预期不一致，已尝试回滚。请重新载入。', 409)
+            expected = candidate['revision'] if written else revision
+            if fresh['revision'] != expected:
+                raise UIError('conflict', '配置已变化或回读与预览不一致；未覆盖外部修改，请重新载入核对。', 409)
             return fresh
         return self.transaction.apply(modifications, verify)

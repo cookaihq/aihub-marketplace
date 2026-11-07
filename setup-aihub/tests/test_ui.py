@@ -53,7 +53,18 @@ class UITests(unittest.TestCase):
                     self.assertEqual(state['task']['id'], task)
                     self.assertEqual(state['task']['binding'], started['binding'])
                     self.assertNotIn('BASE_URL', json.dumps(state))
-                    changes = {'changes': {key: {'op': 'set', 'value': self.marker}}, 'revision': state['revision']}
+                    changes = {'changes': {key: {'op': 'set', 'value': self.marker}}, 'revision': state['revision'], 'target': state['default_targets']['project']}
+                    target_file = self.project / '.env.local'
+                    before = target_file.read_bytes() if target_file.exists() else None
+                    for csrf_value, access_origin in [('invalid', origin), (csrf, 'https://foreign.invalid')]:
+                        with self.assertRaises(HTTPError) as rejected:
+                            request('/api/preview', changes, csrf_value, access_origin)
+                        self.assertEqual(rejected.exception.code, 403)
+                    preview = request('/api/preview', changes, csrf)
+                    self.assertNotIn(self.marker, json.dumps(preview))
+                    projected = next(field for field in preview['config']['fields'] if field['id'] == key)
+                    self.assertEqual(projected['effective']['source'], changes['target'])
+                    self.assertEqual(target_file.read_bytes() if target_file.exists() else None, before)
                     with self.assertRaises(HTTPError):
                         request('/api/save', changes, 'invalid')
                     with self.assertRaises(HTTPError):
@@ -61,6 +72,16 @@ class UITests(unittest.TestCase):
                     saved = request('/api/save', changes, csrf)
                     self.assertNotIn(self.marker, json.dumps(saved))
                     self.assertEqual(saved['receipt']['task']['binding'], started['binding'])
+                    self.assertEqual(saved['receipt']['target'], changes['target'])
+                    reveal = {'id': key, 'target': changes['target'], 'revision': saved['config']['revision']}
+                    with self.assertRaises(HTTPError) as rejected:
+                        request('/api/reveal', reveal, 'invalid')
+                    self.assertEqual(rejected.exception.code, 403)
+                    self.assertEqual(request('/api/reveal', reveal, csrf)['value'], self.marker)
+                    for path in ('/api/preview', '/api/save'):
+                        with self.assertRaises(HTTPError) as rejected:
+                            request(path, changes, csrf)
+                        self.assertEqual(rejected.exception.code, 409)
                     status = self.ui('status', '--task', task)
                     self.assertEqual(status['saved']['task']['id'], task)
                     continued = self.call('continue', '--task', task)
