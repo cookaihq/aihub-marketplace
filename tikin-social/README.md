@@ -1,5 +1,11 @@
 # tikin Social
 
+3.1.1 修复 Markdown 产物的图片与富文本预览；共享入口缺少解析依赖时，会按锁文件恢复运行环境。
+
+本版在 Windows 通过 Codex 0.166.0 的开发源显式调用、两套服务的启动/资源/下载检查，以及独立浏览器的图片显示与手机视口检查。原业务文档 29 张图片全部显示，真实文件保持不变。按本次用户决定，WorkBuddy 不要求实测；macOS 待验。未复测原生安装发现、隐式触发或线上业务；Codex 子会话自身的浏览器控制受限，独立浏览器结果另行记录。
+
+以下为历史 3.1.0 的功能与验收记录。
+
 3.1.0 新增 Hermes 原生入口，完整注册 17 个 Skill，共用请求、配置与离线索引；默认规则和提醒识别当前 Hermes Profile。
 
 本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
@@ -19,8 +25,8 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **3.1.0**. The 16 Skills using the shared business request
-entry are **3.1.0**; offline `tikin-endpoint-discovery` is **2.1.0**. New API runs
+Plugin version: **3.1.1**. The 16 Skills using the shared business request
+entry are **3.1.1**; offline `tikin-endpoint-discovery` is **2.1.1**. New API runs
 require the Agent to supply a concise task name; existing records resume by their saved paths.
 This release includes the previously unpublished 1.5.0/1.6.0 changes and the
 second-batch catalog of 1029 operations; the retained first-batch catalog contains
@@ -264,6 +270,8 @@ HTTP tool when you decline tikin. Large pulls use explicit pagination and reques
 may return a partial result with a resume cursor.
 
 ## 浏览任务、会话和文件
+
+Markdown 详情现在显示标题、强调、列表、表格和文档同目录或子目录内的 PNG、JPEG、GIF、WebP 附图，支持中文和空格路径。缺图或不允许的引用显示原因；远程图片、越界路径和 SVG 不加载。复制与下载保留原始 Markdown，附图不增加产物数量。
 
 > 打开当前项目的 Tikin Social 产物页面。
 

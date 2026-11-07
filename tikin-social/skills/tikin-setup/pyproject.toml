@@ -1,9 +1,9 @@
 [project]
 name = "tikin-setup"
-version = "3.1.0"
-description = "Local configuration helper for the tikin-social Plugin. Standard library only; the pinned interpreter is the point of this project file."
-requires-python = ">=3.9"
-dependencies = []
+version = "3.1.1"
+description = "Local configuration and artifact UI for the tikin-social Plugin."
+requires-python = ">=3.10"
+dependencies = ["markdown-it-py==4.0.0"]
 
 [tool.uv]
 package = false

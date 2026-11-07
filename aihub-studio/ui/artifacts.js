@@ -119,9 +119,17 @@ if (state?.page === 'artifacts') {
     const sidebar=value('sidebar','1')!=='0', info=value('info')==='1', link=safeURL(a.url), copy=a.copy_text??a.preview?.text;
     return `<nav class="viewer-nav"><button class="text-button" data-artifact-action="back">← ${local?e(t?.title||'任务产物'):'文件集合'}</button><button class="text-button sidebar-toggle" data-action="sidebar">${sidebar?'收起':'展开'}文件侧栏</button><div class="file-step"><button data-artifact-action="adjacent" data-id="${e(nav.previous||'')}" aria-label="上一件产物" ${index<1?'disabled':''}>‹</button><span>${nav.index||1} / ${nav.total||1}</span><button data-artifact-action="adjacent" data-id="${e(nav.next||'')}" aria-label="下一件产物" ${!nav.next?'disabled':''}>›</button></div></nav><div class="viewer-body">${sidebar?`<aside class="sidebar" aria-label="${local?'当前任务产物':'筛选后的产物'}">${siblings.map(item=>`<button data-artifact-action="adjacent" data-id="${e(item.id)}" class="${a.id===item.id?'active':''}">${e(item.title)}</button>`).join('')}</aside>`:''}<section class="viewer"><header class="preview-toolbar"><div><h2>${e(a.title)}</h2><small>${e(t?.title)} · ${e(a.status)}</small></div><div class="actions">${copy!==undefined?'<button data-action="copy">复制内容</button>':''}${link?`<a class="button" href="${e(link)}" target="_blank" rel="noopener noreferrer">打开 ↗</a>`:''}${a.resource?`<a class="button" href="${resourceURL(a.resource,true)}" download>下载</a>`:''}<button data-action="info">ⓘ 信息</button></div></header><div class="preview">${a.preview_note?`<p class="muted">${e(a.preview_note)}</p>`:''}${previewHTML(a)}</div></section>${info?`<aside class="metadata"><h3>产物信息</h3><button class="text-button" data-action="info">关闭信息 ×</button><dl>${Object.entries(a.metadata||{}).map(([k,v])=>`<dt>${e(k)}</dt><dd>${e(v)}</dd>`).join('')}</dl></aside>`:''}</div>`;
   };
+  const originalPreviewHTML=previewHTML;
+  previewHTML = function(artifact) {
+    return artifact.preview?.type==='markdown' && Array.isArray(artifact.preview.nodes)
+      ? '<article class="prose markdown-document" data-markdown-preview></article>'
+      : originalPreviewHTML(artifact);
+  };
   const originalRender=render;
   render = function() {
     originalRender();
+    const markdownContainer=document.querySelector('[data-markdown-preview]');
+    if(markdownContainer)renderMarkdown(markdownContainer, data().items.find(item=>item.id===value('id')).preview.nodes);
     document.querySelector('.shell')?.classList.add('artifacts-shell');
     const list=document.querySelector('.conversation-list');
     if(list)list.scrollTop=history.state?.conversationScroll||0;

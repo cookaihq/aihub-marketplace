@@ -8,6 +8,35 @@ import os
 from pathlib import Path
 import sys
 import time
+import subprocess
+
+
+def ensure_preview_runtime(package):
+    """An existing venv from an older installation may not contain the new parser."""
+    check = [sys.executable, '-I', '-c',
+             'from markdown_it import MarkdownIt, __version__; '
+             'assert __version__ == "4.0.0"; assert MarkdownIt().parse("# ready")']
+    flags = {'creationflags': 0x08000000} if os.name == 'nt' else {}
+    def available():
+        try:
+            return subprocess.run(check, capture_output=True, timeout=15, **flags).returncode == 0
+        except (OSError, subprocess.SubprocessError):
+            return False
+    if available():
+        return
+    sys.stderr.write('[ui] Markdown 依赖不可用，正在按 uv.lock 修复当前 Plugin 环境。\n')
+    try:
+        result = subprocess.run(['uv', 'sync', '--frozen', '--no-dev', '--project', str(package),
+                                 '--reinstall-package', 'markdown-it-py', '--reinstall-package', 'mdurl'],
+                                capture_output=True, timeout=120, **flags)
+        if result.returncode == 0 and available():
+            return
+        reason = 'dependency_check_failed' if result.returncode == 0 else 'dependency_sync_failed'
+    except (OSError, subprocess.SubprocessError) as error:
+        reason = type(error).__name__
+    print(json.dumps({'status': 'runtime_error', 'reason': reason,
+                      'message': 'Markdown 依赖修复失败；请按当前 Plugin 的 uv.lock 恢复环境后重试。'}, ensure_ascii=False))
+    raise SystemExit(1)
 
 
 def main(package, plugin):
@@ -49,6 +78,8 @@ def main(package, plugin):
     runtime = (args.runtime_dir or project / 'tmp' / (plugin + '-ui')).resolve() / scope
     if runtime.is_relative_to(package):
         parser.error('runtime directory must stay outside the installation')
+    if args.command == 'start':
+        ensure_preview_runtime(package)
     sys.path.insert(0, str(package / 'shared'))
     from skill_ui.__main__ import main as core_main
     sys.argv = [sys.argv[0], args.command, '--adapter', str(package / 'ui' / 'adapter.py'), '--project', str(project),

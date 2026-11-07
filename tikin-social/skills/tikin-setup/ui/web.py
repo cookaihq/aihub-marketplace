@@ -16,7 +16,7 @@ class MarketplaceHandler(CoreHandler):
             self.check_origin()
             name = parsed.path[1:]
             original = (server.STATIC / name).read_text(encoding='utf-8')
-            extras = ('configuration.js', 'artifacts.js') if name.endswith('.js') else ('configuration.css', 'artifacts.css')
+            extras = ('configuration.js', 'markdown.js', 'artifacts.js') if name.endswith('.js') else ('configuration.css', 'artifacts.css')
             # Prevent the core's single-file shortcut before its bootstrap runs.
             prelude = ("if(!new URL(location.href).searchParams.has('view')){const u=new URL(location.href);u.searchParams.set('view','collection');history.replaceState({},'',u);}\n"
                        if name.endswith('.js') else '')

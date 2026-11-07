@@ -195,3 +195,11 @@
   .file-step { gap:7px; }
   .file-step button { padding:2px 8px; }
 }
+.markdown-document { overflow-wrap:anywhere; min-width:0; }
+.markdown-document img { display:block; max-width:100%; height:auto; margin:16px auto; }
+.markdown-document pre { overflow:auto; white-space:pre; padding:16px; background:var(--surface, #f4f5f7); border-radius:8px; }
+.markdown-document :not(pre)>code { white-space:break-spaces; }
+.markdown-document table { display:block; max-width:100%; overflow:auto; border-collapse:collapse; }
+.markdown-document th, .markdown-document td { padding:8px 12px; border:1px solid var(--line, #ddd); }
+.markdown-document blockquote { border-left:3px solid var(--line, #ccc); margin-left:0; padding-left:18px; }
+.markdown-image-error { display:block; padding:12px; margin:12px 0; border:1px dashed #b88738; border-radius:6px; color:#805a20; font-size:14px; }

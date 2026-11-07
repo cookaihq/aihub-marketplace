@@ -1,8 +1,8 @@
 ---
 name: tikin-creator-analytics
 metadata:
-  version: "3.1.0"
-description: v3.1.0｜通过 Tikin 分析创作者或账号的资料统计、近期内容表现、互动率、发布频率和热门内容。适用于创作者表现分析，或用户提供受支持平台的账号、频道链接或用户名。
+  version: "3.1.1"
+description: v3.1.1｜通过 Tikin 分析创作者或账号的资料统计、近期内容表现、互动率、发布频率和热门内容。适用于创作者表现分析，或用户提供受支持平台的账号、频道链接或用户名。
 ---
 
 # Creator Analytics

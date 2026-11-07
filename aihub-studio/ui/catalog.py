@@ -9,6 +9,7 @@ from pathlib import Path
 import subprocess
 
 from skill_ui.contracts import Resource, UIError
+from markdown_preview import MAX_IMAGE_BYTES, image_path, image_signature, nodes
 
 MAX_RECORD_BYTES = 8 * 1024 * 1024
 TEXT_PREVIEW_BYTES = 160 * 1024
@@ -167,6 +168,7 @@ class Catalog:
         roots = [path.parent for path in root.glob('*/task-info.json')] if root.is_dir() else []
         roots.extend(self.extra_tasks)
         tasks, items, conversations, self.resources = {}, {}, {}, {}
+        self.markdown_resources = {}
         for directory in dict.fromkeys(path.resolve() for path in roots):
             if directory not in self.extra_tasks and not directory.is_relative_to(root.resolve()):
                 continue
@@ -275,6 +277,14 @@ class Catalog:
                     result['preview'] = {'type': 'table', 'columns': rows[0][:30] if rows else [], 'rows': [row[:30] for row in rows[1:]]}
                 else:
                     result['preview'] = {'type': 'markdown' if path.suffix.lower() == '.md' else 'text', 'text': text}
+                    if full and path.suffix.lower() == '.md':
+                        self._clear_preview_images(item['id'])
+                        try:
+                            result['preview']['nodes'] = nodes(text, lambda src: self._preview_image(item, src))
+                        except UIError as error:
+                            self._clear_preview_images(item['id'])
+                            result['preview'] = {'type': 'text', 'text': text}
+                            result['preview_note'] = str(error)
                 if len(raw) > limit or kind == 'table':
                     result['preview_note'] = '预览仅展示部分内容，下载可取得完整文件。'
             except (OSError, UIError):
@@ -352,17 +362,57 @@ class Catalog:
                 'selected_conversation': selected['id'] if selected else None, 'navigation': navigation,
                 'available_types': list(dict.fromkeys(i['kind'] for i in self.items if not folder or i['task_id'] == folder))}
 
+    def _clear_preview_images(self, document_id):
+        for key, (parent, source) in list(self.markdown_resources.items()):
+            if parent == document_id:
+                self.resources.pop(key, None)
+                del self.markdown_resources[key]
+
+    def _preview_image(self, document, destination):
+        source, path, mime = image_path(document['_path'], destination)
+        try:
+            with path.open('rb') as stream:
+                info = os.fstat(stream.fileno())
+                header = stream.read(16)
+            if not 0 < info.st_size <= MAX_IMAGE_BYTES:
+                raise UIError('image', '图片为空或超过 20 MiB，未加载。')
+            if not image_signature(header, mime):
+                raise UIError('image', '文件内容与图片格式不符，未加载。')
+            signature = (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
+            key = identifier('markdown-image', document['id'], str(source))
+            self.resources[key] = (path, mime, path.name, signature, None)
+            self.markdown_resources[key] = (document['id'], source)
+            return key
+        except OSError:
+            raise UIError('image', '图片不存在或无法读取。') from None
+
     def resource(self, id):
         entry = self.resources.get(id)
         if not entry:
             raise UIError('resource', '此文件不在当前项目的成果清单中。', 404)
         path, mime, name, signature, expected = entry
         try:
+            attachment = self.markdown_resources.get(id)
+            if attachment:
+                parent, source = attachment
+                self.resource(parent)  # A changed or unavailable document revokes its attachments too.
+                if source.resolve(strict=True) != path:
+                    raise UIError('changed', '图片路径已变化，请刷新后重新核对。', 409)
             info = path.stat()
             if path.resolve() != path or (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns) != signature:
                 raise UIError('changed', '文件已变化，请刷新后重新核对。', 409)
             if expected and not self._matches(path, signature, expected):
                 raise UIError('changed', '文件与登记内容不一致，请刷新并由 Agent 核对。', 409)
-        except OSError:
+            if attachment:
+                # Serve the validated bytes, not a path the HTTP handler would reopen later.
+                with path.open('rb') as stream:
+                    data = stream.read(MAX_IMAGE_BYTES + 1)
+                    opened = os.fstat(stream.fileno())
+                if ((opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns) != signature
+                        or source.resolve(strict=True) != path or len(data) != info.st_size
+                        or len(data) > MAX_IMAGE_BYTES or not image_signature(data[:16], mime)):
+                    raise UIError('changed', '图片已变化，请刷新后重新核对。', 409)
+                return Resource(data, mime, name)
+        except (OSError, ValueError, RuntimeError):
             raise UIError('missing', '文件已移动或不存在。', 404) from None
         return Resource(path, mime, name)

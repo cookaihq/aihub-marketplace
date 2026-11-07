@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.1 — 2026-11-07
+
+- 修复 Markdown 预览：使用锁定的解析器显示富文本与文档相对附图，支持外置文档、中文及空格路径。
+- 附图沿用鉴权与文档归属，拒绝远程、越界、SVG、伪装格式及超限文件；文件变化后旧资源失效，不增加产物计数。复制和下载保留原文。
+- 启动时按锁文件恢复缺失的解析依赖。 Tikin Setup 声明的 Python 下限调整为 3.10，实际锁定运行时仍为 3.13.3。
+- 共享产物入口覆盖全部 17 个 Skill：16 个升至 3.1.1，接口发现升至 2.1.1。
+- 本版在 Windows 通过 Codex 0.166.0 的开发源显式调用、两套服务的启动/资源/下载检查，以及独立浏览器的图片显示与手机视口检查。原业务文档 29 张图片全部显示，真实文件保持不变。按本次用户决定，WorkBuddy 不要求实测；macOS 待验。未复测原生安装发现、隐式触发或线上业务；Codex 子会话自身的浏览器控制受限，独立浏览器结果另行记录。
+
 ## 3.1.0 — 2026-11-07
 
 - Add a native Hermes Plugin entry registering the existing 17 Skills with shared request, setup and offline discovery resources.
