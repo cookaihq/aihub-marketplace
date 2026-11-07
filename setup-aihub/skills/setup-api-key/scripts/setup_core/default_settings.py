@@ -13,7 +13,7 @@ from .consumers import fingerprint
 from .errors import SetupError
 
 CATALOG = Path(__file__).resolve().parents[4] / "references/default-settings-targets.json"
-AGENT_NAMES = {"codex": "ChatGPT/Codex", "claude-code": "Claude Code", "workbuddy": "WorkBuddy"}
+AGENT_NAMES = {"codex": "ChatGPT/Codex", "claude-code": "Claude Code", "workbuddy": "WorkBuddy", "hermes": "Hermes"}
 INSTALLED = {"installed", "disabled", "unloaded"}
 INSTALLATIONS = INSTALLED | {"not_installed", "unknown", "source_conflict"}
 STATUSES = {"missing", "configured_global", "configured_project", "conflict", "unknown", "skipped"}

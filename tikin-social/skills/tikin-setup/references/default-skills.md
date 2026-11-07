@@ -8,7 +8,7 @@
 
 ## 读取当前 Agent 和偏好
 
-从当前会话确认 Agent 是 `codex`、`claude-code` 或 `workbuddy`，然后直接执行下面的只读 `check`。程序在内部读取规定的配置目录变量，返回实际目录；不要先扫描 home、其他 Agent 的目录或凭证文件，也不要运行 `env` / `printenv`、打印全部进程环境或读取业务 `.env`。检查不需要凭证。已有明确的非默认宿主配置目录时用 `--config-dir` 传入绝对路径。
+从当前会话确认 Agent 是 `codex`、`claude-code`、`workbuddy` 或 `hermes`，然后直接执行下面的只读 `check`。程序在内部读取规定的配置目录变量，返回实际目录；不要先扫描 home、其他 Agent 的目录或凭证文件，也不要运行 `env` / `printenv`、打印全部进程环境或读取业务 `.env`。检查不需要凭证。已有明确的非默认宿主配置目录时用 `--config-dir` 传入绝对路径。
 
 读取结果后，按当前宿主上下文核对 `config_dir`。远程、容器和 WSL 使用实际执行环境，不能套用另一台机器的路径。WorkBuddy 配置目录变量冲突时，程序会停止此项检查；只核对这两个目录值和当前宿主配置，不扩大读取范围。仍无法确定时报告未知，继续主任务。
 
@@ -24,7 +24,7 @@ uv run --project "${TIKIN_SETUP_DIR}" "${TIKIN_SETUP_DIR}/scripts/tikin-config" 
 ## 核对规则是否已经生效
 
 1. 读取当前会话实际适用的全局与项目规则。辅助程序返回候选文件、选定的全局主文件、真实路径以及建议规则。它不解析自然语言、imports 或全部项目覆盖，最终结论由当前 Agent 阅读实际规则后作出。
-2. Codex 核对实际配置目录的首个非空 `AGENTS.override.md` / `AGENTS.md`，再沿项目加载链检查覆盖、配置的 fallback 文件和上下文预算。Claude Code 核对 `CLAUDE.md`、`rules/`、imports、项目/本地规则及托管策略。WorkBuddy 核对当前配置目录的 `CODEBUDDY.md`、`rules/` 和项目 `CODEBUDDY.md` / `AGENTS.md` / `.codebuddy/`，并核对版本与启用条件。候选路径不是实际加载证明。
+2. Codex 核对实际配置目录的首个非空 `AGENTS.override.md` / `AGENTS.md`，再沿项目加载链检查覆盖、配置的 fallback 文件和上下文预算。Claude Code 核对 `CLAUDE.md`、`rules/`、imports、项目/本地规则及托管策略。WorkBuddy 核对当前配置目录的 `CODEBUDDY.md`、`rules/` 和项目 `CODEBUDDY.md` / `AGENTS.md` / `.codebuddy/`，并核对版本与启用条件。Hermes 核对当前 Profile 的 `SOUL.md`，并核对项目上下文：`.hermes.md` / `HERMES.md` 优先，其次是 Git 根到 cwd 的 `AGENTS.override.md` / `AGENTS.md` / `agents.md` 链，再次是 cwd 的 `CLAUDE.md` 等。候选路径不是实际加载证明。
 3. 判断现有文字是否已经明确表达本 Plugin 的相关任务默认使用其具体 Skills。语义等效的手写规则也算，不要求相同标记或逐字一致；仅出现 Plugin 名、安装说明、示例或被禁用/覆盖的规则都不算已生效。
 4. 有等效规则且当前任务适用时不询问。只在项目生效时说明范围，不重复追加项目规则；如需跨项目默认，提供全局设置选择。有相反规则、部分覆盖、重复规则块或无法确认加载时解释具体文件与冲突，不自动覆盖。
 5. 确认没有适用默认规则、提醒开启且本会话尚未提示时，在原任务结果之后提供下面的固定菜单。说明本次 Plugin、当前 Agent、全局作用范围及实际发现的共享文件影响；选择“设为默认”即授权设置这些对象。同一会话同一 Plugin 最多提示一次，沿用用户已作出的跳过、关闭提醒或本轮不要询问的选择。
@@ -54,8 +54,16 @@ uv run --project "${TIKIN_SETUP_DIR}" "${TIKIN_SETUP_DIR}/scripts/tikin-config" 
 
 macOS/Linux 按实际运行用户的 home 定位；Windows 原生用实际运行时用户目录，WSL 使用 Linux 用户目录，不跨环境读取。AIhub 的 Node 程序和 tikin 的共享 Python 请求、配置及端点搜索入口支持原生 Windows 路径；脚本检查与各宿主业务验收分别记录。`--no-global-config` 会跳过本项读取，并拒绝保存；不要绕过它打开 settings.json。
 
+## Hermes 入口与 Profile
+
+使用当前 Hermes local backend 的实际 cwd 和进程环境；从 `skill_view("<plugin>:<skill>")` 返回的路径定位完整 Plugin。启用后的 Skill 进入当前版本的 `skills_list` 和可用技能索引；显式加载与自然触发分别核对。安装与更新见同包 README。缺业务 Key 时复用本 Plugin 配置中心；存在 Setup 任务时加载 `setup-aihub:setup-api-key` 并沿用任务编号。
+
+提醒按实际 `HERMES_HOME`（或明确的 `--config-dir`）隔离，规则目标是其中的 `SOUL.md`；macOS/Linux 默认 `~/.hermes`，当前 Windows 默认 `%LOCALAPPDATA%/hermes`，默认目录还遵循 `HERMES_DATA_DIR_SUFFIX`。自定义/非默认 Profile 必须传当前实际目录，不从默认目录猜测；不要将 Hermes 全局规则写入 `~/.hermes/AGENTS.md`。保留 SOUL 原有人格与其他规则，只追加获授权的 Plugin 块；当前 Profile 的范围不等于全部 Profile。业务 Key 仍使用运行用户的 `.config/<plugin>/` 分层，与 Profile 的提醒和配置任务分开。
+
 ## 宿主依据
 
 - Codex：[AGENTS.md 规则加载](https://learn.chatgpt.com/docs/agent-configuration/agents-md)。
 - Claude Code：[memory 与规则](https://code.claude.com/docs/en/memory)。
 - WorkBuddy：核对本机桌面运行时 `SkillExtensionLoader.parseSkillFile` 和 `MemoryLoader.loadUserMemories`；Skill 逻辑名来自 frontmatter，描述包含 Plugin 来源，全局规则为实际配置目录内的 `CODEBUDDY.md`。其他版本仍需核对真实加载，不把安装卡片或静态文件存在当成会话验收。
+
+- Hermes：[Plugin Skills](https://hermes-agent.nousresearch.com/docs/developer-guide/plugins/)、当前安装的 `hermes_constants.py`、`agent/prompt_builder.py`。核对实际版本和当前 Profile；文件保存与新会话加载分别验收。

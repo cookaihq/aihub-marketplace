@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.1.0 — 2026-11-07
+
+- Hermes 同时注册 setup-api-key 与 setup-agent-model；业务配置网页、默认设置与进度恢复沿用共享实现。
+- 恢复任务绑定当前 Hermes Profile，防止跨 Profile 复用确认；业务 Key 的共享路径与原三宿主行为不变。
+- setup-api-key 升至 4.1.0；setup-agent-model 升至 2.2.2，修正 Hermes 已支持 Git 子目录安装的说明。
+- 本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
+
 ## 4.0.0 — 2026-11-06
 
 - 业务密钥配置改为委托目标 Plugin 自带页面，保留任务、caller、保存范围、提交状态和恢复绑定。退出业务 Secret Book 及旧网页入口，不搬移或删除已有配置。

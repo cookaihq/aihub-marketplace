@@ -1,4 +1,4 @@
 name: setup-aihub
-version: 4.0.0
-description: Configure AIhub models in native agent clients.
+version: 4.1.0
+description: 配置业务密钥与原生客户端模型，保留来源和恢复进度
 author: cookaihq

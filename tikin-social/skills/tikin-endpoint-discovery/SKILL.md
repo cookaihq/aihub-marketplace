@@ -1,8 +1,8 @@
 ---
 name: tikin-endpoint-discovery
 metadata:
-  version: "2.0.0"
-description: v2.0.0｜从 Tikin 支持的平台接口中查找合适的数据接口。适用于已知目标但不清楚接口路径，或 LinkedIn、Reddit、哔哩哔哩、微博、微信、快手、知乎、Lemon8 等没有专属 Skill 的平台；检索随包索引并对应到 REST 调用。
+  version: "2.1.0"
+description: v2.1.0｜从 Tikin 支持的平台接口中查找合适的数据接口。适用于已知目标但不清楚接口路径，或 LinkedIn、Reddit、哔哩哔哩、微博、微信、快手、知乎、Lemon8 等没有专属 Skill 的平台；检索随包索引并对应到 REST 调用。
 ---
 
 # tikin — Endpoint Discovery
@@ -86,6 +86,9 @@ uv run --frozen --project "<this-skill-dir>" python "<this-skill-dir>/scripts/ti
 
 The JSON includes the operation, referenced components, required fields, defaults,
 constraints, catalog identity and snapshot price/rate. Preserve `$ref` siblings.
+Catalog identity retains the frozen source hashes and records distributed hashes and
+documentation-only changes separately. Placeholder-host credential-request examples
+are removed; construct requests through `tikin-rest-api` with the confirmed service.
 Use the method from discovery; old methods and retired operations return an explicit
 local absence with migration information. Catalog `candidate` status is not service
 publication evidence. A snapshot zero price does not establish current live billing.

@@ -54,3 +54,14 @@ test('unknown host identity is not fabricated from a Claude-compatible variable'
   assert.equal(child.agent_id, 'worker-agent');
   assert.throws(() => actorContext({ host: 'Codex', parent_conversation_id: 'guessed' }, {}));
 });
+
+test('Hermes session identity is preserved and conflicting inherited hosts need explicit context', () => {
+  const env = { HERMES_SESSION_ID: 'hermes-session' };
+  assert.equal(actorContext({}, env).host, 'Hermes');
+  assert.equal(actorContext({}, env).conversation_id, 'hermes-session');
+  const inherited = { ...env, CODEX_THREAD_ID: 'parent-codex-session' };
+  assert.equal(actorContext({}, inherited).host, null);
+  assert.equal(actorContext({}, inherited).conversation_id, null);
+  assert.equal(actorContext({ host: 'Hermes' }, inherited).conversation_id, 'hermes-session');
+  assert.equal(actorContext({ host: 'Codex' }, inherited).conversation_id, 'parent-codex-session');
+});

@@ -17,7 +17,7 @@ def main(package, plugin):
     parser.add_argument('--page', choices=('configuration', 'artifacts'), required=True)
     parser.add_argument('--task-dir', type=Path, action='append', default=[])
     parser.add_argument('--skill')
-    parser.add_argument('--agent', choices=('codex', 'claude-code', 'workbuddy'))
+    parser.add_argument('--agent', choices=('codex', 'claude-code', 'workbuddy', 'hermes'))
     parser.add_argument('--config-dir', type=Path)
     parser.add_argument('--no-global-config', action='store_true')
     parser.add_argument('--save-scope', choices=('global', 'project'), default='global')

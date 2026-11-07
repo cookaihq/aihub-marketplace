@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 from test_setup import MARKET, PLUGIN, SCRIPT, SKILL
 from setup_core import default_settings as defaults
+from setup_core.consumers import host_context
 from setup_core.errors import SetupError
 from setup_core.progress import Tasks
 
@@ -278,7 +279,8 @@ class DefaultSettingsTests(unittest.TestCase):
                 self.rule.write_text("# Existing user instructions\n", encoding="utf-8")
                 state = copy.deepcopy(self.state)
                 state["context"]["host"] = host
-                with patch("pathlib.Path.home", return_value=self.user):
+                with patch("pathlib.Path.home", return_value=self.user), patch.dict(os.environ, self.environment(), clear=True):
+                    state["context"].update(host_context(host))
                     Tasks().save(state)
                 report = self.root / "report.json"
                 report.write_text(json.dumps(self.report), encoding="utf-8")

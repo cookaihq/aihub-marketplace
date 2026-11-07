@@ -37,12 +37,31 @@ class DefaultSkillTests(unittest.TestCase):
         return json.loads(process.stdout)
 
     def test_offline_check_all_hosts_without_writes(self):
-        for agent in ("codex", "claude-code", "workbuddy"):
+        for agent in ("codex", "claude-code", "workbuddy", "hermes"):
             result = self.ok(agent=agent)
             self.assertEqual(result["status"], "review_required")
             self.assertEqual(result["session_loaded"], "not_verified")
             self.assertIn("tikin-douyin", result["proposed_rule"])
         self.assertFalse(self.settings.exists())
+
+    def test_hermes_profile_soul_and_reminder_isolation(self):
+        profile = self.root / "Hermes profile 中文"
+        profile.mkdir()
+        soul = profile / "SOUL.md"
+        soul.write_text("Existing identity", encoding="utf-8")
+        self.env["HERMES_HOME"] = str(profile)
+        result = self.ok(agent="hermes")
+        self.assertEqual(result["primary_rule"], str(soul))
+        self.assertIsNone(result["additional_rules_directory"])
+        self.env.update(HERMES_HOME="${HERMES_TEST_PROFILE}", HERMES_TEST_PROFILE=str(profile))
+        self.assertEqual(self.ok(agent="hermes")["config_dir"], str(profile))
+        self.assertEqual(self.ok(agent="hermes", action="dismiss")["status"], "dismissed")
+        self.assertEqual(self.ok(agent="hermes", extra=("--config-dir", str(self.root / "other")))["status"], "review_required")
+        self.assertEqual(self.ok(agent="codex")["status"], "review_required")
+        self.assertEqual(soul.read_text(), "Existing identity")
+        self.env.update(HERMES_HOME="", LOCALAPPDATA=str(self.root / "local"), HERMES_DATA_DIR_SUFFIX="-dev")
+        expected = self.root / "local/hermes-dev" if os.name == "nt" else self.root / ".hermes-dev"
+        self.assertEqual(self.ok(agent="hermes")["config_dir"], str(expected))
 
     def test_persistence_isolation_preservation_and_restore(self):
         self.settings.parent.mkdir(parents=True)

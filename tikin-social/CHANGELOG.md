@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.1.0 — 2026-11-07
+
+- Add a native Hermes Plugin entry registering the existing 17 Skills with shared request, setup and offline discovery resources.
+- Resolve the active Hermes Profile and SOUL.md for default-Skill reminders; preserve existing hosts and business configuration.
+- Bump the 16 request-using Skills to 3.1.0 and endpoint discovery to 2.1.0; document complete-package installation and native updates.
+- Accept Hermes in the shared configuration/artifact launcher and task metadata; require explicit host identity when multiple host session environments coexist.
+- Remove a bundled OpenAPI example that sends credentials to an unconfigured placeholder host; retain every API contract, frozen source hash and separate distributed-document provenance. Hermes install scanning remains enabled.
+- 本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
+
 ## 3.0.0
 
 2026-11-06

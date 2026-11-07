@@ -31,7 +31,7 @@ const HELP = `AIhub media Plugin CLI
 Usage: node <plugin>/scripts/aihub.mjs COMMAND --skill NAME [options]
 Skills: ${SKILLS.join(', ')}
 Commands:
-  default-skills --agent codex|claude-code|workbuddy [--action check|dismiss|enable] [--config-dir DIR]
+  default-skills --agent codex|claude-code|workbuddy|hermes [--action check|dismiss|enable] [--config-dir DIR]
   config-check (--skill NAME | --plugin-only) [--credentials-only] [--delete-from FILE --delete-fields AIHUB_API_KEY]
     Local inspection or read-only deletion projection; no network or media tools.
   doctor

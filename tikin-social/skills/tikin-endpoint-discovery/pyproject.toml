@@ -1,6 +1,6 @@
 [project]
 name = "tikin-endpoint-discovery"
-version = "2.0.0"
+version = "2.1.0"
 description = "Offline search CLI over the bundled tikin endpoint index. Standard library only; the pinned interpreter is the point of this project file."
 requires-python = ">=3.9"
 dependencies = []

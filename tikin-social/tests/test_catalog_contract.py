@@ -93,7 +93,8 @@ class CatalogContractTests(unittest.TestCase):
         refs = ROOT / 'skills/tikin-endpoint-discovery/references'
         identity = json.loads((refs / 'catalog-identity.json').read_text())
         for name in ('endpoint-index.json', 'openapi.json'):
-            self.assertEqual(hashlib.sha256((refs / name).read_bytes()).hexdigest(), identity['outputs'][name]['sha256'])
+            self.assertEqual(hashlib.sha256((refs / name).read_bytes()).hexdigest(),
+                             identity['distributed_outputs'][name]['sha256'])
         self.assertEqual(identity['outputs']['endpoint-index.json']['sha256'],
                          '285a879c2e134a7925a9985feac4f4897d806e59c53062e98076b3fb8ae2bbb7')
         result = subprocess.run([sys.executable, str(DISCOVERY), '--limit', '2000'], capture_output=True, text=True, timeout=30)
@@ -122,6 +123,23 @@ class CatalogContractTests(unittest.TestCase):
         self.assertFalse(query['side_effects'])
         self.assertEqual(query['catalog_price']['usd'], '0.0')
         self.assertIn('1 request per', query['operation']['description'])
+
+    def test_export_discovery_routes_credentials_to_shared_client_and_keeps_provenance(self):
+        output = self.describe('/api/v1/douyin/creator_v2/fetch_item_list_download', 'POST')
+        description = output['operation']['description']
+        self.assertNotIn('https://your-api.com/', description)
+        self.assertIn('tikin-rest-api', description)
+        self.assertIn('Your_Cookie_Here', description)
+        self.assertIn('requestBody', output['operation'])
+        catalog = output['catalog']
+        self.assertEqual(catalog['outputs']['openapi.json']['sha256'],
+                         '2db51d5ff4b9a8db0160c212795ee4126581efc156e08ccb700506f0467dc484')
+        self.assertNotEqual(catalog['outputs']['openapi.json'], catalog['distributed_outputs']['openapi.json'])
+        self.assertEqual(len(catalog['documentation_changes']), 1)
+        change = catalog['documentation_changes'][0]
+        self.assertEqual(change['operation'], 'POST ' + output['path'])
+        self.assertEqual(change['field'], 'description')
+        self.assertEqual(change['distributed_description_sha256'], hashlib.sha256(description.encode()).hexdigest())
 
 
 if __name__ == '__main__':

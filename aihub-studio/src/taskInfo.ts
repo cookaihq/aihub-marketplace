@@ -22,7 +22,7 @@ export interface TaskInfo {
 }
 interface Execution { actor: Actor; name?: string; auxiliary?: boolean; warnings: string[] }
 const execution = new AsyncLocalStorage<Execution>();
-const allowedHosts = new Set(['Codex', 'Claude Code', 'WorkBuddy']);
+const allowedHosts = new Set(['Codex', 'Claude Code', 'WorkBuddy', 'Hermes']);
 const VERSION = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version as string;
 
 export function actorContext(input: Record<string, unknown> = {}, env = process.env): Actor {
@@ -35,9 +35,10 @@ export function actorContext(input: Record<string, unknown> = {}, env = process.
     return value;
   };
   const suppliedHost = string('host');
-  if (suppliedHost && !allowedHosts.has(suppliedHost)) throw new Error('Context host must be Codex, Claude Code or WorkBuddy.');
-  const host = suppliedHost ?? (env.CODEX_THREAD_ID ? 'Codex' : null);
-  const conversation_id = string('conversation_id') ?? (host === 'Codex' ? env.CODEX_THREAD_ID || env.CODEX_SESSION_ID : host === 'WorkBuddy' ? env.CODEBUDDY_SESSION_ID : host === 'Claude Code' ? env.CLAUDE_SESSION_ID : null) ?? null;
+  if (suppliedHost && !allowedHosts.has(suppliedHost)) throw new Error('Context host must be Codex, Claude Code, WorkBuddy or Hermes.');
+  const detected = [env.CODEX_THREAD_ID ? 'Codex' : null, env.HERMES_SESSION_ID ? 'Hermes' : null].filter(Boolean);
+  const host = suppliedHost ?? (detected.length === 1 ? detected[0]! : null);
+  const conversation_id = string('conversation_id') ?? (host === 'Codex' ? env.CODEX_THREAD_ID || env.CODEX_SESSION_ID : host === 'WorkBuddy' ? env.CODEBUDDY_SESSION_ID : host === 'Claude Code' ? env.CLAUDE_SESSION_ID : host === 'Hermes' ? env.HERMES_SESSION_ID : null) ?? null;
   const relationship = string('relationship');
   if (relationship && relationship !== 'child' && relationship !== 'fork') throw new Error('Context relationship must be child or fork.');
   const parent = string('parent_conversation_id');

@@ -1,6 +1,6 @@
 # 宿主安装与加载（给 Agent）
 
-适用于 Setup 自身、`aihub-studio` 与 `tikin-social` 的完整 Plugin。三宿主共用一份 Skill/代码，manifest 分别适配。安装远端前核对所需版本是否可取得，不能用旧发布版替代新增契约。
+适用于 Setup 自身、`aihub-studio` 与 `tikin-social` 的完整 Plugin。各宿主共用一份 Skill/代码，manifest 分别适配。安装远端前核对所需版本是否可取得，不能用旧发布版替代新增契约。
 
 先从当前会话和实际原生管理入口取得：宿主、来源、版本、作用域、实体位置、安装/启用状态、本会话发现/调用状态。未知项留空并说明原因。工具不在当前会话、查询失败、只添加了市场、只有开发目录或另一个宿主已安装，均不是“未安装”的证据。helper 只验证传入业务产物，不是安装探测器。
 
@@ -13,6 +13,16 @@
 | WorkBuddy | 使用当前实例的原生“专家·技能·连接器 → 技能 → 套件”。Windows 5.6.2 的推荐市场 `workbuddy_marketplace_skill` 只装 BuiltinMarket 单 Skill，不能用于自定义 Git 市场的完整 Plugin。按下方步骤与截图指导；当前会话有已核实适用的原生工具/UI 能力时才代办 |
 
 安装完先核对完整组件，再分别验证启用、Skill 发现与调用。已安装但未启用或未加载时，能独立执行真实配置检查就继续；需要业务调用时引导实际刷新/新会话，不要求重装。来源冲突或旧版不兼容时确认实际加载对象，提供兼容版本选择，不强制更新。
+
+## Hermes 原生 Plugin
+
+先核对当前 Hermes 版本、Profile 的实际 `HERMES_HOME`、local backend 和业务 cwd。当前原生安装器支持仓库子目录，三个对象分别使用 `https://github.com/cookaihq/aihub-marketplace.git#aihub-studio`、`#tikin-social`、`#setup-aihub`；CNB 对应同一路径片段。使用实际 `hermes plugins install --help` 中的 `--ref <固定提交> --enable`，整个 Plugin 一起安装。不要把市场仓根作为一个 Plugin，也不要只复制 SKILL.md。没有子目录能力的旧宿主先说明版本限制，由用户选择升级宿主或保留原安装。
+
+通过 `hermes plugins list` 核对来源、版本和启用状态，实际会话用 `skills_list` 与 `skill_view("setup-aihub:setup-api-key")` 核对加载来源。另一个入口是 `setup-aihub:setup-agent-model`。注册不执行脚本、不读业务 Key；当前版本的自然发现和显式调用分别验证。`plugins doctor <完整目录> --ci` 只证明注册契约，不代表业务成功。
+
+配置沿用本机网页与无值 helper，传 `--host hermes`，保留当前 Profile 的 `HERMES_HOME` 给子进程。后台网页使用实际 `terminal` 的 `background: true` 启动 `setup_ui.py start --keep-running`，随后独立查询 `status` 并交付 URL；关闭时用同任务 `stop`。浏览器在另一台机器时先说明回环地址不可直接访问，按用户选择的既有远程访问方式继续。业务保存仍由本人填写并确认，任务恢复保留 caller、cwd、scope 和提交状态。
+
+更新先 `hermes plugins check-updates`，用户已要求更新时使用 `hermes plugins update <plugin>`；完整包、实际来源、版本和新会话加载分别核对。要求固定版本时沿用安装器的精确 ref 入口与实际帮助，先保留旧安装和本地修改。不要给包内 Skill 增加独立更新器，也不要将安装成功当成配置或线上请求通过。
 
 ## WorkBuddy 原生套件
 

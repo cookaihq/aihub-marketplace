@@ -13,7 +13,7 @@ AIhub 的 macOS/Linux 入口使用 `node scripts/aihub.mjs`；Windows 用随包 
 从实际项目目录调用本 Plugin 自带配置中心，无需额外安装 Setup 或开发 UI Skill：
 
 ```text
-uv run --frozen --project "<Plugin实体>" python "<Plugin实体>/scripts/ui.py" start --project "<真实业务cwd>" --page configuration --skill <实际业务Skill> --agent <codex|claude-code|workbuddy>
+uv run --frozen --project "<Plugin实体>" python "<Plugin实体>/scripts/ui.py" start --project "<真实业务cwd>" --page configuration --skill <实际业务Skill> --agent <codex|claude-code|workbuddy|hermes>
 ```
 
 没有 caller 省略 `--skill`。已明确项目保存时加 `--save-scope project`；首次新增默认个人全局。已有配置按真实加载器来源写回，环境变量只读并在原注入位置修复。API Key 下提供获取控制台链接及“或联系团队负责人分配”；页面不展示服务地址。

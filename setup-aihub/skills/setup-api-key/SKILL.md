@@ -1,9 +1,9 @@
 ---
 name: setup-api-key
 metadata:
-  version: "4.0.0"
-description: v4.0.0｜为 AIhub 创作与文档服务、Tikin 社交媒体数据服务检查、配置、更换、修复或清除本机接口密钥。支持只提供名称开始、中文配置意图及业务缺项后的继续，也处理英文密钥配置请求。不管理宿主模型、登录 Key 或远端开户充值。
-compatibility: Claude Code, Codex and WorkBuddy; uv >= 0.8, Python 3.13; target Plugin configuration runtime required.
+  version: "4.1.0"
+description: v4.1.0｜为 AIhub 创作与文档服务、Tikin 社交媒体数据服务检查、配置、更换、修复或清除本机接口密钥。支持只提供名称开始、中文配置意图及业务缺项后的继续，也处理英文密钥配置请求。不管理宿主模型、登录 Key 或远端开户充值。
+compatibility: Claude Code, Codex, WorkBuddy and Hermes; uv >= 0.8, Python 3.13; target Plugin configuration runtime required.
 ---
 
 # Setup API Key

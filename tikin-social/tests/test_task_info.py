@@ -9,6 +9,8 @@ import tempfile
 import unittest
 
 SCRIPTS = Path(__file__).resolve().parents[1] / 'skills/tikin-setup/scripts'
+sys.path.insert(0, str(SCRIPTS))
+from task_info import actor_context
 
 
 class TaskInfoTests(unittest.TestCase):
@@ -78,6 +80,17 @@ class TaskInfoTests(unittest.TestCase):
         saved['schema_version'] = 900
         self.info.write_text(json.dumps(saved))
         self.assertEqual(self.register([], ok=False), saved)
+
+    def test_hermes_participant_and_conflicting_inherited_host(self):
+        self.context.write_text(json.dumps({'host': 'Hermes', 'conversation_id': 'hermes-session'}))
+        updated = self.register([])
+        self.assertEqual(updated['creator']['host'], 'WorkBuddy')
+        self.assertEqual(updated['participants'][-1]['host'], 'Hermes')
+        self.assertEqual(actor_context(environment={'HERMES_SESSION_ID': 'hermes-session'})['conversation_id'], 'hermes-session')
+        inherited = {'HERMES_SESSION_ID': 'hermes-session', 'CODEX_THREAD_ID': 'parent-session'}
+        self.assertIsNone(actor_context(environment=inherited)['host'])
+        self.assertIsNone(actor_context(environment=inherited)['conversation_id'])
+        self.assertEqual(actor_context({'host': 'Hermes'}, inherited)['conversation_id'], 'hermes-session')
 
 
 if __name__ == '__main__':

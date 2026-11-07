@@ -2,7 +2,7 @@
 
 这个市场提供 AIhub 创作与文档处理、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
 
-当前版本为 AIhub Studio **2.0.0**、Tikin Social **3.0.0** 和 Setup AIHub **4.0.0**。业务 Plugin 自带配置中心与按任务、会话、文件查看的产物页；Setup 保留业务配置续接和独立客户端模型配置。实际验证范围见各 Plugin 使用说明。
+当前版本为 AIhub Studio **2.1.0**、Tikin Social **3.1.0** 和 Setup AIHub **4.1.0**。业务 Plugin 自带配置中心与按任务、会话、文件查看的产物页；Setup 保留业务配置续接和独立客户端模型配置。实际验证范围见各 Plugin 使用说明。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
@@ -10,7 +10,7 @@
 | [tikin Social](tikin-social/README.md)（`tikin-social`） | 社交媒体数据查询、素材下载、账号与评论分析、趋势研究 | 17 个 `tikin-*` Skill |
 | [Setup AIHub](setup-aihub/README.md)（`setup-aihub`） | 管理上述业务服务密钥和六类客户端的原生模型配置 | `setup-api-key`、`setup-agent-model` |
 
-仓库提供 Claude Code、Codex 和 WorkBuddy 的市场清单。清单登记不代表所有宿主与操作系统的完整调用都已验证；各 Plugin 的运行工具、配置要求与验证范围见其 README。
+仓库提供 Claude Code、Codex 和 WorkBuddy 的市场清单，以及 Hermes 的三个原生 Plugin 入口；共享 25 个 Skill 与业务实现。清单登记不代表所有宿主与操作系统的完整调用都已验证；各 Plugin 的运行工具、配置要求与验证范围见其 README。
 
 配置服务时可以说“帮我配置 AIhub 创作服务的密钥”或“换一下刚才的 tikin Key”。已加载 Setup 后，仅说 `setup-api-key` 即可开始中文菜单；Setup 尚未安装时先使用[完整安装提示词](setup-aihub/README.md#让-agent-帮你安装)。业务凭证已可读时无需运行 Setup。
 
@@ -41,6 +41,18 @@ Claude Code 和 Codex 支持原生 Plugin 管理。将下面这段话复制到�
 ```
 
 各 Plugin 的完整媒体、文档和数据业务验证范围以对应 README 为准；Setup 的凭证配置验收不代表这些业务全部通过。业务调用还需要对应服务的配置与权限。
+
+### Hermes：安装完整原生 Plugin
+
+将下面这段话复制到 Hermes；安装对象可保留为所需的一个或多个 Plugin：
+
+```text
+请在当前 Hermes Profile 安装 AIhub Marketplace 的 aihub-studio、tikin-social、setup-aihub 三个完整 Plugin。先阅读仓库 README 与各 Plugin README，核对本机 hermes plugins install 的子目录及固定 ref 支持。来源为 https://github.com/cookaihq/aihub-marketplace.git#aihub-studio、https://github.com/cookaihq/aihub-marketplace.git#tikin-social、https://github.com/cookaihq/aihub-marketplace.git#setup-aihub；网络故障时使用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git 的相同 #子目录和同一版本。保留已有配置和本地修改，通过 Hermes 原生入口安装并启用，不单独复制 SKILL.md。分别报告来源、Plugin 版本、25 个 Skill 的发现与实际调用结果。未加载时开启新会话，显式使用 aihub-studio:aihub-image、tikin-social:tikin-endpoint-discovery 或 setup-aihub:setup-api-key 检查；不得以安装成功代替业务通过。
+```
+
+Hermes 支持 Git URL 的 `#子目录`。需要固定版本时，让 Agent 将已发布的 Plugin tag（如 `aihub-studio/v2.1.0`）解析为完整 40 位提交 SHA，再传给安装器的 `--ref`；不能直接传 tag 名。未固定版本的安装可先检查 `hermes plugins check-updates`，你要求更新后由原生 `hermes plugins update <plugin>` 更新完整包。固定版本不会随普通更新移动；更换版本时先确认新提交，再由原生安装器使用同一来源、`--force --ref` 替换。自然请求的 Skill 选择与显式加载分别核对。
+
+安装与默认规则属于当前 Hermes Profile：优先使用实际 `HERMES_HOME`，默认 Windows 为 `%LOCALAPPDATA%/hermes`，macOS 为 `~/.hermes`，并尊重 `HERMES_DATA_DIR_SUFFIX`。默认规则写入当前 Profile 的 `SOUL.md`，保留已有身份内容；业务 Key 继续读取两个 Plugin 原有的 `~/.config/` 配置，不随 Profile 自动迁移。配置任务和提醒按 Profile 隔离，共享 Key 的修改仍可能影响其他宿主。
 
 ### WorkBuddy：手动填写市场源并安装套件
 
@@ -79,12 +91,14 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 
 版本标签随代码同步到 CNB，下表链接到对应的 GitHub Release。
 
-本轮 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
+本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
+
+历史 Studio 2.0.0、Tikin 3.0.0、Setup 4.0.0 的 Windows 合成与 Codex / WorkBuddy 结果见各 Plugin README；Claude Code 入口继续兼容。
 
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 2.0.0 | [aihub-studio/v2.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv2.0.0) |
-| setup-aihub | 4.0.0 | [setup-aihub/v4.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv4.0.0) |
-| tikin-social | 3.0.0 | [tikin-social/v3.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv3.0.0) |
+| aihub-studio | 2.1.0 | [aihub-studio/v2.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv2.1.0) |
+| setup-aihub | 4.1.0 | [setup-aihub/v4.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv4.1.0) |
+| tikin-social | 3.1.0 | [tikin-social/v3.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv3.1.0) |
 <!-- release-table:end -->

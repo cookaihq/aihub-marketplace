@@ -469,7 +469,7 @@ def main():
     inspection_parser.add_argument("--delete-from", help="known source file; never changes the file")
     inspection_parser.add_argument("--delete-fields", help="comma-separated declared fields to project as absent")
     defaults_parser = subparsers.add_parser("default-skills", help="inspect current Agent defaults and manage reminder preferences without API credentials")
-    defaults_parser.add_argument("--agent", required=True, choices=("codex", "claude-code", "workbuddy"))
+    defaults_parser.add_argument("--agent", required=True, choices=("codex", "claude-code", "workbuddy", "hermes"))
     defaults_parser.add_argument("--action", choices=("check", "dismiss", "enable"), default="check")
     defaults_parser.add_argument("--config-dir", help="actual configuration directory of the current Agent")
     run_parser = subparsers.add_parser("run", help="run a command with resolved tikin configuration")

@@ -11,7 +11,7 @@
 | Claude 桌面客户端 | 官方 [Code 本地会话](https://code.claude.com/docs/en/desktop.md)：选择 Local 环境/本机目录，使用 Plugins 与 `/` 或 `+ → Slash commands`。Chat/Cowork 上传技能或云端同步不证明本机脚本访问。原生 Windows/macOS 的本版闭环待实机验证 |
 | Hermes | 完整目录含 `plugin.yaml`、`__init__.py`、所有 skills 与运行时锁文件；原生 Plugin 安装/启用后 `skill_view("setup-aihub:setup-agent-model")`。显式加载是本次稳定入口；当前安装源码还将 Plugin skills 列入 skills_list/索引，随包文档与之有差异，实际版本的隐式发现单独验收。使用实际 local backend；Windows local backend 的 Git Bash 不等于 WSL |
 
-Hermes 原生入口来源：[Plugin 开发文档](https://hermes-agent.nousresearch.com/docs/developer-guide/plugins/)。本 Plugin 位于市场子目录，不能把整个市场仓当作根目录 Plugin 直接传给只接受仓根的安装器。取得确切版本的完整 `setup-aihub/` 后，按原生目录布局放入实际 Hermes home 的 `plugins/setup-aihub/`，通过当前 `hermes plugins enable` 入口启用并核对列表；更新同样替换完整 Plugin 并核对来源/版本，不臆造子目录安装参数。`register(ctx)` 只注册共享 Skill 路径，不运行配置脚本。可用 `plugins doctor <目录>` 检查注册，仍须实际会话验证加载、调用和文件访问。
+Hermes 原生入口与完整子目录安装、启用、更新和验证，读取并遵守[同包 Hermes 安装说明](../../setup-api-key/references/hosts.md#hermes-原生-plugin)。当前安装器支持仓库子目录与固定提交；`register(ctx)` 仅注册共享 Skill，不执行配置脚本。`plugins doctor`、显式加载、自然发现和实际模型配置仍分别验收。
 
 如果某版本的桌面入口不可用，保留进度并报告具体缺项；不切换到另一客户端假称完成。Claude 桌面当前安装/原生配置库格式仍需实机证据；首次配置需先在其原生界面创建条目。没有可靠 `_meta.json` schema 时不伪造配置库选择。
 

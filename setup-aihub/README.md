@@ -1,14 +1,20 @@
 # Setup AIHub
 
+4.1.0 在 Hermes 原生 Plugin 中注册 setup-api-key 和 setup-agent-model。业务配置续接与默认设置识别当前 Hermes Profile，恢复任务不会跨 Profile 复用确认。业务密钥仍由原 Plugin 加载，共享文件的影响范围不变。
+
+本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
+
+以下为历史 4.0.0 的功能与验收记录。
+
 4.0.0 的 setup-api-key 保留业务任务与恢复编号，打开目标 Plugin 自带的配置页面。业务密钥配置退出 Secret Book 入口；既有文件继续按原优先级读取。setup-agent-model 的客户端模型配置流程独立保留。
 
-本轮 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
+4.0.0 Windows 原生已完成本地合成回归、正式页面桌面与手机视口检查，以及 Codex 0.166.0 / WorkBuddy 5.9.3 的原生安装、Skill 发现和代表性运行验收。macOS、真实鉴权与线上业务待验；Claude Code 兼容入口保留，本轮未实测。
 
 已发布的 **3.0.1**：默认设置采用“设为默认 (推荐)”，选择一次后直接设置并展示实际内容。Windows 默认设置测试 15 项通过、1 项既有 symlink 用例跳过，凭证回归 26 项及分发检查 7 项通过。Codex 已验证两个业务 Plugin 的开发流程与隔离规则文件；Setup 完整原生流程仍待验，Claude Code 因额度 403、WorkBuddy 因输入与发送受阻。本版 macOS 待验，本次按用户明确指令发布，以上待验项继续保留。以下历史验收记录仅覆盖各自所列版本。
 
 通过对话管理业务服务密钥和客户端模型接入。`setup-api-key` 检查、配置、更换或清除 **AIhub 创作与文档服务**、**tikin 社交媒体数据服务**的本机接口密钥。你可以在目标 Plugin 的本机配置页面直接填写；配置仍由原业务 Plugin 读取，Setup 不建立集中 Key 库。
 
-当前 Plugin 版本为 **4.0.0**（setup-api-key 4.0.0、setup-agent-model 2.2.1），包含两个独立入口：
+当前 Plugin 版本为 **4.1.0**（setup-api-key 4.1.0、setup-agent-model 2.2.2），包含两个独立入口：
 
 | Skill | 用途 |
 | --- | --- |
@@ -27,11 +33,13 @@
 
 ## 让 Agent 帮你安装
 
-将下面一段复制到你使用的 Claude Code、Codex 或 WorkBuddy，让 Agent 核对来源和版本后安装。Tikin 3.x 配置续接需要 setup-api-key / Setup Plugin 4.0.0；setup-agent-model 需要 2.1.0 或更新版本。若仍加载旧版，先让 Agent 核对并更新实际安装，再在新会话继续。
+将下面一段复制到你使用的 Claude Code、Codex、WorkBuddy 或 Hermes，让 Agent 核对来源和版本后安装。Tikin 3.x 配置续接需要 setup-api-key / Setup Plugin 4.0.0；setup-agent-model 需要 2.1.0 或更新版本。若仍加载旧版，先让 Agent 核对并更新实际安装，再在新会话继续。
 
 > 请安装完整的 setup-aihub Plugin：优先从 https://github.com/cookaihq/aihub-marketplace.git 的 setup-aihub/ 获取，网络故障时同版本回退到 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git。保留已有设置，并按当前宿主的原生 Plugin 入口安装，告诉我实际来源、版本以及是否能发现和调用本次所需的 setup-api-key 或 setup-agent-model。
 
 Claude Code 使用实际技能选择器，可能显示完整的 `/setup-aihub:setup-api-key`；Codex 输入 `$` 选择对应入口，完整 Plugin 入口为 `setup-aihub:setup-api-key`；WorkBuddy 在当前会话点名或选择 `setup-api-key`，具体控件以客户端为准。都不要求额外参数。WorkBuddy 安装完整套件使用“专家·技能·连接器 → 技能 → 套件 → 市场行右侧圆形＋”；需要手工操作时，Agent 会按[同包指引](skills/setup-api-key/references/hosts.md#workbuddy-原生套件)展示截图与步骤。
+
+Hermes 使用 `https://github.com/cookaihq/aihub-marketplace.git#setup-aihub` 的完整原生 Plugin；当前版本同时注册两个 Skill。原生安装、固定 ref、更新与 Profile 范围见[同包 Hermes 指引](skills/setup-api-key/references/hosts.md#hermes-原生-plugin)。显式加载 `setup-aihub:setup-api-key` 后，由当前 Profile 的工具启动本机配置页面；任务编号只在原 Profile、原工作文件夹和相同业务包中继续。
 
 运行需要 uv 0.8 或更新版本，由 Agent 协助检查；首次准备 Python 环境可能联网下载。AIhub 本机配置检查还需要 Node.js 18+；tikin 使用自己的 Python 环境。配置检查不要求先安装媒体工具，不会调用图片、视频或数据业务来测试密钥。
 
@@ -73,7 +81,7 @@ Agent 给出可点击链接，在运行 Agent 的同一电脑打开。字段按�
 2. **本次跳过**：暂时不设置，以后仍可提醒。
 3. **不再提醒**：以后不再询问是否将这些项目设为默认。
 
-名称根据当前 Agent 显示为 ChatGPT/Codex、Claude Code 或 WorkBuddy。选择 1 后直接写入当前 Agent 的全局规则，不再二次确认；完成后展示实际写入的完整内容、文件位置和影响范围。共享文件的影响会在选择前说明。选择 3 只关闭对应项目、当前 Agent 配置的提醒，保留已有规则。中断后可以继续原任务，Agent 会核对原菜单及规则是否变化。
+名称根据当前 Agent 显示为 ChatGPT/Codex、Claude Code、WorkBuddy 或 Hermes。Hermes 默认规则写入当前 Profile 的 SOUL.md，保留原有内容。选择 1 后直接写入当前 Agent 的全局规则，不再二次确认；完成后展示实际写入的完整内容、文件位置和影响范围。共享文件的影响会在选择前说明。选择 3 只关闭对应项目、当前 Agent 配置的提醒，保留已有规则。中断后可以继续原任务，Agent 会核对原菜单及规则是否变化。
 
 未安装的项目不会因检查而自动安装；检查失败或本次跳过不影响已经保存的密钥。关闭全局配置读取时跳过此项。纯查询密钥、清除密钥或已有配置正常时直接返回业务，不自动开始默认设置。
 
