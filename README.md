@@ -2,7 +2,7 @@
 
 这个市场提供 AIhub 创作与文档处理、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
 
-当前版本为 AIhub Studio **2.2.0**、Tikin Social **3.2.0** 和 Setup AIHub **4.1.0**。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果；产物页与 Setup 续接流程保持原有入口。实际验证范围见各 Plugin 使用说明。
+当前版本为 AIhub Studio **3.0.1**、Tikin Social **4.0.1** 和 Setup AIHub **4.2.0**。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果；产物页与 Setup 续接流程保持原有入口。实际验证范围见各 Plugin 使用说明。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
@@ -91,7 +91,7 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 
 版本标签随代码同步到 CNB，下表链接到对应的 GitHub Release。
 
-Studio 2.2.0 与 Tikin 3.2.0 接入新版分层配置，已通过 Windows Codex 0.166.0 开发源配置闭环、独立浏览器检查和 71 项定向回归；本次 WorkBuddy 不要求实测，macOS 待验。未重新安装现用 Plugin，未调用线上业务。Setup AIHub 保持 4.1.0。
+Studio 3.0.1 与 Tikin 4.0.1 修复首次配置保存并显示实际字段名，已通过 Windows 回归、Codex 0.166.0 正式入口保存与回读，以及独立浏览器桌面/390×844 检查；本次 WorkBuddy 按用户要求免验，macOS 待验。未重新安装现用 Plugin，未调用线上业务。Setup AIHub 保持 4.2.0。
 
 历史 Studio 2.1.0、Tikin 3.1.0、Setup 4.1.0 已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；对应版本的 macOS 待验，Claude Code 保持兼容但未实测。
 
@@ -100,7 +100,7 @@ Studio 2.2.0 与 Tikin 3.2.0 接入新版分层配置，已通过 Windows Codex 
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 3.0.0 | [aihub-studio/v3.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv3.0.0) |
+| aihub-studio | 3.0.1 | [aihub-studio/v3.0.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv3.0.1) |
 | setup-aihub | 4.2.0 | [setup-aihub/v4.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv4.2.0) |
-| tikin-social | 4.0.0 | [tikin-social/v4.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.0.0) |
+| tikin-social | 4.0.1 | [tikin-social/v4.0.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.0.1) |
 <!-- release-table:end -->

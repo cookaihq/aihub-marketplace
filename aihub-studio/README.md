@@ -1,4 +1,10 @@
-# AIhub Studio Plugin 3.0.0
+# AIhub Studio Plugin 3.0.1
+
+3.0.1 修复首次保存被 Git 忽略检查拦住的问题：点击保存后自动准备所需保护，填写后即可保存，无需手动添加规则。配置项标题下新增实际字段名，便于对照文件；密钥值仍脱敏显示。
+
+本版通过 Windows 回归、Codex 0.166.0 默认沙箱的正式配置入口保存与回读，以及两套浏览器页面和 390×844 布局检查。本次 WorkBuddy 按用户要求免验；macOS 待验，未重新安装或调用线上业务。
+
+以下为历史 3.0.0 的功能与验收记录。
 
 3.0.0 新增项目 `.env.local.aihub-studio`、`.env.aihub-studio`，六个 Skill 共用；依次优先于普通 `.env.local`、`.env`。
 

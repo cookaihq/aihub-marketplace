@@ -40,6 +40,14 @@
   let queued = false;
   function enhanceConfiguration() {
     queued = false;
+    for (const row of app.querySelectorAll('.effective-row')) {
+      const name = row.querySelector('.setting-name');
+      const key = row.querySelector('[data-config="edit"]')?.dataset.id;
+      if (!name || !key || name.querySelector('.setting-key')) continue;
+      const label = document.createElement('code');
+      label.className = 'setting-key'; label.textContent = key;
+      name.querySelector('strong').after(label);
+    }
     const input = app.querySelector('[data-config-field]');
     const guide = keyGuides[input?.dataset.configField];
     if (!guide || app.querySelector('.key-acquisition')) return;

@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -33,6 +34,7 @@ class Integration(unittest.TestCase):
     @unittest.skipUnless(os.name == 'nt', 'Windows project-owner ACL')
     def test_project_owner_can_read_files_written_with_a_different_execution_sid(self):
         import private_platform
+        self.git('init', '--quiet')
         target = self.project / 'private' / 'setting.env'
         parent_acl = private_platform._dacl_bytes(private_platform._read_security(self.project))
         # Simulate an execution identity distinct from the real project owner;
@@ -70,6 +72,95 @@ class Integration(unittest.TestCase):
                 self.assertEqual(self.fields(saved)[key]['effective']['value'], 'synthetic-only-value')
                 self.assertNotIn('synthetic-only-value', json.dumps(public_config(saved)))
                 self.assertFalse(adapter.transaction.journal.exists())
+
+    def git(self, *args, check=True):
+        return subprocess.run(['git', '-C', str(self.project), *args], check=check,
+                              capture_output=True)
+
+    def test_first_save_in_git_repo_prepares_protection_without_preview_writes(self):
+        self.git('init', '--quiet')
+        ignore = self.project / '.gitignore'
+        original = b'# existing rules\r\nkeep-this-pattern'
+        ignore.write_bytes(original)
+        for plugin, key in [('aihub-studio', 'AIHUB_API_KEY'), ('tikin-social', 'TIKIN_API_KEY')]:
+            with self.subTest(plugin=plugin):
+                adapter = self.adapter(plugin)
+                path = self.project / ('.env.local.' + plugin)
+                initial = adapter.snapshot()
+                before_ignore = ignore.read_bytes()
+                changes = {key: {'op': 'set', 'value': 'synthetic-first-save'}}
+                adapter.preview(changes, initial['revision'], self.target(path))
+                self.assertEqual(ignore.read_bytes(), before_ignore)
+                self.assertFalse(path.exists())
+                self.assertFalse(adapter.transaction.directory.exists())
+                saved = adapter.save(changes, initial['revision'], self.target(path))
+                self.assertEqual(self.fields(saved)[key]['effective']['value'], 'synthetic-first-save')
+                for protected in (path, Path(str(path) + '.ui.lock'),
+                                  Path(str(path) + '.ui-1234567890abcdef.tmp'),
+                                  adapter.transaction.journal, adapter.transaction.directory / 'transaction.lock'):
+                    self.git('check-ignore', '--quiet', '--', str(protected))
+                after_ignore = ignore.read_bytes()
+                adapter.save({key: {'op': 'set', 'value': 'synthetic-second-save'}},
+                             saved['revision'], self.target(path))
+                self.assertEqual(ignore.read_bytes(), after_ignore)
+                self.assertTrue(after_ignore.startswith(original + b'\r\n'))
+                self.assertNotIn('synthetic-first-save', json.dumps(public_config(saved)))
+                self.assertFalse(adapter.transaction.journal.exists())
+        self.assertEqual(self.git('check-ignore', '--quiet', '--', '.env.local.unrelated', check=False).returncode, 1)
+
+    def test_global_save_in_git_project_also_protects_recovery_files(self):
+        self.git('init', '--quiet')
+        adapter, user = self.global_adapter('tikin-social')
+        path = user / '.config/tikin-social/.env'
+        saved = adapter.save({'TIKIN_API_KEY': {'op': 'set', 'value': 'synthetic-global'}},
+                             adapter.snapshot()['revision'], self.target(path))
+        self.assertEqual(self.fields(saved)['TIKIN_API_KEY']['effective']['value'], 'synthetic-global')
+        self.git('check-ignore', '--quiet', '--', str(adapter.transaction.journal))
+        self.git('check-ignore', '--quiet', '--', str(path))
+
+    def test_automatic_ignore_handles_nested_negations_and_literal_names(self):
+        self.git('init', '--quiet')
+        (self.project / '.gitignore').write_text('*.env\n')
+        folder = self.project / 'nested [project]'
+        folder.mkdir()
+        ignore = folder / '.gitignore'
+        ignore.write_bytes(b'# preserve me\n!*.env\n')
+        path = folder / 'private [key]*?.env'
+        if os.name == 'nt':
+            path = folder / 'private [key].env'
+        replace(path, b'synthetic', None)
+        self.assertTrue(ignore.read_bytes().startswith(b'# preserve me\n!*.env\n'))
+        self.git('check-ignore', '--quiet', '--', str(path))
+        self.assertEqual(self.git('check-ignore', '--quiet', '--', str(folder / 'public.env'), check=False).returncode, 1)
+
+    def test_tracked_config_is_not_overwritten_or_removed_from_index(self):
+        self.git('init', '--quiet')
+        path = self.project / '.env.local.tikin-social'
+        path.write_bytes(b'TIKIN_API_KEY=synthetic-tracked\n')
+        self.git('add', '--', path.name)
+        before_index = self.git('ls-files', '--stage').stdout
+        adapter = self.adapter('tikin-social')
+        with self.assertRaises(UIError) as error:
+            adapter.save({'TIKIN_API_KEY': {'op': 'set', 'value': 'synthetic-new'}},
+                         adapter.snapshot()['revision'], self.target(path))
+        self.assertEqual(error.exception.code, 'tracked')
+        self.assertEqual(path.read_bytes(), b'TIKIN_API_KEY=synthetic-tracked\n')
+        self.assertEqual(self.git('ls-files', '--stage').stdout, before_index)
+        self.assertFalse(adapter.transaction.journal.exists())
+
+    def test_unwritable_ignore_preserves_config_and_retry_succeeds(self):
+        self.git('init', '--quiet')
+        adapter = self.adapter('tikin-social')
+        path = self.project / '.env.local.tikin-social'
+        initial = adapter.snapshot()
+        changes = {'TIKIN_API_KEY': {'op': 'set', 'value': 'synthetic-retry'}}
+        with patch('persistence._add_ignore', side_effect=PermissionError('synthetic-denied')):
+            with self.assertRaises(UIError) as error:
+                adapter.save(changes, initial['revision'], self.target(path))
+        self.assertEqual(error.exception.code, 'git')
+        self.assertFalse(path.exists())
+        saved = adapter.save(changes, initial['revision'], self.target(path))
+        self.assertEqual(self.fields(saved)['TIKIN_API_KEY']['effective']['value'], 'synthetic-retry')
 
     def test_explicit_file_save_preserves_unknowns_and_other_file(self):
         local = self.project / '.env.local'

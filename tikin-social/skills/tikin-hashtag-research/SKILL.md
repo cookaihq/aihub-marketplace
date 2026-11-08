@@ -1,8 +1,8 @@
 ---
 name: tikin-hashtag-research
 metadata:
-  version: "4.0.0"
-description: v4.0.0｜通过 Tikin 研究话题标签或关键词，查询受支持平台的热度指标、热门与最新内容及相关标签。适用于话题标签研究、关联标签查询、内容选题，或用户提供受支持的话题标签链接。
+  version: "4.0.1"
+description: v4.0.1｜通过 Tikin 研究话题标签或关键词，查询受支持平台的热度指标、热门与最新内容及相关标签。适用于话题标签研究、关联标签查询、内容选题，或用户提供受支持的话题标签链接。
 ---
 
 # Hashtag Research

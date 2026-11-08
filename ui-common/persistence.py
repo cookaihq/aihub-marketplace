@@ -50,7 +50,40 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest() if raw is not None else None
 
 
-def git_safe(path):
+def _ignore_pattern(name):
+    # Anchor to this directory and quote Git's pattern syntax, including spaces.
+    return '/' + ''.join('\\' + c if c in '\\*?[]!# ' else c for c in name)
+
+
+def _add_ignore(directory, pattern, owner_path=None):
+    """Append only the required rule, preserving user rules and other UI writers."""
+    ignore = checked(directory / '.gitignore')
+    parents(ignore, owner_path)
+    descriptor = os.open(ignore, os.O_CREAT | os.O_RDWR | getattr(os, 'O_BINARY', 0), 0o666)
+    try:
+        with exclusive_lock(descriptor, timeout=5):
+            checked(ignore)
+            os.lseek(descriptor, 0, os.SEEK_SET)
+            before = os.read(descriptor, MAX_FILE_BYTES + 1)
+            if len(before) > MAX_FILE_BYTES:
+                raise ValueError('ignore file too large')
+            rule = pattern.encode('utf-8')
+            # Repeated saves must not grow the file. A later negation may require
+            # appending the same rule again, so only skip an identical final rule.
+            if before.splitlines() and before.splitlines()[-1] == rule:
+                return
+            newline = b'\r\n' if b'\r\n' in before else b'\n'
+            addition = (newline if before and not before.endswith(b'\n') else b'') + rule + newline
+            os.lseek(descriptor, 0, os.SEEK_END)
+            with os.fdopen(os.dup(descriptor), 'ab') as stream:
+                stream.write(addition)
+                stream.flush()
+                os.fsync(stream.fileno())
+    finally:
+        os.close(descriptor)
+
+
+def git_safe(path, *, temporary_for=None, private_directory=None, owner_path=None):
     path = checked(path)
     directory = path.parent
     while not directory.exists():
@@ -78,11 +111,24 @@ def git_safe(path):
         if tracked.returncode != 1 or ignored.returncode not in (0, 1):
             raise ValueError()
         if ignored.returncode:
-            raise UIError('ignore', '目标配置或私有暂存目录未被 Git 忽略，请先添加忽略规则。')
+            if private_directory is not None:
+                folder = Path(private_directory)
+                path.relative_to(folder)
+                _add_ignore(folder.parent, _ignore_pattern(folder.name) + '/', owner_path)
+            elif temporary_for is not None:
+                original = checked(temporary_for)
+                if original.parent != path.parent or not path.name.startswith(original.name + '.ui-') or not path.name.endswith('.tmp'):
+                    raise ValueError('invalid temporary path')
+                _add_ignore(path.parent, _ignore_pattern(original.name) + '.ui-*.tmp', owner_path)
+            else:
+                _add_ignore(path.parent, _ignore_pattern(path.name), owner_path)
+            # Verify the actual Git result, including nested rules and negations.
+            if git('check-ignore', '--quiet', '--', relative).returncode != 0:
+                raise UIError('ignore', '未能自动保护保存位置，草稿已保留；请改选可写的保存位置后重试。')
     except UIError:
         raise
     except (ValueError, OSError, subprocess.SubprocessError):
-        raise UIError('git', '无法确认配置文件的 Git 保护状态，未写入。') from None
+        raise UIError('git', '无法自动准备保存位置的 Git 保护，草稿已保留；请检查目录权限或改选保存位置后重试。') from None
 
 
 def parents(path, owner_path=None):
@@ -101,12 +147,12 @@ def replace(path, content, expected, owner_path=None):
     path = checked(path)
     if digest(read(path)) != expected:
         raise UIError('conflict', '配置已被其他操作修改；草稿仍保留，请重新载入核对。', 409)
-    git_safe(path)
+    git_safe(path, owner_path=owner_path)
     parents(path, owner_path)
     temporary = path.with_name(path.name + '.ui-' + secrets.token_hex(8) + '.tmp')
     descriptor = None
     try:
-        git_safe(temporary)
+        git_safe(temporary, temporary_for=path, owner_path=owner_path)
         descriptor = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         private_permissions(temporary, fd=descriptor, owner_path=owner_path)
         verify_private_permissions(temporary, owner_path=owner_path)
@@ -129,6 +175,7 @@ def replace(path, content, expected, owner_path=None):
 @contextmanager
 def lock(path, owner_path=None):
     path = checked(path)
+    git_safe(path, owner_path=owner_path)
     parents(path, owner_path)
     descriptor = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
     try:
@@ -159,7 +206,7 @@ class Transaction:
             if current != entry['after']:
                 raise UIError('recovery', '上次保存中断后文件又被修改，无法安全回滚。请保留私有事务记录并修复冲突。', 409)
             if original is None:
-                git_safe(path)
+                git_safe(path, owner_path=self.owner_path)
                 path.unlink()
             else:
                 replace(path, original, current, self.owner_path)
@@ -184,11 +231,12 @@ class Transaction:
 
     def recover(self):
         if self.journal.exists():
+            git_safe(self.journal, private_directory=self.directory, owner_path=self.owner_path)
             with lock(self.directory / 'transaction.lock', self.owner_path):
                 self._recover()
 
     def apply(self, changes, verify):
-        git_safe(self.journal)
+        git_safe(self.journal, private_directory=self.directory, owner_path=self.owner_path)
         with lock(self.directory / 'transaction.lock', self.owner_path):
             self._recover()
             with ExitStack() as stack:
@@ -197,7 +245,7 @@ class Transaction:
                 verify(False)
                 entries = []
                 for path, (before, after) in sorted(changes.items()):
-                    git_safe(path)
+                    git_safe(path, owner_path=self.owner_path)
                     if read(path) != before:
                         raise UIError('conflict', '配置已被其他操作修改。请重新载入核对。', 409)
                     entries.append({'path': path, 'before': base64.b64encode(before).decode() if before is not None else None,

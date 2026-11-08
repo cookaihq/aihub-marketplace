@@ -1,8 +1,8 @@
 ---
 name: aihub-document
 metadata:
-  version: "3.0.0"
-description: v3.0.0｜使用 AIhub doc2x-v3 将 PDF 识别并转换为 Markdown、LaTeX 或 DOCX 的 ZIP 结果包，下载后核验文档包。
+  version: "3.0.1"
+description: v3.0.1｜使用 AIhub doc2x-v3 将 PDF 识别并转换为 Markdown、LaTeX 或 DOCX 的 ZIP 结果包，下载后核验文档包。
 ---
 
 # AIhub Document
