@@ -100,7 +100,7 @@ Studio 2.2.0 与 Tikin 3.2.0 接入新版分层配置，已通过 Windows Codex 
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 2.2.0 | [aihub-studio/v2.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv2.2.0) |
-| setup-aihub | 4.1.0 | [setup-aihub/v4.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv4.1.0) |
-| tikin-social | 3.2.0 | [tikin-social/v3.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv3.2.0) |
+| aihub-studio | 3.0.0 | [aihub-studio/v3.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv3.0.0) |
+| setup-aihub | 4.2.0 | [setup-aihub/v4.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv4.2.0) |
+| tikin-social | 4.0.0 | [tikin-social/v4.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.0.0) |
 <!-- release-table:end -->

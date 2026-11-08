@@ -1,8 +1,8 @@
 ---
 name: tikin-bulk-data-export
 metadata:
-  version: "3.2.0"
-description: v3.2.0｜通过 Tikin 批量获取社交媒体帖子、粉丝、搜索结果或评论，支持分页、去重及 CSV、JSON 导出。适用于获取全部帖子、构建数据集、导出数据，或从受支持平台和链接重复拉取大量数据。
+  version: "4.0.0"
+description: v4.0.0｜通过 Tikin 批量获取社交媒体帖子、粉丝、搜索结果或评论，支持分页、去重及 CSV、JSON 导出。适用于获取全部帖子、构建数据集、导出数据，或从受支持平台和链接重复拉取大量数据。
 ---
 
 # Bulk Data Export

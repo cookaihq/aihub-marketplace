@@ -14,7 +14,7 @@ test('model lists use caller-specific layering, replace lower lists and disclose
   const home = join(dir, 'user'); const project = join(dir, 'project');
   await mkdir(project); await mkdir(join(home, '.config', 'aihub-studio'), { recursive: true });
   const shared = join(home, '.config', 'aihub-studio', '.env');
-  const image = join(project, '.env.aihub-image');
+  const image = join(project, '.env.aihub-studio');
   try {
     await writeFile(shared, 'AIHUB_API_KEY=fixture\nAIHUB_IMAGE_MODELS=a,b\nAIHUB_VIDEO_MODELS=c,d\nAIHUB_MODEL_FALLBACK_POLICY=confirm');
     await writeFile(image, 'AIHUB_IMAGE_MODELS=e,f\nAIHUB_MODEL_MAX_ATTEMPTS=2');

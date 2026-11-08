@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.2.0 — 2026-11-08
+
+- 支持 AIhub Studio 3.x、Tikin Social 4.x，保留此前支持的版本范围。
+- 委托业务配置页时沿用目标 Plugin 的项目默认文件、来源与保存结果；Setup 不另建 `.env.setup-aihub`，不迁移或删除既有凭证。
+- setup-api-key 升至 4.2.0；setup-agent-model 保持 2.2.2，其模型配置流程不变。
+- Windows Codex CLI 0.166.0 默认 workspace-write 沙箱通过开发源显式加载、真实配置入口及页面 HTTP 闭环；Setup 委托、任务绑定和仅配置回读通过。独立浏览器验证两套业务页桌面及 390×844 布局。按用户本批次决定，WorkBuddy 免验；macOS 待验。未重新安装、验证隐式触发或调用线上业务。
+
+
 ## 4.1.0 — 2026-11-07
 
 - Hermes 同时注册 setup-api-key 与 setup-agent-model；业务配置网页、默认设置与进度恢复沿用共享实现。

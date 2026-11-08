@@ -1,8 +1,8 @@
 ---
 name: tikin-setup
 metadata:
-  version: "3.2.0"
-description: v3.2.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
+  version: "4.0.0"
+description: v4.0.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
 ---
 
 # tikin Setup
@@ -52,13 +52,19 @@ user’s home directory, not `XDG_CONFIG_HOME` or old product aliases:
 - `~/.config/tikin-social/.env` is the confirmed default for new shared credentials.
 - `~/.config/tikin-social/settings.json` stores non-secret routing and default-Skill reminder preferences.
 
-Each API field resolves independently from environment → `$PWD/.env.<skill-name>` →
+Each API field resolves independently from environment → `$PWD/.env.local.tikin-social` → `$PWD/.env.tikin-social` →
 `$PWD/.env.local` → `$PWD/.env` → `~/.config/tikin-social/<skill-name>/.env.local` →
-that directory’s `.env` → `~/.config/tikin-social/.env.<skill-name>` → Plugin root `.env.local`
+that directory’s `.env` → Plugin root `.env.local`
 → Plugin root `.env` → `~/.config/<skill-name>/.env`. Missing or empty fields fall through;
 empty directories do not block fallback. Only the invocation directory and current Skill’s
 listed files are read. Existing unreadable files fail explicitly. Dotenv values are literal,
 never shell-sourced; only `TIKIN_API_KEY` and `TIKIN_BASE_URL` are recognized.
+
+The two Plugin project files are shared by all 17 Skills, including Plugin-only checks.
+4.0.0 stops reading project `.env.<skill-name>` and Plugin-root `.env.<skill-name>`;
+retain the Skill subdirectory and ordinary Skill fallback above. Never migrate or delete
+retired files automatically. New project keys default to `.env.local.tikin-social`, with
+plain `.env.local` still available; verify Git ignore and tracking before saving.
 
 Pass the calling Skill’s exact name before `status`, `config-check`, `validate` or `run`, for
 example `--skill tikin-douyin config-check`. The default caller is `tikin-setup`.

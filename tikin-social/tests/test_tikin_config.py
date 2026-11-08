@@ -114,7 +114,7 @@ class TikinConfigTests(unittest.TestCase):
             )
         return result
 
-    def test_each_skill_reads_its_own_file_before_shared_and_home_values(self):
+    def test_all_skills_share_plugin_project_files_and_ignore_retired_suffixes(self):
         project = Path(self.tempdir.name)
         config_dir = self.config_home / "tikin-social"
         config_dir.mkdir(parents=True)
@@ -124,21 +124,30 @@ class TikinConfigTests(unittest.TestCase):
         names = [path.parent.name for path in (ROOT / "skills").glob("*/SKILL.md")]
         for name in names:
             (project / (".env." + name)).write_text("TIKIN_API_KEY=for-" + name + "\n")
+            (config_dir / (".env." + name)).write_text("TIKIN_API_KEY=retired-global\n")
+        plugin_file = project / '.env.tikin-social'
+        plugin_file.write_text('TIKIN_API_KEY=plugin-value\n')
+        plugin_local = project / '.env.local.tikin-social'
+        plugin_local.write_text('TIKIN_API_KEY=plugin-local-value\n')
         for name in names:
             with self.subTest(skill=name):
                 result = self.run_config("--skill", name, "status")
-                self.assertEqual(json.loads(result.stdout)["key_source"], str(project / (".env." + name)))
+                self.assertEqual(json.loads(result.stdout)["key_source"], str(plugin_local))
                 child = self.run_config(
                     "--skill", name, "run", "--", INTERPRETER, "-c",
                     "import os,sys; sys.exit(os.environ['TIKIN_API_KEY'] != sys.argv[1])",
-                    "for-" + name,
+                    "plugin-local-value",
                 )
                 self.assertEqual(child.stdout, "")
                 self.assertNotIn("for-" + name, child.stderr)
+        plugin_local.write_text('TIKIN_API_KEY=\n')
+        self.assertEqual(json.loads(self.run_config('--plugin-only', 'status').stdout)['key_source'], str(plugin_file))
+        plugin_file.write_text('TIKIN_API_KEY=\n')
+        self.assertEqual(json.loads(self.run_config('status').stdout)['key_source'], str(project / '.env.local'))
 
     def test_process_wins_and_empty_layers_fall_through_without_shell_expansion(self):
         project = Path(self.tempdir.name)
-        skill_file = project / ".env.tikin-douyin"
+        skill_file = project / ".env.local.tikin-social"
         skill_file.write_text("TIKIN_API_KEY=skill-value\n")
         local = project / ".env.local"
         local.write_text("TIKIN_API_KEY=local-value\n")
@@ -176,7 +185,7 @@ class TikinConfigTests(unittest.TestCase):
         (project / ".env.tikin-tiktok").write_text("TIKIN_API_KEY=other-skill\n")
         result = self.run_config("--skill", "tikin-douyin", "status")
         self.assertEqual(json.loads(result.stdout)["key_source"], "missing")
-        for name in (".env.tikin-douyin", ".env.local", ".env"):
+        for name in (".env.local.tikin-social", ".env.tikin-social", ".env.local", ".env"):
             (project / name).write_text("TIKIN_API_KEY=parent-value\n")
         child_dir = project / "child"
         child_dir.mkdir()
@@ -189,7 +198,7 @@ class TikinConfigTests(unittest.TestCase):
 
     def test_run_uses_independent_values_and_does_not_initialize_home(self):
         project = Path(self.tempdir.name)
-        (project / ".env.tikin-setup").write_text("TIKIN_API_KEY=project-value\n")
+        (project / ".env.tikin-social").write_text("TIKIN_API_KEY=project-value\n")
         (project / ".env.local").write_text("TIKIN_BASE_URL=https://selected.example\n")
         result = self.run_config(
             "run", "--", INTERPRETER, "-c",
@@ -389,7 +398,7 @@ class TikinConfigTests(unittest.TestCase):
     def global_files(self, skill="tikin-douyin"):
         root = self.config_home / "tikin-social"
         return [root / skill / ".env.local", root / skill / ".env",
-                root / (".env." + skill), root / ".env.local", root / ".env",
+                root / ".env.local", root / ".env",
                 self.config_home / skill / ".env"]
 
     def test_all_global_layers_precede_the_current_skill_fallback(self):
@@ -465,10 +474,31 @@ class TikinConfigTests(unittest.TestCase):
         self.assertEqual(result.returncode, 3)
         report = json.loads(result.stdout)
         self.assertIsNone(report["skill"])
-        self.assertEqual(len(report["layers"]), 4)
+        self.assertEqual(len(report["layers"]), 6)
         shared = self.config_home / "tikin-social" / ".env"
         self.write_config(shared, "TIKIN_API_KEY=shared-secret\n")
         self.assertEqual(json.loads(self.run_config("--plugin-only", "status").stdout)["key_source"], str(shared))
+
+    def test_retired_sources_are_not_read_even_when_unreadable(self):
+        project = Path(self.tempdir.name)
+        retired = [project / '.env.tikin-douyin', self.config_home / 'tikin-social' / '.env.tikin-douyin']
+        for path in retired:
+            path.mkdir(parents=True)
+        for name in ('.env.aihub-studio', '.env.local.aihub-studio', '.env.tikin-social.backup'):
+            (project / name).write_text('TIKIN_API_KEY=other-plugin\n')
+        report = json.loads(self.run_config('--skill', 'tikin-douyin', 'config-check', check=False).stdout)
+        self.assertEqual(report['fields']['TIKIN_API_KEY']['source'], 'missing')
+        self.assertFalse(any(row['path'] in map(str, retired) for row in report['layers']))
+        self.assertFalse(any(problem['reason'] == 'unreadable' for problem in report['problems']))
+        env = dict(self.env, TIKIN_API_KEY='synthetic-process')
+        self.assertEqual(json.loads(self.run_config('--skill', 'tikin-douyin', 'status', env=env).stdout)['key_source'], 'environment')
+        for name in ('.env.local.tikin-social', '.env.tikin-social'):
+            path = project / name
+            path.mkdir()
+            result = self.run_config('--skill', 'tikin-douyin', 'config-check', env=env, check=False)
+            self.assertEqual(result.returncode, 3)
+            self.assertIn({'source': str(path), 'reason': 'unreadable'}, json.loads(result.stdout)['problems'])
+            path.rmdir()
 
     def test_each_unreadable_global_file_is_reported_and_blocks_commands(self):
         for path in self.global_files():
@@ -628,7 +658,7 @@ class TikinConfigTests(unittest.TestCase):
             "TIKIN_API_KEY=wrong-home-key\n"
             f"TIKIN_BASE_URL=http://127.0.0.1:{server.server_port}\n"
         )
-        (Path(self.tempdir.name) / ".env.tikin-douyin").write_text(
+        (Path(self.tempdir.name) / ".env.tikin-social").write_text(
             f"TIKIN_API_KEY={secret}\n"
         )
 

@@ -77,10 +77,11 @@ export function resolveConfiguration(options: ConfigOptions) {
   const cwd = resolve(options.cwd ?? process.cwd());
   const homeDirectory = resolve(options.homeDirectory ?? homedir());
   if (skill !== null && !Object.hasOwn(MODEL_KEYS, skill)) throw new Error('A valid caller Skill from the bundled Skills or explicit null is required.');
-  const paths = [...(skill ? [join(cwd, `.env.${skill}`)] : []), join(cwd, '.env.local'), join(cwd, '.env')];
+  const paths = [join(cwd, `.env.local.${PLUGIN_NAME}`), join(cwd, `.env.${PLUGIN_NAME}`),
+    join(cwd, '.env.local'), join(cwd, '.env')];
   if (useGlobalConfig) {
     const root = join(homeDirectory, '.config', PLUGIN_NAME);
-    if (skill) paths.push(join(root, skill, '.env.local'), join(root, skill, '.env'), join(root, `.env.${skill}`));
+    if (skill) paths.push(join(root, skill, '.env.local'), join(root, skill, '.env'));
     paths.push(join(root, '.env.local'), join(root, '.env'));
     if (skill) paths.push(join(homeDirectory, '.config', skill, '.env'));
   }

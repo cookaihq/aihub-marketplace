@@ -14,7 +14,7 @@ test('shared inspection and deletion projections use the real loader without mod
   const root = await mkdtemp(join(tmpdir(), '配置 preview '));
   const home = join(root, '用户');
   const shared = join(home, '.config/aihub-studio/.env');
-  const target = join(root, '.env.local');
+  const target = join(root, '.env.local.aihub-studio');
   const options = { skill: null, cwd: root, homeDirectory: home, env: {} };
   try {
     await mkdir(join(home, '.config/aihub-studio'), { recursive: true });
@@ -24,7 +24,7 @@ test('shared inspection and deletion projections use the real loader without mod
     const bytes = await readFile(target);
     const before = inspectConfig(options, true);
     assert.equal(before.skill, null);
-    assert.equal(before.layers.length, 4);
+    assert.equal(before.layers.length, 6);
     assert.equal(before.fields.AIHUB_API_KEY?.source, target);
     const projected = inspectConfig({ ...options, deletion: { path: target, fields: ['AIHUB_API_KEY'] } }, true);
     assert.equal(projected.fields.AIHUB_API_KEY?.source, shared);
@@ -32,7 +32,7 @@ test('shared inspection and deletion projections use the real loader without mod
     assert.deepEqual(await readFile(target), bytes);
     const disabled = inspectConfig({ ...options, useGlobalConfig: false, deletion: { path: target, fields: ['AIHUB_API_KEY'] } }, true);
     assert.equal(disabled.status, 'configuration_required');
-    assert.equal(disabled.layers.length, 2);
+    assert.equal(disabled.layers.length, 4);
     assert.throws(() => inspectConfig({ ...options, deletion: { path: target, fields: ['AIHUB_BASE_URL'] } }, true));
     assert.throws(() => inspectConfig({ ...options, deletion: { path: join(root, '.env.aihub-image'), fields: ['AIHUB_API_KEY'] } }, true));
     const childEnv = { ...process.env, HOME: home, USERPROFILE: home, AIHUB_API_KEY: '', AIHUB_BASE_URL: '' };
@@ -81,7 +81,7 @@ test('inspection ignores retired service settings and reports missing or unreada
     assert.ok(unreadable.problems.some(p => p.reason === 'unreadable' && p.source === path));
     assert.ok(inspectConfig(options, true).problems.some(p => p.reason === 'unreadable' && p.source === path));
     const disabled = inspectConfig({ ...options, useGlobalConfig: false });
-    assert.equal(disabled.layers.length, 3);
+    assert.equal(disabled.layers.length, 4);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

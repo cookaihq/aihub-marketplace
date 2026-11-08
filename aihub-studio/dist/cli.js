@@ -49,8 +49,8 @@ Commands:
   task --task-id ID --media TYPE --output-dir DIR [--wait-seconds 0..600]
   upload --input-file JSON
 Global configuration is read automatically from ~/.config/aihub-studio/, then ~/.config/<skill-name>/.env.
-Configuration: process environment > project .env.<skill-name> > .env.local > .env
-  > Plugin <skill-name>/.env.local > <skill-name>/.env > .env.<skill-name> > .env.local > .env
+Configuration: process environment > project .env.local.aihub-studio > .env.aihub-studio > .env.local > .env
+  > Plugin <skill-name>/.env.local > <skill-name>/.env > .env.local > .env
   > standalone ~/.config/<skill-name>/.env (only fills missing or empty fields).
 Use --no-global-config to skip both global directories; --use-global-config remains a compatible no-op.
 Do not combine --no-global-config with --use-global-config. Only the current Skill's standalone .env is read.

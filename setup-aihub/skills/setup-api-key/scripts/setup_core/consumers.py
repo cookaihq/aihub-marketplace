@@ -10,12 +10,12 @@ from .errors import SetupError
 
 ADAPTERS = {
     "aihub-studio": {
-        "declaration": "references/credentials.json", "minimum": (1, 2, 0), "maximum_exclusive": (3, 0, 0),
+        "declaration": "references/credentials.json", "minimum": (1, 2, 0), "maximum_exclusive": (4, 0, 0),
         "fields": {"AIHUB_API_KEY"}, "runtime": "package.json",
         "artifacts": ["scripts/aihub.mjs", "scripts/aihub.ps1", "dist/cli.js", "dist/config.js"],
     },
     "tikin-social": {
-        "declaration": "skills/tikin-setup/references/credentials.json", "minimum": (2, 0, 0), "maximum_exclusive": (4, 0, 0),
+        "declaration": "skills/tikin-setup/references/credentials.json", "minimum": (2, 0, 0), "maximum_exclusive": (5, 0, 0),
         "fields": {"TIKIN_API_KEY", "TIKIN_BASE_URL"}, "runtime": "skills/tikin-setup/pyproject.toml",
         "artifacts": ["skills/tikin-setup/scripts/tikin-config", "skills/tikin-setup/scripts/_runtime_bootstrap.py",
                       "skills/tikin-setup/.python-version", "skills/tikin-setup/uv.lock"],

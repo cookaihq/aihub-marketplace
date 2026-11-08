@@ -1,5 +1,13 @@
 # tikin Social
 
+4.0.0 新增项目 `.env.local.tikin-social`、`.env.tikin-social`，17 个 Skill 共用；依次优先于普通 `.env.local`、`.env`。
+
+本版停止读取两种旧 Skill 后缀路径，保留 Skill 子目录及普通 Skill 全局回退。仅在退出位置保存过 Key 时，请按下方配置说明选择受支持位置；程序不会自动迁移。通过 Setup 委托配置时须使用 Setup AIHub 4.2.0 或更新版本，也可直接打开本 Plugin 自带配置页。
+
+本批 Windows Codex 开发源显式加载、真实配置入口和页面 HTTP 闭环已通过，桌面与 390×844 浏览器检查通过；按用户对本批次的明确决定，WorkBuddy 免验；macOS 待验。本版未重新安装或验证原生发现、隐式触发及线上业务。
+
+以下为历史 3.2.0 的功能与验收记录。
+
 3.2.0 接入新版分层配置中心：查看当前生效值及逐项来源，辨认项目覆盖与全局继承，选择具体文件编辑，并在保存或移除覆盖前预览真实结果。一次只保存选中的文件，其他草稿继续保留。
 
 本版已在 Windows 原生通过 Codex CLI 0.166.0 的开发源显式调用、两套随包服务启动、HTTP 配置预览/保存、原加载器回读和停止检查；独立浏览器完成桌面与 390×844 窄屏验证。71 项定向回归通过。按本次用户决定，WorkBuddy 不作为验收要求；macOS 待验。未替换现用 Plugin 安装，未验证原生重新安装、隐式触发、线上鉴权或付费业务。
@@ -31,8 +39,8 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **3.2.0**. The 16 Skills using the shared business request
-entry are **3.2.0**; offline `tikin-endpoint-discovery` is **2.2.0**. New API runs
+Plugin version: **4.0.0**. The 16 Skills using the shared business request
+entry are **4.0.0**; offline `tikin-endpoint-discovery` is **3.0.0**. New API runs
 require the Agent to supply a concise task name; existing records resume by their saved paths.
 This release includes the previously unpublished 1.5.0/1.6.0 changes and the
 second-batch catalog of 1029 operations; the retained first-batch catalog contains
@@ -93,7 +101,7 @@ Claude Code and Codex have native Plugin installations. WorkBuddy uses the **套
 **添加市场** dialog. After adding the repository, click the ＋ on the **tikin-social** card to
 install it. Adding the market and installing its Plugin are separate steps.
 
-Hermes installs the complete native Plugin from `https://github.com/cookaihq/aihub-marketplace.git#tikin-social` (same-version CNB fallback: `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git#tikin-social`). Ask your Agent to preserve existing settings, install and enable the package, and verify all 17 Skills in the active Profile. Explicitly load `tikin-social:tikin-endpoint-discovery` for an offline search before reporting a business result. Fixed refs and native updates are described in the [packaged installation guide](skills/tikin-setup/references/installation.md); [Profile rules](skills/tikin-setup/references/default-skills.md#hermes-入口与-profile) identify the active SOUL.md and reminder scope. Missing-Key recovery through Setup requires its Hermes-capable 4.1.0 release.
+Hermes installs the complete native Plugin from `https://github.com/cookaihq/aihub-marketplace.git#tikin-social` (same-version CNB fallback: `https://cnb.cool/zhidateam/tannt/aihub-marketplace.git#tikin-social`). Ask your Agent to preserve existing settings, install and enable the package, and verify all 17 Skills in the active Profile. Explicitly load `tikin-social:tikin-endpoint-discovery` for an offline search before reporting a business result. Fixed refs and native updates are described in the [packaged installation guide](skills/tikin-setup/references/installation.md); [Profile rules](skills/tikin-setup/references/default-skills.md#hermes-入口与-profile) identify the active SOUL.md and reminder scope. Missing-Key recovery for Tikin 4.x requires Setup 4.2.0 or later.
 
 Other Agent Skills clients can install the **complete 17-Skill suite** from this same
 repository's `tikin-social/` directory and one fixed Plugin release. Setup, discovery,
@@ -123,25 +131,31 @@ automatically.
 
 无需另装 Setup 即可打开。页面先展示当前生效配置，逐项标出项目覆盖、继承全局或其他来源。点击“编辑”可选择保存范围和具体文件，在保存或移除设置前预览实际生效值及来源；“来源与优先级”显示该项真实的读取顺序。Key 下提供 [Tikin 控制台](https://console.tikin.net) 链接及“或联系团队负责人分配”。页面不展示服务地址；既有地址配置仍按原加载器读取。
 
-首次新增默认个人全局 `~/.config/tikin-social/.env`；新增项目密钥使用 `.env.local`，已有密钥可选择原文件修复或移除，环境变量在原注入处修复。每次只保存所选文件，其他文件的草稿继续保留；保存较低优先级的文件时，预览会说明是否仍被上层覆盖。路由与提醒偏好保存在独立的全局 `settings.json`，平台路由可移除后继承默认方式，默认方式移除时重置为 `auto`。密钥直接在浏览器填写，不放入聊天。本页校验本机配置，不验证在线鉴权；既有文件继续读取，不迁移或删除。
+首次新增默认个人全局 `~/.config/tikin-social/.env`；新增项目密钥默认使用 `.env.local.tikin-social`，也可明确选择普通 `.env.local`，已有密钥可选择原文件修复或移除，环境变量在原注入处修复。每次只保存所选文件，其他文件的草稿继续保留；保存较低优先级的文件时，预览会说明是否仍被上层覆盖。路由与提醒偏好保存在独立的全局 `settings.json`，平台路由可移除后继承默认方式，默认方式移除时重置为 `auto`。密钥直接在浏览器填写，不放入聊天。本页校验本机配置，不验证在线鉴权；受支持的既有文件继续读取，不迁移或删除；4.0.0 退出来源见下文。
 
 已有 Setup 任务沿用原编号打开同一配置中心，保存后用真实加载器复查，再核对原业务提交状态。已提交或结果不明先查原结果，不重发；没有浏览器或明确选择文件编辑时，沿用[本机配置流程](skills/tikin-setup/references/credential-setup.md)。
 
 默认同机访问、闲置 60 分钟结束。**📱 手机或其他设备访问需要 FRP / Tailscale，实际配置状态由 Agent 核对。**
 
+### Upgrading from 3.x
+
+4.0.0 adds the two Plugin project files below and stops reading project `.env.<skill-name>` and global `~/.config/tikin-social/.env.<skill-name>`. If your key exists only there, configure a supported location before running a task. Skill subdirectory `.env.local/.env`, ordinary Skill `~/.config/<skill-name>/.env` fallback and plain project files remain supported. No file is automatically read for migration, moved or deleted.
+
+Ask your Agent to list the old and proposed locations without revealing values, then wait for your migration choice. Use `.env.local.tikin-social` for a shared project key, or the retained Skill subdirectory for a distinct global account. The ordinary `.env.tikin-social` file supports nonsecret settings and repair of an existing key; new project keys use the declared local files and must be untracked and Git-ignored.
+
 ### Configuration sources and repair
 
 The confirmed default for new shared credentials is the Plugin’s personal `.env` file. Existing
-project or Skill-specific choices remain valid. Each field independently uses the first nonempty
+supported project or Skill-specific choices remain valid. Each field independently uses the first nonempty
 value below. For example, when `tikin-douyin` makes a request:
 
 1. The process environment.
-2. `.env.tikin-douyin` in the command’s working folder.
-3. `.env.local` in that folder.
-4. `.env` in that folder.
-5. `~/.config/tikin-social/tikin-douyin/.env.local`.
-6. `~/.config/tikin-social/tikin-douyin/.env`.
-7. `~/.config/tikin-social/.env.tikin-douyin`.
+2. `.env.local.tikin-social` in the command’s working folder, shared by this Plugin’s Skills.
+3. `.env.tikin-social` in that folder, shared by this Plugin’s Skills.
+4. `.env.local` in that folder.
+5. `.env` in that folder.
+6. `~/.config/tikin-social/tikin-douyin/.env.local`.
+7. `~/.config/tikin-social/tikin-douyin/.env`.
 8. `~/.config/tikin-social/.env.local`.
 9. `~/.config/tikin-social/.env`.
 10. `~/.config/tikin-douyin/.env`.
@@ -152,7 +166,7 @@ Skills’ files are not searched. Empty fields or empty Plugin directories conti
 sources. Existing unreadable files report an error instead of silently selecting another account.
 Files contain literal values; they are never executed as shell programs.
 
-The six global sources are read automatically. Ask “Run this task without global configuration”
+The five global sources are read automatically. Ask “Run this task without global configuration”
 to disable both Plugin and ordinary Skill global files for that invocation; the helper’s
 `--no-global-config` option also uses default routing without reading saved settings. A helper
 call explicitly made without a caller Skill uses only project shared and Plugin shared files.

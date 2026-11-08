@@ -76,20 +76,20 @@ class SetupTests(unittest.TestCase):
             report = self.inspect(plugin)
             self.assertIsNone(report["skill"])
             self.assertEqual(report["cwd"], str(self.project))
-            self.assertEqual(len(report["layers"]), 4)
+            self.assertEqual(len(report["layers"]), 6)
             self.assertEqual(report["status"], "configuration_required")
         self.assertFalse((self.user / ".config").exists())
         self.assertEqual(list(self.project.iterdir()), [])
 
-    def test_aihub_accepts_v1_and_v2_contracts_and_ignores_retired_address(self):
+    def test_aihub_accepts_v1_v2_v3_contracts_and_ignores_retired_address(self):
         from setup_core import consumers
         read_json = consumers._json
-        for version in ("1.2.0", "1.5.1", "2.0.0", "2.9.9", "3.0.0"):
+        for version in ("1.2.0", "1.5.1", "2.0.0", "2.9.9", "3.0.0", "3.9.9", "4.0.0"):
             def manifest_version(path):
                 value = read_json(path)
                 return {**value, "version": version} if path.name == "plugin.json" else value
             with self.subTest(version=version), patch.object(consumers, "_json", side_effect=manifest_version):
-                if version == "3.0.0":
+                if version == "4.0.0":
                     with self.assertRaises(SetupError) as failure:
                         Consumer("aihub-studio", MARKET / "aihub-studio", None, self.project)
                     self.assertEqual(failure.exception.reason, "incompatible_version")
@@ -109,7 +109,7 @@ class SetupTests(unittest.TestCase):
     def test_tikin_requires_upgrade_from_v1_and_rejects_unknown_major_without_writes(self):
         for version, reason in (("1.4.0", "consumer_upgrade_required"),
                                 ("1.99.99", "consumer_upgrade_required"),
-                                ("4.0.0", "incompatible_version")):
+                                ("5.0.0", "incompatible_version")):
             with self.subTest(version=version):
                 root = self.root / ("Tikin " + version)
                 for folder in (".claude-plugin", ".codex-plugin", ".codebuddy-plugin"):
@@ -122,7 +122,7 @@ class SetupTests(unittest.TestCase):
                     self.assertEqual(result["reason"], reason)
                     self.assertEqual(result["current_version"], version)
                     self.assertEqual(result["minimum"], "2.0.0")
-                    self.assertEqual(result["maximum_exclusive"], "4.0.0")
+                    self.assertEqual(result["maximum_exclusive"], "5.0.0")
                 with self.assertRaises(SetupError) as failure:
                     Consumer("tikin-social", root, None, self.project)
                 self.assertEqual(failure.exception.reason, reason)
@@ -221,8 +221,13 @@ class SetupTests(unittest.TestCase):
             self.assertEqual(self.inspect(plugin, caller, "--no-global-config")["fields"][key]["source"], "missing")
             specific = self.project / (".env." + caller)
             specific.write_text(key + "=synthetic-project")
-            self.assertEqual(self.inspect(plugin, caller)["fields"][key]["source"], str(specific))
+            self.assertEqual(self.inspect(plugin, caller)["fields"][key]["source"], str(fallback))
             self.assertEqual(self.inspect(plugin)["fields"][key]["source"], "missing")
+            shared = self.project / (".env.local." + plugin)
+            shared.write_text(key + "=synthetic-plugin-project")
+            self.assertEqual(self.inspect(plugin, caller)["fields"][key]["source"], str(shared))
+            self.assertEqual(self.inspect(plugin)["fields"][key]["source"], str(shared))
+            self.assertNotIn(str(specific), [layer["path"] for layer in self.inspect(plugin, caller)["layers"]])
 
     def test_tikin_url_projection_retains_key_and_default_service_relationship(self):
         target = self.global_file("tikin-social")

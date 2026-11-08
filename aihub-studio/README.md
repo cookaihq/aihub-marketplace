@@ -1,4 +1,12 @@
-# AIhub Studio Plugin 2.2.0
+# AIhub Studio Plugin 3.0.0
+
+3.0.0 新增项目 `.env.local.aihub-studio`、`.env.aihub-studio`，六个 Skill 共用；依次优先于普通 `.env.local`、`.env`。
+
+本版停止读取两种旧 Skill 后缀路径，保留 Skill 子目录及普通 Skill 全局回退。仅在退出位置保存过 Key 时，请按下方配置说明选择受支持位置；程序不会自动迁移。通过 Setup 委托配置时须使用 Setup AIHub 4.2.0 或更新版本，也可直接打开本 Plugin 自带配置页。
+
+本批 Windows Codex 开发源显式加载、真实配置入口和页面 HTTP 闭环已通过，桌面与 390×844 浏览器检查通过；按用户对本批次的明确决定，WorkBuddy 免验；macOS 待验。本版未重新安装或验证原生发现、隐式触发及线上业务。
+
+以下为历史 2.2.0 的功能与验收记录。
 
 2.2.0 接入新版分层配置中心：查看当前生效值及逐项来源，辨认项目覆盖与全局继承，选择具体文件编辑，并在保存或移除覆盖前预览真实结果。一次只保存选中的文件，其他草稿继续保留。
 
@@ -133,13 +141,13 @@ WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套�
 
 1.0.0 将安装对象从 `aihub@plugin-marketplace` 改为 **`aihub-studio@aihub-marketplace`**。新市场与旧市场是两个独立安装来源；只更新旧市场中的 `aihub` 不会换成新名称。先核对并准备下文的新配置，再按上面当前 Agent 对应的安装说明安装 AIhub Studio；随后停用旧 `aihub`，打开新会话，核对实际加载的 Plugin 身份、版本与六个 Skill 的来源，再验证调用。确认新版本可用后才卸载旧对象，不自动删除其配置。保留旧市场中的其他 Plugin；不能在两份同名 Skill 都启用时，把调用成功认定为新版通过。
 
-六个 `aihub-*` Skill 名、`AIHUB_*` 配置字段、项目配置与既有任务记录保持兼容。**Plugin 个人全局配置目录由 `~/.config/aihub/` 改为 `~/.config/aihub-studio/`；新版本不自动读取或搬迁旧 Plugin 目录。** 如果密钥只保存在旧目录，需要确认迁移或重新配置后才能使用新版本。当前 Skill 的 `~/.config/aihub-image/.env` 等普通 Skill 文件仍可作为末层来源。
+该次迁移保留六个 `aihub-*` Skill 名、`AIHUB_*` 配置字段与既有任务记录；3.0.0 的配置来源变化见下文。**Plugin 个人全局配置目录由 `~/.config/aihub/` 改为 `~/.config/aihub-studio/`；新版本不自动读取或搬迁旧 Plugin 目录。** 如果密钥只保存在旧目录，需要确认迁移或重新配置后才能使用新版本。当前 Skill 的 `~/.config/aihub-image/.env` 等普通 Skill 文件仍可作为末层来源。
 
 需要迁移旧 Plugin 配置时，可以说：
 
-> 请把旧 AIhub Plugin 的配置迁到 AIhub Studio：先只报告 `~/.config/aihub/` 中实际使用的共享文件、当前 Skill 专用文件和来源，将相同相对路径映射到 `~/.config/aihub-studio/`。核对新位置和环境变量、项目配置是否已有覆盖，列出将新增或替换的文件和字段，隐藏密钥，等我确认后再保存。保留旧文件，不合并不同账号；写完只检查本机配置来源，不提交业务请求。
+> 请把旧 AIhub Plugin 的配置迁到 AIhub Studio：先只报告 `~/.config/aihub/` 中实际使用的共享文件、当前 Skill 专用文件和来源，将共享文件与 Skill 子目录映射到 `~/.config/aihub-studio/`；旧根目录的 Skill 后缀文件另行选择受支持的 Skill 子目录目标。核对新位置和环境变量、项目配置是否已有覆盖，列出将新增或替换的文件和字段，隐藏密钥，等我确认后再保存。保留旧文件，不合并不同账号；写完只检查本机配置来源，不提交业务请求。
 
-映射只包含 `.env`、`.env.local`、`.env.<skill-name>`、`<skill-name>/.env.local` 与 `<skill-name>/.env`，保留相对位置与优先级，不扫描备份文件，也不把各 Skill 的不同配置任选一份合并到共享文件。Windows 原生与 WSL 仍分别使用各自用户目录，不跨环境复制。安装、配置迁移和真实业务验证分别报告，旧目录在迁移确认前保持原状。
+共享 `.env`、`.env.local` 及 `<skill-name>/.env.local`、`<skill-name>/.env` 可保留相对位置；旧根 `.env.<skill-name>` 须单独确认新的 Skill 子目录目标及覆盖关系，不扫描备份文件，也不把各 Skill 的不同配置任选一份合并到共享文件。Windows 原生与 WSL 仍分别使用各自用户目录，不跨环境复制。安装、配置迁移和真实业务验证分别报告，旧目录在迁移确认前保持原状。
 
 ## 完成首次配置
 
@@ -149,38 +157,44 @@ WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套�
 
 页面先展示当前生效配置，逐项标出项目覆盖、继承全局或其他来源。点击“编辑”可选择保存范围和具体文件，在保存或移除设置前预览实际生效值及来源；“来源与优先级”显示该项真实的读取顺序。Key 输入框下有 [AIhub 控制台](https://api.aihubmax.com/console) 获取链接，也可联系团队负责人分配。模型顺序、结果检查和提醒偏好可在同页调整，服务地址无需展示或填写。
 
-首次新增默认个人全局 `~/.config/aihub-studio/.env`；新增项目密钥使用 `.env.local`，已有密钥可选择原文件修复或移除。每次只保存所选文件，其他文件的草稿继续保留；保存较低优先级的文件时，预览会说明是否仍被上层覆盖。页面不会自动保存草稿，完整 Key 不进入聊天或进度记录。本页校验本机配置，不验证在线鉴权。已有 Setup 配置任务仍可从原编号继续，打开同一配置中心。
+首次新增默认个人全局 `~/.config/aihub-studio/.env`；新增项目密钥默认使用 `.env.local.aihub-studio`，也可明确选择普通 `.env.local`，已有密钥可选择原文件修复或移除。每次只保存所选文件，其他文件的草稿继续保留；保存较低优先级的文件时，预览会说明是否仍被上层覆盖。页面不会自动保存草稿，完整 Key 不进入聊天或进度记录。本页校验本机配置，不验证在线鉴权。已有 Setup 配置任务仍可从原编号继续，打开同一配置中心。
 
 配置页面只供同机浏览器访问，闲置 60 分钟结束。**📱 手机或其他设备访问需要 FRP / Tailscale；让 Agent 先核对实际配置状态。** 明确选择文件编辑或没有浏览器时，Agent 可说明完整本机路径供本人填写，详见[配置衔接](references/credential-setup.md)。
 
-保存后通过真实业务加载器复查；本机读取成功不代表线上鉴权或生成成功。未提交且原授权有效才继续，已提交或结果不明先查询原结果。业务配置不再提供 Secret Book 方式，已保存的本机文件继续按原顺序读取。
+保存后通过真实业务加载器复查；本机读取成功不代表线上鉴权或生成成功。未提交且原授权有效才继续，已提交或结果不明先查询原结果。业务配置不再提供 Secret Book 方式，受支持的本机文件按下表读取；3.0.0 退出的来源不会自动迁移。
+
+### 从 2.x 升级的配置变化
+
+3.0.0 新增项目 `.env.local.aihub-studio` 和 `.env.aihub-studio`，六个 Skill 共用。项目 `.env.<skill-name>` 与全局 `~/.config/aihub-studio/.env.<skill-name>` 不再读取；若 Key 只在这两处，升级后需要重新配置。Skill 子目录的 `.env.local/.env`、普通 Skill 的 `~/.config/<skill-name>/.env` 和普通项目 `.env.local/.env` 仍保留。
+
+可对 Agent 说：“检查本次升级的配置来源，隐藏密钥，列出旧位置及受支持目标，等我确认后再迁移，保留原文件。”共享项目配置可选择 `.env.local.aihub-studio`，独立全局配置可选择 Skill 子目录；程序和安装过程都不会自动迁移。普通 `.env.aihub-studio` 可编辑非密钥设置和修复已有密钥；新增项目密钥使用上述本地文件，写前须被 Git 忽略且未跟踪。
 
 ### 配置保存在哪里，先读取哪一份？
 
 修复按每个字段的实际来源确定原文件；来源为进程环境变量时，在原注入位置修复，页面只读展示其状态。
 
-下面以图片 Skill `aihub-image` 为例，越靠前越优先。视频、音频、音乐、素材理解和文档分别将文件名或子目录名中的 `aihub-image` 换成 `aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding`、`aihub-document`；Plugin 目录始终叫 `aihub-studio`。
+下面以图片 Skill `aihub-image` 为例，越靠前越优先。视频、音频、音乐、素材理解和文档分别将全局 Skill 子目录名和普通 Skill 回退目录名中的 `aihub-image` 换成 `aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding`、`aihub-document`；Plugin 目录始终叫 `aihub-studio`。
 
 | 顺序 | 位置 | 作用 |
 | --- | --- | --- |
 | 1 | 运行程序时的环境变量 | 当前进程已有或本次传入的设置 |
-| 2 | 工作文件夹的 `.env.aihub-image` | 当前项目内仅供图片 Skill 使用 |
-| 3 | 工作文件夹的 `.env.local` | 当前项目内共用 |
-| 4 | 工作文件夹的 `.env` | 当前项目的补充配置 |
-| 5 | `~/.config/aihub-studio/aihub-image/.env.local` | 图片 Skill 子目录中的优先覆盖 |
-| 6 | `~/.config/aihub-studio/aihub-image/.env` | 图片 Skill 子目录中的配置 |
-| 7 | `~/.config/aihub-studio/.env.aihub-image` | 在 Plugin 根目录直接设置图片 Skill 专用配置 |
+| 2 | 工作文件夹的 `.env.local.aihub-studio` | 当前项目内六个 Skill 共用的本地优先配置 |
+| 3 | 工作文件夹的 `.env.aihub-studio` | 当前项目内六个 Skill 共用 |
+| 4 | 工作文件夹的 `.env.local` | 当前项目内读取同名字段的 Skill 共用 |
+| 5 | 工作文件夹的 `.env` | 当前项目的补充配置 |
+| 6 | `~/.config/aihub-studio/aihub-image/.env.local` | 图片 Skill 子目录中的优先覆盖 |
+| 7 | `~/.config/aihub-studio/aihub-image/.env` | 图片 Skill 子目录中的配置 |
 | 8 | `~/.config/aihub-studio/.env.local` | 六个 Skill 共用的优先覆盖 |
 | 9 | `~/.config/aihub-studio/.env` | 首次新增配置的默认保存位置，六个 Skill 共用 |
 | 10 | `~/.config/aihub-image/.env` | 普通图片 Skill 的配置，仅补齐前面各层缺失或为空的项 |
 
-只需要图片 Skill 使用不同设置时，可让 Agent 协助创建 `.env.aihub-image`；需要独立子目录时再使用 `aihub-image/`。无需预先创建六个子目录或复制相同密钥。每次只读取当前 Skill 的专用文件、Plugin 共享文件和当前 Skill 的普通全局 `.env`，不读取普通 Skill 目录的 `.env.local`，也不扫描其他 Skill、旧产品别名目录或 `.env.backup` 等文件。
+只需要图片 Skill 使用不同全局设置时，可让 Agent 协助使用 `~/.config/aihub-studio/aihub-image/.env`；需要更高优先级时使用该子目录的 `.env.local`。无需预先创建六个子目录或复制相同密钥。每次只读取当前 Skill 的专用文件、Plugin 共享文件和当前 Skill 的普通全局 `.env`，不读取普通 Skill 目录的 `.env.local`，也不扫描其他 Skill、旧产品别名目录或 `.env.backup` 等文件。
 
 **密钥及业务选项按字段取首个非空值。** 子目录不存在、目录为空、文件缺失或某项为空时，继续向下查找；Plugin 目录存在或已填好一项，也不阻止其他缺项读取第 10 层。文件存在但无法读取时会报错，所有来源都没有密钥就提示配置。服务地址始终固定，环境变量或文件中的旧 `AIHUB_BASE_URL` 被忽略，原文件保持不变。
 
 “工作文件夹”是 **Agent 实际执行任务的文件夹**，不是 Plugin 安装目录。程序不向父文件夹搜索项目配置。个人全局配置自动读取，但环境变量和当前工作文件夹中的配置仍优先；全局文件不随工作文件夹切换而改变。
 
-没有具体业务 Skill 时，配置检查可只查看工作文件夹的 `.env.local/.env` 与 Plugin 共享全局 `.env.local/.env`，不假借某个 Skill 或读取其专用层。这不代表六个 Skill 已全部验证。清除选定字段前可以只读预览清除后是否回退到其他来源；不会为预览临时修改文件。本机凭证检查无需 ffprobe，也不发线上鉴权请求。
+没有具体业务 Skill 时，配置检查可只查看工作文件夹的 `.env.local.aihub-studio`、`.env.aihub-studio`、`.env.local`、`.env` 与 Plugin 共享全局 `.env.local/.env`，不假借某个 Skill 或读取其专用层。这不代表六个 Skill 已全部验证。清除选定字段前可以只读预览清除后是否回退到其他来源；不会为预览临时修改文件。本机凭证检查无需 ffprobe，也不发线上鉴权请求。
 
 | 实际运行环境 | Plugin 共用全局配置文件 | 普通 Skill 回退文件，以图片为例 |
 | --- | --- | --- |
@@ -188,13 +202,13 @@ WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套�
 | Windows 原生环境 | `%USERPROFILE%\.config\aihub-studio\.env`，通常如 `C:\Users\你的用户名\.config\aihub-studio\.env` | `%USERPROFILE%\.config\aihub-image\.env` |
 | WSL（Windows 上的 Linux 环境） | WSL 用户的 `~/.config/aihub-studio/.env`，通常如 `/home/你的Linux用户名/.config/aihub-studio/.env` | WSL 用户的 `~/.config/aihub-image/.env` |
 
-表中的 `aihub-studio/` 内也可以保存 `.env.local`、当前 Skill 的专用文件及可选子目录。个人文件夹由实际运行程序的环境决定：macOS、Linux 和 WSL 优先使用 `HOME`，Windows 原生环境优先使用 `USERPROFILE`；未设置时使用系统提供的当前用户目录。WSL 不会自动读取 Windows 用户配置。可让 Agent 确认完整路径；**路径说明不代表对应平台已完成兼容性验证。**
+表中的 `aihub-studio/` 内也可以保存 `.env.local` 及当前 Skill 的可选子目录。个人文件夹由实际运行程序的环境决定：macOS、Linux 和 WSL 优先使用 `HOME`，Windows 原生环境优先使用 `USERPROFILE`；未设置时使用系统提供的当前用户目录。WSL 不会自动读取 Windows 用户配置。可让 Agent 确认完整路径；**路径说明不代表对应平台已完成兼容性验证。**
 
 两类全局目录默认都会读取。若某次任务只应使用环境变量和项目配置，可以说：
 
 > 这次 AIhub 任务请关闭个人全局配置读取，同时跳过 Plugin 目录和普通 Skill 目录，只使用环境变量和当前工作文件夹中的配置，并报告实际来源。不要修改配置文件。
 
-也可以明确要求 Agent 将新配置仅保存到项目的 `.env.local`；位于 Git 项目内时，写入密钥前须确认该文件未被跟踪且已被忽略。仅选择项目保存不会自动关闭全局读取，需要时使用上面的请求。
+也可以明确要求 Agent 将新配置仅保存到项目的 `.env.local.aihub-studio`（也可明确选择普通 `.env.local`）；位于 Git 项目内时，写入密钥前须确认该文件未被跟踪且已被忽略。仅选择项目保存不会自动关闭全局读取，需要时使用上面的请求。
 
 已有的 `~/.config/aihub-image/.env` 等当前 Skill 配置无需迁移，即可作为末层来源。同一用户下，同名 Skill 的独立安装和 Plugin 安装可能共用该文件，Plugin 中的非空值始终优先。默认保存位置仍是 `~/.config/aihub-studio/.env`，程序不会创建、复制或搬迁已有配置。若希望主动整理这些文件，可以说：
 

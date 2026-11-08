@@ -54,7 +54,7 @@ class UITests(unittest.TestCase):
                     self.assertEqual(state['task']['binding'], started['binding'])
                     self.assertNotIn('BASE_URL', json.dumps(state))
                     changes = {'changes': {key: {'op': 'set', 'value': self.marker}}, 'revision': state['revision'], 'target': state['default_targets']['project']}
-                    target_file = self.project / '.env.local'
+                    target_file = self.project / ('.env.local.' + plugin)
                     before = target_file.read_bytes() if target_file.exists() else None
                     for csrf_value, access_origin in [('invalid', origin), (csrf, 'https://foreign.invalid')]:
                         with self.assertRaises(HTTPError) as rejected:
@@ -89,8 +89,8 @@ class UITests(unittest.TestCase):
                     self.assertEqual(continued['result']['business_next_step'], 'query_existing_result')
                     self.assertEqual(continued['context']['caller'], skill)
                     self.assertEqual(continued['business']['task_id'], 'existing-task')
-                    self.assertEqual(Path(continued['result']['local']['fields'][key]['source']), self.project / '.env.local')
-                    self.assertIn(self.marker, (self.project / '.env.local').read_text())
+                    self.assertEqual(Path(continued['result']['local']['fields'][key]['source']), target_file)
+                    self.assertIn(self.marker, target_file.read_text())
                     self.assertFalse((self.user / '.config' / plugin / '.env').exists())
                 finally:
                     self.ui('stop', '--task', task)

@@ -1,5 +1,13 @@
 # Setup AIHub
 
+4.2.0 支持 AIhub Studio 3.x、Tikin Social 4.x，保留此前支持的版本范围。
+
+项目目标由原业务 Plugin 决定；新版本默认采用 `.env.local.<plugin-name>`。setup-agent-model 保持 2.2.2。
+
+本批 Windows Codex 开发源显式加载已完成真实委托、任务绑定、保存与配置回读；按用户对本批次的明确决定，WorkBuddy 免验；macOS 待验。本版未重新安装或执行线上业务。
+
+以下为历史 4.1.0 的功能与验收记录。
+
 4.1.0 在 Hermes 原生 Plugin 中注册 setup-api-key 和 setup-agent-model。业务配置续接与默认设置识别当前 Hermes Profile，恢复任务不会跨 Profile 复用确认。业务密钥仍由原 Plugin 加载，共享文件的影响范围不变。
 
 本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
@@ -14,7 +22,7 @@
 
 通过对话管理业务服务密钥和客户端模型接入。`setup-api-key` 检查、配置、更换或清除 **AIhub 创作与文档服务**、**tikin 社交媒体数据服务**的本机接口密钥。你可以在目标 Plugin 的本机配置页面直接填写；配置仍由原业务 Plugin 读取，Setup 不建立集中 Key 库。
 
-当前 Plugin 版本为 **4.1.0**（setup-api-key 4.1.0、setup-agent-model 2.2.2），包含两个独立入口：
+当前 Plugin 版本为 **4.2.0**（setup-api-key 4.2.0、setup-agent-model 2.2.2），包含两个独立入口：
 
 | Skill | 用途 |
 | --- | --- |
@@ -27,7 +35,7 @@
 
 业务配置页面由 AIhub Studio / Tikin Social 自带，Setup 负责选择已安装服务、保存任务关联及配置后的检查。业务 Plugin 没有新页面入口时先更新完整 Plugin；本机文件编辑、清除和仅本轮使用仍可用。
 
-本版支持 **AIhub Studio 1.x / 2.x（最低 1.2.0）** 和 **Tikin Social 2.x / 3.x（最低 2.0.0）** 的配置检查；网页需要业务 Plugin 自带新入口。Tikin 3.x 使用 Setup 4.0.0 或更新版本。旧版提示先更新完整 Plugin，随后继续原配置任务；不会降级或迁移既有密钥。
+本版支持 **AIhub Studio 1.x / 2.x / 3.x（最低 1.2.0）** 和 **Tikin Social 2.x / 3.x / 4.x（最低 2.0.0）** 的配置检查；网页需要业务 Plugin 自带新入口。AIhub Studio 3.x / Tikin 4.x 使用 Setup 4.2.0 或更新版本；Tikin 3.x 使用 Setup 4.0.0 或更新版本。旧版提示先更新完整 Plugin，随后继续原配置任务；不会降级或迁移既有密钥。
 
 3.0.0 在 macOS 通过 93 项回归，另 10 项 Windows 或可选独立 Secret Book 集成跳过。Codex 0.166.0 已用原生安装的 Setup 3.0.0 与 Tikin 2.0.1 验证缺 Key、网页预览保存、原加载器复查与跨轮恢复，保留默认沙箱并使用单次命令审批。Claude Code 2.1.318 因账号额度不足（403）未完成调用；WorkBuddy 5.9.3 已通过原生安装、加载、缺 Key 检查与网页启动，但预览时被宿主安全删除机制阻断。本次发布保留这两项待验；Windows 原生、真实飞书授权及线上业务也待验，不能视为三宿主全流程通过。
 
@@ -63,7 +71,7 @@ Hermes 使用 `https://github.com/cookaihq/aihub-marketplace.git#setup-aihub` �
 
 > 请用 setup-api-key 打开 AIhub 的配置中心。我会在网页填写 Key；保存后检查原业务能否读取，再继续原任务。
 
-Agent 给出可点击链接，在运行 Agent 的同一电脑打开。字段按用途分组，必要/全部配置共享同一草稿；页面底部固定保存栏显示变更摘要，点击一次保存。首次新增默认个人全局，明确项目保存使用 `.env.local`；已有值写回真实生效来源，环境变量在原注入处修复。
+Agent 给出可点击链接，在运行 Agent 的同一电脑打开。字段按用途分组，必要/全部配置共享同一草稿；页面底部固定保存栏显示变更摘要，点击一次保存。首次新增默认个人全局，明确项目保存默认使用目标 Plugin 的 `.env.local.aihub-studio` 或 `.env.local.tikin-social`（也可选择普通 `.env.local`）；已有值写回真实生效来源，环境变量在原注入处修复。
 
 页面不展示服务地址。AIhub Key 下可打开 [AIhub 控制台](https://api.aihubmax.com/console)，Tikin Key 下可打开 [Tikin 控制台](https://console.tikin.net)，也可联系团队负责人分配。完整 Key 不进入聊天、argv 或进度记录。
 
@@ -97,19 +105,21 @@ Agent 给出可点击链接，在运行 Agent 的同一电脑打开。字段按�
 
 例如 Windows 用户文件夹为 `C:\Users\你的用户名`，WSL 通常为 `/home/你的Linux用户名`。Windows 原生与 WSL 不自动互读；本版本机配置已在 Windows 原生验证；本轮 macOS 待验，Linux 和 WSL 未验。脚本通过不等于三宿主会话通过。
 
-普通字段各自取首个非空值。以真实调用方 `aihub-image` 为例，按以下顺序读取：
+AIhub Studio 3.x / Tikin Social 4.x 的普通字段各自取首个非空值；较早受支持版本以其真实加载器报告为准。以真实调用方 `aihub-image` 为例，按以下顺序读取：
 
 1. 运行进程的环境变量。
-2. 任务工作文件夹的 `.env.aihub-image` → `.env.local` → `.env`。
+2. 任务工作文件夹的 `.env.local.aihub-studio` → `.env.aihub-studio` → `.env.local` → `.env`。
 3. `~/.config/aihub-studio/aihub-image/.env.local` → 同目录 `.env`。
-4. `~/.config/aihub-studio/.env.aihub-image` → Plugin 根 `.env.local` → 根 `.env`。
+4. Plugin 根 `~/.config/aihub-studio/.env.local` → 根 `.env`。
 5. 普通 Skill 的 `~/.config/aihub-image/.env`。
 
-tikin 例如 `tikin-douyin` 使用相同次序，将 Plugin 名换为 `tikin-social`、Skill 名换为 `tikin-douyin`。其他 Skill 按自己的真实名字对应。默认共用 Plugin 根 `.env`，确有差异才建专用文件；空子目录、缺项、空值不阻断回退。现有文件不可读会报错，不静默选别的账号。
+tikin 例如 `tikin-douyin` 使用相同次序，将 Plugin 名换为 `tikin-social`、Skill 名换为 `tikin-douyin`。其他 Skill 按自己的真实名字对应。默认共用 Plugin 根 `.env`，确有差异才建 Skill 子目录文件；空子目录、缺项、空值不阻断回退。现有文件不可读会报错，不静默选别的账号。
 
-“工作文件夹”是本次业务任务实际运行的位置。程序不向父目录找配置，也不扫描兄弟 Skill、旧产品别名或备份文件。没有业务 Skill 时只读工作文件夹 `.env.local/.env` 和 Plugin 共享 `.env.local/.env`；普通 Skill 回退不参与。全局层默认自动读取，可以说“这次关闭全局配置读取”，同时跳过 Plugin 与普通 Skill 的全局文件。
+“工作文件夹”是本次业务任务实际运行的位置。程序不向父目录找配置，也不扫描兄弟 Skill、旧产品别名或备份文件。没有业务 Skill 时只读工作文件夹的两种 Plugin 后缀文件、普通 `.env.local/.env` 和 Plugin 共享全局 `.env.local/.env`；普通 Skill 回退不参与。全局层默认自动读取，可以说“这次关闭全局配置读取”，同时跳过 Plugin 与普通 Skill 的全局文件。
 
-修复写回实际来源；环境变量错误先找注入位置，不另写低层全局文件。首次选择项目保存使用工作文件夹 `.env.local`，写前检查未跟踪且被 Git 忽略。原子替换的临时文件也要被忽略，规则不足时 Agent 会说明需补哪项，不自动改索引。既有普通 Skill 配置无需迁移即可回退；需要迁移时可说“列出原文件和目标文件，经我确认后整理”，不会自动合并不同账号。
+修复写回实际来源；环境变量错误先找注入位置，不另写低层全局文件。首次选择项目保存默认使用工作文件夹 `.env.local.<业务Plugin名>`，普通 `.env.local` 仍可选择，写前检查未跟踪且被 Git 忽略。原子替换的临时文件也要被忽略，规则不足时 Agent 会说明需补哪项，不自动改索引。既有普通 Skill 配置无需迁移即可回退；需要迁移时可说“列出原文件和目标文件，经我确认后整理”，不会自动合并不同账号。
+
+AIhub Studio 3.0.0 / Tikin Social 4.0.0 不再读取项目 `.env.<skill-name>` 和 Plugin 全局根 `.env.<skill-name>`；保留 Skill 子目录及普通 Skill 全局回退。仅在退出位置有值时，先选择受支持目标重新配置，或明确确认迁移；Setup 不自动搬移或删除文件。
 
 同一操作系统用户、同一运行环境的多个宿主和 Plugin 版本可能共用这些文件。修改共享 Key 会影响它们。安装作用域与凭证作用域分别说明；读取配置不代表获准保存或迁移。
 

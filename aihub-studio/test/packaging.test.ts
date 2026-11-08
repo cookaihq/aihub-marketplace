@@ -75,11 +75,12 @@ test('published Plugin runs outside the checkout without node_modules or origina
     const manifest = JSON.parse(await readFile(join(plugin, '.claude-plugin/plugin.json'), 'utf8'));
     const inspection = await command('config-check', '--skill', 'aihub-image');
     assert.deepEqual(inspection.consumer, { kind: 'plugin', name: manifest.name });
-    assert.equal(inspection.fields.AIHUB_API_KEY.source, join(config, '.env.aihub-image'));
+    assert.equal(inspection.fields.AIHUB_API_KEY.source, join(config, '.env'));
+    assert.ok(!inspection.layers.some((layer: { path: string }) => layer.path === join(config, '.env.aihub-image')));
     assert.ok(inspection.layers.every((layer: { path: string }) => !layer.path.startsWith(`${legacy}${sep}`)));
     assert.equal((await doctor('aihub-video')).config_sources.AIHUB_API_KEY, join(config, '.env'));
-    assert.equal((await doctor('aihub-image')).config_sources.AIHUB_API_KEY, join(config, '.env.aihub-image'));
-    assert.equal((await doctor('aihub-image', '--use-global-config')).config_sources.AIHUB_API_KEY, join(config, '.env.aihub-image'));
+    assert.equal((await doctor('aihub-image')).config_sources.AIHUB_API_KEY, join(config, '.env'));
+    assert.equal((await doctor('aihub-image', '--use-global-config')).config_sources.AIHUB_API_KEY, join(config, '.env'));
     await writeFile(join(config, 'aihub-image', '.env'), 'AIHUB_API_KEY=fixture-directory-key');
     assert.equal((await doctor('aihub-image')).config_sources.AIHUB_API_KEY, join(config, 'aihub-image', '.env'));
     await assert.rejects(doctor('aihub-image', '--no-global-config'), (error: unknown) => {

@@ -8,21 +8,21 @@
     {
       "name": "aihub-studio",
       "source": "./aihub-studio",
-      "version": "2.2.0",
+      "version": "3.0.0",
       "description": "AIhub 图片、视频、音频、音乐、多模态理解和文档处理，包含 6 个 Skill。",
       "category": "productivity"
     },
     {
       "name": "tikin-social",
       "source": "./tikin-social",
-      "version": "3.2.0",
+      "version": "4.0.0",
       "description": "通过 tikin 获取社交媒体数据、下载素材并分析账号、评论和趋势，包含 17 个 Skill。",
       "category": "web-integration"
     },
     {
       "name": "setup-aihub",
       "source": "./setup-aihub",
-      "version": "4.1.0",
+      "version": "4.2.0",
       "description": "管理业务密钥与六类客户端的 AIhub 原生模型配置。",
       "category": "productivity"
     }

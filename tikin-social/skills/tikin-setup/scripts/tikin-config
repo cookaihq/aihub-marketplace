@@ -146,13 +146,12 @@ def configuration_paths(skill_name, global_enabled):
     if skill_name is not None and skill_name not in SKILL_NAMES:
         raise SystemExit("--skill must name one of the 17 bundled tikin Skills")
     cwd = Path.cwd()
-    paths = [cwd / (".env." + skill_name)] if skill_name else []
-    paths += [cwd / ".env.local", cwd / ".env"]
+    paths = [cwd / (".env.local." + PLUGIN_NAME), cwd / (".env." + PLUGIN_NAME),
+             cwd / ".env.local", cwd / ".env"]
     if global_enabled:
         root = config_dir()
         if skill_name:
-            paths += [root / skill_name / ".env.local", root / skill_name / ".env",
-                      root / (".env." + skill_name)]
+            paths += [root / skill_name / ".env.local", root / skill_name / ".env"]
         paths += [root / ".env.local", root / ".env"]
         if skill_name:
             paths.append(Path.home() / ".config" / skill_name / ".env")

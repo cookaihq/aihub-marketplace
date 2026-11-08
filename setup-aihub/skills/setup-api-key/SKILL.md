@@ -1,8 +1,8 @@
 ---
 name: setup-api-key
 metadata:
-  version: "4.1.0"
-description: v4.1.0｜为 AIhub 创作与文档服务、Tikin 社交媒体数据服务检查、配置、更换、修复或清除本机接口密钥。支持只提供名称开始、中文配置意图及业务缺项后的继续，也处理英文密钥配置请求。不管理宿主模型、登录 Key 或远端开户充值。
+  version: "4.2.0"
+description: v4.2.0｜为 AIhub 创作与文档服务、Tikin 社交媒体数据服务检查、配置、更换、修复或清除本机接口密钥。支持只提供名称开始、中文配置意图及业务缺项后的继续，也处理英文密钥配置请求。不管理宿主模型、登录 Key 或远端开户充值。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; uv >= 0.8, Python 3.13; target Plugin configuration runtime required.
 ---
 
@@ -27,11 +27,11 @@ compatibility: Claude Code, Codex, WorkBuddy and Hermes; uv >= 0.8, Python 3.13;
 
 按 [业务契约](references/consumers.md)定位真实 Plugin 实体，使用 [helper](references/helper.md) 的 `inspect`。保留真实业务 cwd、caller 和本次关闭全局的选择。共享报告只代表共享层。只读检查不创建配置或进度，不联网鉴权，不执行 `doctor`、完整 `tikin-setup`、路由初始化或更新。
 
-本版接入 Tikin 2.x；Tikin 1.x 须先经当前宿主的完整 Plugin 入口升级，再核对实际版本与实体继续。`consumer_upgrade_required` 按返回的支持范围引导升级，已有授权沿用；不降级、不修改版本声明绕过检查。AIhub Studio 的范围另按业务契约核对。
+本版接入 Tikin 2.x / 3.x / 4.x；Tikin 1.x 须先经当前宿主的完整 Plugin 入口升级，再核对实际版本与实体继续。`consumer_upgrade_required` 按返回的支持范围引导升级，已有授权沿用；不降级、不修改版本声明绕过检查。AIhub Studio 的范围另按业务契约核对。
 
 凭证已可读且只是正常业务请求时，交回业务入口。缺项、主动更换/清除或有证据需修复时，报告字段、实际来源与依据。网络、余额、限流、权限错误各自解释，不能据此认定 Key 文本错误。地址与 Key 的对应关系也须核对。
 
-**配置、缺项或修复默认打开所选 Plugin 的配置中心**，读取并执行[网页入口](references/browser.md)。本 Skill 的 wrapper 保留任务编号、caller、scope 和业务提交状态；实际字段及保存由业务 Plugin 的原加载器负责。API Key 由本人在网页填写，一次保存；不展示服务地址。已有来源和范围沿用，新增默认个人全局，明确项目保存使用 `.env.local`。不要让用户把 Key 发到聊天，不截图已填写的真实 Key，不通过 argv 或进度文件传递值。
+**配置、缺项或修复默认打开所选 Plugin 的配置中心**，读取并执行[网页入口](references/browser.md)。本 Skill 的 wrapper 保留任务编号、caller、scope 和业务提交状态；实际字段及保存由业务 Plugin 的原加载器负责。API Key 由本人在网页填写，一次保存；不展示服务地址。已有来源和范围沿用，新增默认个人全局，明确项目保存时采用业务 UI 声明的项目默认目标：Studio 3.x 为 `.env.local.aihub-studio`、Tikin 4.x 为 `.env.local.tikin-social`；普通 `.env.local` 仍可明确选择。旧受支持版本按其真实目标执行，不向未被加载器声明的文件写入。不要让用户把 Key 发到聊天，不截图已填写的真实 Key，不通过 argv 或进度文件传递值。
 
 - **本机编辑器**：用户明确选择文件编辑或环境无浏览器时，按 [helper](references/helper.md) 的 `start → plan → apply` 准备实际来源文件，用户本机填写后 `continue` 无值复查。
 - **清除**：仅用户明确要求时，先用原业务加载器投影说明低层回退、高层覆盖和缺项，再清除选定文件的字段。保留无关行，不撤销远端 Key。Tikin 既有地址配置仍由加载器支持，清除时核对与 Key 的对应关系。

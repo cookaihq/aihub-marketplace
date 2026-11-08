@@ -27,25 +27,27 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" doctor --skill "${AIHUB_CALLER}"
 凭证配置只需 `AIHUB_API_KEY`。业务行为另支持当前 Skill 的 `AIHUB_<类型>_MODELS`、`AIHUB_MODEL_FALLBACK_POLICY` 和 `AIHUB_MODEL_MAX_ATTEMPTS`，完整名称与语义见 [模型配置](model-selection.md#可选配置)。`AIHUB_RESULT_CHECK_*`、`AIHUB_ERROR_REPORT_THRESHOLD` 与 `AIHUB_SUPPORT_URL` 见 [结果检查与错误反馈](result-checks.md)，不属于 Secret Book 的凭证声明。每个变量独立按以下顺序使用首个非空值，模型列表整体替换、不跨层合并：
 
 1. 当前进程环境变量。
-2. 当前工作目录 `.env.<skill-name>`，其中名称取本次 `--skill` 值。
-3. 当前工作目录 `.env.local`。
-4. 当前工作目录 `.env`。
-5. 自动读取 `~/.config/aihub-studio/<skill-name>/.env.local`。
-6. `~/.config/aihub-studio/<skill-name>/.env`。
-7. `~/.config/aihub-studio/.env.<skill-name>`。
+2. 当前工作目录 `.env.local.aihub-studio`，六个 Skill 共用。
+3. 当前工作目录 `.env.aihub-studio`，六个 Skill 共用。
+4. 当前工作目录 `.env.local`。
+5. 当前工作目录 `.env`。
+6. 自动读取 `~/.config/aihub-studio/<skill-name>/.env.local`。
+7. `~/.config/aihub-studio/<skill-name>/.env`。
 8. `~/.config/aihub-studio/.env.local`。
 9. `~/.config/aihub-studio/.env`。
 10. `~/.config/<skill-name>/.env`，只补齐以上来源中缺失或为空的字段。
 
 `<skill-name>` 必须是当前调用方的真实名称，与其 `SKILL.md` frontmatter `name` 一致。Plugin 名固定为 manifest 的 `aihub-studio`，不随安装目录、Agent 或版本变化。缺项、空值及空子目录继续回退；Plugin 目录存在或其中已有部分字段，也不阻断其他缺项读取第 10 层。文件存在但无法读取时明确报错。不向父目录搜索，不读取普通 Skill 目录的 `.env.local`，不扫描兄弟 Skill、旧产品别名目录、其他 Plugin 或任意 `.env.*`。普通字段分别取值；密钥须属于固定 AIhub 服务。业务命令要求有效的 `--skill`。无调用方的配置检查显式使用 `config-check --plugin-only`，只读项目和 Plugin 共享文件，跳过所有 Skill 专属层；与 `--skill` 互斥。
 
-首次新增配置时，个人全局配置是 AIhub 已确认的默认方案，共享配置保存到 `~/.config/aihub-studio/.env`。需要一个 Skill 使用不同值时可写根 `.env.<skill-name>`，只有明确需要时才创建对应子目录。写入前确认具体作用域并保留已有内容；仅提供凭证或允许读取不代表授权持久化。首次选择项目保存使用调用工作目录的 `.env.local`；修复已有字段写回其实际来源文件。写入 Secret 前检查未跟踪且被忽略。
+首次新增配置时，个人全局配置是 AIhub 已确认的默认方案，共享配置保存到 `~/.config/aihub-studio/.env`。需要一个 Skill 使用不同全局值时使用其子目录 `.env` 或 `.env.local`。写入前确认具体作用域并保留已有内容；仅提供凭证或允许读取不代表授权持久化。首次选择项目保存默认使用调用工作目录的 `.env.local.aihub-studio`，明确选择普通 `.env.local` 时沿用；修复已有字段写回其实际来源文件。普通 `.env.aihub-studio` 可编辑非 Secret 项或修复已有密钥。写入 Secret 前检查未跟踪且被忽略。
 
-全局读取由加载器自动执行，正常调用不加参数。`--no-global-config` 关闭本次命令的全部六个全局层，同时跳过 Plugin 目录和普通 Skill 目录；`--use-global-config` 仅为旧命令兼容，不再是必填项，两者同时传入报冲突。正常请求不需要逐次向用户征求读取全局文件的许可。`doctor` 报告每个字段的最终来源，包括普通 Skill 回退文件的实际路径，但不验证账号鉴权或生成通道。
+3.0.0 起不读取项目 `.env.<skill-name>` 和 Plugin 全局根 `.env.<skill-name>`，也不接受它们作为修复或删除预览目标。需要迁移时先由用户确认准确源和受支持目标，不自动读取、搬移或删除退出文件；保留的 Skill 子目录和普通 Skill 全局回退继续生效。
 
-已有 `~/.config/aihub-image/.env` 等当前 Skill 配置无需迁移即可作为末层来源。同一用户下，同名 Skill 的独立分发与 Plugin 分发可能共用这一文件；Plugin 配置优先。迁移只是可选整理操作，须先列出准确源与目标，让用户确认后再写入；相同配置可合并到共享文件，不同配置分别放到 `.env.<skill-name>` 或已选定的 Skill 子目录。默认写入位置仍在 Plugin 目录，加载器不创建、复制、移动或删除配置。用户文件夹由 Node `os.homedir()` 定位，Windows 原生与 WSL 使用各自用户目录；具体平台路径见随包 README。
+全局读取由加载器自动执行，正常调用不加参数。`--no-global-config` 关闭本次命令的全部五个全局层，同时跳过 Plugin 目录和普通 Skill 目录；`--use-global-config` 仅为旧命令兼容，不再是必填项，两者同时传入报冲突。正常请求不需要逐次向用户征求读取全局文件的许可。`doctor` 报告每个字段的最终来源，包括普通 Skill 回退文件的实际路径，但不验证账号鉴权或生成通道。
 
-从旧 `aihub` Plugin 迁移时另行处理 `~/.config/aihub/`：新加载器只认 manifest 的 `aihub-studio`，旧 Plugin 目录不会作为回退来源。用户确认迁移后，将实际选定的旧文件映射到 `~/.config/aihub-studio/` 下相同相对位置，保留共享与专用覆盖关系。先检查目标文件和更高优先级来源，列出新增或替换项；不得自动搬迁、覆盖新配置或将不同账号合并。普通 Skill 文件、项目文件及 `AIHUB_*` key 无需因 Plugin 改名而移动或改名。写完运行 `config-check` 核对新 consumer 与实际来源；配置迁移不授权重发业务请求。
+已有 `~/.config/aihub-image/.env` 等当前 Skill 配置无需迁移即可作为末层来源。同一用户下，同名 Skill 的独立分发与 Plugin 分发可能共用这一文件；Plugin 配置优先。迁移只是可选整理操作，须先列出准确源与目标，让用户确认后再写入；相同配置可合并到共享文件，不同配置分别放到已选定的 Skill 子目录。默认写入位置仍在 Plugin 目录，加载器不创建、复制、移动或删除配置。用户文件夹由 Node `os.homedir()` 定位，Windows 原生与 WSL 使用各自用户目录；具体平台路径见随包 README。
+
+从旧 `aihub` Plugin 迁移时另行处理 `~/.config/aihub/`：新加载器只认 manifest 的 `aihub-studio`，旧 Plugin 目录不会作为回退来源。用户确认迁移后，将实际选定的旧共享文件及 Skill 子目录映射到 `~/.config/aihub-studio/` 下相同相对位置；旧根 Skill 后缀另行选择受支持的子目录目标，保留共享与专用覆盖关系。先检查目标文件和更高优先级来源，列出新增或替换项；不得自动搬迁、覆盖新配置或将不同账号合并。普通 Skill 文件、项目文件及 `AIHUB_*` key 无需因 Plugin 改名而移动或改名。写完运行 `config-check` 核对新 consumer 与实际来源；配置迁移不授权重发业务请求。
 
 服务地址固定为 `https://api.aihubmax.com`。用户只配置 `AIHUB_API_KEY`；环境变量和各层配置文件中的旧 `AIHUB_BASE_URL` 均被忽略，来源报告不再将地址列为配置字段。原文件保持不变。官方固定地址的已有任务仍可恢复；其他服务地址的旧记录在联网前拒绝恢复，提示使用原服务客户端继续。配置缺失或鉴权失败时明确报告。
 

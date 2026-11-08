@@ -74,7 +74,7 @@ class Integration(unittest.TestCase):
     def test_explicit_file_save_preserves_unknowns_and_other_file(self):
         local = self.project / '.env.local'
         local.write_text('# keep me\nOTHER=value\nAIHUB_API_KEY=old\nAIHUB_API_KEY=last\n', encoding='utf-8')
-        model = self.project / '.env.aihub-image'
+        model = self.project / '.env.aihub-studio'
         model.write_text('AIHUB_IMAGE_MODELS=old-model\n', encoding='utf-8')
         adapter = self.adapter('aihub-studio')
         initial = adapter.snapshot()
@@ -151,8 +151,9 @@ class Integration(unittest.TestCase):
                                    ('tikin-social', 'tikin-douyin', 'TIKIN_API_KEY')]:
             adapter, user = self.global_adapter(plugin, skill=skill)
             folder = user / '.config' / plugin
-            ordered = [self.project / ('.env.' + skill), self.project / '.env.local', self.project / '.env',
-                       folder / skill / '.env.local', folder / skill / '.env', folder / ('.env.' + skill),
+            ordered = [self.project / ('.env.local.' + plugin), self.project / ('.env.' + plugin),
+                       self.project / '.env.local', self.project / '.env',
+                       folder / skill / '.env.local', folder / skill / '.env',
                        folder / '.env.local', folder / '.env', user / '.config' / skill / '.env']
             for index, path in enumerate(ordered):
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -170,6 +171,44 @@ class Integration(unittest.TestCase):
             adapter.options['skill'] = None
             snapshot = adapter.snapshot()
             self.assertNotIn(self.target(ordered[-1]), self.fields(snapshot)[key]['targets'])
+
+    def test_plugin_project_targets_retired_sources_and_save_round_trip(self):
+        for plugin, skill, key in [('aihub-studio', 'aihub-image', 'AIHUB_API_KEY'),
+                                   ('tikin-social', 'tikin-douyin', 'TIKIN_API_KEY')]:
+            with self.subTest(plugin=plugin):
+                adapter, user = self.global_adapter(plugin, skill=skill)
+                local = self.project / ('.env.local.' + plugin)
+                plain = self.project / ('.env.' + plugin)
+                retired = [self.project / ('.env.' + skill), user / '.config' / plugin / ('.env.' + skill)]
+                for path in retired:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(key + '=retired-secret\n')
+                initial = adapter.snapshot()
+                self.assertEqual(initial['default_targets']['project'], self.target(local))
+                self.assertEqual(self.fields(initial)[key]['effective']['status'], 'missing')
+                for path in retired:
+                    self.assertNotIn(self.target(path), [layer['id'] for layer in initial['layers']])
+                    with self.assertRaises(UIError):
+                        adapter.preview({key: {'op': 'set', 'value': 'new'}}, initial['revision'], self.target(path))
+                self.assertNotIn(self.target(plain), self.fields(initial)[key]['targets'])
+                changes = {key: {'op': 'set', 'value': 'synthetic-plugin-key'}}
+                preview = adapter.preview(changes, initial['revision'], self.target(local))
+                self.assertFalse(local.exists())
+                self.assertEqual(self.fields(preview)[key]['effective']['source'], self.target(local))
+                saved = adapter.save(changes, initial['revision'], self.target(local))
+                self.assertNotIn('synthetic-plugin-key', json.dumps(public_config(saved)))
+                # The plain Plugin source can repair an existing secret and edit nonsecrets.
+                plain.write_text(key + '=synthetic-plain-key\n')
+                saved = adapter.save({key: {'op': 'set', 'value': 'synthetic-repaired'}},
+                                     adapter.snapshot()['revision'], self.target(plain))
+                self.assertEqual(self.fields(saved)[key]['effective']['source'], self.target(local))
+                for caller in (None, skill):
+                    adapter.options['skill'] = caller
+                    self.assertEqual(self.fields(adapter.snapshot())[key]['effective']['source'], self.target(local))
+                cleared = adapter.save({key: {'op': 'unset'}}, adapter.snapshot()['revision'], self.target(local))
+                self.assertEqual(self.fields(cleared)[key]['effective']['value'], 'synthetic-repaired')
+                self.assertEqual(self.fields(cleared)[key]['effective']['source'], self.target(plain))
+                self.assertTrue(all('retired-secret' in p.read_text() for p in retired))
 
     def test_validation_revision_conflict_and_target_whitelist(self):
         file = self.project / '.env.local'

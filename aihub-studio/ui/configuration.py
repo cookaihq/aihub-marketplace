@@ -57,6 +57,9 @@ class Configuration:
         self.secret = secrets.token_bytes(32)
         self.transaction = Transaction(self.project / 'tmp' / (self.plugin + '-config-transactions'), owner_path=self.project)
 
+    def _private_project_file(self, path):
+        return Path(path) in (self.project / ('.env.local.' + self.plugin), self.project / '.env.local')
+
     def _load(self, overrides=None):
         payload = dict(self.options, project=str(self.project), overrides=overrides or {})
         command = (['node', str(self.package / 'scripts/ui-config.mjs')] if self.plugin == 'aihub-studio'
@@ -82,15 +85,19 @@ class Configuration:
                         path='进程环境变量', readonly=True, enabled=True, rank=0)
         plugin_root = home / '.config' / self.plugin
         if target.parent == self.project:
-            scope, name, label = 'project', '项目 · ' + target.name, '仅影响当前项目；共享文件也会影响本项目其他 Skill。'
-            rank = 20 if target.name == '.env.local' else 30 if target.name == '.env' else 10
+            scope, name = 'project', '项目 · ' + target.name
+            plugin_file = target.name in ('.env.local.' + self.plugin, '.env.' + self.plugin)
+            label = ('仅当前项目的 ' + self.plugin + ' 各 Skill 共用。' if plugin_file
+                     else '当前项目中读取同名字段的 Skill 共用。')
+            rank = {'.env.local.' + self.plugin: 10, '.env.' + self.plugin: 20,
+                    '.env.local': 30, '.env': 40}[target.name]
         else:
             scope, label = 'global', '同一用户的多个项目与 Agent 共用；Skill 专用文件仅影响对应 Skill。'
             name = '全局 · ' + str(target.relative_to(home / '.config')).replace('\\', '/') if target.is_relative_to(home / '.config') else '全局 · ' + target.name
             if target.parent == plugin_root:
-                rank = 70 if target.name == '.env.local' else 80 if target.name == '.env' else 60
+                rank = 70 if target.name == '.env.local' else 80
             elif target.parent.parent == plugin_root:
-                rank = 40 if target.name == '.env.local' else 50
+                rank = 50 if target.name == '.env.local' else 60
             else:
                 rank = 90
         if target.name == 'settings.json':
@@ -195,9 +202,9 @@ class Configuration:
                     rows.append(dict(layer=layer['id'], present=present, status=status, value=self._typed(field, raw),
                                      **({'message': message} if message else {})))
                     if row is not None and not layer['readonly']:
-                        # New project secrets go only to .env.local. Existing
+                        # New project secrets go only to declared local files. Existing
                         # explicit keys may be removed or repaired in their own file.
-                        if not field.get('sensitive') or layer['scope'] != 'project' or Path(layer['path']).name == '.env.local' or present:
+                        if not field.get('sensitive') or layer['scope'] != 'project' or self._private_project_file(layer['path']) or present:
                             targets.append(layer['id'])
                 if effective['status'] != 'error' and value not in (None, ''):
                     try:
@@ -218,7 +225,7 @@ class Configuration:
         revision = hmac.new(self.secret, json.dumps(fingerprint, sort_keys=True, ensure_ascii=False).encode(), hashlib.sha256).hexdigest()
         task = self.options.get('task') or {'id': self.plugin + '-configuration', 'binding': str(self.project),
             'continuation': '请在项目 ' + str(self.project) + ' 中重新检查 ' + self.plugin + ' 配置，并继续此前已授权的任务。'}
-        defaults = {'project': self._layer_id(str(self.project / '.env.local'))}
+        defaults = {'project': self._layer_id(str(self.project / ('.env.local.' + self.plugin)))}
         if settings_enabled:
             defaults['global'] = self._layer_id(str(home / '.config' / self.plugin / '.env'))
         snapshot = {'revision': revision, 'layers': sorted(layers.values(), key=lambda layer: (layer['rank'], layer['path'])),
@@ -280,10 +287,10 @@ class Configuration:
                 # including numeric/boolean settings. settings.json remains typed.
                 if not (key.isupper() and value == ''):
                     self._validate(field, value)
-                if field.get('sensitive') and layer['scope'] == 'project' and Path(layer['path']).name != '.env.local':
+                if field.get('sensitive') and layer['scope'] == 'project' and not self._private_project_file(layer['path']):
                     old = next(row for row in field['rows'] if row['layer'] == target)
                     if value and not old.get('value'):
-                        raise UIError('target', '新增项目密钥只能保存到 .env.local；此文件仅允许修复已有密钥或移除设置。', 422)
+                        raise UIError('target', '新增项目密钥只能保存到 .env.local.' + self.plugin + ' 或 .env.local；此文件仅允许修复已有密钥或移除设置。', 422)
             if key.startswith('routing.'):
                 settings_changed = True
                 routing = settings.setdefault('routing', {'default': 'auto', 'platforms': {}})

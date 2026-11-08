@@ -25,12 +25,12 @@ test('Plugin global files are automatic, with project, Skill and process overrid
     // Add increasingly specific sources, then remove them to check both override and fallback.
     const overrides = [
       [join(plugin, '.env.local'), 'shared-local-key'],
-      [join(plugin, '.env.aihub-image'), 'flat-image-key'],
       [join(plugin, 'aihub-image', '.env'), 'image-directory-key'],
       [join(plugin, 'aihub-image', '.env.local'), 'image-directory-local-key'],
       [join(project, '.env'), 'project-key'],
       [join(project, '.env.local'), 'project-local-key'],
-      [join(project, '.env.aihub-image'), 'project-image-key'],
+      [join(project, '.env.aihub-studio'), 'project-plugin-key'],
+      [join(project, '.env.local.aihub-studio'), 'project-plugin-local-key'],
     ] as const;
     for (const [path, key] of overrides) {
       await writeFile(path, `AIHUB_API_KEY=${key}\nAIHUB_BASE_URL=https://ignored-override.invalid`);
@@ -49,7 +49,10 @@ test('Plugin global files are automatic, with project, Skill and process overrid
       assert.equal(report.fields.AIHUB_BASE_URL, undefined);
       assert.equal(report.environment.AIHUB_BASE_URL, undefined);
     }
-    assert.equal(loadConfig({ ...options, skill: 'aihub-video' }).apiKey, 'project-local-key');
+    for (const skill of ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document']) {
+      assert.equal(loadConfig({ ...options, skill }).apiKey, 'project-plugin-local-key');
+    }
+    assert.equal(inspectConfig({ ...options, skill: null }).fields.AIHUB_API_KEY?.source, join(project, '.env.local.aihub-studio'));
     for (let i = overrides.length - 1; i >= 0; i--) {
       await writeFile(overrides[i]![0], 'AIHUB_API_KEY=""');
       assert.equal(loadConfig(options).apiKey, i ? overrides[i - 1]![1] : 'shared-home-key');
@@ -175,6 +178,36 @@ test('renamed Plugin ignores the old Plugin configuration and reports its new id
     await writeFile(join(current, '.env'), 'AIHUB_API_KEY=new-plugin-key');
     assert.equal(loadConfig(options).apiKey, 'new-plugin-key');
     assert.equal(loadConfig(options).sources.AIHUB_API_KEY, join(current, '.env'));
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('retired Skill suffixes are never read or offered for deletion; Plugin sources remain isolated', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aihub-retired-'));
+  const project = join(dir, 'project');
+  const home = join(dir, 'home');
+  const retired = [join(project, '.env.aihub-image'), join(home, '.config/aihub-studio/.env.aihub-image')];
+  const options = { skill: 'aihub-image', cwd: project, homeDirectory: home, env: {} };
+  try {
+    await mkdir(project);
+    await mkdir(join(home, '.config/aihub-studio'), { recursive: true });
+    for (const path of retired) await writeFile(path, 'AIHUB_API_KEY=retired-secret');
+    for (const file of ['.env.tikin-social', '.env.local.tikin-social', '.env.local.aihub-studio.backup']) {
+      await writeFile(join(project, file), 'AIHUB_API_KEY=other-plugin-secret');
+    }
+    assert.throws(() => loadConfig(options), /Missing AIHUB_API_KEY/);
+    for (const path of retired) {
+      assert.ok(!inspectConfig(options).layers.some(layer => layer.path === path));
+      assert.throws(() => inspectConfig({ ...options, deletion: { path, fields: ['AIHUB_API_KEY'] } }), /known configuration path/);
+      await rm(path);
+      await mkdir(path); // If consulted this would block even a valid process value.
+    }
+    assert.equal(loadConfig({ ...options, env: { AIHUB_API_KEY: 'process' } }).apiKey, 'process');
+    for (const file of ['.env.aihub-studio', '.env.local.aihub-studio']) {
+      const path = join(project, file);
+      await mkdir(path);
+      assert.throws(() => loadConfig({ ...options, env: { AIHUB_API_KEY: 'process' } }), /Cannot read configuration file/);
+      await rm(path, { recursive: true });
+    }
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 
