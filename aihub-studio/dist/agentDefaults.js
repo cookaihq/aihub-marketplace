@@ -2,6 +2,7 @@ import { closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, re
 import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { validateSpeechPreferences } from './speech.js';
 const PLUGIN = 'aihub-studio';
 const AGENTS = ['codex', 'claude-code', 'workbuddy', 'hermes'];
 function canonical(path, depth = 0) {
@@ -40,6 +41,7 @@ export function readSettings(path, contents) {
     if (!value || typeof value !== 'object' || Array.isArray(value))
         throw new Error('settings.json must be an object.');
     const settings = value;
+    validateSpeechPreferences(settings);
     const preferences = settings.default_skill_reminders;
     if (preferences !== undefined) {
         if (!preferences || preferences.version !== 1 || !Array.isArray(preferences.agents))

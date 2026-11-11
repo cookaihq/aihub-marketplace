@@ -22,7 +22,7 @@ async function fixture(skill = 'aihub-image') {
   let base = '';
   const server = createServer(async (req, res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/v1/models') return json({ data: [first, second].filter(id => id !== first || state.firstVisible).map(id => ({ id })) });
+    if (req.url === '/e/v1/models') return json({ data: [first, second].filter(id => id !== first || state.firstVisible).map(id => ({ id })) });
     if (req.method === 'POST') {
       let text = ''; for await (const chunk of req) text += chunk;
       const body = JSON.parse(text);
@@ -36,7 +36,7 @@ async function fixture(skill = 'aihub-image') {
       return json({ id: body.model, model: body.model, status: body.model === first ? state.firstStatus : 'completed',
         ...(body.model === first && state.firstStatus === 'failed' ? { error: { code: state.terminalCode, type: 'task_error' } } : {}), results: [{ url: `${base}/image.png` }] });
     }
-    if (req.url?.startsWith('/v1/tasks/')) {
+    if (req.url?.startsWith('/e/v1/tasks/')) {
       if (state.queryFailure) return json({ error: { message: 'fixture denied' } }, 403);
       const id = decodeURIComponent(req.url.split('/').at(-1)!);
       return json({ id, model: id, status: id === first ? state.queryStatus : 'completed',

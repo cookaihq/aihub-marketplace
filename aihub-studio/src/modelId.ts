@@ -1,5 +1,5 @@
 /**
- * live id（GET /v1/models 的可调用 id）与 catalog model id（spec 派生）的归一化。
+ * live id（GET /e/v1/models 的可调用 id）与 catalog model id（spec 派生）的归一化。
  *
  * 两侧命名规则不同，必须归一化后才能对齐：
  * - live 侧可能带 provider 前缀与方括号变体：`google/veo-3.1[fast|audio]`、`fabric-1.0[480p]`

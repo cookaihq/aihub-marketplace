@@ -1,6 +1,7 @@
 // Private pipe used only by the local UI; never prints values to Agent-facing commands.
 import {resolveConfiguration, MODEL_KEYS} from '../dist/config.js';
 import {agentDefaults,readSettings} from '../dist/agentDefaults.js';
+import {MINIMAX_DEFAULT_VOICE_KEY} from '../dist/speech.js';
 import {homedir} from 'node:os';
 import {join} from 'node:path';
 let raw='';for await(const chunk of process.stdin)raw+=chunk;
@@ -8,7 +9,10 @@ try{
   const options=JSON.parse(raw),base={cwd:options.project,useGlobalConfig:options.global_enabled,fileOverrides:options.overrides};
   const shared=resolveConfiguration({...base,skill:options.skill||null});
   const all={shared,models:{},home_directory:homedir()};
-  for(const [skill,key] of Object.entries(MODEL_KEYS))all.models[key]=resolveConfiguration({...base,skill});
+  for(const [skill,key] of Object.entries(MODEL_KEYS)) {
+    all.models[key]=resolveConfiguration({...base,skill});
+    if(skill==='aihub-audio')all.models[MINIMAX_DEFAULT_VOICE_KEY]=all.models[key];
+  }
   if(options.global_enabled){
     all.settings_path=join(homedir(),'.config','aihub-studio','settings.json');
     all.settings=readSettings(all.settings_path,options.overrides?.[all.settings_path]??undefined);

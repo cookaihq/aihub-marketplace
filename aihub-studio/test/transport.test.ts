@@ -51,7 +51,7 @@ test("paid submissions are not repeated after 5xx, 429, or a closed connection",
           else response.writeHead(status).end(JSON.stringify({ error: { message: "not known" } }));
         });
       }, async (client) => {
-        await assert.rejects(client.submitGeneration("/v1/images/generations", { model: "fixture", prompt: "x" }),
+        await assert.rejects(client.submitGeneration("/e/v1/images/generations", { model: "fixture", prompt: "x" }),
           (error: unknown) => error instanceof ApiError && error.ambiguous && !error.retryable);
         assert.equal(hits, 1);
       });
@@ -85,7 +85,7 @@ test("successful HTTP with an unusable submission response preserves ambiguity",
         hits++;
         response.end(body);
       }, async (client) => {
-        await assert.rejects(client.submitGeneration("/v1/images/generations", { model: "fixture" }),
+        await assert.rejects(client.submitGeneration("/e/v1/images/generations", { model: "fixture" }),
           (error: unknown) => error instanceof ApiError && error.ambiguous && error.code === "invalid_response");
         assert.equal(hits, 1);
       });
@@ -93,8 +93,8 @@ test("successful HTTP with an unusable submission response preserves ambiguity",
   }
 });
 
-test("Retry-After is finite, capped at 60 seconds, and fallback delay is one second", async (t) => {
-  for (const [header, delay] of [["3600", 60_000], ["Infinity", 1_000], ["NaN", 1_000], ["0", 0]] as const) {
+test("Retry-After is honored beyond 60 seconds and invalid values use a one-second fallback", async (t) => {
+  for (const [header, delay] of [["90", 90_000], ["Infinity", 1_000], ["NaN", 1_000], ["0", 0]] as const) {
     await t.test(header, async (subtest) => {
       let hits = 0;
       const logs: unknown[][] = [];
@@ -137,7 +137,21 @@ test("deadline prevents an early retry when Retry-After exceeds the remaining bu
     await assert.rejects(client.getTask("t1", false, { deadline: started + 200 }), ApiError);
     assert.equal(hits, 1);
     assert(Date.now() - started < 800);
+    await assert.rejects(client.getTask("t1"), ApiError);
+    assert.equal(hits, 2, 'default request budget also rejects a delay that cannot be honored');
   });
+});
+
+test('legacy gateway paths translate once and native Gemini paths retain their contract', async () => {
+  const paths: string[] = [];
+  await withGateway((request, response) => {
+    paths.push(request.url!); response.end('{}');
+  }, async client => {
+    for (const path of ['/v1/tasks/old', '/e/v1/tasks/current', '/v1beta/models/native:generateContent', '/api/pricing']) {
+      await client.request('GET', path);
+    }
+  });
+  assert.deepEqual(paths, ['/e/v1/tasks/old', '/e/v1/tasks/current', '/v1beta/models/native:generateContent', '/api/pricing']);
 });
 
 test("polling has a strict wall-clock budget and retains the latest task", async () => {
@@ -186,7 +200,7 @@ test("only proven pre-send failures can retry a non-idempotent POST", async (t) 
       });
       subtest.mock.timers.enable({ apis: ["setTimeout"] });
       const client = new AihubmaxClient({ baseUrl: "https://fixture.invalid", apiKey: "sk-test-secret" });
-      const result = client.submitGeneration("/v1/images/generations", { model: "fixture" })
+      const result = client.submitGeneration("/e/v1/images/generations", { model: "fixture" })
         .then((value) => ({ value, error: undefined }), (error: unknown) => ({ value: undefined, error }));
       await immediate();
       if (expectedHits === 2) subtest.mock.timers.tick(1_000);
@@ -205,5 +219,5 @@ test("catalog resolution keeps the live variant ID separate from its parameter f
   const resolved = resolveEntry("google/veo-3.1[fast]");
   assert.equal(resolved?.catalogModel, "veo-3.1");
   assert.equal(resolved?.match, "family");
-  assert.equal(resolved?.entry.path, "/v1/videos/generations");
+  assert.equal(resolved?.entry.path, "/e/v1/videos/generations");
 });

@@ -37,7 +37,7 @@ test('first rejected request creates an absolute Markdown report with actual req
   try {
     const cfg = config(`http://127.0.0.1:${(server.address() as AddressInfo).port}`);
     const result = await collectRequestErrors(async events => {
-      await assert.rejects(new AihubmaxClient(cfg).submitGeneration('/v1/images/generations', {
+      await assert.rejects(new AihubmaxClient(cfg).submitGeneration('/e/v1/images/generations', {
         model: 'gpt-image-2.5-flare', prompt: 'synthetic private prompt', size: '1024x1024',
       }));
       return feedback(cfg, { status: 'preflight_failed', run_record: join(root, 'run.json') }, events);
@@ -46,7 +46,7 @@ test('first rejected request creates an absolute Markdown report with actual req
     assert.equal(result!.show_notice, true);
     assert.ok(isAbsolute(String(result!.error_report)));
     const report = await readFile(String(result!.error_report), 'utf8');
-    for (const evidence of ['synthetic private prompt', 'new_provider_error', 'precise synthetic detail', 'synthetic-request-id', '422', '/v1/images/generations']) {
+    for (const evidence of ['synthetic private prompt', 'new_provider_error', 'precise synthetic detail', 'synthetic-request-id', '422', '/e/v1/images/generations']) {
       assert.ok(report.includes(evidence), `missing evidence: ${evidence}`);
     }
     assert.ok(!report.includes(cfg.apiKey));
@@ -74,7 +74,7 @@ test('accepted submission survives a new invocation; query HTTP and provider evi
   try {
     await collectRequestErrors(async () => {
       await bindDiagnosticRecord(cfg, record, { original_request: 'user original words', inputs: { images: ['https://assets.invalid/ref.png?Signature=signed-secret'] } }, true);
-      await new AihubmaxClient(cfg).submitGeneration('/v1/images/generations', { model: 'synthetic-model', prompt: 'actual submitted prompt' });
+      await new AihubmaxClient(cfg).submitGeneration('/e/v1/images/generations', { model: 'synthetic-model', prompt: 'actual submitted prompt' });
     });
     const query = () => collectRequestErrors(async events => {
       await bindDiagnosticRecord(cfg, record);
@@ -121,7 +121,7 @@ test('first failed attempt is saved before retry; a report write error cannot re
     await mkdir(join(broken, 'diagnostic.json'), { recursive: true });
     await collectRequestErrors(async () => {
       await bindDiagnosticRecord(cfg, join(broken, 'run.json'));
-      await assert.rejects(new AihubmaxClient(cfg).submitGeneration('/v1/images/generations', { prompt: 'do not replay' }),
+      await assert.rejects(new AihubmaxClient(cfg).submitGeneration('/e/v1/images/generations', { prompt: 'do not replay' }),
         (error: unknown) => (error as { status: number; ambiguous: boolean }).status === 503 && (error as { ambiguous: boolean }).ambiguous);
     });
     assert.equal(calls, 3);

@@ -202,7 +202,7 @@ export async function continueRun(cfg, recordInput, waitSeconds, confirmation) {
                     attempt.result = await transcribe();
                 }
                 else if (candidate.protocol === 'generation') {
-                    attempt.result = await generate(cfg, { media: candidate.media, model: candidate.model, params, outputDir, waitSeconds: remainingWait(), onRecord });
+                    attempt.result = await generate(cfg, { media: candidate.media, model: candidate.model, params, outputDir, waitSeconds: remainingWait(), onRecord, parametersResolved: true });
                 }
                 else if (candidate.protocol === 'understanding') {
                     attempt.result = await understand(cfg, { model: candidate.model, prompt: params.prompt,

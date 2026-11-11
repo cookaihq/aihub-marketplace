@@ -1,5 +1,6 @@
 """Marketplace additions around the pinned Skill UI handler; vendored files remain unchanged."""
 import json
+from importlib import import_module
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
@@ -11,6 +12,12 @@ CoreHandler = server.Handler
 
 
 class MarketplaceHandler(CoreHandler):
+    def send_header(self, keyword, value):
+        if (keyword.lower() == 'content-security-policy' and self.server.page == 'configuration'
+                and self.server.adapter.plugin == 'aihub-studio'):
+            value = import_module('plugins.aihub-studio.web').media_policy(value)
+        super().send_header(keyword, value)
+
     def get(self):
         parsed = urlsplit(self.path)
         if parsed.path in ('/app.js', '/style.css'):
@@ -24,7 +31,17 @@ class MarketplaceHandler(CoreHandler):
             if name.endswith('.js'):
                 prelude += 'const marketplaceSaveScope=' + json.dumps(self.server.adapter.options.get('save_scope', 'global')) + ';\n'
             content = prelude + original + '\n' + '\n'.join((ASSETS / file).read_text(encoding='utf-8') for file in extras)
+            if self.server.page == 'configuration' and self.server.adapter.plugin == 'aihub-studio':
+                content += '\n' + import_module('plugins.aihub-studio.web').assets('js' if name.endswith('.js') else 'css')
             return self.send(200, content.encode(), ('text/javascript' if name.endswith('.js') else 'text/css') + '; charset=utf-8')
+        if parsed.path == '/api/minimax-voices':
+            self.check_origin()
+            self.authorized()
+            self.server.lifetime()
+            if self.server.page != 'configuration' or self.server.adapter.plugin != 'aihub-studio':
+                raise UIError('page', '此页面不提供音色库。', 404)
+            # A fresh read uses the latest credential; never cache a previous key's response.
+            return self.send(200, import_module('plugins.aihub-studio.web').voices(self.server.adapter.configuration))
         if parsed.path == '/api/artifacts':
             self.check_origin()
             self.authorized()

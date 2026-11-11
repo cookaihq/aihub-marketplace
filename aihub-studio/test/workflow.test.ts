@@ -37,9 +37,9 @@ test('new CLI persists a task and resumes it through partial download to verifie
   let posts = 0; let asset2 = false; let queryFails = true; let base = '';
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/v1/models') return json({ data: [{ id: 'gpt-image-2' }] });
+    if (req.url === '/e/v1/models') return json({ data: [{ id: 'gpt-image-2' }] });
     if (req.method === 'POST') { posts++; return json({ id: 'test-task', status: 'pending', model: 'gpt-image-2' }); }
-    if (req.url?.startsWith('/v1/tasks/')) {
+    if (req.url?.startsWith('/e/v1/tasks/')) {
       if (queryFails) return json({ error: { message: 'fixture query denied' } }, 403);
       return json({ id: 'test-task', status: 'completed', model: 'gpt-image-2', results: [{ url: `${base}/one.png` }, { video_url: `${base}/two.png` }] });
     }
@@ -161,7 +161,7 @@ test('legacy Seedance 2.0 records and task IDs remain recoverable without model 
     assert.equal(resumed.json.model, 'seedance-2.0-fast-text-to-video'); assert.equal(resumed.json.progress, 42);
     const adopted = await run(dir, base, 'task', '--skill', 'aihub-video', '--task-id', 'legacy-task', '--media', 'video', '--output-dir', dir, '--wait-seconds', '0');
     assert.equal(adopted.json.status, 'waiting'); assert.equal(adopted.json.model, 'seedance-2.0-fast-text-to-video');
-    assert.deepEqual(calls, [['GET', '/v1/tasks/legacy-task'], ['GET', '/v1/tasks/legacy-task']]);
+    assert.deepEqual(calls, [['GET', '/e/v1/tasks/legacy-task'], ['GET', '/e/v1/tasks/legacy-task']]);
     const pointer = join(dir, '.task-links', (await readdir(join(dir, '.task-links'))).find(name => name.endsWith('.json'))!);
     const saved = JSON.parse(await readFile(pointer, 'utf8'));
     const adoptedJob = await readJob(adopted.json.record);
@@ -268,7 +268,7 @@ test('CLI upload validates one source, transfers the local bytes, and never repe
       assert.equal(outcome.json.url, `${base}/files/uploaded.bin`);
       assert.equal(outcome.json.size, bytes.length);
       assert.equal(posts.length, 1);
-      assert.equal(posts[0]!.path, '/v1/files/upload/base64');
+      assert.equal(posts[0]!.path, '/e/v1/files/upload/base64');
       assert.equal(posts[0]!.authorization, `Bearer ${key}`);
       assert.equal(posts[0]!.body.file_name, 'reference.bin');
       assert.deepEqual(Buffer.from(String(posts[0]!.body.file_data), 'base64'), bytes);
@@ -308,15 +308,15 @@ test('CLI handles completed and failed submission responses without querying or 
   let downloads = 0;
   const server = createServer((req, res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/v1/models') return json({ data: [{ id: 'gpt-image-2' }] });
-    if (req.method === 'POST' && req.url === '/v1/images/generations') {
+    if (req.url === '/e/v1/models') return json({ data: [{ id: 'gpt-image-2' }] });
+    if (req.method === 'POST' && req.url === '/e/v1/images/generations') {
       posts++;
       req.resume();
       req.on('end', () => json({ id: `terminal-${state}`, status: state, model: 'gpt-image-2',
         ...(state === 'completed' ? { results: [{ url: `${base}/result.png` }] } : { error: { code: 'fixture_failure', message: 'Generation failed.' } }) }));
       return;
     }
-    if (req.url?.startsWith('/v1/tasks/')) { taskQueries++; return json({ error: { message: 'Terminal task should not be queried.' } }, 400); }
+    if (req.url?.startsWith('/e/v1/tasks/')) { taskQueries++; return json({ error: { message: 'Terminal task should not be queried.' } }, 400); }
     if (req.url === '/result.png') {
       downloads++;
       res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': image.length }); res.end(image);
@@ -390,8 +390,8 @@ test('E2 submits doc2x and delivers a validated ZIP without ffprobe', async () =
   let base = ''; let posts = 0; let body: Record<string, unknown> | undefined;
   const server = createServer((req, res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.method === 'GET' && req.url === '/v1/models') return json({ data: [{ id: 'doc2x-v3' }] });
-    if (req.method === 'POST' && req.url === '/v1/run/generations') {
+    if (req.method === 'GET' && req.url === '/e/v1/models') return json({ data: [{ id: 'doc2x-v3' }] });
+    if (req.method === 'POST' && req.url === '/e/v1/run/generations') {
       posts++;
       const chunks: Buffer[] = []; req.on('data', c => chunks.push(c)); req.on('end', () => { body = JSON.parse(Buffer.concat(chunks).toString()) as Record<string, unknown>; json({ id: 'doc-task', status: 'completed', model: 'doc2x-v3', results: [{ url: `${base}/result.zip` }] }); });
       return;

@@ -70,7 +70,7 @@ export function generationEntries(): CatalogEntry[] {
 /**
  * 生成条目的索引，首次访问时构建一次。
  *
- * resolveEntry 会对 /v1/models 返回的每个 id 各查一次，因此按 model 预先建表。
+ * resolveEntry 会对 /e/v1/models 返回的每个 id 各查一次，因此按 model 预先建表。
  */
 interface GenIndex {
   entries: CatalogEntry[];
@@ -102,7 +102,7 @@ export function findEntryByModel(model: string): CatalogEntry | undefined {
  * 为一个 live id 找参数说明：先精确匹配，再按归一化 family 匹配。
  *
  * 例如源仓已记录的 `veo-3.1[4k]`、`google/veo-3.1[fast]` 可以取 `veo-3.1`
- * 的参数说明；能否提交仍须查询当前 Key 的 /v1/models。
+ * 的参数说明；能否提交仍须查询当前 Key 的 /e/v1/models。
  */
 export function resolveEntry(
   modelId: string,

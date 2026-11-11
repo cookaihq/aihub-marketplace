@@ -21,7 +21,7 @@ test('published Plugin runs outside the checkout without node_modules or origina
       const output = JSON.parse(stdout);
       assert.equal(output.status, 'ok'); assert.equal(output.media, media);
       assert.equal(output.model, model); assert.equal(output.catalog_model, model);
-      assert.equal(output.endpoint, `POST /v1/${media === 'image' ? 'images' : 'videos'}/generations`);
+      assert.equal(output.endpoint, `POST /e/v1/${media === 'image' ? 'images' : 'videos'}/generations`);
       assert.ok(output.params.some((p: { name: string }) => p.name === 'prompt'));
       const fields = new Map<string, { enum?: string[]; default?: unknown }>(output.params.map((p: { name: string }) => [p.name, p]));
       if (model.startsWith('gpt-image-2.5-')) {

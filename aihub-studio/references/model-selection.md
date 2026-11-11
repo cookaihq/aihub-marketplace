@@ -32,6 +32,16 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 
 `AIHUB_MODEL_MAX_ATTEMPTS` 是可选正整数，包含首个模型。默认等于适用候选数；预检跳过、查询和下载不计数。每个普通候选最多提交一次，不循环列表；转写候选可包含多个分片，每片最多一次生成提交，次数限制仍按模型尝试计算。全局策略可在当前 Skill 的专用文件中覆盖；`doctor` 和 `models` 的 `model_selection` 提供实际值与来源。
 
+## MiniMax Speech 默认音色
+
+`AIHUB_MINIMAX_SPEECH_DEFAULT_VOICE_ID` 是可选单值，仅由 `aihub-audio` 的真实配置链读取，适用于 `speech-2.8-hd` 和 `speech-2.8-turbo`。没有内置默认音色。环境变量、项目文件、Plugin 全局文件及音频 Skill 专用回退沿用现有优先级；空白值回退到下一层。即使从其他 Skill 打开统一配置中心，该项仍显示音频 Skill 的值与来源。
+
+新 `audio-tts` 计划和独立 `generate` 只在参数未提供 `voice_setting.voice_id` 时补入配置值，同时保留语速、音量等其他已传字段。显式音色优先；显式空值或无效值交给原参数校验，不用默认值掩盖错误。用户未指定音色时，Agent 不应自行填一个推荐值覆盖已配置默认值。`run.json` 冻结解析后的候选；`continue` 及旧任务恢复不会套用后来修改的默认音色，也不会重新生成已提交任务。
+
+可在配置中心搜索、筛选、试听预设音色后选用，也可手填自定义 / 克隆音色 ID。ID 保留大小写和内部空格，例如 `Chinese (Mandarin)_Warm_Girl`；拒绝首尾空白和控制字符。音色库失败时保留已有值，未收录不代表无效。
+
+收藏独立保存在 `~/.config/aihub-studio/settings.json` 的 `audio.minimax_speech.favorite_voice_ids`，最多 2000 个唯一 ID，每项不超过 512 字符。收藏只是候选列表，不参与自动选型、轮换或合成参数。点击星标保留草稿，需明确保存收藏；“使用此音色”只回填原编辑面板，需另行保存默认音色。关闭全局配置时不读取或保存收藏。样音从服务返回的受支持公开 HTTPS 地址播放，不提交生成请求。
+
 ## 任务 JSON
 
 请求文件由 Agent 写在调用项目的任务目录中。`original_request` 保留用户原文，`prompt` 是提交给模型的提示词；后者不能代替前者。只在用户本次明确指定型号时填 `model`。

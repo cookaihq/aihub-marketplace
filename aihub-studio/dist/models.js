@@ -99,7 +99,7 @@ export function modelEntry(model) {
     }
     if (!found || !supported(model, found.entry))
         throw new Error('No supported generation schema for this model. Use models and describe; this release supports the selected image, video, digital-human, music and TTS workflows.');
-    if (found.entry.method.toUpperCase() !== 'POST' || !/^\/v1\/(images|videos|audios|audio|run)\/generations$/.test(found.entry.path))
+    if (found.entry.method.toUpperCase() !== 'POST' || !/^\/e\/v1\/(images|videos|audios|audio|run)\/generations$/.test(found.entry.path))
         throw new Error('Unsupported catalog generation endpoint.');
     return found;
 }
@@ -112,7 +112,7 @@ export async function models(client, media, keyword) {
                 .filter(item => !kw || `${item.id} ${(item.capabilities ?? []).join(' ')}`.toLowerCase().includes(kw))
                 .map(item => ({ model: item.id, media: 'llm', capabilities: item.capabilities ?? [], preferred: PREFERRED_MODELS.understanding.includes(item.id), default: PREFERRED_MODELS.understanding.includes(item.id) }));
             return { status: 'ok', availability_known: true, models: rows, catalog_only: [], preferred_models: PREFERRED_MODELS.understanding,
-                note: 'E1 uses the separate /v1/configs/llm_generations_models registry. Only models declaring the requested media capability may be submitted; pure text is excluded.' };
+                note: 'E1 uses the separate /e/v1/configs/llm_generations_models registry. Only models declaring the requested media capability may be submitted; pure text is excluded.' };
         }
         catch (error) {
             return { status: 'availability_unknown', availability_known: false, models: [], catalog_only: [], error: error.message,

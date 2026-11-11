@@ -27,20 +27,20 @@ async function fixture(audio = false) {
   let base = '';
   const server = createServer(async (req, res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/v1/models') return json({ data: [{ id: generator }] });
-    if (req.url === '/v1/configs/llm_generations_models') {
+    if (req.url === '/e/v1/models') return json({ data: [{ id: generator }] });
+    if (req.url === '/e/v1/configs/llm_generations_models') {
       state.modelQueries++;
       return json({ data: [{ id: 'text-only', capabilities: [] }, ...(state.visible ? [{ id: checker, capabilities: ['vision', 'audio', 'video', 'file'] }] : [])] });
     }
     if (req.method === 'POST') {
       let raw = ''; for await (const chunk of req) raw += chunk;
       const body = JSON.parse(raw);
-      if (req.url === '/v1/files/upload/base64') {
+      if (req.url === '/e/v1/files/upload/base64') {
         state.uploads++;
         assert.deepEqual(Buffer.from(body.file_data, 'base64'), bytes, 'review uploads the actual delivered file');
         return json({ id: 'uploaded-artifact', filename: body.file_name, url: `${base}/asset`, size: bytes.length, created: 0 });
       }
-      if (req.url === '/v1/llm/generations') {
+      if (req.url === '/e/v1/llm/generations') {
         state.reviewPosts++; state.lastBody = body;
         if (state.errorStatus) { res.setHeader('x-request-id', 'private-review-request'); return json({ error: { code: 'service_unavailable', message: 'fixture-review-secret https://private.invalid/?signature=hidden original prompt' } }, state.errorStatus); }
         const input = JSON.parse(body.messages[0].content[0].text);
@@ -52,7 +52,7 @@ async function fixture(audio = false) {
       if (req.url?.startsWith('/v1beta/')) return json({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'audio/wav', data: bytes.toString('base64') } }] } }] });
       return json({ id: 'private-generation-task', model: generator, status: 'completed', results: [{ url: `${base}/asset` }] });
     }
-    if (req.url?.startsWith('/v1/tasks/')) {
+    if (req.url?.startsWith('/e/v1/tasks/')) {
       state.queries++;
       if (state.queryFail) return json({ error: { code: 'permission_denied', message: 'no access' } }, 403);
       return json({ id: 'private-review-task', model: checker, status: state.reviewMode === 'pending' ? 'processing' : 'completed', results: [{ text: JSON.stringify(state.report) }] });

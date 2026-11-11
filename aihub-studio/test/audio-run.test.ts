@@ -23,10 +23,10 @@ async function fixture(large = false) {
     results: state.inline ? [{ transcripts: [{ text: '第一句。第二句。', sentences: [{ text: '第一句。', begin_time: 0, end_time: 200 }, { text: '第二句。', begin_time: 300, end_time: 800 }] }] }] : [{ transcription_url: `${base}/result/${id}` }] });
   const server = createServer(async (req,res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/v1/models') return json({ data: state.visible.map(id => ({ id })) });
+    if (req.url === '/e/v1/models') return json({ data: state.visible.map(id => ({ id })) });
     if (req.method === 'POST') {
       let raw = ''; for await (const chunk of req) raw += chunk; const body = JSON.parse(raw);
-      if (req.url === '/v1/files/upload/base64') {
+      if (req.url === '/e/v1/files/upload/base64') {
         state.uploads++; const bytes = Buffer.from(body.file_data, 'base64'); state.uploadSizes.push(bytes.length);
         assert.equal(body.auto_cleanup, false);
         if (state.uploadFail) return json({ error: { code: 'uncertain' } }, 503);
@@ -36,7 +36,7 @@ async function fixture(large = false) {
       if (state.submitUnknown) return json({ error: { code: 'uncertain' } }, 503);
       return json(task(String(state.posts.length), body.model, state.inline || state.terminal));
     }
-    if (req.url?.startsWith('/v1/tasks/')) {
+    if (req.url?.startsWith('/e/v1/tasks/')) {
       if (state.queryFail) return json({ error: { code: 'denied' } }, 403);
       const id = req.url.split('/').at(-1)!; return json(task(id, state.posts[Number(id)-1]!, true));
     }

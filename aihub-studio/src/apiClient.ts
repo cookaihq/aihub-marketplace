@@ -98,7 +98,7 @@ export interface RequestOptions {
 
 const MAX_ATTEMPTS = 3;
 const DEFAULT_TIMEOUT_MS = 30_000;
-const MAX_RETRY_AFTER_MS = 60_000;
+const DEFAULT_REQUEST_BUDGET_MS = 120_000;
 const POLL_INTERVAL_MS = 5_000;
 const TASK_QUERY_TIMEOUT_MS = 15_000;
 const MAX_POLL_FAILURES = 3;
@@ -144,13 +144,13 @@ function retryDelayMs(response: Response | undefined, failedAttempt: number): nu
   const seconds = Number(raw);
   if (!Number.isNaN(seconds)) {
     return Number.isFinite(seconds) && seconds >= 0
-      ? Math.min(seconds * 1_000, MAX_RETRY_AFTER_MS)
+      ? seconds * 1_000
       : fallback;
   }
   // HTTP-date form, while rejecting nonfinite numeric spellings such as NaN.
   if (!/[A-Za-z]{3},/.test(raw)) return fallback;
   const date = Date.parse(raw);
-  return Number.isFinite(date) ? Math.min(Math.max(0, date - Date.now()), MAX_RETRY_AFTER_MS) : fallback;
+  return Number.isFinite(date) ? Math.max(0, date - Date.now()) : fallback;
 }
 
 export class AihubmaxClient {
@@ -162,6 +162,10 @@ export class AihubmaxClient {
   }
 
   async request<T>(method: string, path: string, body?: unknown, opts: RequestOptions = {}): Promise<T> {
+    // Stored inputs and external catalog snapshots may still carry the old prefix.
+    // Translation only: every such request uses the current gateway, without fallback.
+    if (path.startsWith('/v1/')) path = '/e' + path;
+    opts = {...opts, deadline: opts.deadline ?? Date.now() + DEFAULT_REQUEST_BUDGET_MS};
     const timeout = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     if (!Number.isFinite(timeout) || timeout <= 0 || timeout > 2_147_483_647) {
       throw new ApiError("timeoutMs 必须是大于 0 且不超过 2147483647 的毫秒数。", 0, "validation", "invalid_timeout");
@@ -322,10 +326,10 @@ export class AihubmaxClient {
 
   async getTask(taskId: string, syncUpstream = false, opts?: RequestOptions): Promise<TaskResponse> {
     const suffix = syncUpstream ? "?sync_upstream=true" : "";
-    const task = await this.request<TaskResponse>("GET", `/v1/tasks/${encodeURIComponent(taskId)}${suffix}`, undefined, opts);
+    const task = await this.request<TaskResponse>("GET", `/e/v1/tasks/${encodeURIComponent(taskId)}${suffix}`, undefined, opts);
     if (!task || task.id !== taskId || !TASK_STATUSES.has(task.status)) {
       const error = new ApiError("任务查询响应缺少有效 ID 或状态，请保留原 task_id 后再次查询。", this.evidenceFor(task)?.response.http_status ?? 0, "protocol", "invalid_response");
-      await observeRequestError(error, 'GET', `/v1/tasks/${encodeURIComponent(taskId)}`, this.evidenceFor(task));
+      await observeRequestError(error, 'GET', `/e/v1/tasks/${encodeURIComponent(taskId)}`, this.evidenceFor(task));
       throw error;
     }
     await observeTerminalTask(task, this.evidenceFor(task));
@@ -363,31 +367,31 @@ export class AihubmaxClient {
   }
 
   uploadBase64(fileData: string, fileName?: string): Promise<{ id: string; filename: string; url: string; size: number; created: number }> {
-    return this.request("POST", "/v1/files/upload/base64", {
+    return this.request("POST", "/e/v1/files/upload/base64", {
       file_data: fileData, ...(fileName ? { file_name: fileName } : {}),
     });
   }
 
   uploadUrl(url: string, fileName?: string): Promise<{ id: string; filename: string; url: string; size: number; created: number }> {
-    return this.request("POST", "/v1/files/upload/url", { url, ...(fileName ? { file_name: fileName } : {}) });
+    return this.request("POST", "/e/v1/files/upload/url", { url, ...(fileName ? { file_name: fileName } : {}) });
   }
 
   async listLiveModels(): Promise<Map<string, LiveModel>> {
-    const result = await this.request<{ data?: LiveModel[] }>("GET", "/v1/models");
+    const result = await this.request<{ data?: LiveModel[] }>("GET", "/e/v1/models");
     if (!result || !Array.isArray(result.data) || result.data.some((model) => !model || typeof model.id !== "string")) {
       const error = new ApiError("模型清单响应格式无效，无法确认模型可用性。", this.evidenceFor(result)?.response.http_status ?? 0, "protocol", "invalid_response");
-      await observeRequestError(error, 'GET', '/v1/models', this.evidenceFor(result));
+      await observeRequestError(error, 'GET', '/e/v1/models', this.evidenceFor(result));
       throw error;
     }
     return new Map(result.data.map((model) => [model.id, model]));
   }
 
-  /** LLM Custom registry is separate from GET /v1/models. */
+  /** LLM Custom registry is separate from GET /e/v1/models. */
   async listLlmModels(): Promise<LlmModel[]> {
-    const result = await this.request<{ data?: LlmModel[] }>("GET", "/v1/configs/llm_generations_models");
+    const result = await this.request<{ data?: LlmModel[] }>("GET", "/e/v1/configs/llm_generations_models");
     if (!result || !Array.isArray(result.data) || result.data.some((model) => !model || typeof model.id !== "string")) {
       const error = new ApiError("LLM 模型清单响应格式无效，无法确认理解模型能力。", this.evidenceFor(result)?.response.http_status ?? 0, "protocol", "invalid_response");
-      await observeRequestError(error, 'GET', '/v1/configs/llm_generations_models', this.evidenceFor(result));
+      await observeRequestError(error, 'GET', '/e/v1/configs/llm_generations_models', this.evidenceFor(result));
       throw error;
     }
     return result.data;

@@ -13,7 +13,7 @@ const videoInputs: Array<[string, Record<string, unknown>]> = [
 test('GPT Image 2.5 accepts six quality settings, transparent output and mask/background together', () => {
   for (const model of imageModels) {
     for (const quality of ['auto', 'low', 'medium', 'high', 'xhigh', 'max']) {
-      assert.equal(validateGeneration('image', model, { prompt: 'A product photo', quality, resolution: 'auto' }), '/v1/images/generations');
+      assert.equal(validateGeneration('image', model, { prompt: 'A product photo', quality, resolution: 'auto' }), '/e/v1/images/generations');
     }
     for (const output_format of ['png', 'webp']) {
       assert.doesNotThrow(() => validateGeneration('image', model, {
@@ -56,7 +56,7 @@ test('GPT Image 2.5 rejects invalid output counts and custom geometry before gen
 test('Seedance 2.5 validates duration boundaries and the 1080p duration combination for each mode', () => {
   for (const [model, input] of videoInputs) {
     for (const resolution of ['480p', '720p']) {
-      for (const duration of [4, 30]) assert.equal(validateGeneration('video', model, { prompt: 'A moving circle', ...input, resolution, duration }), '/v1/videos/generations');
+      for (const duration of [4, 30]) assert.equal(validateGeneration('video', model, { prompt: 'A moving circle', ...input, resolution, duration }), '/e/v1/videos/generations');
     }
     for (const duration of [5, 10, 30]) assert.doesNotThrow(() => validateGeneration('video', model, { prompt: 'A moving circle', ...input, resolution: '1080p', duration }));
     assert.doesNotThrow(() => validateGeneration('video', model, { prompt: 'A moving circle', ...input, resolution: '1080p' }));
@@ -99,7 +99,7 @@ test('explicitly selected Seedance 2.0 variants retain their existing generation
       const model = `seedance-2.0-${speed}${mode}`;
       assert.equal(validateGeneration('video', model, {
         prompt: 'A moving circle', ...input, duration: -1, aspect_ratio: 'adaptive', generate_audio: false, seed: 42,
-      }), '/v1/videos/generations');
+      }), '/e/v1/videos/generations');
       assert.match(describe(model).capability, /explicit selection/);
     }
   }

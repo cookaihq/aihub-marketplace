@@ -28,7 +28,7 @@ export function audioContract(model: string): AudioContract {
   return { model, max_bytes: 2_000_000_000, max_seconds: 12 * 3600,
     formats: ['aac', 'amr', 'avi', 'flac', 'flv', 'm4a', 'mkv', 'mov', 'mp3', 'mp4', 'mpeg', 'ogg', 'opus', 'wav', 'webm', 'wma', 'wmv'],
     ...(model === 'paraformer-8k-v2' ? { sample_rate: 8000 } : {}),
-    upload: { endpoint: '/v1/files/upload/base64', max_bytes: UPLOAD_MAX_BYTES, basis: 'client-adapter-bound' },
+    upload: { endpoint: '/e/v1/files/upload/base64', max_bytes: UPLOAD_MAX_BYTES, basis: 'client-adapter-bound' },
     source: 'https://docs.aihubmax.com/openapi/zh/paraformer-v2.json' };
 }
 export function remoteAudio(input: string): boolean { return /^https?:\/\//i.test(input); }

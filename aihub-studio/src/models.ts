@@ -96,7 +96,7 @@ export function modelEntry(model: string) {
     throw new Error(`Video model ${model} is not exposed for new generation by this Plugin. Video generation defaults to Seedance 2.5 text, starting-frame, or reference modes; Seedance 2.0 variants remain available for explicit selection, alongside the C1/C2 digital-human models. Existing task IDs and records can still be queried or resumed.`);
   }
   if (!found || !supported(model, found.entry)) throw new Error('No supported generation schema for this model. Use models and describe; this release supports the selected image, video, digital-human, music and TTS workflows.');
-  if (found.entry.method.toUpperCase() !== 'POST' || !/^\/v1\/(images|videos|audios|audio|run)\/generations$/.test(found.entry.path)) throw new Error('Unsupported catalog generation endpoint.');
+  if (found.entry.method.toUpperCase() !== 'POST' || !/^\/e\/v1\/(images|videos|audios|audio|run)\/generations$/.test(found.entry.path)) throw new Error('Unsupported catalog generation endpoint.');
   return found;
 }
 
@@ -109,7 +109,7 @@ export async function models(client: AihubmaxClient, media?: Media, keyword?: st
         .filter(item => !kw || `${item.id} ${(item.capabilities ?? []).join(' ')}`.toLowerCase().includes(kw))
         .map(item => ({ model: item.id, media: 'llm', capabilities: item.capabilities ?? [], preferred: PREFERRED_MODELS.understanding.includes(item.id as typeof PREFERRED_MODELS.understanding[number]), default: PREFERRED_MODELS.understanding.includes(item.id as typeof PREFERRED_MODELS.understanding[number]) }));
       return { status: 'ok', availability_known: true, models: rows, catalog_only: [], preferred_models: PREFERRED_MODELS.understanding,
-        note: 'E1 uses the separate /v1/configs/llm_generations_models registry. Only models declaring the requested media capability may be submitted; pure text is excluded.' };
+        note: 'E1 uses the separate /e/v1/configs/llm_generations_models registry. Only models declaring the requested media capability may be submitted; pure text is excluded.' };
     } catch (error) {
       return { status: 'availability_unknown', availability_known: false, models: [], catalog_only: [], error: (error as Error).message,
         ...(error instanceof ApiError ? { failure: { http_status: error.status, ambiguous: error.ambiguous } } : {}) };

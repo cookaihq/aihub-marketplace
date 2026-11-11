@@ -73,6 +73,87 @@ class Integration(unittest.TestCase):
                 self.assertNotIn('synthetic-only-value', json.dumps(public_config(saved)))
                 self.assertFalse(adapter.transaction.journal.exists())
 
+    def test_speech_sources_are_audio_specific_from_every_caller(self):
+        key = 'AIHUB_MINIMAX_SPEECH_DEFAULT_VOICE_ID'
+        adapter, user = self.global_adapter('aihub-studio', skill='aihub-image')
+        plugin = user / '.config/aihub-studio'
+        audio = plugin / 'aihub-audio/.env'
+        image = plugin / 'aihub-image/.env'
+        for path, value in ((audio, 'audio-voice'), (image, 'image-voice')):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(key + '=' + value + '\nAIHUB_API_KEY=fixture\n')
+        for caller in ('aihub-image', 'aihub-audio', 'aihub-video', 'aihub-music', 'aihub-understanding', 'aihub-document', None):
+            adapter.options['skill'] = caller
+            fields = self.fields(adapter.snapshot())
+            self.assertEqual(len(fields), 17)
+            self.assertEqual(fields[key]['effective']['value'], 'audio-voice')
+            self.assertEqual(fields[key]['effective']['source'], self.target(audio))
+            self.assertNotIn(self.target(image), fields[key]['targets'])
+        adapter.options['skill'] = 'aihub-audio'
+        path = self.project / '.env.local.aihub-studio'
+        saved = adapter.save({key: {'op':'set', 'value':'custom-voice'}}, adapter.snapshot()['revision'], self.target(path))
+        self.assertEqual(self.fields(saved)[key]['effective']['value'], 'custom-voice')
+        cleared = adapter.save({key: {'op':'unset'}}, saved['revision'], self.target(path))
+        self.assertEqual(self.fields(cleared)[key]['effective']['value'], 'audio-voice')
+
+    def test_speech_favorites_preserve_settings_and_coordinate_node_writer(self):
+        from importlib import import_module
+        key = 'audio.minimax_speech.favorite_voice_ids'
+        adapter, user = self.global_adapter('aihub-studio')
+        plugin = user / '.config/aihub-studio'
+        plugin.mkdir(parents=True)
+        (plugin / '.env').write_text('AIHUB_API_KEY=fixture\n')
+        path = plugin / 'settings.json'
+        original = {'custom': {'keep': True}, 'audio': {'other': 42},
+                    'default_skill_reminders': {'version':1, 'agents':[]}}
+        path.write_text(json.dumps(original))
+        initial = adapter.snapshot()
+        values = ['Chinese (Mandarin)_Warm_Girl'] + ['voice-' + str(i) for i in range(75)]
+        changes = {key:{'op':'set','value':values}}
+        adapter.preview(changes, initial['revision'], self.target(path))
+        self.assertEqual(json.loads(path.read_text()), original)
+        lock = Path(str(path) + '.default-skills.lock')
+        lock.write_text('another writer')
+        with self.assertRaises(UIError) as error:
+            adapter.save(changes, initial['revision'], self.target(path))
+        self.assertEqual(error.exception.code, 'busy')
+        self.assertEqual(lock.read_text(), 'another writer')
+        self.assertEqual(json.loads(path.read_text()), original)
+        lock.unlink()
+        saved = adapter.save(changes, initial['revision'], self.target(path))
+        self.assertEqual(self.fields(saved)[key]['effective']['value'], values)
+        data = json.loads(path.read_text())
+        self.assertEqual(data['custom'], original['custom'])
+        self.assertEqual(data['audio']['other'], 42)
+        self.assertEqual(data['default_skill_reminders'], original['default_skill_reminders'])
+        script = "import {agentDefaults} from './dist/agentDefaults.js'; agentDefaults({agent:'codex',action:'dismiss'});"
+        with import_module('plugins.aihub-studio.persistence').settings_lock(path, self.project):
+            result = subprocess.run(['node','--input-type=module','-e',script], cwd=adapter.package,
+                                    env=adapter.environment, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(json.loads(path.read_text()), data)
+        subprocess.run(['node','--input-type=module','-e',script], cwd=adapter.package,
+                       env=adapter.environment, capture_output=True, check=True)
+        self.assertEqual(json.loads(path.read_text())['audio'], data['audio'])
+        updated = adapter.snapshot()
+        cleared = adapter.save({key:{'op':'unset'}}, updated['revision'], self.target(path))
+        self.assertEqual(self.fields(cleared)[key]['effective']['value'], [])
+        self.assertFalse(json.loads(path.read_text())['default_skill_reminders']['agents'][0]['enabled'])
+        disabled = self.fields(self.adapter('aihub-studio').snapshot())[key]
+        self.assertTrue(disabled['readonly'])
+        self.assertEqual(disabled['targets'], [])
+
+    def test_invalid_favorite_schema_cannot_be_overwritten(self):
+        adapter, user = self.global_adapter('aihub-studio')
+        folder = user / '.config/aihub-studio'
+        folder.mkdir(parents=True)
+        path = folder / 'settings.json'
+        original = '{"audio":{"minimax_speech":{"favorite_voice_ids":["a","a"]}}}'
+        path.write_text(original)
+        with self.assertRaises(UIError):
+            adapter.snapshot()
+        self.assertEqual(path.read_text(), original)
+
     def git(self, *args, check=True):
         return subprocess.run(['git', '-C', str(self.project), *args], check=check,
                               capture_output=True)

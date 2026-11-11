@@ -5,6 +5,7 @@ import { AihubmaxClient, ApiError, PollBudgetExceededError } from './apiClient.j
 import { credentialId, sanitized } from './config.js';
 import { checkMediaTools, downloadAssets, downloadJsonAssets, validateLocalMedia } from './download.js';
 import { validateGeneration } from './models.js';
+import { speechParameters } from './speech.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { UPLOAD_MAX_BYTES } from './audioMedia.js';
 import { transcriptText } from './transcript.js';
@@ -282,12 +283,14 @@ async function queryAndDeliver(client, cfg, job, record, waitSeconds) {
     return result(job, record);
 }
 export async function generate(cfg, options) {
-    const path = validateGeneration(options.media, options.model, options.params);
+    // Stored run candidates are already resolved, even when they contain no voice ID.
+    const params = options.parametersResolved ? options.params : speechParameters(options.model, options.params, cfg.speech?.defaultVoiceId);
+    const path = validateGeneration(options.media, options.model, params);
     assertOutsideInstallation(options.outputDir);
     if (options.media !== 'document')
         await checkMediaTools();
     const { job, record } = await newJob(cfg, options.media, options.model, options.outputDir);
-    await bindDiagnosticRecord(cfg, record, { model: options.model, parameters: options.params, original_request: null });
+    await bindDiagnosticRecord(cfg, record, { model: options.model, parameters: params, original_request: null });
     const client = new AihubmaxClient(cfg);
     job.submission = { state: 'not_submitted', error: 'Model availability has not been verified. No generation was submitted.' };
     await save(record, job, cfg);
@@ -307,7 +310,7 @@ export async function generate(cfg, options) {
     process.stderr.write(`AIhub task record: ${record}\n`);
     return withJobLock(record, async () => {
         try {
-            const task = await client.submitGeneration(path, { ...options.params, model: options.model });
+            const task = await client.submitGeneration(path, { ...params, model: options.model });
             job.submission = { state: 'known', task: sanitized(task, [cfg.apiKey]) };
             await save(record, job, cfg);
         }
@@ -475,7 +478,7 @@ export async function understand(cfg, options) {
         const available = await client.listLlmModels();
         const live = available.find((item) => item.id === options.model);
         if (!live)
-            throw new Error(`模型 ${options.model} 不在 /v1/configs/llm_generations_models 返回的当前账号清单中。`);
+            throw new Error(`模型 ${options.model} 不在 /e/v1/configs/llm_generations_models 返回的当前账号清单中。`);
         const needed = new Set(options.content.map((item) => String(item.type).replace('_url', '').replace('image', 'vision')));
         if (live.capabilities && [...needed].some((cap) => !live.capabilities.includes(cap)))
             throw new Error(`模型 ${options.model} 不具备所需多模态能力；不会静默切换模型。`);
@@ -497,7 +500,7 @@ export async function understand(cfg, options) {
     await options.onRecord?.(record);
     return withJobLock(record, async () => {
         try {
-            const task = await client.submitGeneration('/v1/llm/generations', body, { timeoutMs: LLM_SUBMIT_TIMEOUT_MS });
+            const task = await client.submitGeneration('/e/v1/llm/generations', body, { timeoutMs: LLM_SUBMIT_TIMEOUT_MS });
             job.submission = { state: 'known', task: sanitized(task, [cfg.apiKey]) };
             await save(record, job, cfg);
         }

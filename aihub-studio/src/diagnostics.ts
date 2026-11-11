@@ -69,8 +69,8 @@ async function persistFailure(): Promise<void> {
   catch { c.warning = '无法保存错误报告；保留原任务结果与已知任务 ID，不要因此重新提交。'; }
 }
 function stageFor(method: string, path: string): Stage {
-  return path.startsWith('/v1/tasks/') ? 'query' : method === 'GET' && (path.includes('/models') || path.includes('/configs/') || path === '/api/pricing') ? 'registry'
-    : path.startsWith('/v1/files/') ? 'upload' : method === 'POST' ? 'submission' : 'other';
+  return path.startsWith('/e/v1/tasks/') ? 'query' : method === 'GET' && (path.includes('/models') || path.includes('/configs/') || path === '/api/pricing') ? 'registry'
+    : path.startsWith('/e/v1/files/') ? 'upload' : method === 'POST' ? 'submission' : 'other';
 }
 export async function observeRequestError(error: ApiError, method: string, path: string, evidence?: HttpEvidence): Promise<void> {
   const c = context.getStore();

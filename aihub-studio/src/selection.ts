@@ -3,6 +3,7 @@ import { modelEntry, validateGeneration } from './models.js';
 import type { Media } from './state.js';
 import { resolve } from 'node:path';
 import { audioContract, remoteAudio, type AudioContract } from './audioMedia.js';
+import { speechParameters } from './speech.js';
 
 export const OPERATIONS = {
   'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
@@ -128,7 +129,7 @@ function matchesOperation(model: string, operation: Operation): boolean {
   }
 }
 
-function buildCandidate(request: TaskRequest, model: string): Candidate {
+function buildCandidate(request: TaskRequest, model: string, defaultVoiceId?: string): Candidate {
   const op = request.operation;
   const protocol = op === 'understanding' ? 'understanding' : op === 'music-native' ? 'native-music' : 'generation';
   const media: Media = op.startsWith('image-') ? 'image' : op.startsWith('video-') ? 'video'
@@ -228,6 +229,7 @@ function buildCandidate(request: TaskRequest, model: string): Candidate {
       params[promptField] = request.prompt;
     }
     Object.assign(params, JSON.parse(JSON.stringify(requirements)));
+    if (op === 'audio-tts') Object.assign(params, speechParameters(model, params, defaultVoiceId));
     // Reject every unmapped field even where a catalog schema is permissive.
     const entry = modelEntry(model).entry;
     assertKeys(params, entry.params.filter(name => name !== 'model'), 'model_parameters');
@@ -245,7 +247,7 @@ export function selectionPlan(cfg: LoadedConfig, value: Record<string, unknown>)
   const excluded: SelectionPlan['excluded'] = [];
   for (const model of selected) {
     if (!matchesOperation(model, request.operation)) { excluded.push({ model, reason: 'This exact model is not supported for the selected task purpose/protocol.' }); continue; }
-    candidates.push(buildCandidate(request, model));
+    candidates.push(buildCandidate(request, model, cfg.speech?.defaultVoiceId));
   }
   return { request, candidates, excluded, source,
     policy: source === 'user' ? 'off' : cfg.modelSelection?.policy ?? 'auto',

@@ -79,8 +79,8 @@ async function persistFailure() {
     }
 }
 function stageFor(method, path) {
-    return path.startsWith('/v1/tasks/') ? 'query' : method === 'GET' && (path.includes('/models') || path.includes('/configs/') || path === '/api/pricing') ? 'registry'
-        : path.startsWith('/v1/files/') ? 'upload' : method === 'POST' ? 'submission' : 'other';
+    return path.startsWith('/e/v1/tasks/') ? 'query' : method === 'GET' && (path.includes('/models') || path.includes('/configs/') || path === '/api/pricing') ? 'registry'
+        : path.startsWith('/e/v1/files/') ? 'upload' : method === 'POST' ? 'submission' : 'other';
 }
 export async function observeRequestError(error, method, path, evidence) {
     const c = context.getStore();

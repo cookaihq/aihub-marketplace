@@ -1,5 +1,6 @@
 """Configuration adapter backed by the two Plugins' original loaders."""
 from copy import deepcopy
+from importlib import import_module
 import hashlib
 import hmac
 import json
@@ -55,7 +56,10 @@ class Configuration:
         self.environment = environment
         self.definitions = definitions(self.plugin)
         self.secret = secrets.token_bytes(32)
-        self.transaction = Transaction(self.project / 'tmp' / (self.plugin + '-config-transactions'), owner_path=self.project)
+        extra_lock = (import_module('plugins.aihub-studio.persistence').settings_lock
+                      if self.plugin == 'aihub-studio' else None)
+        self.transaction = Transaction(self.project / 'tmp' / (self.plugin + '-config-transactions'),
+                                       owner_path=self.project, extra_lock=extra_lock)
 
     def _private_project_file(self, path):
         return Path(path) in (self.project / ('.env.local.' + self.plugin), self.project / '.env.local')
@@ -141,12 +145,18 @@ class Configuration:
             key = field['id']
             rows = []
             targets = []
-            is_settings = key.startswith('routing.') or key == 'default_skill_reminders'
+            is_settings = field.get('settings_path') or key.startswith('routing.') or key == 'default_skill_reminders'
             if is_settings:
                 settings = data.get('settings', {})
                 explicit = False
                 value = field.get('default')
-                if key.startswith('routing.'):
+                if field.get('settings_path'):
+                    node = settings
+                    for part in field['settings_path'][:-1]:
+                        node = node.get(part, {})
+                    leaf = field['settings_path'][-1]
+                    explicit, value = leaf in node, node.get(leaf, field.get('default'))
+                elif key.startswith('routing.'):
                     routing = settings.get('routing', {})
                     if key == 'routing.default':
                         explicit, value = 'default' in routing, routing.get('default', 'auto')
@@ -250,8 +260,11 @@ class Configuration:
         strings = value if isinstance(value, list) else [value] if isinstance(value, str) else []
         if any(not isinstance(v, str) or any(c in v for c in '\r\n\0\u2028\u2029\x85') or '••••••' in v for v in strings):
             raise UIError('validation', field['label'] + '包含不支持的字符。', 422)
-        if kind == 'list' and (len(value) > 50 or any(not v or re.search(r'[\s,]', v) for v in value) or len(set(value)) != len(value)):
-            raise UIError('validation', field['label'] + '须为不重复的模型 ID。', 422)
+        if kind == 'list' and (len(value) > field.get('max_items', 50) or any(not v or (not field.get('value_pattern') and re.search(r'[\s,]', v)) for v in value) or len(set(value)) != len(value)):
+            raise UIError('validation', field['label'] + '须为不重复的' + field.get('item_label', '模型 ID') + '，最多 ' + str(field.get('max_items', 50)) + ' 项。', 422)
+        if any((field.get('max_length') and len(v) > field['max_length']) or (field.get('trimmed') and v != v.strip()) or
+               (v and field.get('value_pattern') and not re.fullmatch(field['value_pattern'], v)) for v in strings):
+            raise UIError('validation', field['label'] + '的格式或长度无效。', 422)
         if field['id'] == 'AIHUB_SUPPORT_URL' and value:
             try:
                 url = urlsplit(value)
@@ -291,7 +304,17 @@ class Configuration:
                     old = next(row for row in field['rows'] if row['layer'] == target)
                     if value and not old.get('value'):
                         raise UIError('target', '新增项目密钥只能保存到 .env.local.' + self.plugin + ' 或 .env.local；此文件仅允许修复已有密钥或移除设置。', 422)
-            if key.startswith('routing.'):
+            if field.get('settings_path'):
+                settings_changed = True
+                node = settings
+                for part in field['settings_path'][:-1]:
+                    node = node.setdefault(part, {})
+                leaf = field['settings_path'][-1]
+                if value is None:
+                    node.pop(leaf, None)
+                else:
+                    node[leaf] = value
+            elif key.startswith('routing.'):
                 settings_changed = True
                 routing = settings.setdefault('routing', {'default': 'auto', 'platforms': {}})
                 if key == 'routing.default':

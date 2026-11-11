@@ -196,7 +196,7 @@ export async function continueRun(cfg: LoadedConfig, recordInput: string, waitSe
         if (candidate.transcription) {
           attempt.result = await transcribe();
         } else if (candidate.protocol === 'generation') {
-          attempt.result = await generate(cfg, { media: candidate.media, model: candidate.model, params, outputDir, waitSeconds: remainingWait(), onRecord });
+          attempt.result = await generate(cfg, { media: candidate.media, model: candidate.model, params, outputDir, waitSeconds: remainingWait(), onRecord, parametersResolved: true });
         } else if (candidate.protocol === 'understanding') {
           attempt.result = await understand(cfg, { model: candidate.model, prompt: params.prompt as string,
             content: params.content as Array<Record<string, unknown>>, outputDir, waitSeconds: remainingWait(),
