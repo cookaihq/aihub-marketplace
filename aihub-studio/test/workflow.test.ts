@@ -37,7 +37,7 @@ test('new CLI persists a task and resumes it through partial download to verifie
   let posts = 0; let asset2 = false; let queryFails = true; let base = '';
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/e/v1/models') return json({ data: [{ id: 'gpt-image-2' }] });
+    if (req.url === '/v1/models') return json({ data: [{ id: 'gpt-image-2' }] });
     if (req.method === 'POST') { posts++; return json({ id: 'test-task', status: 'pending', model: 'gpt-image-2' }); }
     if (req.url?.startsWith('/e/v1/tasks/')) {
       if (queryFails) return json({ error: { message: 'fixture query denied' } }, 403);
@@ -130,7 +130,7 @@ test('CLI rejects invalid Seedance 2.5 inputs before HTTP and never falls back t
     assert.equal(requests, 0);
     await writeFile(params, JSON.stringify({ prompt: 'A moving blue circle' }));
     const unavailable = await command();
-    assert.equal(unavailable.json.status, 'not_submitted'); assert.match(unavailable.json.error, /exact model ID is not present/);
+    assert.equal(unavailable.json.status, 'not_submitted'); assert.match(unavailable.json.error, /model and requested variant are not present/);
     assert.equal(requests, 1); assert.equal(posts, 0);
     const folder = (await readdir(dir)).find(name => /^\d{14}-.+-run-[a-f0-9]{8}$/.test(name));
     assert.ok(folder);
@@ -308,7 +308,7 @@ test('CLI handles completed and failed submission responses without querying or 
   let downloads = 0;
   const server = createServer((req, res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/e/v1/models') return json({ data: [{ id: 'gpt-image-2' }] });
+    if (req.url === '/v1/models') return json({ data: [{ id: 'gpt-image-2' }] });
     if (req.method === 'POST' && req.url === '/e/v1/images/generations') {
       posts++;
       req.resume();
@@ -390,7 +390,7 @@ test('E2 submits doc2x and delivers a validated ZIP without ffprobe', async () =
   let base = ''; let posts = 0; let body: Record<string, unknown> | undefined;
   const server = createServer((req, res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.method === 'GET' && req.url === '/e/v1/models') return json({ data: [{ id: 'doc2x-v3' }] });
+    if (req.method === 'GET' && req.url === '/v1/models') return json({ data: [{ id: 'doc2x-v3' }] });
     if (req.method === 'POST' && req.url === '/e/v1/run/generations') {
       posts++;
       const chunks: Buffer[] = []; req.on('data', c => chunks.push(c)); req.on('end', () => { body = JSON.parse(Buffer.concat(chunks).toString()) as Record<string, unknown>; json({ id: 'doc-task', status: 'completed', model: 'doc2x-v3', results: [{ url: `${base}/result.zip` }] }); });

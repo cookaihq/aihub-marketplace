@@ -1,13 +1,13 @@
 /**
- * live id（GET /e/v1/models 的可调用 id）与 catalog model id（spec 派生）的归一化。
+ * live id（GET /v1/models 的账号模型 id）与 catalog model id（spec 派生）的归一化。
  *
  * 两侧命名规则不同，必须归一化后才能对齐：
  * - live 侧可能带 provider 前缀与方括号变体：`google/veo-3.1[fast|audio]`、`fabric-1.0[480p]`
  * - catalog 侧是文档命名：`veo-3.1`、`fabric-1.0`
  *
  * 注意方向性：catalog 的裸 family 名（`veo-3.1`）**不一定可直接提交**，
- * 能提交的是 live 侧的真实 id。因此归一化只用于「给 live id 找参数说明」，
- * 不能反过来把 catalog 名当作可调用 id。
+ * 归一化只用于「给 live id 找参数说明」，不能据此推断可提交的 id。
+ * 已核实的请求映射另在 models.ts 中显式处理，例如 Fabric 的型号与分辨率。
  */
 
 export interface NormalizedModelId {

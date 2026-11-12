@@ -67,7 +67,7 @@ test('direct generation uses the default and continuing frozen or legacy candida
   const server = createServer(async (req,res) => {
     paths.push(req.url!);
     const json = (data:unknown) => res.end(JSON.stringify(data));
-    if (req.url === '/e/v1/models') return json({data:['speech-2.8-hd','speech-2.8-turbo'].map(id=>({id}))});
+    if (req.url === '/v1/models') return json({data:['speech-2.8-hd','speech-2.8-turbo'].map(id=>({id}))});
     if (req.method === 'POST' && req.url === '/e/v1/audios/generations') {
       let raw=''; for await (const chunk of req) raw += chunk;
       const body = JSON.parse(raw); posts.push(body);
@@ -91,7 +91,8 @@ test('direct generation uses the default and continuing frozen or legacy candida
       assert.deepEqual(posts.at(-1)?.voice_setting, voice ? {voice_id:voice} : undefined);
       assert(!saved.includes('changed-later'));
     }
-    assert(!paths.some(path=>path.startsWith('/v1/')||path.includes('/e/e/')));
+    assert(paths.includes('/v1/models'));
+    assert(!paths.some(path => (path.startsWith('/v1/') && path !== '/v1/models') || path.includes('/e/e/')));
   } finally { server.closeAllConnections(); await new Promise<void>(r=>server.close(()=>r())); await rm(dir,{recursive:true,force:true}); }
 });
 

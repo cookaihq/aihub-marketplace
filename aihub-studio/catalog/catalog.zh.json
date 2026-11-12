@@ -2,7 +2,7 @@
   "generatedAt": "2026-08-04T02:57:58.577Z",
   "lang": "zh",
   "specBaseUrl": "https://docs.aihubmax.com/openapi/zh/",
-  "specFileCount": 154,
+  "specFileCount": 156,
   "entries": [
     {
       "file": "claude-format-messages.json",
@@ -13559,6 +13559,681 @@
         }
       ],
       "registeredInDocsJson": true
+    },
+    {
+      "file": "eleven-v4.json",
+      "operationId": "eleven-v4",
+      "method": "POST",
+      "path": "/e/v1/audios/generations",
+      "title": "Eleven v4 / v4 Turbo",
+      "summary": "Eleven v4 / v4 Turbo",
+      "description": "- Eleven v4 与 v4 Turbo 文本转语音\n- 支持音色、音频标签、IPA 发音、文本规范化及可选时间戳\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 完成后从 `results[0].url` 下载音频；启用 timestamps 时保留时间戳。请及时下载，链接保留时间取决于文件存储服务。\n",
+      "category": "generation",
+      "mediaType": "audio",
+      "models": [
+        "eleven-v4",
+        "eleven-v4-turbo"
+      ],
+      "modelSource": "default",
+      "requestContentTypes": [
+        "application/json"
+      ],
+      "requiredParams": [
+        "model",
+        "text"
+      ],
+      "params": [
+        "apply_text_normalization",
+        "enable_safety_checker",
+        "language_code",
+        "model",
+        "output_format",
+        "seed",
+        "similarity_boost",
+        "stability",
+        "text",
+        "timestamps",
+        "voice"
+      ],
+      "paramSpecs": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "default": "eleven-v4",
+          "description": "`eleven-v4`：语音合成，$0.08/1000 字符；`eleven-v4-turbo`：更快的语音合成，$0.04/1000 字符。两者共用参数合同。"
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "description": "要朗读的文本，1–5000 字符。支持 `[whispering]` 等音频标签，以及用 `/.../` 包围的 IPA 发音。"
+        },
+        {
+          "name": "voice",
+          "type": "string",
+          "required": false,
+          "default": "Rachel",
+          "description": "音色名称或可用的音色 ID；默认 `Rachel`。"
+        },
+        {
+          "name": "stability",
+          "type": "number",
+          "required": false,
+          "default": 0.5,
+          "description": "声音稳定性，0–1。较低值更富表现力，较高值更一致。"
+        },
+        {
+          "name": "similarity_boost",
+          "type": "number",
+          "required": false,
+          "default": 0.75,
+          "description": "与参考音色的相似度，0–1。较高值提高相似度，但可能降低自然度。"
+        },
+        {
+          "name": "seed",
+          "type": null,
+          "required": false,
+          "default": null,
+          "description": "随机种子，0–4294967295。相同参数和种子不保证输出完全一致。"
+        },
+        {
+          "name": "language_code",
+          "type": null,
+          "required": false,
+          "default": null,
+          "description": "语音与文本规范化所用的 ISO 639-1 语言代码。"
+        },
+        {
+          "name": "apply_text_normalization",
+          "type": "string",
+          "required": false,
+          "enum": [
+            "auto",
+            "on",
+            "off"
+          ],
+          "default": "auto",
+          "description": "数字、日期等文本规范化：`auto` 自动判断，`on` 启用，`off` 关闭。"
+        },
+        {
+          "name": "timestamps",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "是否在结果中附带语音时间戳；时间戳数组随音频一起返回。"
+        },
+        {
+          "name": "enable_safety_checker",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "description": "是否检查输入内容安全；关闭需服务账户具备相应权限。"
+        },
+        {
+          "name": "output_format",
+          "type": "string",
+          "required": false,
+          "enum": [
+            "mp3_22050_32",
+            "mp3_44100_32",
+            "mp3_44100_64",
+            "mp3_44100_96",
+            "mp3_44100_128",
+            "mp3_44100_192",
+            "pcm_8000",
+            "pcm_16000",
+            "pcm_22050",
+            "pcm_24000",
+            "pcm_44100",
+            "pcm_48000",
+            "ulaw_8000",
+            "alaw_8000",
+            "opus_48000_32",
+            "opus_48000_64",
+            "opus_48000_96",
+            "opus_48000_128",
+            "opus_48000_192"
+          ],
+          "default": "mp3_44100_128",
+          "description": "输出格式，名称为编码_采样率_码率（如适用）。默认 `mp3_44100_128`；支持 MP3、PCM、μ-law、A-law 与 Opus。"
+        }
+      ],
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "model",
+          "text"
+        ],
+        "properties": {
+          "model": {
+            "description": "`eleven-v4`：语音合成，$0.08/1000 字符；`eleven-v4-turbo`：更快的语音合成，$0.04/1000 字符。两者共用参数合同。",
+            "examples": [
+              "eleven-v4",
+              "eleven-v4-turbo"
+            ],
+            "type": "string",
+            "default": "eleven-v4"
+          },
+          "text": {
+            "description": "要朗读的文本，1–5000 字符。支持 `[whispering]` 等音频标签，以及用 `/.../` 包围的 IPA 发音。",
+            "maxLength": 5000,
+            "minLength": 1,
+            "type": "string",
+            "example": "[whispering] Welcome to the evening show."
+          },
+          "voice": {
+            "default": "Rachel",
+            "description": "音色名称或可用的音色 ID；默认 `Rachel`。",
+            "type": "string",
+            "example": "Rachel"
+          },
+          "stability": {
+            "default": 0.5,
+            "description": "声音稳定性，0–1。较低值更富表现力，较高值更一致。",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "type": "number",
+            "example": 0.5
+          },
+          "similarity_boost": {
+            "default": 0.75,
+            "description": "与参考音色的相似度，0–1。较高值提高相似度，但可能降低自然度。",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "type": "number",
+            "example": 0.75
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 4294967295,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "随机种子，0–4294967295。相同参数和种子不保证输出完全一致。",
+            "example": 42
+          },
+          "language_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "语音与文本规范化所用的 ISO 639-1 语言代码。",
+            "example": "zh"
+          },
+          "apply_text_normalization": {
+            "default": "auto",
+            "description": "数字、日期等文本规范化：`auto` 自动判断，`on` 启用，`off` 关闭。",
+            "enum": [
+              "auto",
+              "on",
+              "off"
+            ],
+            "type": "string",
+            "example": "auto"
+          },
+          "timestamps": {
+            "default": false,
+            "description": "是否在结果中附带语音时间戳；时间戳数组随音频一起返回。",
+            "type": "boolean",
+            "example": true
+          },
+          "enable_safety_checker": {
+            "default": true,
+            "description": "是否检查输入内容安全；关闭需服务账户具备相应权限。",
+            "type": "boolean",
+            "example": true
+          },
+          "output_format": {
+            "default": "mp3_44100_128",
+            "description": "输出格式，名称为编码_采样率_码率（如适用）。默认 `mp3_44100_128`；支持 MP3、PCM、μ-law、A-law 与 Opus。",
+            "enum": [
+              "mp3_22050_32",
+              "mp3_44100_32",
+              "mp3_44100_64",
+              "mp3_44100_96",
+              "mp3_44100_128",
+              "mp3_44100_192",
+              "pcm_8000",
+              "pcm_16000",
+              "pcm_22050",
+              "pcm_24000",
+              "pcm_44100",
+              "pcm_48000",
+              "ulaw_8000",
+              "alaw_8000",
+              "opus_48000_32",
+              "opus_48000_64",
+              "opus_48000_96",
+              "opus_48000_128",
+              "opus_48000_192"
+            ],
+            "type": "string",
+            "example": "mp3_44100_128"
+          }
+        }
+      },
+      "registeredInDocsJson": false
+    },
+    {
+      "file": "elevenlabs-music-v2.5.json",
+      "operationId": "elevenlabs-music-v2.5",
+      "method": "POST",
+      "path": "/e/v1/audios/generations",
+      "title": "ElevenLabs Music v2.5",
+      "summary": "ElevenLabs Music v2.5",
+      "description": "- ElevenLabs Music v2.5 音乐生成\n- 支持提示词或分段创作计划、歌词、风格与参考音频\n- 以实际输出分钟向上取整计费，$0.60/分钟\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 完成后从 `results[0].url` 下载音频，请及时保存；链接保留时间取决于文件存储服务。\n",
+      "category": "generation",
+      "mediaType": "audio",
+      "models": [
+        "elevenlabs-music-v2.5"
+      ],
+      "modelSource": "default",
+      "requestContentTypes": [
+        "application/json"
+      ],
+      "requiredParams": [
+        "model"
+      ],
+      "params": [
+        "composition_plan",
+        "duration",
+        "enable_safety_checker",
+        "force_instrumental",
+        "model",
+        "output_format",
+        "prompt",
+        "seed"
+      ],
+      "paramSpecs": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "default": "elevenlabs-music-v2.5",
+          "description": "`elevenlabs-music-v2.5`：提示词或分段计划生成音乐，总长 3–600 秒，按实际输出整分钟计费。"
+        },
+        {
+          "name": "prompt",
+          "type": null,
+          "required": false,
+          "default": null,
+          "description": "音乐描述，最多 4100 字符。与 composition_plan 必须且只能提供一个。"
+        },
+        {
+          "name": "composition_plan",
+          "type": null,
+          "required": false,
+          "default": null,
+          "description": "分段创作计划；与 prompt 互斥。每段可指定歌词、风格和参考音频。"
+        },
+        {
+          "name": "duration",
+          "type": null,
+          "required": false,
+          "default": null,
+          "description": "歌曲时长，单位秒，范围 3–600，最多三位小数。仅用于 prompt 模式；省略时由模型决定。费用按实际输出音频时长向上取整到分钟计算。"
+        },
+        {
+          "name": "force_instrumental",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "仅用于 prompt 模式。true 保证纯音乐；false 由提示词决定是否包含人声。"
+        },
+        {
+          "name": "seed",
+          "type": null,
+          "required": false,
+          "default": null,
+          "description": "仅用于 composition_plan 模式的随机种子，不保证完全复现。"
+        },
+        {
+          "name": "output_format",
+          "type": "string",
+          "required": false,
+          "enum": [
+            "mp3_22050_32",
+            "mp3_44100_32",
+            "mp3_44100_64",
+            "mp3_44100_96",
+            "mp3_44100_128",
+            "mp3_44100_192",
+            "pcm_8000",
+            "pcm_16000",
+            "pcm_22050",
+            "pcm_24000",
+            "pcm_44100",
+            "pcm_48000",
+            "ulaw_8000",
+            "alaw_8000",
+            "opus_48000_32",
+            "opus_48000_64",
+            "opus_48000_96",
+            "opus_48000_128",
+            "opus_48000_192",
+            "mp3_24000_48",
+            "mp3_48000_128",
+            "mp3_48000_192",
+            "mp3_48000_240",
+            "mp3_48000_320",
+            "pcm_32000"
+          ],
+          "default": "mp3_48000_192",
+          "description": "音频输出格式，名称为编码_采样率_码率（如适用）；默认 mp3_48000_192。"
+        },
+        {
+          "name": "enable_safety_checker",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "description": "是否检查输入内容安全；关闭需服务账户具备相应权限。"
+        }
+      ],
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "model"
+        ],
+        "properties": {
+          "model": {
+            "description": "`elevenlabs-music-v2.5`：提示词或分段计划生成音乐，总长 3–600 秒，按实际输出整分钟计费。",
+            "examples": [
+              "elevenlabs-music-v2.5"
+            ],
+            "type": "string",
+            "default": "elevenlabs-music-v2.5"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "maxLength": 4100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "音乐描述，最多 4100 字符。与 composition_plan 必须且只能提供一个。",
+            "example": "Mysterious jungle soundtrack with woodwinds and rhythmic percussion."
+          },
+          "composition_plan": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "chunks": {
+                    "description": "按播放顺序排列的 1–30 个段落，总时长须为 3–600 秒。",
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "text": {
+                          "description": "本段歌词或演奏指示。可用 `[Verse 1]` 等段落名开头，名称 1–100 字符，支持 `{scratching}` 等行内指示。最多 30 行，每行最多 200 字符；纯音乐可为空。",
+                          "type": "string",
+                          "example": "[Verse 1]\nNeon rain on empty streets\nI keep walking to the beat"
+                        },
+                        "duration": {
+                          "description": "本段时长，单位秒，范围 3–120，最多三位小数。",
+                          "maximum": 120.0,
+                          "minimum": 3.0,
+                          "multipleOf": 0.001,
+                          "type": "number",
+                          "example": 15
+                        },
+                        "positive_styles": {
+                          "description": "本段应包含的风格与音乐方向，建议使用英文；第一段决定整首歌的主要风格。",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array",
+                          "example": [
+                            "synthwave",
+                            "analog drum machine"
+                          ]
+                        },
+                        "negative_styles": {
+                          "anyOf": [
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "default": null,
+                          "description": "本段需避免的风格；无特定要求时可省略或留空。",
+                          "example": [
+                            "distortion"
+                          ]
+                        },
+                        "context_adherence": {
+                          "anyOf": [
+                            {
+                              "enum": [
+                                "low",
+                                "medium",
+                                "high"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "default": null,
+                          "description": "与相邻段落的一致性：`low` 更自由，`high` 更连贯。",
+                          "example": "medium"
+                        },
+                        "audio_reference": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "audio_url": {
+                                  "description": "用作风格参考的音频 URL，必须为公开可访问的 HTTP/HTTPS 地址。",
+                                  "type": "string",
+                                  "example": "https://storage.googleapis.com/falserverless/example_outputs/elevenlabs/music_generated.mp3"
+                                },
+                                "start_ms": {
+                                  "default": 0,
+                                  "description": "参考片段的起始偏移，单位毫秒。",
+                                  "minimum": 0,
+                                  "type": "integer",
+                                  "example": 0
+                                },
+                                "end_ms": {
+                                  "anyOf": [
+                                    {
+                                      "exclusiveMinimum": 0,
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "default": null,
+                                  "description": "参考片段的结束偏移，单位毫秒。必须大于 start_ms，窗口最长 30000 毫秒；省略时采用 start_ms 后 30 秒或音频结尾，以较早者为准。",
+                                  "example": 15000
+                                },
+                                "strength": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "low",
+                                        "medium",
+                                        "high",
+                                        "xhigh"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "default": null,
+                                  "description": "参考风格强度：从 `low` 到 `xhigh` 逐渐增强。",
+                                  "example": "medium"
+                                }
+                              },
+                              "required": [
+                                "audio_url"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "default": null,
+                          "description": "本段的参考音频；第一段的参考会影响后续所有段落。",
+                          "example": {
+                            "audio_url": "https://storage.googleapis.com/falserverless/example_outputs/elevenlabs/music_generated.mp3",
+                            "end_ms": 15000,
+                            "start_ms": 0
+                          }
+                        }
+                      },
+                      "required": [
+                        "text",
+                        "duration",
+                        "positive_styles"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 30,
+                    "minItems": 1,
+                    "type": "array",
+                    "example": [
+                      {
+                        "duration": 15,
+                        "positive_styles": [
+                          "ambient"
+                        ],
+                        "text": "[Intro]"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "chunks"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "分段创作计划；与 prompt 互斥。每段可指定歌词、风格和参考音频。",
+            "example": {
+              "chunks": [
+                {
+                  "duration": 15,
+                  "positive_styles": [
+                    "ambient"
+                  ],
+                  "text": "[Intro]"
+                }
+              ]
+            }
+          },
+          "duration": {
+            "anyOf": [
+              {
+                "maximum": 600.0,
+                "minimum": 3.0,
+                "multipleOf": 0.001,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "歌曲时长，单位秒，范围 3–600，最多三位小数。仅用于 prompt 模式；省略时由模型决定。费用按实际输出音频时长向上取整到分钟计算。",
+            "example": 30
+          },
+          "force_instrumental": {
+            "default": false,
+            "description": "仅用于 prompt 模式。true 保证纯音乐；false 由提示词决定是否包含人声。",
+            "type": "boolean",
+            "example": true
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "仅用于 composition_plan 模式的随机种子，不保证完全复现。",
+            "example": 42
+          },
+          "output_format": {
+            "default": "mp3_48000_192",
+            "description": "音频输出格式，名称为编码_采样率_码率（如适用）；默认 mp3_48000_192。",
+            "enum": [
+              "mp3_22050_32",
+              "mp3_44100_32",
+              "mp3_44100_64",
+              "mp3_44100_96",
+              "mp3_44100_128",
+              "mp3_44100_192",
+              "pcm_8000",
+              "pcm_16000",
+              "pcm_22050",
+              "pcm_24000",
+              "pcm_44100",
+              "pcm_48000",
+              "ulaw_8000",
+              "alaw_8000",
+              "opus_48000_32",
+              "opus_48000_64",
+              "opus_48000_96",
+              "opus_48000_128",
+              "opus_48000_192",
+              "mp3_24000_48",
+              "mp3_48000_128",
+              "mp3_48000_192",
+              "mp3_48000_240",
+              "mp3_48000_320",
+              "pcm_32000"
+            ],
+            "type": "string",
+            "example": "mp3_48000_192"
+          },
+          "enable_safety_checker": {
+            "default": true,
+            "description": "是否检查输入内容安全；关闭需服务账户具备相应权限。",
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "registeredInDocsJson": false,
+      "conditionalRequiredParams": [
+        "prompt",
+        "composition_plan"
+      ]
     }
   ],
   "crossCheck": {

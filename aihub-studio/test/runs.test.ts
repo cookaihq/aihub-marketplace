@@ -22,7 +22,7 @@ async function fixture(skill = 'aihub-image') {
   let base = '';
   const server = createServer(async (req, res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/e/v1/models') return json({ data: [first, second].filter(id => id !== first || state.firstVisible).map(id => ({ id })) });
+    if (req.url === '/v1/models') return json({ data: [first, second].filter(id => id !== first || state.firstVisible).map(id => ({ id })) });
     if (req.method === 'POST') {
       let text = ''; for await (const chunk of req) text += chunk;
       const body = JSON.parse(text);

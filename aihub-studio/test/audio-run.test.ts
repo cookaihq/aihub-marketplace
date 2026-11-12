@@ -23,7 +23,7 @@ async function fixture(large = false) {
     results: state.inline ? [{ transcripts: [{ text: '第一句。第二句。', sentences: [{ text: '第一句。', begin_time: 0, end_time: 200 }, { text: '第二句。', begin_time: 300, end_time: 800 }] }] }] : [{ transcription_url: `${base}/result/${id}` }] });
   const server = createServer(async (req,res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/e/v1/models') return json({ data: state.visible.map(id => ({ id })) });
+    if (req.url === '/v1/models') return json({ data: state.visible.map(id => ({ id })) });
     if (req.method === 'POST') {
       let raw = ''; for await (const chunk of req) raw += chunk; const body = JSON.parse(raw);
       if (req.url === '/e/v1/files/upload/base64') {

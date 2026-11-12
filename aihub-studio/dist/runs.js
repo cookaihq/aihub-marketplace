@@ -9,6 +9,7 @@ import { generate, resume, understand, nativeMusic, failureInfo, TaskPersistence
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { runTranscription } from './audioRun.js';
 import { createTask, participate } from './taskInfo.js';
+import { generationModelAvailable } from './models.js';
 function canonical(value) {
     if (Array.isArray(value))
         return `[${value.map(canonical).join(',')}]`;
@@ -58,7 +59,8 @@ async function available(client, candidate) {
             return 'The model does not declare all required media capabilities.';
         return undefined;
     }
-    return (await client.listLiveModels()).has(candidate.model) ? undefined : 'The exact model ID is not visible to the current account.';
+    return generationModelAvailable(await client.listLiveModels(), candidate.model, candidate.params ?? {})
+        ? undefined : 'The model and requested variant are not visible to the current account.';
 }
 /** A terminal task failure is distinct from a failed request, query or download. */
 function disposition(result) {

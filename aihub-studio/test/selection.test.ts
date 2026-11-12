@@ -83,3 +83,45 @@ test('unknown mappings, protocol changes and raw local paths are not silently ac
   assert.deepEqual(music.candidates.map(c => c.model), ['lyria-3-pro']);
   assert.throws(() => selectionPlan(cfg('aihub-image'), { operation: 'image-edit', original_request: 'edit', prompt: 'edit', inputs: { images: ['/local/image.png'] } }), /remote HTTP/);
 });
+
+test('digital-human defaults construct complete model-specific requests and preserve explicit choices', () => {
+  const inputs = { videos: ['https://fixture.invalid/person.mp4'], audios: ['https://fixture.invalid/voice.wav'] };
+  const sync = { operation: 'video-lipsync', original_request: 'Synchronize this video with this recording', inputs };
+  const plan = selectionPlan(cfg('aihub-video'), sync);
+  assert.equal(plan.source, 'built-in');
+  assert.deepEqual(plan.candidates, [{ model: 'sync-3', media: 'video', protocol: 'generation', params: {
+    video_url: inputs.videos[0], audio_url: inputs.audios[0],
+  } }]);
+  for (const requirements of [{ temperature: 0.8 }, { active_speaker: true }]) {
+    const rejected = selectionPlan(cfg('aihub-video'), { ...sync, requirements }).candidates[0]!;
+    assert.ok(rejected.rejection); assert.equal(rejected.params, undefined);
+  }
+  const legacy = selectionPlan(cfg('aihub-video', ['lipsync-2']), { ...sync, requirements: { temperature: 0.8, active_speaker: true } });
+  assert.equal(legacy.source, 'configuration'); assert.equal(legacy.candidates[0]?.params?.temperature, 0.8);
+  const avatar = { operation: 'video-avatar', original_request: 'Make this portrait speak the recording',
+    inputs: { images: ['https://fixture.invalid/portrait.png'], audios: inputs.audios } };
+  const defaultAvatar = selectionPlan(cfg('aihub-video'), avatar).candidates[0]!;
+  assert.equal(defaultAvatar.model, 'fabric-1.0');
+  assert.deepEqual(defaultAvatar.params, { image_url: avatar.inputs.images[0], audio_url: inputs.audios[0], resolution: '720p' });
+  assert.equal(selectionPlan(cfg('aihub-video'), { ...avatar, requirements: { resolution: '480p' } }).candidates[0]?.params?.resolution, '480p');
+  for (const extra of [{ prompt: 'Turn left' }, { requirements: { advanced: true } }, { requirements: { resolution: '1080p' } }]) {
+    assert.ok(selectionPlan(cfg('aihub-video'), { ...avatar, ...extra }).candidates[0]?.rejection);
+  }
+  const explicit = selectionPlan(cfg('aihub-video', ['fabric-1.0']), { ...avatar, model: 'omnihuman-1.5', prompt: 'Wave' });
+  assert.equal(explicit.policy, 'off'); assert.equal(explicit.candidates[0]?.params?.prompt, 'Wave');
+});
+
+test('Carbon is the default for every understanding input type without overriding configuration or user models', () => {
+  for (const [input, type] of [['images', 'image_url'], ['audios', 'audio_url'], ['videos', 'video_url'], ['files', 'file_url']]) {
+    const url = `https://fixture.invalid/${input}`;
+    const request = { operation: 'understanding', original_request: 'Explain this media', prompt: 'Describe the contents', inputs: { [input!]: [url] } };
+    const plan = selectionPlan(cfg('aihub-understanding'), request);
+    assert.equal(plan.source, 'built-in'); assert.equal(plan.candidates.length, 1);
+    assert.equal(plan.candidates[0]?.model, 'gemini-4-carbon');
+    assert.deepEqual(plan.candidates[0]?.params?.content, [{ type, [type!]: { url } }]);
+    const configured = selectionPlan(cfg('aihub-understanding', ['gemini-3.1-pro-preview']), request);
+    assert.equal(configured.source, 'configuration'); assert.equal(configured.candidates[0]?.model, 'gemini-3.1-pro-preview');
+    const explicit = selectionPlan(cfg('aihub-understanding', ['gemini-4-carbon']), { ...request, model: 'gemini-3.5-flash' });
+    assert.equal(explicit.source, 'user'); assert.equal(explicit.policy, 'off'); assert.equal(explicit.candidates[0]?.model, 'gemini-3.5-flash');
+  }
+});

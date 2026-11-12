@@ -39,7 +39,7 @@ export function findEntryByModel(model) {
  * 为一个 live id 找参数说明：先精确匹配，再按归一化 family 匹配。
  *
  * 例如源仓已记录的 `veo-3.1[4k]`、`google/veo-3.1[fast]` 可以取 `veo-3.1`
- * 的参数说明；能否提交仍须查询当前 Key 的 /e/v1/models。
+ * 的参数说明；能否提交仍须查询当前 Key 的 /v1/models。
  */
 export function resolveEntry(modelId) {
     const exact = findEntryByModel(modelId);

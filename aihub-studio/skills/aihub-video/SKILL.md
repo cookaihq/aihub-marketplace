@@ -1,8 +1,8 @@
 ---
 name: aihub-video
 metadata:
-  version: "3.0.2"
-description: v3.0.2｜通过 AIhub 使用 Seedance 2.5，基于文字、首帧图片或多模态参考素材生成视频；也支持 C1 视频口型同步和 C2 图片加音频数字人。检查各类任务的限制，支持继续已有任务并交付核验后的视频文件。
+  version: "3.1.0"
+description: v3.1.0｜通过 AIhub 使用 Seedance 2.5，基于文字、首帧图片或多模态参考素材生成视频；也支持 C1 视频口型同步和 C2 图片加音频数字人。检查各类任务的限制，支持继续已有任务并交付核验后的视频文件。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
@@ -38,7 +38,11 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 
 三个型号的差别是输入用途，没有已核实的 2.5 Fast 型号，不按速度或质量虚构变体。只有配置列表中的适用候选才可按策略切换，不自行追加 Seedance 2.0。2.0 的时长、分辨率和参考素材限制逐项独立检查，不能降低用户要求。
 
-C1 视频唇形同步默认使用 `lipsync-2`；C2 人像图片和音频驱动数字人默认使用 `omnihuman-1.5`，不因输入包含音频就改用 Seedance。C2 只有旁白文字时先取得音频，再按模型要求传 `audio_url`，不能把文字当作音频 URL。`lipsync-2-pro`、`sync-3`、`fabric-1.0`、`fabric-1.0-fast` 和 `creatify-aurora` 仅在模型查询确认可用且用户明确选择时使用。
+C1 视频唇形同步默认使用 `sync-3`，输入一个视频和一个音频，可选 `sync_mode`；该模型不支持 `temperature`、`active_speaker` 或提示词。C2 人像图片和音频驱动数字人默认使用 `fabric-1.0`，输入一张人像和一个音频，分辨率未指定时使用 `720p`，也可指定 `480p`。Fabric 不接受提示词、`advanced`、`turbo_mode`，不能照搬 OmniHuman 的参数。
+
+C1/C2 不因输入包含音频就改用 Seedance。C2 只有旁白文字时先取得音频，再传 `audio_url`；Fabric 音频最多 30 秒，提交前核对实际时长，无法确定时先说明缺项，不能静默截断。当前账号的 Fabric 型号可列为 `fabric-1.0[480p]` / `fabric-1.0[720p]`；CLI 按请求的 `resolution` 核对可见性，生成请求仍使用 `fabric-1.0`。不自动改用其他分辨率。
+
+显式指定或配置的 `lipsync-2`、`omnihuman-1.5` 继续按其自身参数执行；`lipsync-2-pro`、`fabric-1.0-fast` 和 `creatify-aurora` 尚无自动转换，需用户明确选择并按单模型入口的契约准备参数。
 
 ## 输入与效果边界
 

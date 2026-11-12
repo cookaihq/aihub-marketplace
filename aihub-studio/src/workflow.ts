@@ -4,7 +4,7 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'nod
 import { AihubmaxClient, ApiError, PollBudgetExceededError, type TaskResponse, type GeminiMusicResponse } from './apiClient.js';
 import { credentialId, sanitized, type LoadedConfig } from './config.js';
 import { checkMediaTools, downloadAssets, downloadJsonAssets, validateLocalMedia } from './download.js';
-import { validateGeneration } from './models.js';
+import { validateGeneration, generationModelAvailable } from './models.js';
 import { speechParameters } from './speech.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { UPLOAD_MAX_BYTES } from './audioMedia.js';
@@ -38,6 +38,8 @@ export class TaskPersistenceError extends Error {
 const RESULT_METADATA_KEYS = [
   'lyrics', 'seed', 'degraded_reason', 'map_type', 'result_type',
   'profile_id', 'character_id', 'voice_id', 'duration', 'resolution',
+  // Keep the provider's segmented alignment unchanged, including empty segments.
+  'timestamps',
 ] as const;
 const STRUCTURED_AUDIO_MODELS = new Set(['paraformer-v2', 'paraformer-8k-v2', 'cohere-transcribe', 'scribe-v2']);
 const LLM_SUBMIT_TIMEOUT_MS = 120_000;
@@ -250,7 +252,7 @@ export async function generate(cfg: LoadedConfig, options: { media: Media; model
   await save(record, job, cfg);
   try {
     const live = await client.listLiveModels();
-    if (!live.has(options.model)) throw new Error('The exact model ID is not present in the current key model list. Run models and use its unchanged ID. No generation was submitted.');
+    if (!generationModelAvailable(live, options.model, options.params)) throw new Error('The model and requested variant are not present in the current key model list. Run models and check the requested parameters. No generation was submitted.');
   } catch (error) {
     job.submission = { state: 'not_submitted', error: cleanError(error, cfg) };
     await save(record, job, cfg);

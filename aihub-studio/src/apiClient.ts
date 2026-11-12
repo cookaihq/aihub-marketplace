@@ -163,8 +163,9 @@ export class AihubmaxClient {
 
   async request<T>(method: string, path: string, body?: unknown, opts: RequestOptions = {}): Promise<T> {
     // Stored inputs and external catalog snapshots may still carry the old prefix.
-    // Translation only: every such request uses the current gateway, without fallback.
-    if (path.startsWith('/v1/')) path = '/e' + path;
+    // Translate business paths to the current gateway without fallback.
+    // The account model registry is served by the main API, outside the /e gateway.
+    if (path.startsWith('/v1/') && path.split('?')[0] !== '/v1/models') path = '/e' + path;
     opts = {...opts, deadline: opts.deadline ?? Date.now() + DEFAULT_REQUEST_BUDGET_MS};
     const timeout = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     if (!Number.isFinite(timeout) || timeout <= 0 || timeout > 2_147_483_647) {
@@ -377,16 +378,16 @@ export class AihubmaxClient {
   }
 
   async listLiveModels(): Promise<Map<string, LiveModel>> {
-    const result = await this.request<{ data?: LiveModel[] }>("GET", "/e/v1/models");
+    const result = await this.request<{ data?: LiveModel[] }>("GET", "/v1/models");
     if (!result || !Array.isArray(result.data) || result.data.some((model) => !model || typeof model.id !== "string")) {
       const error = new ApiError("模型清单响应格式无效，无法确认模型可用性。", this.evidenceFor(result)?.response.http_status ?? 0, "protocol", "invalid_response");
-      await observeRequestError(error, 'GET', '/e/v1/models', this.evidenceFor(result));
+      await observeRequestError(error, 'GET', '/v1/models', this.evidenceFor(result));
       throw error;
     }
     return new Map(result.data.map((model) => [model.id, model]));
   }
 
-  /** LLM Custom registry is separate from GET /e/v1/models. */
+  /** LLM Custom registry is separate from GET /v1/models. */
   async listLlmModels(): Promise<LlmModel[]> {
     const result = await this.request<{ data?: LlmModel[] }>("GET", "/e/v1/configs/llm_generations_models");
     if (!result || !Array.isArray(result.data) || result.data.some((model) => !model || typeof model.id !== "string")) {

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AihubmaxClient } from '../src/apiClient.js';
-import { describe, models, validateGeneration } from '../src/models.js';
+import { describe, models, validateGeneration, generationModelAvailable } from '../src/models.js';
 
 const imageModels = ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'];
 const videoInputs: Array<[string, Record<string, unknown>]> = [
@@ -106,7 +106,7 @@ test('explicitly selected Seedance 2.0 variants retain their existing generation
 });
 
 test('live model output marks Flare as the ordinary image default and all three Seedance 2.5 input modes as preferred defaults', async () => {
-  const ids = [...imageModels, ...videoInputs.map(([model]) => model), 'lipsync-2', 'omnihuman-1.5', 'seedance-2.0-text-to-video', 'seedance-2.0-fast-reference-to-video'];
+  const ids = [...imageModels, ...videoInputs.map(([model]) => model), 'sync-3', 'fabric-1.0[480p]', 'fabric-1.0[720p]', 'lipsync-2', 'omnihuman-1.5', 'seedance-2.0-text-to-video', 'seedance-2.0-fast-reference-to-video'];
   const client = new AihubmaxClient({ apiKey: 'offline-fixture', baseUrl: 'https://example.invalid' });
   client.listLiveModels = async () => new Map(ids.map(id => [id, { id }]));
   const output = await models(client);
@@ -115,8 +115,12 @@ test('live model output marks Flare as the ordinary image default and all three 
     ['gpt-image-2.5-flare', true, true], ['gpt-image-2.5-sunburst', true, false],
   ]);
   assert.deepEqual(rows.filter(row => row.model.startsWith('seedance-2.5-')).map(row => [row.model, row.preferred, row.default]), videoInputs.map(([model]) => [model, true, true]));
-  assert.ok(rows.find(row => row.model === 'lipsync-2')?.default);
-  assert.ok(rows.find(row => row.model === 'omnihuman-1.5')?.default);
+  for (const model of ['sync-3', 'fabric-1.0']) {
+    assert.ok(rows.find(row => row.model === model)?.default);
+    assert.ok(rows.find(row => row.model === model)?.preferred);
+  }
+  assert.equal(rows.filter(row => row.model === 'fabric-1.0').length, 1);
+  for (const model of ['lipsync-2', 'omnihuman-1.5']) assert.equal(rows.find(row => row.model === model)?.default, false);
   assert.deepEqual(rows.filter(row => row.model.startsWith('seedance-2.0-')).map(row => [row.model, row.preferred, row.default]), [
     ['seedance-2.0-text-to-video', false, false], ['seedance-2.0-fast-reference-to-video', false, false],
   ]);
@@ -125,4 +129,48 @@ test('live model output marks Flare as the ordinary image default and all three 
   const legacy = unavailable.models as Array<{ model: string; preferred: boolean; default: boolean }>;
   assert.deepEqual(legacy.map(row => [row.model, row.preferred, row.default]), [['seedance-2.0-text-to-video', false, false]]);
   assert.ok(unavailable.catalog_only.some(row => row.model === 'seedance-2.5-text-to-video'));
+});
+
+test('digital-human schemas enforce the selected model without accepting unrelated legacy fields', () => {
+  const sync = { video_url: 'https://example.test/person.mp4', audio_url: 'https://example.test/voice.wav' };
+  for (const sync_mode of ['bounce', 'loop', 'cut_off', 'silence', 'remap']) {
+    assert.equal(validateGeneration('video', 'sync-3', { ...sync, sync_mode }), '/e/v1/videos/generations');
+  }
+  for (const params of [{ temperature: 0.5 }, { active_speaker: true }, { sync_mode: 'unknown' }, { sync_mode: null }, { prompt: 'talk' }]) {
+    assert.throws(() => validateGeneration('video', 'sync-3', { ...sync, ...params }));
+  }
+  assert.ok(describe('sync-3').params.every(field => !['temperature', 'active_speaker'].includes(field.name)));
+  assert.ok(describe('lipsync-2').params.some(field => field.name === 'temperature'));
+  const avatar = { image_url: 'https://example.test/face.png', audio_url: sync.audio_url };
+  for (const resolution of ['480p', '720p']) assert.doesNotThrow(() => validateGeneration('video', 'fabric-1.0', { ...avatar, resolution }));
+  for (const params of [{}, { resolution: '1080p' }, { resolution: null }, { resolution: '720p', prompt: 'talk' }, { resolution: '720p', turbo_mode: true }]) {
+    assert.throws(() => validateGeneration('video', 'fabric-1.0', { ...avatar, ...params }));
+  }
+});
+
+test('Fabric availability requires the requested resolution and never infers other model families', async () => {
+  const live = new Map([['fabric-1.0[480p]', { id: 'fabric-1.0[480p]' }]]);
+  assert.equal(generationModelAvailable(live, 'fabric-1.0', { resolution: '480p' }), true);
+  assert.equal(generationModelAvailable(live, 'fabric-1.0', { resolution: '720p' }), false);
+  assert.equal(generationModelAvailable(live, 'fabric-1.0', { resolution: '1080p' }), false);
+  assert.equal(generationModelAvailable(live, 'fabric-1.0-fast', { resolution: '480p' }), false);
+  const client = new AihubmaxClient({ apiKey: 'offline-fixture', baseUrl: 'https://example.invalid' });
+  client.listLiveModels = async () => live;
+  const output = await models(client, 'video');
+  assert.deepEqual(output.models.map(row => ({ model: row.model, resolutions: 'available_resolutions' in row ? row.available_resolutions : undefined })), [
+    { model: 'fabric-1.0', resolutions: ['480p'] },
+  ]);
+});
+
+test('understanding model discovery marks only Carbon as the built-in default and preserves live capabilities', async () => {
+  const client = new AihubmaxClient({ apiKey: 'offline-fixture', baseUrl: 'https://example.invalid' });
+  client.listLlmModels = async () => [
+    { id: 'gemini-4-carbon', capabilities: ['vision', 'audio', 'video', 'file'] },
+    { id: 'gemini-3.1-pro-preview', capabilities: ['vision'] },
+  ];
+  const output = await models(client, 'understanding');
+  assert.deepEqual(output.models.map(row => [row.model, row.default]), [['gemini-4-carbon', true], ['gemini-3.1-pro-preview', false]]);
+  client.listLlmModels = async () => [{ id: 'gemini-3.1-pro-preview', capabilities: ['vision'] }];
+  const missing = await models(client, 'understanding');
+  assert.equal(missing.models.some(row => row.default), false, 'a missing default must not be invented or silently replaced');
 });

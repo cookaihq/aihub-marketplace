@@ -147,11 +147,24 @@ test('legacy gateway paths translate once and native Gemini paths retain their c
   await withGateway((request, response) => {
     paths.push(request.url!); response.end('{}');
   }, async client => {
-    for (const path of ['/v1/tasks/old', '/e/v1/tasks/current', '/v1beta/models/native:generateContent', '/api/pricing']) {
+    for (const path of ['/v1/tasks/old', '/e/v1/tasks/current', '/v1/models', '/v1/models?key=value', '/v1beta/models/native:generateContent', '/api/pricing']) {
       await client.request('GET', path);
     }
   });
-  assert.deepEqual(paths, ['/e/v1/tasks/old', '/e/v1/tasks/current', '/v1beta/models/native:generateContent', '/api/pricing']);
+  assert.deepEqual(paths, ['/e/v1/tasks/old', '/e/v1/tasks/current', '/v1/models', '/v1/models?key=value', '/v1beta/models/native:generateContent', '/api/pricing']);
+});
+
+test('account models use the main API registry while LLM capabilities use the gateway registry', async () => {
+  const paths: string[] = [];
+  await withGateway((request, response) => {
+    paths.push(request.url!);
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end(JSON.stringify({ data: [{ id: 'sync-3' }] }));
+  }, async client => {
+    assert.ok((await client.listLiveModels()).has('sync-3'));
+    await client.listLlmModels();
+  });
+  assert.deepEqual(paths, ['/v1/models', '/e/v1/configs/llm_generations_models']);
 });
 
 test("polling has a strict wall-clock budget and retains the latest task", async () => {

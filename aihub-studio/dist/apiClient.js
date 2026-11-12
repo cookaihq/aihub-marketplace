@@ -96,8 +96,9 @@ export class AihubmaxClient {
     }
     async request(method, path, body, opts = {}) {
         // Stored inputs and external catalog snapshots may still carry the old prefix.
-        // Translation only: every such request uses the current gateway, without fallback.
-        if (path.startsWith('/v1/'))
+        // Translate business paths to the current gateway without fallback.
+        // The account model registry is served by the main API, outside the /e gateway.
+        if (path.startsWith('/v1/') && path.split('?')[0] !== '/v1/models')
             path = '/e' + path;
         opts = { ...opts, deadline: opts.deadline ?? Date.now() + DEFAULT_REQUEST_BUDGET_MS };
         const timeout = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -306,15 +307,15 @@ export class AihubmaxClient {
         return this.request("POST", "/e/v1/files/upload/url", { url, ...(fileName ? { file_name: fileName } : {}) });
     }
     async listLiveModels() {
-        const result = await this.request("GET", "/e/v1/models");
+        const result = await this.request("GET", "/v1/models");
         if (!result || !Array.isArray(result.data) || result.data.some((model) => !model || typeof model.id !== "string")) {
             const error = new ApiError("模型清单响应格式无效，无法确认模型可用性。", this.evidenceFor(result)?.response.http_status ?? 0, "protocol", "invalid_response");
-            await observeRequestError(error, 'GET', '/e/v1/models', this.evidenceFor(result));
+            await observeRequestError(error, 'GET', '/v1/models', this.evidenceFor(result));
             throw error;
         }
         return new Map(result.data.map((model) => [model.id, model]));
     }
-    /** LLM Custom registry is separate from GET /e/v1/models. */
+    /** LLM Custom registry is separate from GET /v1/models. */
     async listLlmModels() {
         const result = await this.request("GET", "/e/v1/configs/llm_generations_models");
         if (!result || !Array.isArray(result.data) || result.data.some((model) => !model || typeof model.id !== "string")) {

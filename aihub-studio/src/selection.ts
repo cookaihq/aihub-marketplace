@@ -1,9 +1,10 @@
 import type { FallbackPolicy, LoadedConfig } from './config.js';
-import { modelEntry, validateGeneration } from './models.js';
+import { modelEntry, validateGeneration, VIDEO_DEFAULT_MODELS, PREFERRED_MODELS } from './models.js';
 import type { Media } from './state.js';
 import { resolve } from 'node:path';
 import { audioContract, remoteAudio, type AudioContract } from './audioMedia.js';
 import { speechParameters } from './speech.js';
+import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL } from './elevenlabs.js';
 
 export const OPERATIONS = {
   'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
@@ -96,14 +97,14 @@ function defaults(request: TaskRequest): string[] {
     case 'video-text': return ['seedance-2.5-text-to-video'];
     case 'video-start-frame': return ['seedance-2.5-image-to-video'];
     case 'video-reference': return ['seedance-2.5-reference-to-video'];
-    case 'video-lipsync': return ['lipsync-2'];
-    case 'video-avatar': return ['omnihuman-1.5'];
+    case 'video-lipsync': return [...VIDEO_DEFAULT_MODELS.c1];
+    case 'video-avatar': return [...VIDEO_DEFAULT_MODELS.c2];
     case 'audio-tts': return ['speech-2.8-hd'];
     case 'audio-transcribe': return ['paraformer-v2'];
     case 'audio-clone': return ['voice-clone'];
     case 'music-async': return ['lyria-3-pro'];
     case 'music-native': return ['lyria-3-pro-preview'];
-    case 'understanding': return ['gemini-3.1-pro-preview'];
+    case 'understanding': return [PREFERRED_MODELS.understanding[0]];
     case 'document': return ['doc2x-v3'];
   }
 }
@@ -121,10 +122,10 @@ function matchesOperation(model: string, operation: Operation): boolean {
     case 'video-reference': return /^seedance-2\.[05]-(fast-)?reference-to-video$/.test(model);
     case 'video-lipsync': return LIPSYNC.includes(model);
     case 'video-avatar': return AVATAR.includes(model);
-    case 'audio-tts': return /^speech-/.test(model);
+    case 'audio-tts': return /^speech-/.test(model) || ELEVEN_TTS_MODELS.has(model);
     case 'audio-transcribe': return TRANSCRIBE.includes(model);
     case 'audio-clone': return model === 'voice-clone';
-    case 'music-async': return /^lyria-|^minimax-music-/.test(model);
+    case 'music-async': return /^lyria-|^minimax-music-/.test(model) || model === ELEVEN_MUSIC_MODEL;
     case 'document': return media === 'document';
   }
 }
@@ -172,15 +173,26 @@ function buildCandidate(request: TaskRequest, model: string, defaultVoiceId?: st
       }
     } else if (op === 'video-lipsync') {
       inputFields.videos = ['video_url', 'one']; inputFields.audios = ['audio_url', 'one']; requiredInputs = ['videos', 'audios'];
-      if (model !== 'lipsync-2') throw new Error('This lip-sync variant needs a verified task parameter mapping before automatic selection.');
-      allowedRequirements = ['active_speaker', 'sync_mode', 'temperature'];
+      if (model === 'sync-3') allowedRequirements = ['sync_mode'];
+      else if (model === 'lipsync-2') allowedRequirements = ['active_speaker', 'sync_mode', 'temperature'];
+      else throw new Error('This lip-sync variant needs a verified task parameter mapping before automatic selection.');
     } else if (op === 'video-avatar') {
       inputFields.images = ['image_url', 'one']; inputFields.audios = ['audio_url', 'one']; requiredInputs = ['images', 'audios'];
-      if (model !== 'omnihuman-1.5') throw new Error('This avatar model needs a verified task parameter mapping before automatic selection.');
-      promptField = 'prompt'; allowedRequirements = ['advanced', 'turbo_mode'];
+      if (model === 'fabric-1.0') {
+        allowedRequirements = ['resolution'];
+        // Fabric requires an explicit resolution; preserve the user's choice.
+        params.resolution = requirements.resolution ?? '720p';
+      } else if (model === 'omnihuman-1.5') {
+        promptField = 'prompt'; allowedRequirements = ['advanced', 'turbo_mode'];
+      } else throw new Error('This avatar model needs a verified task parameter mapping before automatic selection.');
     } else if (op === 'audio-tts') {
-      if (!['speech-2.8-hd', 'speech-2.8-turbo'].includes(model)) throw new Error('Voice IDs and speech options require a verified mapping for this TTS model.');
-      promptField = 'prompt'; allowedRequirements = ['voice_setting', 'audio_setting', 'voice_modify', 'pronunciation_dict', 'language_boost'];
+      if (ELEVEN_TTS_MODELS.has(model)) {
+        promptField = 'text';
+        allowedRequirements = modelEntry(model).entry.params.filter(name => !['model', 'text'].includes(name));
+      } else {
+        if (!['speech-2.8-hd', 'speech-2.8-turbo'].includes(model)) throw new Error('Voice IDs and speech options require a verified mapping for this TTS model.');
+        promptField = 'prompt'; allowedRequirements = ['voice_setting', 'audio_setting', 'voice_modify', 'pronunciation_dict', 'language_boost'];
+      }
     } else if (op === 'audio-transcribe') {
       candidate.transcription = audioContract(model);
       inputFields.audios = ['file_urls', 'many']; requiredInputs = ['audios'];
@@ -190,8 +202,13 @@ function buildCandidate(request: TaskRequest, model: string, defaultVoiceId?: st
       inputFields.audios = ['audio_url', 'one']; requiredInputs = ['audios'];
       allowedRequirements = ['accuracy', 'need_volume_normalization', 'noise_reduction', 'preview_model', 'preview_text'];
     } else if (op === 'music-async') {
-      if (model !== 'lyria-3-pro') throw new Error('This music model needs verified duration, lyrics and parameter mappings before automatic selection.');
-      promptField = 'prompt'; inputFields.images = ['image_urls', 'many']; allowedRequirements = ['negative_prompt'];
+      promptField = 'prompt';
+      if (model === ELEVEN_MUSIC_MODEL) {
+        allowedRequirements = modelEntry(model).entry.params.filter(name => !['model', 'prompt'].includes(name));
+      } else {
+        if (model !== 'lyria-3-pro') throw new Error('This music model needs verified duration, lyrics and parameter mappings before automatic selection.');
+        inputFields.images = ['image_urls', 'many']; allowedRequirements = ['negative_prompt'];
+      }
     } else if (op === 'document') {
       if (model !== 'doc2x-v3') throw new Error('No verified document conversion mapping for this model.');
       inputFields.files = ['pdf_url', 'one']; requiredInputs = ['files'];

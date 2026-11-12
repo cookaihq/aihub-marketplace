@@ -65,9 +65,11 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" describe --skill "${AIHUB_CALLER}" 
 
 `--media` 可取 `image`、`video`、`audio`、`document`；E1 使用 `models --media understanding` 查询独立的 LLM 注册表。`models` 的 `preferred` 仍是随包目录推荐；生效的列表和策略以 `model_selection` 为准，具体任务候选以 `plan` 为准。没有配置时按 [图片 Skill](../skills/aihub-image/SKILL.md#选择图片模型) 或 [视频 Skill](../skills/aihub-video/SKILL.md#选择视频模型) 的规则选择；C1/C2 保留各自专用用途。
 
-`describe` 离线读取随包模型目录说明字段，无需 API Key。只有 `catalog_only` 中的目录记录不能证明模型在线可用，`availability_known: false` 或 `status: availability_unknown` 应报告可用性未知。提交时保留线上 `models` 中的原始模型 ID，不能把规范化名称当作线上 ID。新流程只在已配置且适用的候选间按保存的策略切换；不得自动追加旧版本或其他模型。Plugin 会在提交前拒绝图片增强/材质/Profile、视频高清放大（B10）/插帧/Topaz、Sora 角色、字幕、提示词数字人和声音创建模型。
+`describe` 离线读取随包模型目录说明字段，无需 API Key。只有 `catalog_only` 中的目录记录不能证明模型在线可用，`availability_known: false` 或 `status: availability_unknown` 应报告可用性未知。账号模型列表使用 `/v1/models`；生成、任务和专用配置查询使用 `/e/v1/`。提交时使用 `models` 返回的请求型号，不自行泛化模型名。Fabric 是已核实的特例：账号的带分辨率 ID 对应生成型号 `fabric-1.0` 和 `resolution`，可用分辨率列在 `available_resolutions`。新流程只在已配置且适用的候选间按保存的策略切换；不得自动追加旧版本或其他模型。Plugin 会在提交前拒绝图片增强/材质/Profile、视频高清放大（B10）/插帧/Topaz、Sora 角色、字幕、提示词数字人和声音创建模型。
 
 以下为保留的单模型底层入口，供旧任务流程或用户明确选择尚无自动参数转换的型号使用，**不读取配置列表来换模型**。D1 的 `speech-2.8-hd`（TTS）、`paraformer-v2`（ASR）和 D2 的 `lyria-3-pro` 使用 `generate --media audio`；`lyria-3-pro-preview` 使用 `native-music`。E1 先查询独立 LLM 注册表再调用 `understand`，必须含媒体内容块，纯文本请求属于 F 组并拒绝。E2 使用 `generate --media document`，结果 ZIP 只做文件签名和非空检查。
+
+`eleven-v4` / `eleven-v4-turbo` 和 `elevenlabs-music-v2.5` 也使用异步音频路径，完整参数及当前上线条件见 [ElevenLabs](elevenlabs.md)。新任务优先使用已接入的 `plan/run`；单模型 `generate` 的 TTS 参数为 text，新流程任务 JSON 的 prompt 会映射为 text。`describe.request_schema` 保留嵌套计划、范围及可空字段约束。
 
 ```bash
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" models --skill aihub-understanding --media understanding
@@ -153,6 +155,8 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" task --skill "${AIHUB_CALLER}" \
 | `delivered` | 全部结果文件已下载并通过程序检查；新 run 同时返回独立的 `result_check`，按 [检查流程](result-checks.md) 完成后交付结论与文件。 |
 
 结果为空、错误页或无效媒体不能作为成功文件交付。程序检查非空、适用的响应长度、实际媒体类型和 `ffprobe` 可解析性；这不等于逐帧解码，也不证明视觉或音频内容符合用户要求。语义检查默认开启，由宿主读取实际媒体并执行 `review-submit`；`auto` 模式下宿主能力不足时执行 `review --provider aihub`。完成检查必须转述 `user_notice`，告知可通过对话关闭；不能只保存到 JSON。旧单任务记录缺少原始需求时报告无法检查，不能用生成 prompt 冒充。任务特有的 `seed`、`lyrics`、`degraded_reason`、`map_type`、`result_type`、`duration` 和 `resolution` 等字段会在 CLI 结果的 `result_metadata` 中返回；完整远端任务仍保存在 `task.json`，这些字段不是单独的业务能力。
+
+ElevenLabs TTS 的 timestamps 同样在 result_metadata 中返回，保留原数组和空段；run 的对应位置为 result.result_metadata。未返回的歌词、时长、种子和用量不补造，文件实测时长不作为账单。
 
 ## 文件位置与保留
 

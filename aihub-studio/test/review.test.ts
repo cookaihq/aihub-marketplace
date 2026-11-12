@@ -27,7 +27,7 @@ async function fixture(audio = false) {
   let base = '';
   const server = createServer(async (req, res) => {
     const json = (value: unknown, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
-    if (req.url === '/e/v1/models') return json({ data: [{ id: generator }] });
+    if (req.url === '/v1/models') return json({ data: [{ id: generator }] });
     if (req.url === '/e/v1/configs/llm_generations_models') {
       state.modelQueries++;
       return json({ data: [{ id: 'text-only', capabilities: [] }, ...(state.visible ? [{ id: checker, capabilities: ['vision', 'audio', 'video', 'file'] }] : [])] });

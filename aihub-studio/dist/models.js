@@ -1,5 +1,6 @@
 import { ApiError } from './apiClient.js';
 import { listModelSummaries, resolveEntry } from './catalog.js';
+import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, validateElevenLabs } from './elevenlabs.js';
 /**
  * The catalog contains every documented endpoint. This Plugin deliberately
  * exposes the selected task scope instead of treating every media entry as a
@@ -28,13 +29,13 @@ export const PREFERRED_MODELS = {
     ],
     audio: ['speech-2.8-hd', 'paraformer-v2'],
     document: ['doc2x-v3'],
-    understanding: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
+    understanding: ['gemini-4-carbon'],
 };
-/** 首轮实测使用的数字人默认模型；其余 C1/C2 型号仍需显式选择。 */
+/** Built-in C1/C2 choices; explicit requests and configured lists take priority. */
 export const VIDEO_DEFAULT_MODELS = {
     generation: PREFERRED_MODELS.video,
-    c1: ['lipsync-2'],
-    c2: ['omnihuman-1.5'],
+    c1: ['sync-3'],
+    c2: ['fabric-1.0'],
 };
 const VIDEO_DEFAULT_SET = new Set([
     ...VIDEO_DEFAULT_MODELS.generation,
@@ -127,7 +128,10 @@ export async function models(client, media, keyword) {
         const live = await client.listLiveModels();
         const rows = [];
         const mapped = new Set();
-        for (const id of live.keys()) {
+        // The gateway accepts Fabric's base model plus resolution, while /v1/models
+        // enumerates its billing variants. Expose the documented request ID once.
+        const ids = new Set([...live.keys()].map(id => /^fabric-1\.0\[(480p|720p)\]$/.test(id) ? 'fabric-1.0' : id));
+        for (const id of ids) {
             const found = resolveEntry(id);
             if (!found || !supported(id, found.entry))
                 continue;
@@ -139,21 +143,22 @@ export async function models(client, media, keyword) {
             const preferred = found.entry.mediaType === 'image'
                 ? PREFERRED_MODELS.image.includes(id)
                 : found.entry.mediaType === 'video'
-                    ? PREFERRED_MODELS.video.includes(id)
+                    ? VIDEO_DEFAULT_SET.has(id)
                     : found.entry.mediaType === 'audio'
                         ? PREFERRED_MODELS.audio.includes(id)
                         : found.entry.mediaType === 'document'
                             ? PREFERRED_MODELS.document.includes(id)
                             : false;
             rows.push({ model: id, media: found.entry.mediaType, title: found.entry.title, catalog_model: found.catalogModel, preferred,
+                ...(id === 'fabric-1.0' ? { available_resolutions: ['480p', '720p'].filter(resolution => generationModelAvailable(live, id, { resolution })) } : {}),
                 default: (found.entry.mediaType === 'image' && id === 'gpt-image-2.5-flare') ||
                     (found.entry.mediaType === 'video' && VIDEO_DEFAULT_SET.has(id)) ||
                     (found.entry.mediaType === 'audio' && PREFERRED_MODELS.audio.includes(id)) ||
                     (found.entry.mediaType === 'document' && id === 'doc2x-v3') });
         }
         return { status: 'ok', availability_known: true, models: rows, catalog_only: catalog.filter(row => !mapped.has(row.model)),
-            preferred_models: media ? (PREFERRED_MODELS[media] ?? []) : PREFERRED_MODELS,
-            note: 'Listed model IDs are visible to this key; a working generation channel is not guaranteed. preferred marks built-in recommendations, not the configured model order. Read model_selection for current configuration and use plan for task-specific candidates. run and continue follow the saved fallback policy and preserve all input requirements; no model is appended automatically. Explicit user model choices remain fixed. Legacy single-model commands do not perform fallback.' };
+            preferred_models: media === 'video' ? [...VIDEO_DEFAULT_SET] : media ? (PREFERRED_MODELS[media] ?? []) : { ...PREFERRED_MODELS, video: [...VIDEO_DEFAULT_SET] },
+            note: 'Listed request models are visible to this key; a working generation channel is not guaranteed. Fabric uses model fabric-1.0 plus resolution; available_resolutions maps the account billing IDs. preferred marks built-in recommendations, not the configured model order. Read model_selection for current configuration and use plan for task-specific candidates. run and continue follow the saved fallback policy and preserve all input requirements; no model is appended automatically. Explicit user model choices remain fixed. Legacy single-model commands do not perform fallback.' };
     }
     catch (error) {
         return { status: 'availability_unknown', availability_known: false, models: [], catalog_only: catalog, error: error.message,
@@ -162,11 +167,12 @@ export async function models(client, media, keyword) {
 }
 export function describe(model) {
     const { entry, catalogModel, match } = modelEntry(model);
-    const params = entry.paramSpecs.map((field) => field.name === 'model'
+    const params = entry.paramSpecs.filter(field => model !== 'sync-3' || !['temperature', 'active_speaker'].includes(field.name)).map((field) => field.name === 'model'
         ? { ...field, default: model, description: `${field.description ?? ''}\nSelected model ID: ${model}.` }
         : field);
     return { status: 'ok', model, media: entry.mediaType, endpoint: `POST ${entry.path}`,
         catalog_model: catalogModel, match, title: entry.title, params,
+        ...(entry.requestSchema ? { request_schema: entry.requestSchema } : {}),
         required_params: entry.requiredParams, conditionally_required_params: entry.conditionalRequiredParams ?? [],
         capability: capabilityForModel(model, entry.mediaType),
         note: 'This is bundled schema information, not proof of model availability. Keep the exact ID returned by models. ' +
@@ -180,6 +186,12 @@ export function validateGeneration(media, model, params) {
         throw new Error(`This model belongs to ${entry.mediaType}, not ${media}.`);
     if ('model' in params && params.model !== model)
         throw new Error('params.model conflicts with --model. Keep model only in --model.');
+    if (ELEVEN_TTS_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL) {
+        if (!entry.requestSchema)
+            throw new Error('The bundled ElevenLabs request contract is missing.');
+        validateElevenLabs(model, params, entry.requestSchema);
+        return entry.path;
+    }
     for (const field of entry.paramSpecs) {
         if (field.name === 'model')
             continue;
@@ -222,7 +234,31 @@ export function validateGeneration(media, model, params) {
         validateImage25(params);
     if (PREFERRED_MODELS.video.includes(catalogModel))
         validateSeedance25(catalogModel, entry, params);
+    if (model === 'sync-3' || model === 'fabric-1.0')
+        validateDigitalHuman(model, params);
     return entry.path;
+}
+/** Fabric's documented request uses a base ID plus resolution; the account list uses billing IDs. */
+export function generationModelAvailable(live, model, params) {
+    if (live.has(model))
+        return true;
+    return model === 'fabric-1.0' && ['480p', '720p'].includes(String(params.resolution)) && live.has(`${model}[${params.resolution}]`);
+}
+function validateDigitalHuman(model, params) {
+    const allowed = model === 'sync-3' ? ['model', 'video_url', 'audio_url', 'sync_mode'] : ['model', 'image_url', 'audio_url', 'resolution'];
+    for (const [field, value] of Object.entries(params)) {
+        if (!allowed.includes(field))
+            throw new Error(`${field} is not supported by ${model}; use describe.`);
+        if (value === null)
+            throw new Error(`${field} cannot be null; omit optional fields to use their defaults.`);
+        if (typeof value === 'string' && !value.trim())
+            throw new Error(`${field} must be a nonempty string.`);
+    }
+    if (model === 'sync-3' && params.sync_mode !== undefined && !['bounce', 'loop', 'cut_off', 'silence', 'remap'].includes(String(params.sync_mode))) {
+        throw new Error('sync_mode must be bounce, loop, cut_off, silence, or remap.');
+    }
+    if (model === 'fabric-1.0' && !['480p', '720p'].includes(String(params.resolution)))
+        throw new Error('fabric-1.0 resolution must be 480p or 720p.');
 }
 // These checks follow the Gateway's model schemas. Keep them model-specific:
 // other catalog entries have different nullable fields and input conventions.

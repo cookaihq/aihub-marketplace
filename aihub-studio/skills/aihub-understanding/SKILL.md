@@ -1,8 +1,8 @@
 ---
 name: aihub-understanding
 metadata:
-  version: "3.0.2"
-description: v3.0.2｜通过 AIhub llm-custom 模型理解图片、音频、视频或文件内容，返回文本结果并支持中断后继续任务。
+  version: "3.0.3"
+description: v3.0.3｜通过 AIhub llm-custom 模型理解图片、音频、视频或文件内容，返回文本结果并支持中断后继续任务。
 ---
 
 # AIhub Understanding
@@ -24,7 +24,7 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。E1 只接受图片、音频、视频或文件内容，不能提交纯文本请求。保存 `operation=understanding`、`original_request`、分析提示词 `prompt` 和媒体实际 URL 列表 `inputs`；本地文件先上传。`requirements` 可含 `system_prompt`、`max_tokens`、`temperature`。
 
-仅用户本次指定型号时填 `model` 并固定执行；否则使用 `AIHUB_UNDERSTANDING_MODELS`，未配置时用 `gemini-3.1-pro-preview`。CLI 逐个读取 `/e/v1/configs/llm_generations_models` 核对精确 ID 与所需媒体能力，并把请求转换为对应内容块。图片能力不能证明能读取音频或视频，能力不符的候选按保存的策略跳过或停止。
+仅用户本次指定型号时填 `model` 并固定执行；否则使用 `AIHUB_UNDERSTANDING_MODELS`，未配置时图片、音频、视频和文件理解均用 `gemini-4-carbon`。CLI 逐个读取 `/e/v1/configs/llm_generations_models` 核对精确 ID 与所需媒体能力，并把请求转换为对应内容块。通用 `/v1/models` 中可见不代表已接入 llm-custom；注册表缺少该型号时停止并报告，不自行改模型或接口。图片能力不能证明能读取音频或视频，能力不符的候选按保存的策略跳过或停止。
 
 ```bash
 AIHUB_PLUGIN_DIR="<实际 Plugin 目录>"
