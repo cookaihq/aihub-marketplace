@@ -1,4 +1,16 @@
-# AIhub Studio Plugin 3.2.0
+# AIhub Studio Plugin 4.0.0
+
+4.0.0 从 `aihub-audio` 移除声音克隆，音频 Skill 现在提供文本转语音和语音识别／转写。旧 `audio-clone` 请求不再受支持；`voice-clone`、`minimax-voice-clone` 及其带提供方前缀或变体后缀的型号不能通过模型列表、`describe` 或 `generate` 发起克隆。使用旧模型列表的用户应移除这两个克隆型号。已有音色 ID 仍可用于语音合成。
+
+4.0.0 将 TTS 默认设为 `eleven-v4`，异步音乐默认设为 `elevenlabs-music-v2.5`；ASR 继续使用 `paraformer-v2`，Gemini 原生音乐继续使用 `lyria-3-pro-preview`。静态文生图默认 GPT Image 2.6，图片编辑使用 2.5；两者均按速度优先 Flare、细节优先 Sunburst 选择。个人配置及本次明确指定的模型优先，已保存任务沿用原模型。
+
+**ElevenLabs 音乐时长需要迁移。** 歌曲 `duration: 30` 改为 `music_length_ms: 30000`，段落 `duration: 15` 改为 `duration_ms: 15000`，全部为整数毫秒；旧字段明确拒绝，不自动换算。可告诉 Agent：“把这份 ElevenLabs 音乐请求迁移为整数毫秒，只预览计划，暂不提交。”已受理任务继续原 ID 查询与下载。custom-voice 使用已有音色 ID；Scribe V2/V3 可显式用于单 URL 或本地文件转写，保留词、说话人和时间戳字段。详见 [ElevenLabs](references/elevenlabs.md)。
+
+Gateway v0.9.15 的官方／Fal 音频、Scribe 和 GPT Image 2.6 共 13 个生产任务已完成并对账；这属于服务端证据，不代替 Skill 宿主验收。音频已下载解码，人工试听仍待评审。2.6 当前只支持静态文生图，不接受参考图、遮罩、markup、GIF 或 SVG；实际尺寸、质量与格式以结果元数据及文件为准。requested_options_unavailable / unsupported_parameters 保留完整字段列表并停止自动切换，修改要求由用户决定。
+
+本版已通过 Windows 原生 Codex 0.167.2 的开发源显式调用与离线计划，以及受影响回归和六个 Skill 的规范校验。本批按用户决定免测 Claude Code、WorkBuddy；macOS、重新安装与隐式发现待验。验收凭证可见 ElevenLabs 七款及 Paraformer，未返回 GPT Image 2.6；服务端生产证据与账号权限分别记录，实际运行仍须通过当前账号可见性检查。以下历史结果只对应其标明的版本。
+
+以下为历史 3.2.0 的功能与验收记录。
 
 3.2.0 将视频唇形同步默认改为 `sync-3`，人像图片加音频数字人默认改为 `fabric-1.0`，图片、音频、视频和文件理解默认改为 `gemini-4-carbon`。本次明确指定的模型、已有模型列表配置及已开始任务继续优先使用原选择。
 
@@ -97,11 +109,9 @@ Windows 原生 Codex 0.167.1 已通过开发源显式调用、合成配置保存
 
 目前不提供图片增强、材质贴图、人物档案创建、视频高清放大、插帧、Sora 角色创建、仅凭文字生成数字人、字幕制作或纯文本聊天入口。视频的严格首尾帧控制、保留原片的编辑与续写、精确动作控制和转场尚未验证，不能保证达到这些效果。
 
-`aihub-audio` 还有需要明确提出、并提供参考音频的声音克隆入口，但完整交付尚未验证。服务只返回音色编号、没有预览音频时，当前程序会报告没有可下载文件；遇到这种情况，应先让 Agent 核对任务记录中的音色结果，不能直接认定克隆失败后重新提交。
+你可以本次指定模型，也可以为每个 Skill 配置按顺序尝试的模型。没有模型配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；常规任务选 Flare，明确细节优先且速度次要时选 Sunburst。视频按文字、明确首帧、参考素材选择对应的 Seedance 2.5 型号；人像与音频驱动使用 Fabric 1.0，视频唇形同步使用 Sync 3；素材理解使用 Gemini 4 Carbon，并检查当前账号的对应媒体能力。候选必须符合输入和输出要求，切换规则见下文。Flare 与 Sunburst 的速度和细节差异尚无严格对照实测，不能保证固定提升。
 
-你可以本次指定模型，也可以为每个 Skill 配置按顺序尝试的模型。没有模型配置时，图片常规任务使用 GPT Image 2.5 Flare；明确要求精修且速度次要时选择 Sunburst。视频按文字、明确首帧、参考素材选择对应的 Seedance 2.5 型号；人像与音频驱动使用 Fabric 1.0，视频唇形同步使用 Sync 3；素材理解使用 Gemini 4 Carbon，并检查当前账号的对应媒体能力。候选必须符合输入和输出要求，切换规则见下文。Flare 与 Sunburst 的速度和细节差异尚无严格对照实测，不能保证固定提升。
-
-确认 ElevenLabs 正式可用后，可以把这些话复制给 Agent：
+可以把这些话复制给 Agent：
 
 > 用 eleven-v4 的 Rachel 朗读下面的文字，并保存原始时间戳：欢迎来到今天的节目。
 

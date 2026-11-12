@@ -1,8 +1,8 @@
 ---
 name: aihub-image
 metadata:
-  version: "3.0.3"
-description: v3.0.3｜通过 AIhub 生成或编辑图片，按已配置的模型优先级执行并支持可恢复的模型切换。未配置时，优先速度使用 GPT Image 2.5 Flare，优先细节使用 Sunburst。支持继续已有图片任务并交付核验后的文件。
+  version: "3.1.0"
+description: v3.1.0｜通过 AIhub 生成或编辑图片，按已配置的模型优先级执行并支持可恢复的模型切换。未配置时，文生图使用 GPT Image 2.6，编辑使用 2.5；速度优先选 Flare，细节优先选 Sunburst。支持继续已有任务并交付核验后的文件。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
@@ -29,13 +29,13 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 
 选择优先级是：用户本次明确指定型号 → `AIHUB_IMAGE_MODELS` 有序配置 → 下表的内置规则。指定型号固定执行并关闭 fallback，仍须通过账号可见性和参数检查。没有模型配置时，草稿标签不能覆盖明确的细节优先要求，例如“精细草稿、不赶时间”选 Sunburst：
 
-| 用户需求 | 默认模型 |
-| --- | --- |
-| 明确速度优先，或未明确细节优先的草稿、多轮试图、常规任务 | `gpt-image-2.5-flare` |
-| 明确要求细节保真、精修，且速度不是首要目标 | `gpt-image-2.5-sunburst` |
-| 同时强调最快速度与最高细节，无法判断优先级 | 先确认速度或细节哪项优先，再选择 |
+| 用户需求 | 静态文生图 | 图片编辑／参考图 |
+| --- | --- | --- |
+| 明确速度优先，或未明确细节优先的草稿、多轮试图、常规任务 | `gpt-image-2.6-flare` | `gpt-image-2.5-flare` |
+| 明确要求细节保真、精修，且速度不是首要目标 | `gpt-image-2.6-sunburst` | `gpt-image-2.5-sunburst` |
+| 同时强调最快速度与最高细节，无法判断优先级 | 先确认速度或细节哪项优先 | 先确认速度或细节哪项优先 |
 
-两款都用于文生图和图片编辑。有无参考图、透明背景或 `mask_url` 不决定型号；`quality` 是独立输出参数，不能用它代替型号选择。上述速度与细节取向是本地模型定位和已确认的选择策略，尚无严格的同条件 A/B 实测结论，不承诺固定速度差或画质提升。
+2.6 正式合同只支持静态文生图，不接受参考图、遮罩、markup、GIF 或 SVG；编辑沿用 2.5，不删掉素材改作文生图。显式指定 2.6 的编辑请求应说明能力冲突，由用户另选支持编辑的模型，不能静默替换。透明背景不决定 Flare/Sunburst；`quality` 与 2.6 的可选 `complexity` 是独立参数，省略 complexity 时不补值。2.6 省略尺寸为 auto；实际尺寸、质量和格式以结果元数据及下载文件为准。速度与细节取向沿用用户选择策略，尚无严格的同条件 A/B 实测结论，不承诺固定速度差或画质提升。
 
 ## 执行流程
 
@@ -51,7 +51,7 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 AIHUB_PLUGIN_DIR="<实际 Plugin 目录>"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" doctor --skill aihub-image
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" models --skill aihub-image --media image
-node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" describe --skill aihub-image --model "gpt-image-2.5-flare"
+node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" describe --skill aihub-image --model "gpt-image-2.6-flare"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" plan --skill aihub-image --request-file "/任务目录/image-request.json"
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill aihub-image \
   --request-file "/任务目录/image-request.json" --output-dir "/任务目录/data/aihub-studio" --wait-seconds 30

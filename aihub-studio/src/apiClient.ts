@@ -19,7 +19,7 @@ export interface SubmitResponse {
 
 export interface TaskResponse extends SubmitResponse {
   results?: unknown[] | null;
-  error?: { code?: string; message?: string; type?: string } | null;
+  error?: { code?: string; message?: string; type?: string; unsupported_parameters?: unknown; suggested_remove_parameters?: unknown; [key: string]: unknown } | null;
 }
 
 export interface LiveModel {
@@ -72,6 +72,7 @@ export class ApiError extends Error {
     readonly requestId?: string,
     readonly ambiguous = false,
     readonly retryable = false,
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = "ApiError";
@@ -175,7 +176,10 @@ export class AihubmaxClient {
       throw new ApiError("deadline 必须是有限的绝对毫秒时间戳。", 0, "validation", "invalid_deadline");
     }
     // Serialize before sending. Circular JSON and invalid parameters are local errors.
-    const serializedBody = body === undefined ? undefined : JSON.stringify(body);
+    const multipart = body instanceof FormData;
+    const serializedBody = multipart ? body : body === undefined ? undefined : JSON.stringify(body);
+    const evidenceBody = multipart ? Object.fromEntries([...body.entries()].map(([key, value]) =>
+      [key, typeof value === 'string' ? value : { filename: value.name, size: value.size, type: value.type }])) : body;
     const policy = opts.retry ?? (IDEMPOTENT_METHODS.has(method.toUpperCase()) ? "idempotent" : "non-idempotent");
     const isWrite = policy === "non-idempotent";
     const url = `${this.cfg.baseUrl}${path}`;
@@ -188,14 +192,14 @@ export class AihubmaxClient {
       let text: string;
       const started = Date.now();
       const headers = { Authorization: `Bearer ${this.cfg.apiKey}`,
-        ...(serializedBody !== undefined ? { 'Content-Type': 'application/json' } : {}) };
+        ...(!multipart && serializedBody !== undefined ? { 'Content-Type': 'application/json' } : {}) };
       const capture = async (responseBody: unknown, retry = false, timeoutStage: string | null = null) => {
         const delay = retry ? retryDelayMs(response, attempt) : null;
         const scheduled = retry && (opts.deadline === undefined || delay! < opts.deadline - Date.now());
         return observeExchange(redactEvidence({ id: randomUUID(), at: new Date(started).toISOString(), method, url,
           elapsed_ms: Date.now() - started, attempt: attempt + 1, max_attempts: MAX_ATTEMPTS, retry_policy: policy,
           retry_scheduled: scheduled, retry_delay_ms: scheduled ? delay : null, timeout_ms: timeoutMs, timeout_stage: timeoutStage,
-          request: { headers, body: body ?? null, query: Object.fromEntries([...new URL(url).searchParams.keys()].map(key => [key, new URL(url).searchParams.getAll(key)])) }, response: { http_status: response?.status ?? null,
+          request: { headers, body: evidenceBody ?? null, query: Object.fromEntries([...new URL(url).searchParams.keys()].map(key => [key, new URL(url).searchParams.getAll(key)])) }, response: { http_status: response?.status ?? null,
             headers: response ? Object.fromEntries(response.headers.entries()) : {}, body: responseBody },
         }, [this.cfg.apiKey]) as HttpEvidence);
       };
@@ -289,10 +293,12 @@ export class AihubmaxClient {
     let message = this.redact(text).slice(0, 400);
     let type: string | undefined;
     let code: string | undefined;
+    let details: Record<string, unknown> | undefined;
     let requestId: string | undefined = headerRequestId;
     try {
       const parsed = JSON.parse(text) as { error?: { message?: unknown; type?: unknown; code?: unknown } };
       if (parsed?.error) {
+        if (typeof parsed.error === 'object' && !Array.isArray(parsed.error)) details = redactEvidence(parsed.error, [this.cfg.apiKey]) as Record<string, unknown>;
         if (typeof parsed.error.message === "string") message = this.redact(parsed.error.message).slice(0, 400);
         if (typeof parsed.error.type === "string") type = this.redact(parsed.error.type);
         if (typeof parsed.error.code === "string") code = this.redact(parsed.error.code);
@@ -310,10 +316,10 @@ export class AihubmaxClient {
     return new ApiError(this.redact(`请求失败（HTTP ${status}）：${hints[status] ?? ""}${message}` +
       (ambiguous ? " 写入结果不明，请勿自动重新提交。" : "")),
       status, type, code, requestId ? this.redact(requestId) : undefined, ambiguous,
-      !ambiguous && (status === 429 || status >= 500));
+      !ambiguous && (status === 429 || status >= 500), details);
   }
 
-  async submitGeneration(path: string, params: Record<string, unknown>, opts?: RequestOptions): Promise<SubmitResponse> {
+  async submitGeneration(path: string, params: Record<string, unknown> | FormData, opts?: RequestOptions): Promise<SubmitResponse> {
     const result = await this.request<SubmitResponse>("POST", path, params, opts);
     if (!result || typeof result.id !== "string" || !result.id || !TASK_STATUSES.has(result.status)) {
       const error = new ApiError("生成请求未返回有效的任务 ID 与状态；写入结果不明，请勿自动重新提交。",

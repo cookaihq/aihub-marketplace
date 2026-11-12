@@ -12,6 +12,7 @@ export interface FailureEvent {
   id: string; at: string; stage: Stage; http_status: number | null; http_status_source: string;
   code: string; message: string | null; ambiguous: boolean; request_id?: string | null; task_id?: string;
   task_status?: string; exchange_id?: string; upstream: Array<{ source: string; value: unknown }>;
+  type?: unknown; unsupported_parameters?: unknown; suggested_remove_parameters?: unknown;
 }
 interface Capture {
   events: FailureEvent[]; exchanges: HttpEvidence[]; cfg?: LoadedConfig; record?: string;
@@ -81,6 +82,7 @@ export async function observeRequestError(error: ApiError, method: string, path:
     http_status: evidence?.response.http_status ?? null, http_status_source: evidence?.response.http_status ? 'client_response' : 'not_observed',
     code: error.code ?? 'unknown_error', message: error.message, ambiguous: error.ambiguous,
     request_id: error.requestId ?? evidence?.response.headers['x-request-id'] ?? null,
+    ...errorDetails(error.details),
     ...(taskId ? { task_id: taskId } : {}),
     ...(evidence ? { exchange_id: evidence.id } : {}), upstream: upstreamEvidence(evidence?.response.body) });
   await persistFailure();
@@ -94,12 +96,18 @@ export async function observeTerminalTask(task: TaskResponse, evidence?: HttpEvi
     code: task.error?.code ?? 'unknown_error', message: task.error?.message ?? null,
     ambiguous: false, task_id: task.id, task_status: task.status,
     request_id: evidence?.response.headers['x-request-id'] ?? null,
+    ...errorDetails(task.error ?? undefined),
     ...(evidence ? { exchange_id: evidence.id } : {}), upstream: upstreamEvidence(evidence?.response.body ?? task) });
   await persistFailure();
 }
 
 export const ISSUE_URL = 'https://github.com/cookaihq/aihub-marketplace/issues/new';
+function errorDetails(error?: Record<string, unknown>) {
+  return Object.fromEntries(['type', 'unsupported_parameters', 'suggested_remove_parameters']
+    .filter(key => error?.[key] !== undefined).map(key => [key, redactEvidence(error![key])]));
+}
 const PUBLIC_CODES = new Set(['model_unavailable', 'model_not_support_capability', 'content_policy_violation', 'timeout',
+  'requested_options_unavailable', 'unsupported_parameters',
   'service_unavailable', 'network_error', 'ambiguous', 'invalid_response', 'insufficient_quota', 'invalid_api_key',
   'rate_limit_exceeded', 'authentication_error', 'permission_denied']);
 
@@ -174,7 +182,9 @@ export async function feedback(cfg: LoadedConfig, output: Record<string, unknown
     const hasContext = await stat(contextPath).then(s => s.isFile()).catch(() => false);
     const links = [reportPath, path, draftPath, ...(hasContext ? [contextPath] : [])].map(localLink);
     const account = saved.events.some(e => [401, 402, 403].includes(e.http_status ?? 0));
-    const advice = account ? '请核对 AIhub API Key、账号权限或余额；不要为生成报告重发请求。'
+    const optionsUnavailable = saved.events.some(e => ['requested_options_unavailable', 'unsupported_parameters'].includes(e.code));
+    const advice = optionsUnavailable ? '完整展示错误 message 及 unsupported_parameters / suggested_remove_parameters 的全部项目；让用户选择保留要求稍后处理，或明确修改相关要求后新建请求。不得自动删参、替换音色、切换模型或重新生成；退款只转述服务证据，修改不保证成功。'
+      : account ? '请核对 AIhub API Key、账号权限或余额；不要为生成报告重发请求。'
       : 'service_unavailable 仅是服务返回的错误分类，不能证明上游宕机。未暴露的供应商状态、路由和内部重试应由管理员按 task_id/request_id 查询后台日志。';
     const report = '# AIHub Studio 本地请求与错误汇总\n\n' +
       `首次记录：${saved.created_at}\n\n更新时间：${now}\n\n独立错误数：${saved.events.length}\n\n` +

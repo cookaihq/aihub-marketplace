@@ -62,16 +62,16 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 
 | `operation` | 输入和用途 | 当前已验证的自动参数转换 |
 | --- | --- | --- |
-| `image-generate` / `image-edit` | 提示词；编辑另需 `inputs.images`，可选 `mask` | GPT Image 2.5 Flare / Sunburst；`resolution`、`quality`、`background`、`output_format`、`num_outputs` |
+| `image-generate` | 提示词，静态文生图 | 默认 GPT Image 2.6 Flare / Sunburst；`resolution`、`quality`、`complexity`、`background`、`output_format`、`num_outputs`；省略尺寸为 auto，2.5 可显式选择 |
+| `image-edit` | 提示词和 `inputs.images`，可选 `mask` | 默认 GPT Image 2.5 Flare / Sunburst；`resolution`、`quality`、`background`、`output_format`、`num_outputs`；2.6 不接受参考图或遮罩 |
 | `video-text` | 文字 | Seedance 2.5、2.0 / Fast 对应文生型号 |
 | `video-start-frame` | 一张固定首帧 `inputs.images` | 对应图生型号；不把参考图改作首帧 |
 | `video-reference` | 参考图、视频或音频 | 对应参考生型号；2.0 只自动接入图片参考，视频/音频严格限制尚缺可验证的素材元数据 |
 | `video-lipsync` | 一个视频和一个音频 | 默认 `sync-3`；仅可选 `sync_mode`。显式或配置的 `lipsync-2` 另支持 `active_speaker`、`temperature` |
 | `video-avatar` | 一张图片和一个音频 | 默认 `fabric-1.0`；`resolution=480p/720p`，未指定为 `720p`，不接受提示词。显式或配置的 `omnihuman-1.5` 另支持提示词、`advanced`、`turbo_mode` |
-| `audio-tts` | 提示词中的待朗读文本 | `speech-2.8-hd` / `speech-2.8-turbo`；`voice_setting`、`audio_setting`、`voice_modify`、`pronunciation_dict`、`language_boost` |
+| `audio-tts` | 提示词中的待朗读文本 | 默认 `eleven-v4`，prompt → text，独立 voice；显式 Speech 2.8 保留 `voice_setting` 等原参数，彼此不混用 |
 | `audio-transcribe` | 原录音路径或 URL 的 `inputs.audios` | `paraformer-v2` / `paraformer-8k-v2`；按模型检查格式、大小、时长并自动分段，8 kHz 型号不接受 `language_hints` |
-| `audio-clone` | 一个音频，须用户明确要求克隆 | `voice-clone`；`accuracy`、`need_volume_normalization`、`noise_reduction`、`preview_model`、`preview_text`；不承诺返回可下载音频 |
-| `music-async` | 提示词，可选图片参考 | `lyria-3-pro`；`negative_prompt` |
+| `music-async` | 提示词或段落计划 | 默认 `elevenlabs-music-v2.5`，整数毫秒；显式 `lyria-3-pro` 保留图片参考与 `negative_prompt`，不向 ElevenLabs 转换 |
 | `music-native` | 提示词 | `lyria-3-pro-preview`；不接收额外要求或参考素材，不与异步音乐静默互换 |
 | `understanding` | 提示词及至少一种媒体输入 | 默认 `gemini-4-carbon`；从线上 LLM 注册表检查精确 ID 和所需媒体能力；`system_prompt`、`max_tokens`、`temperature` |
 | `document` | 一个 PDF 的 `inputs.files` | `doc2x-v3`；`page_count`、`convert_mode`、`filename`、`formula_mode`、`merge_cross_page_forms` |
@@ -82,7 +82,9 @@ C1/C2 使用各自的契约，不套用 Seedance 时长或比例。`sync-3` 的 
 
 配置一个模型 ID 不代表已接入其参数转换。CLI 先按任务用途筛选，再逐个检查；TTS 不能替代转写、首帧图生不能替代参考生成。不兼容型号会列出原因。有目录说明但尚无自动转换的型号，只能在用户明确选择且按其契约准备参数后使用旧单模型入口；不能借此绕过已经保存的多模型任务或确认要求。
 
-`audio-tts` 另支持 `eleven-v4` / `eleven-v4-turbo` 的 prompt → text 映射；`music-async` 另支持 `elevenlabs-music-v2.5` 的提示词或分段计划。选择这些型号前读取并遵守 [ElevenLabs 参数与交付](elevenlabs.md)，包括模式互斥、旧参数拒绝、时间戳空段、实际文件容器和计费边界。`describe.request_schema` 保留完整嵌套约束，`plan` 展示实际映射后的请求；新增型号不自动加入个人列表。API 验收及生产正式可用尚未确认，本版不切换 TTS / 音乐内置默认值。
+`audio-tts` 另支持 `eleven-v4` / `eleven-v4-turbo` 及其 `-custom-voice` 变体的 prompt → text 映射；custom 必须显式提供已有音色 ID，不属于声音克隆。`music-async` 支持 `elevenlabs-music-v2.5` 的提示词或分段计划，时长使用整数 music_length_ms / duration_ms，拒绝旧秒制 duration。`audio-transcribe` 支持 `scribe-v2` / `scribe-v3` 的单 URL 或 multipart 本地文件输入，不使用 Paraformer 分段与转码；有 V3 的候选列表排除 V2，不能自动降级，需要 V2 时显式新建请求。
+
+选择这些型号前读取并遵守 [ElevenLabs 参数与交付](elevenlabs.md)，包括模式互斥、nullable 控制、时间戳空段、实际容器和计费边界。官方 Music 仅 MP3/Opus，其余统一编码保留兼容渠道；不强制官方或静默移除参数。`describe.request_schema` 保留完整嵌套约束，`plan` 展示实际请求；新增型号不自动加入个人列表。requested_options_unavailable / unsupported_parameters 停止自动切换，保留完整错误与字段列表，交由用户决定修改要求或稍后处理。Gateway v0.9.15 正式上线后启用上述 TTS／异步音乐默认；ASR 和 Gemini 原生音乐默认保持原值，音频人工试听仍待评审。
 
 ## 执行与继续
 

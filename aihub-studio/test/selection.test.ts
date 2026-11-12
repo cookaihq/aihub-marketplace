@@ -39,7 +39,7 @@ test('model lists use caller-specific layering, replace lower lists and disclose
 
 test('explicit user models are fixed, configured order wins, builtin defaults remain task-specific', () => {
   const request = { operation: 'image-generate', original_request: 'A red cat', prompt: 'A red cat', image_priority: 'detail' };
-  assert.equal(selectionPlan(cfg('aihub-image'), request).candidates[0]?.model, 'gpt-image-2.5-sunburst');
+  assert.equal(selectionPlan(cfg('aihub-image'), request).candidates[0]?.model, 'gpt-image-2.6-sunburst');
   const configured = cfg('aihub-image', ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst']);
   assert.equal(selectionPlan(configured, request).candidates[0]?.model, 'gpt-image-2.5-flare');
   const fixed = selectionPlan(configured, { ...request, model: 'gpt-image-2.5-sunburst' });

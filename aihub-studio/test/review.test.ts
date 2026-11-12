@@ -12,7 +12,7 @@ import { loadConfig, inspectConfig } from '../src/config.js';
 import { assertPrivateFile } from './private-permissions.js';
 import { fixtureTransport } from './fixture-transport.js';
 const exec = promisify(execFile);
-const generator = 'gpt-image-2.5-flare';
+const generator = 'gpt-image-2.6-flare';
 const checker = 'gemini-3.8-flash';
 
 async function fixture(audio = false) {

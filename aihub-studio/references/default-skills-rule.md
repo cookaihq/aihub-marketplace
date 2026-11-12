@@ -11,7 +11,7 @@
 | --- | --- |
 | 文生图、参考图生图、支持的生成式图片编辑 | `aihub-image` |
 | 文生视频、图生视频、参考生视频、唇形同步与数字人 | `aihub-video` |
-| 文本转语音、语音识别与转写、明确授权的声音克隆 | `aihub-audio` |
+| 文本转语音、语音识别与转写 | `aihub-audio` |
 | 音乐生成 | `aihub-music` |
 | 图片、音频、视频及支持的文件内容理解 | `aihub-understanding` |
 | PDF 转换为 Markdown、LaTeX 或 DOCX | `aihub-document` |

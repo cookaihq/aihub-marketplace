@@ -1,4 +1,5 @@
-export const ELEVEN_TTS_MODELS = new Set(['eleven-v4', 'eleven-v4-turbo']);
+export const ELEVEN_TTS_MODELS = new Set(['eleven-v4', 'eleven-v4-turbo', 'eleven-v4-custom-voice', 'eleven-v4-turbo-custom-voice']);
+export const SCRIBE_MODELS = new Set(['scribe-v2', 'scribe-v3']);
 export const ELEVEN_MUSIC_MODEL = 'elevenlabs-music-v2.5';
 /** Only the schema vocabulary used by these bundled, dereferenced contracts. */
 function validateSchema(value, schema, path, strictObject = false) {
@@ -42,7 +43,7 @@ function validateSchema(value, schema, path, strictObject = false) {
         if (schema.multipleOf !== undefined) {
             const units = value / schema.multipleOf;
             if (Math.abs(units - Math.round(units)) > 1e-7)
-                throw new Error(`${path} must be a multiple of ${schema.multipleOf} seconds.`);
+                throw new Error(`${path} must be a multiple of ${schema.multipleOf}.`);
         }
     }
     if (Array.isArray(value)) {
@@ -69,23 +70,74 @@ function validateSchema(value, schema, path, strictObject = false) {
 }
 /** Cross-field rules expressed in the contract descriptions, beyond JSON Schema. */
 export function validateElevenLabs(model, params, schema) {
+    if (model === ELEVEN_MUSIC_MODEL) {
+        if (Object.hasOwn(params, 'duration'))
+            throw new Error('duration in seconds was removed; migrate to integer music_length_ms (milliseconds).');
+        const chunks = params.composition_plan?.chunks;
+        if (Array.isArray(chunks))
+            chunks.forEach((chunk, index) => {
+                if (chunk && typeof chunk === 'object' && Object.hasOwn(chunk, 'duration')) {
+                    throw new Error(`composition_plan.chunks[${index}].duration in seconds was removed; migrate to integer duration_ms (milliseconds).`);
+                }
+            });
+    }
     validateSchema({ ...params, model }, schema, 'params', true);
+    if (ELEVEN_TTS_MODELS.has(model) && model.endsWith('-custom-voice') &&
+        (typeof params.voice !== 'string' || !params.voice.trim() || params.voice === 'Rachel')) {
+        throw new Error('custom-voice requires an explicit existing voice ID; it does not create or clone a voice.');
+    }
+    if (model.endsWith('-custom-voice')) {
+        if ([...String(params.text)].length > 2000)
+            throw new Error('Official custom-voice text allows at most 2000 characters.');
+        if (model.includes('-turbo-')) {
+            for (const key of ['previous_text', 'future_text', 'similarity_boost'])
+                if (params[key] != null)
+                    throw new Error(`Official Turbo does not support ${key}; preserve the request and select a compatible model.`);
+            if (params.seed === 0)
+                throw new Error('Official Turbo seed must be > 0.');
+        }
+    }
+    if (SCRIBE_MODELS.has(model)) {
+        if ((params.audio_url !== undefined) === (params.file !== undefined))
+            throw new Error('Provide exactly one of audio_url or file.');
+        if (params.audio_url !== undefined) {
+            let url;
+            try {
+                url = new URL(params.audio_url);
+            }
+            catch {
+                throw new Error('audio_url must use public HTTP(S).');
+            }
+            if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
+                throw new Error('audio_url must use HTTP(S) without credentials.');
+        }
+        if (params.file !== undefined && (typeof params.file !== 'string' || !params.file.trim()))
+            throw new Error('file must be a nonempty local audio path.');
+        const speakers = params.num_speakers != null;
+        const threshold = params.diarization_threshold != null;
+        if (speakers && threshold)
+            throw new Error('num_speakers and diarization_threshold are mutually exclusive.');
+        if (params.diarize === false && (speakers || threshold))
+            throw new Error('num_speakers and diarization_threshold require diarize=true.');
+        return;
+    }
     if (model !== ELEVEN_MUSIC_MODEL)
         return;
     const plan = params.composition_plan;
     if ((params.prompt != null) === (plan != null))
         throw new Error('Provide exactly one of prompt or composition_plan.');
-    const unused = plan ? ['duration', 'force_instrumental'] : ['seed'];
-    for (const key of unused)
-        if (Object.hasOwn(params, key)) {
-            throw new Error(`${key} is only supported in ${plan ? 'prompt' : 'composition_plan'} mode; it cannot be silently discarded.`);
-        }
+    if (plan && (params.music_length_ms != null || params.force_instrumental === true))
+        throw new Error('music_length_ms and force_instrumental=true are only supported in prompt mode.');
+    if (!plan && params.seed != null)
+        throw new Error('seed is only supported in composition_plan mode.');
+    if (!plan && typeof params.prompt === 'string' && !params.prompt.trim())
+        throw new Error('prompt must not be blank.');
     if (!plan)
         return;
     // Integer milliseconds avoid float accumulation at the 600-second boundary.
-    const totalMs = plan.chunks.reduce((sum, chunk) => sum + Math.round(Number(chunk.duration) * 1000), 0);
+    const totalMs = plan.chunks.reduce((sum, chunk) => sum + Number(chunk.duration_ms), 0);
     if (totalMs > 600_000)
-        throw new Error('composition_plan total duration must be <= 600 seconds.');
+        throw new Error('composition_plan total duration must be <= 600000 milliseconds.');
     for (const [index, chunk] of plan.chunks.entries()) {
         const label = `composition_plan.chunks[${index}]`;
         const text = chunk.text;

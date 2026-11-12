@@ -2364,6 +2364,311 @@
       "registeredInDocsJson": true
     },
     {
+      "file": "gpt-image-2.json",
+      "operationId": "gpt-image-2",
+      "method": "POST",
+      "path": "/e/v1/images/generations",
+      "title": "GPT Image 2.6 Flare / Sunburst",
+      "summary": "GPT Image 2.6 静态文生图",
+      "description": "正式 OpenAPI 只开放静态文生图；不支持参考图、遮罩、markup、GIF 或 SVG。省略尺寸为 auto，complexity 与 quality 独立。尺寸、质量和格式是请求值，交付以实际元数据与下载文件为准。来源：docs-site 1cc10851819ce1f7dc3f257f59b3af3daa0bf01b 的 openapi/zh/gpt-image-2.json；仅按 2.6 模型能力投影，不表示账号可见性或全部效果已验。",
+      "category": "generation",
+      "mediaType": "image",
+      "models": [
+        "gpt-image-2.6-flare",
+        "gpt-image-2.6-sunburst"
+      ],
+      "modelSource": "enum",
+      "requestContentTypes": [
+        "application/json"
+      ],
+      "requiredParams": [
+        "model",
+        "prompt"
+      ],
+      "params": [
+        "background",
+        "complexity",
+        "model",
+        "num_outputs",
+        "output_format",
+        "prompt",
+        "quality",
+        "resolution"
+      ],
+      "paramSpecs": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "description": "`gpt-image-2`：三档质量，按尺寸和质量按张计费\n`gpt-image-2.5-flare`：六档质量与透明背景，按实际 token 计费，侧重生成速度\n`gpt-image-2.5-sunburst`：六档质量与透明背景，按实际 token 计费，侧重精细细节\n`gpt-image-2.6-flare`：静态文生图，六档质量、三档复杂度，省略尺寸为 auto，按官方 token 费率计费\n`gpt-image-2.6-sunburst`：与 2.6 Flare 相同的静态参数与 token 费率",
+          "enum": [
+            "gpt-image-2.6-flare",
+            "gpt-image-2.6-sunburst"
+          ],
+          "default": "gpt-image-2.6-flare"
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true,
+          "description": "图像生成提示词\n\n- 文生图模式：描述想要生成的图像内容\n- 图生图 / 编辑模式：描述在 `image_urls` 参考图基础上的变化或编辑指令\n- 多张参考图时的引用写法见 `image_urls` 字段说明\n"
+        },
+        {
+          "name": "num_outputs",
+          "type": "integer",
+          "required": false,
+          "description": "单次请求生成的图片数量（1–10）",
+          "default": 1
+        },
+        {
+          "name": "resolution",
+          "type": null,
+          "required": false,
+          "description": "输出图像分辨率\n\n**形式 A — 预设字符串（`宽x高`）**，共 11 个 preset：\n  - `1024x768` / `768x1024`（0.79 MP）\n  - `1024x1024`（1.05 MP）\n  - `1536x1024` / `1024x1536`（1.57 MP）\n  - `1920x1080` / `1080x1920`（2.07 MP，FHD）\n  - `2560x1440` / `1440x2560`（3.69 MP，QHD）\n  - `3840x2160` / `2160x3840`（8.29 MP，4K）\n\n**形式 B — 自定义对象** `{\"width\": int, \"height\": int}`。\n约束：\n- `width` 和 `height` 都是 16 的倍数\n- 256 ≤ `width` ≤ 3840、256 ≤ `height` ≤ 3840\n- 长短边比 ≤ 3:1\n- 总像素 `width × height ∈ [655,360, 8,294,400]`\n\n**模型差异：**\n- `gpt-image-2` / `gpt-image-2-limit`：省略时为 `1024x1024`，使用上述预设或自定义对象\n- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：省略时仍为 `1024x1024`；显式 `auto` 才由模型选择尺寸。指定尺寸是请求值，实际宽高以任务结果的 `size` 和图片文件为准\n- `gpt-image-2.6-flare` / `gpt-image-2.6-sunburst`：省略时为 `auto`，由模型选择尺寸；也接受上述预设或自定义对象，指定值原样表达请求尺寸，实际宽高以生成元数据和图片文件为准\n",
+          "default": "auto"
+        },
+        {
+          "name": "quality",
+          "type": "string",
+          "required": false,
+          "description": "请求的图像生成质量档位\n\n- `low` —— 低质量档位\n- `medium` —— 中等质量档位\n- `high` —— 高质量档位（默认）\n- `auto` —— 模型自动选择质量\n- `xhigh` / `max` —— 更高质量档位\n\n**各模型可请求的值：**\n- `gpt-image-2` / `gpt-image-2-limit`：仅接受 `low`、`medium`、`high`\n- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：可请求全部六档\n- `gpt-image-2.6-flare` / `gpt-image-2.6-sunburst`：可请求全部六档\n\n请求档位与实际结果可能不同。2026-11-12 已记录的测试中，`gpt-image-2.5-flare` 和 `gpt-image-2.5-sunburst` 请求 `medium`，返回的原生生成元数据为 `quality=low`。这是历史观测，不代表其他模型、其他请求或配置调整后的结果。请按原生生成元数据确认实际 `quality`，并检查下载文件的内容。\n",
+          "enum": [
+            "auto",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "default": "high"
+        },
+        {
+          "name": "complexity",
+          "type": "string",
+          "required": false,
+          "description": "可选的生成复杂度，与 `quality` 独立\n\n- 省略时不指定复杂度，保留模型的默认行为\n- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：可请求 `low`、`medium`、`high`；当前默认不开放，使用默认配置时请省略。选项不可用时返回参数不支持错误，不忽略该字段\n- `gpt-image-2.6-flare` / `gpt-image-2.6-sunburst`：支持 `low`、`medium`、`high`；省略时不发送该选项，由模型采用默认行为\n- `gpt-image-2` / `gpt-image-2-limit`：不支持\n\n\n> 非必须不要传这个参数。",
+          "default": null,
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        {
+          "name": "output_format",
+          "type": "string",
+          "required": false,
+          "description": "请求的输出图像格式\n\n- `png` —— 无损，默认\n- `jpeg` —— 有损压缩\n- `webp` —— 现代压缩格式\n\n请求格式与实际文件可能不同。2026-11-12 已记录的测试中，`gpt-image-2.6-flare` 请求 `jpeg`，原生生成元数据和下载文件均为 PNG。这是历史观测，不代表其他模型、其他请求或配置调整后的结果。请按原生生成元数据和下载文件确认实际格式，不仅根据请求值判断文件类型。\n\n\n> 非必须不要传这个参数。",
+          "enum": [
+            "png",
+            "jpeg",
+            "webp"
+          ],
+          "default": "png"
+        },
+        {
+          "name": "background",
+          "type": "string",
+          "required": false,
+          "description": "背景模式\n\n- `auto` —— 模型自动决定\n- `opaque` —— 不透明背景\n- `transparent` —— 透明背景，输出格式必须是 `png` 或 `webp`\n\n**模型差异：**\n- `gpt-image-2` / `gpt-image-2-limit`：仅支持 `auto`、`opaque`，不可与 `mask_url` 同时传入\n- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：支持全部三种背景，可同时指定 `mask_url`\n- `gpt-image-2.6-flare` / `gpt-image-2.6-sunburst`：静态文生图支持全部三种背景\n\n\n> 非必须不要传这个参数。",
+          "enum": [
+            "auto",
+            "opaque",
+            "transparent"
+          ],
+          "default": "auto"
+        }
+      ],
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "model",
+          "prompt"
+        ],
+        "properties": {
+          "model": {
+            "description": "`gpt-image-2`：三档质量，按尺寸和质量按张计费\n`gpt-image-2.5-flare`：六档质量与透明背景，按实际 token 计费，侧重生成速度\n`gpt-image-2.5-sunburst`：六档质量与透明背景，按实际 token 计费，侧重精细细节\n`gpt-image-2.6-flare`：静态文生图，六档质量、三档复杂度，省略尺寸为 auto，按官方 token 费率计费\n`gpt-image-2.6-sunburst`：与 2.6 Flare 相同的静态参数与 token 费率",
+            "examples": [
+              "gpt-image-2",
+              "gpt-image-2.5-flare",
+              "gpt-image-2.5-sunburst",
+              "gpt-image-2.6-flare",
+              "gpt-image-2.6-sunburst"
+            ],
+            "type": "string",
+            "default": "gpt-image-2.6-flare",
+            "enum": [
+              "gpt-image-2.6-flare",
+              "gpt-image-2.6-sunburst"
+            ]
+          },
+          "prompt": {
+            "description": "图像生成提示词\n\n- 文生图模式：描述想要生成的图像内容\n- 图生图 / 编辑模式：描述在 `image_urls` 参考图基础上的变化或编辑指令\n- 多张参考图时的引用写法见 `image_urls` 字段说明\n",
+            "type": "string",
+            "example": "生成一张未来城市夜景海报，霓虹灯，电影感构图"
+          },
+          "num_outputs": {
+            "default": 1,
+            "description": "单次请求生成的图片数量（1–10）",
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer",
+            "example": 1
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "输出图像分辨率\n\n**形式 A — 预设字符串（`宽x高`）**，共 11 个 preset：\n  - `1024x768` / `768x1024`（0.79 MP）\n  - `1024x1024`（1.05 MP）\n  - `1536x1024` / `1024x1536`（1.57 MP）\n  - `1920x1080` / `1080x1920`（2.07 MP，FHD）\n  - `2560x1440` / `1440x2560`（3.69 MP，QHD）\n  - `3840x2160` / `2160x3840`（8.29 MP，4K）\n\n**形式 B — 自定义对象** `{\"width\": int, \"height\": int}`。\n约束：\n- `width` 和 `height` 都是 16 的倍数\n- 256 ≤ `width` ≤ 3840、256 ≤ `height` ≤ 3840\n- 长短边比 ≤ 3:1\n- 总像素 `width × height ∈ [655,360, 8,294,400]`\n\n**模型差异：**\n- `gpt-image-2` / `gpt-image-2-limit`：省略时为 `1024x1024`，使用上述预设或自定义对象\n- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：省略时仍为 `1024x1024`；显式 `auto` 才由模型选择尺寸。指定尺寸是请求值，实际宽高以任务结果的 `size` 和图片文件为准\n- `gpt-image-2.6-flare` / `gpt-image-2.6-sunburst`：省略时为 `auto`，由模型选择尺寸；也接受上述预设或自定义对象，指定值原样表达请求尺寸，实际宽高以生成元数据和图片文件为准\n",
+            "examples": [
+              "1024x768",
+              "768x1024",
+              "1024x1024",
+              "1536x1024",
+              "1024x1536",
+              "1920x1080",
+              "1080x1920",
+              "2560x1440",
+              "1440x2560",
+              "3840x2160",
+              "2160x3840",
+              "auto"
+            ],
+            "x-model-enum-overrides": {
+              "gpt-image-2": [
+                "1024x1024",
+                "1024x1536",
+                "1024x768",
+                "1080x1920",
+                "1440x2560",
+                "1536x1024",
+                "1920x1080",
+                "2160x3840",
+                "2560x1440",
+                "3840x2160",
+                "768x1024"
+              ],
+              "gpt-image-2-limit": [
+                "1024x1024",
+                "1024x1536",
+                "1024x768",
+                "1080x1920",
+                "1440x2560",
+                "1536x1024",
+                "1920x1080",
+                "2160x3840",
+                "2560x1440",
+                "3840x2160",
+                "768x1024"
+              ]
+            },
+            "default": "auto"
+          },
+          "quality": {
+            "default": "high",
+            "description": "请求的图像生成质量档位\n\n- `low` —— 低质量档位\n- `medium` —— 中等质量档位\n- `high` —— 高质量档位（默认）\n- `auto` —— 模型自动选择质量\n- `xhigh` / `max` —— 更高质量档位\n\n**各模型可请求的值：**\n- `gpt-image-2` / `gpt-image-2-limit`：仅接受 `low`、`medium`、`high`\n- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：可请求全部六档\n- `gpt-image-2.6-flare` / `gpt-image-2.6-sunburst`：可请求全部六档\n\n请求档位与实际结果可能不同。2026-11-12 已记录的测试中，`gpt-image-2.5-flare` 和 `gpt-image-2.5-sunburst` 请求 `medium`，返回的原生生成元数据为 `quality=low`。这是历史观测，不代表其他模型、其他请求或配置调整后的结果。请按原生生成元数据确认实际 `quality`，并检查下载文件的内容。\n",
+            "enum": [
+              "auto",
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ],
+            "examples": [
+              "high",
+              "low",
+              "medium",
+              "auto",
+              "xhigh",
+              "max"
+            ],
+            "type": "string",
+            "x-model-enum-overrides": {
+              "gpt-image-2": [
+                "low",
+                "medium",
+                "high"
+              ],
+              "gpt-image-2-limit": [
+                "low",
+                "medium",
+                "high"
+              ]
+            }
+          },
+          "complexity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "可选的生成复杂度，与 `quality` 独立\n\n- 省略时不指定复杂度，保留模型的默认行为\n- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：可请求 `low`、`medium`、`high`；当前默认不开放，使用默认配置时请省略。选项不可用时返回参数不支持错误，不忽略该字段\n- `gpt-image-2.6-flare` / `gpt-image-2.6-sunburst`：支持 `low`、`medium`、`high`；省略时不发送该选项，由模型采用默认行为\n- `gpt-image-2` / `gpt-image-2-limit`：不支持\n\n\n> 非必须不要传这个参数。",
+            "x-advanced": true,
+            "x-unsupported-models": [
+              "gpt-image-2",
+              "gpt-image-2-limit"
+            ],
+            "example": "low"
+          },
+          "output_format": {
+            "default": "png",
+            "description": "请求的输出图像格式\n\n- `png` —— 无损，默认\n- `jpeg` —— 有损压缩\n- `webp` —— 现代压缩格式\n\n请求格式与实际文件可能不同。2026-11-12 已记录的测试中，`gpt-image-2.6-flare` 请求 `jpeg`，原生生成元数据和下载文件均为 PNG。这是历史观测，不代表其他模型、其他请求或配置调整后的结果。请按原生生成元数据和下载文件确认实际格式，不仅根据请求值判断文件类型。\n\n\n> 非必须不要传这个参数。",
+            "enum": [
+              "png",
+              "jpeg",
+              "webp"
+            ],
+            "type": "string",
+            "x-advanced": true,
+            "example": "png"
+          },
+          "background": {
+            "default": "auto",
+            "description": "背景模式\n\n- `auto` —— 模型自动决定\n- `opaque` —— 不透明背景\n- `transparent` —— 透明背景，输出格式必须是 `png` 或 `webp`\n\n**模型差异：**\n- `gpt-image-2` / `gpt-image-2-limit`：仅支持 `auto`、`opaque`，不可与 `mask_url` 同时传入\n- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：支持全部三种背景，可同时指定 `mask_url`\n- `gpt-image-2.6-flare` / `gpt-image-2.6-sunburst`：静态文生图支持全部三种背景\n\n\n> 非必须不要传这个参数。",
+            "enum": [
+              "auto",
+              "opaque",
+              "transparent"
+            ],
+            "examples": [
+              "auto",
+              "opaque",
+              "transparent"
+            ],
+            "type": "string",
+            "x-advanced": true,
+            "x-model-enum-overrides": {
+              "gpt-image-2": [
+                "auto",
+                "opaque"
+              ],
+              "gpt-image-2-limit": [
+                "auto",
+                "opaque"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "registeredInDocsJson": true
+    },
+    {
       "file": "grok-imagine-edit-video.json",
       "operationId": "grok-imagine-edit-video",
       "method": "POST",
@@ -8466,7 +8771,7 @@
       "path": "/e/v1/audios/generations",
       "title": "Scribe V2 语音识别",
       "summary": "Scribe V2 语音识别",
-      "description": "- Scribe V2 录音文件识别模型\n - 支持语言指定、说话人分离、音频事件标注与 keyterms 偏置词增强\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 识别结果会在任务详情的 `results` 字段中返回",
+      "description": "- Scribe V2 录音文件识别模型\n - 支持语言指定、说话人分离、音频事件标注与 keyterms 偏置词增强\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 识别结果会在任务详情的 `results` 字段中返回\n",
       "category": "generation",
       "mediaType": "audio",
       "models": [
@@ -8474,33 +8779,40 @@
       ],
       "modelSource": "default",
       "requestContentTypes": [
-        "application/json"
+        "application/json",
+        "multipart/form-data"
       ],
       "requiredParams": [
-        "audio_url",
         "model"
       ],
       "params": [
         "audio_url",
+        "diarization_threshold",
         "diarize",
+        "file",
         "keyterms",
         "language_code",
         "model",
-        "tag_audio_events"
+        "no_verbatim",
+        "num_speakers",
+        "seed",
+        "tag_audio_events",
+        "temperature",
+        "timestamps_granularity"
       ],
       "paramSpecs": [
         {
           "name": "audio_url",
           "type": "string",
-          "required": true,
-          "description": "待识别音频文件 URL\n\n**说明：**\n- 需为 HTTP/HTTPS 可访问地址\n- 音频文件需可被系统直接访问和读取"
+          "required": false,
+          "description": "待识别音频文件 URL\n\n**说明：**\n- 需为 HTTP/HTTPS 可访问地址\n- 音频文件需可被系统直接访问和读取\n"
         },
         {
-          "name": "model",
-          "type": "string",
-          "required": true,
-          "default": "scribe-v2",
-          "description": "`scribe-v2`：支持 diarize、音频事件标注与 keyterms 的语音识别模型"
+          "name": "diarization_threshold",
+          "type": "number",
+          "required": false,
+          "default": null,
+          "description": "说话人分离阈值；要求 diarize=true 且不指定 num_speakers。\n\n> 非必须不要传这个参数。"
         },
         {
           "name": "diarize",
@@ -8510,18 +8822,56 @@
           "description": "是否进行说话人分离。默认开启。"
         },
         {
+          "name": "file",
+          "type": "string",
+          "required": false,
+          "description": "Local audio path submitted as multipart file; exactly one of file and audio_url."
+        },
+        {
           "name": "keyterms",
-          "type": null,
+          "type": "array",
           "required": false,
           "default": null,
-          "description": "偏置词 / 短语列表\n\n**说明：**\n- 最多 100 个条目\n- 每个条目最多 50 个字符\n- 用于提升特定术语或专有名词的识别倾向\n\n\n> 非必须不要传这个参数。"
+          "description": "偏置词 / 短语列表\n\n**说明：**\n- 最多 100 个条目\n- 每个条目最多 50 个字符\n- 用于提升特定术语或专有名词的识别倾向\n\n\n> 非必须不要传这个参数。",
+          "items": "string"
         },
         {
           "name": "language_code",
-          "type": null,
+          "type": "string",
           "required": false,
           "default": null,
-          "description": "音频语言代码\n\n**说明：**\n- 支持 ISO-639-1 或 ISO-639-3 代码\n- 例如：`zh` / `zho` / `en` / `eng`\n- 不传时由模型自动检测"
+          "description": "音频语言代码\n\n**说明：**\n- 支持 ISO-639-1 或 ISO-639-3 代码\n- 例如：`zh` / `zho` / `en` / `eng`\n- 不传时由模型自动检测\n"
+        },
+        {
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "enum": [
+            "scribe-v2"
+          ],
+          "default": "scribe-v2",
+          "description": "`scribe-v2`：支持 diarize、音频事件标注与 keyterms 的语音识别模型"
+        },
+        {
+          "name": "no_verbatim",
+          "type": "boolean",
+          "required": false,
+          "default": null,
+          "description": "是否移除口头语；省略采用 false。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "num_speakers",
+          "type": "integer",
+          "required": false,
+          "default": null,
+          "description": "说话人人数上限；要求 diarize=true。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "seed",
+          "type": "integer",
+          "required": false,
+          "default": null,
+          "description": "随机种子。\n\n> 非必须不要传这个参数。"
         },
         {
           "name": "tag_audio_events",
@@ -8529,9 +8879,200 @@
           "required": false,
           "default": true,
           "description": "是否标注笑声、掌声等音频事件。默认开启。"
+        },
+        {
+          "name": "temperature",
+          "type": "number",
+          "required": false,
+          "default": null,
+          "description": "采样温度；省略采用模型默认值。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "timestamps_granularity",
+          "type": "string",
+          "required": false,
+          "enum": [
+            "none",
+            "word",
+            "character"
+          ],
+          "default": null,
+          "description": "时间戳粒度；省略采用 word。\n\n> 非必须不要传这个参数。"
         }
       ],
-      "registeredInDocsJson": true
+      "registeredInDocsJson": true,
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "model"
+        ],
+        "properties": {
+          "model": {
+            "description": "`scribe-v2`：支持 diarize、音频事件标注与 keyterms 的语音识别模型",
+            "examples": [
+              "scribe-v2"
+            ],
+            "type": "string",
+            "default": "scribe-v2",
+            "enum": [
+              "scribe-v2"
+            ]
+          },
+          "audio_url": {
+            "description": "待识别音频文件 URL\n\n**说明：**\n- 需为 HTTP/HTTPS 可访问地址\n- 音频文件需可被系统直接访问和读取\n",
+            "type": "string",
+            "example": "https://samplelib.com/lib/preview/mp3/sample-3s.mp3"
+          },
+          "language_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "音频语言代码\n\n**说明：**\n- 支持 ISO-639-1 或 ISO-639-3 代码\n- 例如：`zh` / `zho` / `en` / `eng`\n- 不传时由模型自动检测\n",
+            "example": "zh"
+          },
+          "tag_audio_events": {
+            "default": true,
+            "description": "是否标注笑声、掌声等音频事件。默认开启。",
+            "type": "boolean",
+            "example": true
+          },
+          "diarize": {
+            "default": true,
+            "description": "是否进行说话人分离。默认开启。",
+            "type": "boolean",
+            "example": true
+          },
+          "keyterms": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 50,
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "偏置词 / 短语列表\n\n**说明：**\n- 最多 100 个条目\n- 每个条目最多 50 个字符\n- 用于提升特定术语或专有名词的识别倾向\n\n\n> 非必须不要传这个参数。",
+            "x-advanced": true,
+            "example": [
+              "project kickoff",
+              "quarterly results",
+              "speech to text"
+            ]
+          },
+          "num_speakers": {
+            "anyOf": [
+              {
+                "maximum": 32,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "说话人人数上限；要求 diarize=true。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "diarization_threshold": {
+            "anyOf": [
+              {
+                "maximum": 0.4,
+                "minimum": 0.1,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "说话人分离阈值；要求 diarize=true 且不指定 num_speakers。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "timestamps_granularity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "word",
+                  "character"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "时间戳粒度；省略采用 word。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "no_verbatim": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "是否移除口头语；省略采用 false。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "采样温度；省略采用模型默认值。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 2147483647,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "随机种子。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Local audio path submitted as multipart file; exactly one of file and audio_url."
+          }
+        }
+      },
+      "conditionalRequiredParams": [
+        "audio_url",
+        "file"
+      ]
     },
     {
       "file": "seedance-1.0-pro-fast-video-generate.json",
@@ -13565,14 +14106,16 @@
       "operationId": "eleven-v4",
       "method": "POST",
       "path": "/e/v1/audios/generations",
-      "title": "Eleven v4 / v4 Turbo",
-      "summary": "Eleven v4 / v4 Turbo",
+      "title": "Eleven v4 / Turbo / Custom Voice",
+      "summary": "Eleven v4 / Turbo / Custom Voice",
       "description": "- Eleven v4 与 v4 Turbo 文本转语音\n- 支持音色、音频标签、IPA 发音、文本规范化及可选时间戳\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 完成后从 `results[0].url` 下载音频；启用 timestamps 时保留时间戳。请及时下载，链接保留时间取决于文件存储服务。\n",
       "category": "generation",
       "mediaType": "audio",
       "models": [
         "eleven-v4",
-        "eleven-v4-turbo"
+        "eleven-v4-turbo",
+        "eleven-v4-custom-voice",
+        "eleven-v4-turbo-custom-voice"
       ],
       "modelSource": "default",
       "requestContentTypes": [
@@ -13584,10 +14127,14 @@
       ],
       "params": [
         "apply_text_normalization",
+        "clone_strength",
         "enable_safety_checker",
+        "future_text",
         "language_code",
         "model",
         "output_format",
+        "previous_text",
+        "pronunciation_dictionary_locators",
         "seed",
         "similarity_boost",
         "stability",
@@ -13596,54 +14143,6 @@
         "voice"
       ],
       "paramSpecs": [
-        {
-          "name": "model",
-          "type": "string",
-          "required": true,
-          "default": "eleven-v4",
-          "description": "`eleven-v4`：语音合成，$0.08/1000 字符；`eleven-v4-turbo`：更快的语音合成，$0.04/1000 字符。两者共用参数合同。"
-        },
-        {
-          "name": "text",
-          "type": "string",
-          "required": true,
-          "description": "要朗读的文本，1–5000 字符。支持 `[whispering]` 等音频标签，以及用 `/.../` 包围的 IPA 发音。"
-        },
-        {
-          "name": "voice",
-          "type": "string",
-          "required": false,
-          "default": "Rachel",
-          "description": "音色名称或可用的音色 ID；默认 `Rachel`。"
-        },
-        {
-          "name": "stability",
-          "type": "number",
-          "required": false,
-          "default": 0.5,
-          "description": "声音稳定性，0–1。较低值更富表现力，较高值更一致。"
-        },
-        {
-          "name": "similarity_boost",
-          "type": "number",
-          "required": false,
-          "default": 0.75,
-          "description": "与参考音色的相似度，0–1。较高值提高相似度，但可能降低自然度。"
-        },
-        {
-          "name": "seed",
-          "type": null,
-          "required": false,
-          "default": null,
-          "description": "随机种子，0–4294967295。相同参数和种子不保证输出完全一致。"
-        },
-        {
-          "name": "language_code",
-          "type": null,
-          "required": false,
-          "default": null,
-          "description": "语音与文本规范化所用的 ISO 639-1 语言代码。"
-        },
         {
           "name": "apply_text_normalization",
           "type": "string",
@@ -13657,18 +14156,45 @@
           "description": "数字、日期等文本规范化：`auto` 自动判断，`on` 启用，`off` 关闭。"
         },
         {
-          "name": "timestamps",
-          "type": "boolean",
+          "name": "clone_strength",
+          "type": "number",
           "required": false,
-          "default": false,
-          "description": "是否在结果中附带语音时间戳；时间戳数组随音频一起返回。"
+          "default": null,
+          "description": "专业克隆强度，0–1；仅适用于为所选模型微调的专业克隆音色，与 similarity_boost 含义不同。\n\n> 非必须不要传这个参数。"
         },
         {
           "name": "enable_safety_checker",
           "type": "boolean",
           "required": false,
-          "default": true,
-          "description": "是否检查输入内容安全；关闭需服务账户具备相应权限。"
+          "default": null,
+          "description": "是否检查输入内容安全；省略或 null 表示不指定该控制。"
+        },
+        {
+          "name": "future_text",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "后文，最多 100 字符；仅 eleven-v4 及其 custom-voice 变体支持，不计入朗读文本。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "language_code",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "语音与文本规范化所用的 ISO 639-1 语言代码。"
+        },
+        {
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "enum": [
+            "eleven-v4",
+            "eleven-v4-turbo",
+            "eleven-v4-custom-voice",
+            "eleven-v4-turbo-custom-voice"
+          ],
+          "default": "eleven-v4",
+          "description": "`eleven-v4`：$0.08/1000 字符；`eleven-v4-turbo`：$0.04/1000 字符；`eleven-v4-custom-voice`：已有音色 ID，$0.08/1000 字符；`eleven-v4-turbo-custom-voice`：已有音色 ID，$0.04/1000 字符。"
         },
         {
           "name": "output_format",
@@ -13697,6 +14223,62 @@
           ],
           "default": "mp3_44100_128",
           "description": "输出格式，名称为编码_采样率_码率（如适用）。默认 `mp3_44100_128`；支持 MP3、PCM、μ-law、A-law 与 Opus。"
+        },
+        {
+          "name": "previous_text",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "前文，最多 100 字符；仅 eleven-v4 及其 custom-voice 变体支持，不计入朗读文本。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "pronunciation_dictionary_locators",
+          "type": "array",
+          "required": false,
+          "default": null,
+          "description": "发音词典及固定版本，最多 3 项；需具备对应词典的访问权限。\n\n> 非必须不要传这个参数。",
+          "items": "object"
+        },
+        {
+          "name": "seed",
+          "type": "integer",
+          "required": false,
+          "default": null,
+          "description": "随机种子，0–4294967295。相同参数和种子不保证输出完全一致。"
+        },
+        {
+          "name": "similarity_boost",
+          "type": "number",
+          "required": false,
+          "default": null,
+          "description": "与参考音色的相似度，0–1。省略或 null 表示不指定相似度控制。"
+        },
+        {
+          "name": "stability",
+          "type": "number",
+          "required": false,
+          "default": 0.5,
+          "description": "声音稳定性，0–1。较低值更富表现力，较高值更一致。"
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "description": "要朗读的文本，1–5000 字符。支持 `[whispering]` 等音频标签，以及用 `/.../` 包围的 IPA 发音。"
+        },
+        {
+          "name": "timestamps",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "是否在结果中附带语音时间戳；时间戳数组随音频一起返回。"
+        },
+        {
+          "name": "voice",
+          "type": "string",
+          "required": false,
+          "default": "Rachel",
+          "description": "音色名称或可用的音色 ID；普通模型默认 Rachel，两个 -custom-voice 变体必须显式提供已有音色 ID。"
         }
       ],
       "requestSchema": {
@@ -13707,13 +14289,21 @@
         ],
         "properties": {
           "model": {
-            "description": "`eleven-v4`：语音合成，$0.08/1000 字符；`eleven-v4-turbo`：更快的语音合成，$0.04/1000 字符。两者共用参数合同。",
+            "description": "`eleven-v4`：$0.08/1000 字符；`eleven-v4-turbo`：$0.04/1000 字符；`eleven-v4-custom-voice`：已有音色 ID，$0.08/1000 字符；`eleven-v4-turbo-custom-voice`：已有音色 ID，$0.04/1000 字符。",
             "examples": [
               "eleven-v4",
-              "eleven-v4-turbo"
+              "eleven-v4-turbo",
+              "eleven-v4-custom-voice",
+              "eleven-v4-turbo-custom-voice"
             ],
             "type": "string",
-            "default": "eleven-v4"
+            "default": "eleven-v4",
+            "enum": [
+              "eleven-v4",
+              "eleven-v4-turbo",
+              "eleven-v4-custom-voice",
+              "eleven-v4-turbo-custom-voice"
+            ]
           },
           "text": {
             "description": "要朗读的文本，1–5000 字符。支持 `[whispering]` 等音频标签，以及用 `/.../` 包围的 IPA 发音。",
@@ -13724,7 +14314,7 @@
           },
           "voice": {
             "default": "Rachel",
-            "description": "音色名称或可用的音色 ID；默认 `Rachel`。",
+            "description": "音色名称或可用的音色 ID；普通模型默认 Rachel，两个 -custom-voice 变体必须显式提供已有音色 ID。",
             "type": "string",
             "example": "Rachel"
           },
@@ -13737,11 +14327,18 @@
             "example": 0.5
           },
           "similarity_boost": {
-            "default": 0.75,
-            "description": "与参考音色的相似度，0–1。较高值提高相似度，但可能降低自然度。",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "type": "number",
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "与参考音色的相似度，0–1。省略或 null 表示不指定相似度控制。",
             "example": 0.75
           },
           "seed": {
@@ -13790,9 +14387,16 @@
             "example": true
           },
           "enable_safety_checker": {
-            "default": true,
-            "description": "是否检查输入内容安全；关闭需服务账户具备相应权限。",
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "是否检查输入内容安全；省略或 null 表示不指定该控制。",
             "example": true
           },
           "output_format": {
@@ -13821,6 +14425,83 @@
             ],
             "type": "string",
             "example": "mp3_44100_128"
+          },
+          "previous_text": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "前文，最多 100 字符；仅 eleven-v4 及其 custom-voice 变体支持，不计入朗读文本。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "future_text": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "后文，最多 100 字符；仅 eleven-v4 及其 custom-voice 变体支持，不计入朗读文本。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "pronunciation_dictionary_locators": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "pronunciation_dictionary_id": {
+                      "description": "发音词典 ID。",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "version_id": {
+                      "description": "要使用的发音词典版本 ID。",
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "pronunciation_dictionary_id",
+                    "version_id"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 3,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "发音词典及固定版本，最多 3 项；需具备对应词典的访问权限。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "clone_strength": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "专业克隆强度，0–1；仅适用于为所选模型微调的专业克隆音色，与 similarity_boost 含义不同。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
           }
         }
       },
@@ -13848,42 +14529,30 @@
       ],
       "params": [
         "composition_plan",
-        "duration",
         "enable_safety_checker",
         "force_instrumental",
         "model",
+        "music_length_ms",
         "output_format",
         "prompt",
-        "seed"
+        "seed",
+        "timestamps"
       ],
       "paramSpecs": [
         {
-          "name": "model",
-          "type": "string",
-          "required": true,
-          "default": "elevenlabs-music-v2.5",
-          "description": "`elevenlabs-music-v2.5`：提示词或分段计划生成音乐，总长 3–600 秒，按实际输出整分钟计费。"
-        },
-        {
-          "name": "prompt",
-          "type": null,
-          "required": false,
-          "default": null,
-          "description": "音乐描述，最多 4100 字符。与 composition_plan 必须且只能提供一个。"
-        },
-        {
           "name": "composition_plan",
-          "type": null,
+          "type": "object",
           "required": false,
           "default": null,
-          "description": "分段创作计划；与 prompt 互斥。每段可指定歌词、风格和参考音频。"
+          "description": "分段创作计划；与 prompt 互斥。每段可指定歌词、风格和参考音频。",
+          "conditional": true
         },
         {
-          "name": "duration",
-          "type": null,
+          "name": "enable_safety_checker",
+          "type": "boolean",
           "required": false,
           "default": null,
-          "description": "歌曲时长，单位秒，范围 3–600，最多三位小数。仅用于 prompt 模式；省略时由模型决定。费用按实际输出音频时长向上取整到分钟计算。"
+          "description": "是否检查输入内容安全；关闭需服务账户具备相应权限。"
         },
         {
           "name": "force_instrumental",
@@ -13893,11 +14562,21 @@
           "description": "仅用于 prompt 模式。true 保证纯音乐；false 由提示词决定是否包含人声。"
         },
         {
-          "name": "seed",
-          "type": null,
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "enum": [
+            "elevenlabs-music-v2.5"
+          ],
+          "default": "elevenlabs-music-v2.5",
+          "description": "`elevenlabs-music-v2.5`：提示词或分段计划生成音乐，总长 3–600 秒，按实际输出整分钟计费。"
+        },
+        {
+          "name": "music_length_ms",
+          "type": "integer",
           "required": false,
           "default": null,
-          "description": "仅用于 composition_plan 模式的随机种子，不保证完全复现。"
+          "description": "歌曲时长，单位毫秒，范围 3000–600000。仅用于 prompt 模式；省略时由模型决定。费用按实际输出音频时长向上取整到分钟计算。"
         },
         {
           "name": "output_format",
@@ -13934,11 +14613,26 @@
           "description": "音频输出格式，名称为编码_采样率_码率（如适用）；默认 mp3_48000_192。"
         },
         {
-          "name": "enable_safety_checker",
+          "name": "prompt",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "音乐描述，最多 4100 字符。与 composition_plan 必须且只能提供一个。",
+          "conditional": true
+        },
+        {
+          "name": "seed",
+          "type": "integer",
+          "required": false,
+          "default": null,
+          "description": "仅用于 composition_plan 模式的随机种子，不保证完全复现。"
+        },
+        {
+          "name": "timestamps",
           "type": "boolean",
           "required": false,
-          "default": true,
-          "description": "是否检查输入内容安全；关闭需服务账户具备相应权限。"
+          "default": null,
+          "description": "是否请求歌词词级时间戳；省略或 null 不指定该控制。\n\n> 非必须不要传这个参数。"
         }
       ],
       "requestSchema": {
@@ -13953,7 +14647,10 @@
               "elevenlabs-music-v2.5"
             ],
             "type": "string",
-            "default": "elevenlabs-music-v2.5"
+            "default": "elevenlabs-music-v2.5",
+            "enum": [
+              "elevenlabs-music-v2.5"
+            ]
           },
           "prompt": {
             "anyOf": [
@@ -13976,7 +14673,7 @@
                 "additionalProperties": false,
                 "properties": {
                   "chunks": {
-                    "description": "按播放顺序排列的 1–30 个段落，总时长须为 3–600 秒。",
+                    "description": "按播放顺序排列的 1–30 个段落，总时长须为 3000–600000 毫秒。",
                     "items": {
                       "additionalProperties": false,
                       "properties": {
@@ -13985,13 +14682,12 @@
                           "type": "string",
                           "example": "[Verse 1]\nNeon rain on empty streets\nI keep walking to the beat"
                         },
-                        "duration": {
-                          "description": "本段时长，单位秒，范围 3–120，最多三位小数。",
-                          "maximum": 120.0,
-                          "minimum": 3.0,
-                          "multipleOf": 0.001,
-                          "type": "number",
-                          "example": 15
+                        "duration_ms": {
+                          "description": "本段时长，单位毫秒，范围 3000–120000。",
+                          "maximum": 120000,
+                          "minimum": 3000,
+                          "type": "integer",
+                          "example": 15000
                         },
                         "positive_styles": {
                           "description": "本段应包含的风格与音乐方向，建议使用英文；第一段决定整首歌的主要风格。",
@@ -14111,7 +14807,7 @@
                       },
                       "required": [
                         "text",
-                        "duration",
+                        "duration_ms",
                         "positive_styles"
                       ],
                       "type": "object"
@@ -14121,7 +14817,7 @@
                     "type": "array",
                     "example": [
                       {
-                        "duration": 15,
+                        "duration_ms": 15000,
                         "positive_styles": [
                           "ambient"
                         ],
@@ -14144,7 +14840,7 @@
             "example": {
               "chunks": [
                 {
-                  "duration": 15,
+                  "duration_ms": 15000,
                   "positive_styles": [
                     "ambient"
                   ],
@@ -14153,21 +14849,20 @@
               ]
             }
           },
-          "duration": {
+          "music_length_ms": {
             "anyOf": [
               {
-                "maximum": 600.0,
-                "minimum": 3.0,
-                "multipleOf": 0.001,
-                "type": "number"
+                "maximum": 600000,
+                "minimum": 3000,
+                "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
             "default": null,
-            "description": "歌曲时长，单位秒，范围 3–600，最多三位小数。仅用于 prompt 模式；省略时由模型决定。费用按实际输出音频时长向上取整到分钟计算。",
-            "example": 30
+            "description": "歌曲时长，单位毫秒，范围 3000–600000。仅用于 prompt 模式；省略时由模型决定。费用按实际输出音频时长向上取整到分钟计算。",
+            "example": 30000
           },
           "force_instrumental": {
             "default": false,
@@ -14222,9 +14917,30 @@
             "example": "mp3_48000_192"
           },
           "enable_safety_checker": {
-            "default": true,
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "description": "是否检查输入内容安全；关闭需服务账户具备相应权限。",
-            "type": "boolean",
+            "example": true
+          },
+          "timestamps": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "是否请求歌词词级时间戳；省略或 null 不指定该控制。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true,
             "example": true
           }
         }
@@ -14233,6 +14949,370 @@
       "conditionalRequiredParams": [
         "prompt",
         "composition_plan"
+      ]
+    },
+    {
+      "file": "scribe-v3.json",
+      "operationId": "scribe-v3",
+      "method": "POST",
+      "path": "/e/v1/audios/generations",
+      "title": "Scribe V3 语音识别",
+      "summary": "Scribe V3 语音识别",
+      "description": "- Scribe V3 语音识别，保留说话人、词或字符时间戳\n- 支持辅助语言和数字格式控制\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 识别结果会在任务详情的 `results` 字段中返回\n",
+      "category": "generation",
+      "mediaType": "audio",
+      "models": [
+        "scribe-v3"
+      ],
+      "modelSource": "default",
+      "requestContentTypes": [
+        "application/json",
+        "multipart/form-data"
+      ],
+      "requiredParams": [
+        "model"
+      ],
+      "params": [
+        "audio_url",
+        "diarization_threshold",
+        "diarize",
+        "file",
+        "keyterms",
+        "language_code",
+        "model",
+        "no_verbatim",
+        "num_speakers",
+        "numbers_format",
+        "secondary_language_codes",
+        "seed",
+        "tag_audio_events",
+        "temperature",
+        "timestamps_granularity"
+      ],
+      "paramSpecs": [
+        {
+          "name": "audio_url",
+          "type": "string",
+          "required": false,
+          "description": "待识别音频文件 URL\n\n**说明：**\n- 需为 HTTP/HTTPS 可访问地址\n- 音频文件需可被系统直接访问和读取\n"
+        },
+        {
+          "name": "diarization_threshold",
+          "type": "number",
+          "required": false,
+          "default": null,
+          "description": "说话人分离阈值；要求 diarize=true 且不指定 num_speakers。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "diarize",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "description": "是否进行说话人分离。默认开启。"
+        },
+        {
+          "name": "file",
+          "type": "string",
+          "required": false,
+          "description": "Local audio path submitted as multipart file; exactly one of file and audio_url."
+        },
+        {
+          "name": "keyterms",
+          "type": "array",
+          "required": false,
+          "default": null,
+          "description": "偏置词 / 短语列表\n\n**说明：**\n- 最多 100 个条目\n- 每个条目最多 50 个字符\n- 用于提升特定术语或专有名词的识别倾向\n\n\n> 非必须不要传这个参数。",
+          "items": "string"
+        },
+        {
+          "name": "language_code",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "音频语言代码\n\n**说明：**\n- 支持 ISO-639-1 或 ISO-639-3 代码\n- 例如：`zh` / `zho` / `en` / `eng`\n- 不传时由模型自动检测\n"
+        },
+        {
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "enum": [
+            "scribe-v3"
+          ],
+          "default": "scribe-v3",
+          "description": "`scribe-v3`：支持 secondary_language_codes 与 numbers_format，不降级为 V2。"
+        },
+        {
+          "name": "no_verbatim",
+          "type": "boolean",
+          "required": false,
+          "default": null,
+          "description": "是否移除口头语；省略采用 false。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "num_speakers",
+          "type": "integer",
+          "required": false,
+          "default": null,
+          "description": "说话人人数上限；要求 diarize=true。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "numbers_format",
+          "type": "string",
+          "required": false,
+          "enum": [
+            "digits",
+            "words"
+          ],
+          "default": null,
+          "description": "数字转写格式，仅 V3 支持；省略采用模型默认值。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "secondary_language_codes",
+          "type": "array",
+          "required": false,
+          "default": null,
+          "description": "辅助语言的 ISO 639-1/639-3 代码，仅 V3 支持。\n\n> 非必须不要传这个参数。",
+          "items": "string"
+        },
+        {
+          "name": "seed",
+          "type": "integer",
+          "required": false,
+          "default": null,
+          "description": "随机种子。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "tag_audio_events",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "description": "是否标注笑声、掌声等音频事件。默认开启。"
+        },
+        {
+          "name": "temperature",
+          "type": "number",
+          "required": false,
+          "default": null,
+          "description": "采样温度；省略采用模型默认值。\n\n> 非必须不要传这个参数。"
+        },
+        {
+          "name": "timestamps_granularity",
+          "type": "string",
+          "required": false,
+          "enum": [
+            "none",
+            "word",
+            "character"
+          ],
+          "default": null,
+          "description": "时间戳粒度；省略采用 word。\n\n> 非必须不要传这个参数。"
+        }
+      ],
+      "registeredInDocsJson": true,
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "model"
+        ],
+        "properties": {
+          "model": {
+            "description": "`scribe-v3`：支持 secondary_language_codes 与 numbers_format，不降级为 V2。",
+            "examples": [
+              "scribe-v3"
+            ],
+            "type": "string",
+            "default": "scribe-v3",
+            "enum": [
+              "scribe-v3"
+            ]
+          },
+          "audio_url": {
+            "description": "待识别音频文件 URL\n\n**说明：**\n- 需为 HTTP/HTTPS 可访问地址\n- 音频文件需可被系统直接访问和读取\n",
+            "type": "string",
+            "example": "https://samplelib.com/lib/preview/mp3/sample-3s.mp3"
+          },
+          "language_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "音频语言代码\n\n**说明：**\n- 支持 ISO-639-1 或 ISO-639-3 代码\n- 例如：`zh` / `zho` / `en` / `eng`\n- 不传时由模型自动检测\n",
+            "example": "zh"
+          },
+          "tag_audio_events": {
+            "default": true,
+            "description": "是否标注笑声、掌声等音频事件。默认开启。",
+            "type": "boolean",
+            "example": true
+          },
+          "diarize": {
+            "default": true,
+            "description": "是否进行说话人分离。默认开启。",
+            "type": "boolean",
+            "example": true
+          },
+          "keyterms": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 50,
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "偏置词 / 短语列表\n\n**说明：**\n- 最多 100 个条目\n- 每个条目最多 50 个字符\n- 用于提升特定术语或专有名词的识别倾向\n\n\n> 非必须不要传这个参数。",
+            "x-advanced": true,
+            "example": [
+              "project kickoff",
+              "quarterly results",
+              "speech to text"
+            ]
+          },
+          "num_speakers": {
+            "anyOf": [
+              {
+                "maximum": 32,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "说话人人数上限；要求 diarize=true。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "diarization_threshold": {
+            "anyOf": [
+              {
+                "maximum": 0.4,
+                "minimum": 0.1,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "说话人分离阈值；要求 diarize=true 且不指定 num_speakers。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "timestamps_granularity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "word",
+                  "character"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "时间戳粒度；省略采用 word。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "no_verbatim": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "是否移除口头语；省略采用 false。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "采样温度；省略采用模型默认值。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 2147483647,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "随机种子。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "secondary_language_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "辅助语言的 ISO 639-1/639-3 代码，仅 V3 支持。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "numbers_format": {
+            "anyOf": [
+              {
+                "enum": [
+                  "digits",
+                  "words"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "数字转写格式，仅 V3 支持；省略采用模型默认值。\n\n> 非必须不要传这个参数。",
+            "x-advanced": true
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Local audio path submitted as multipart file; exactly one of file and audio_url."
+          }
+        }
+      },
+      "conditionalRequiredParams": [
+        "audio_url",
+        "file"
       ]
     }
   ],

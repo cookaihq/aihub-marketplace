@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.0.0 — 2026-11-13
+
+- 移除 `aihub-audio` 的声音克隆能力、`audio-clone` 操作及其参数映射。
+- `voice-clone`、`minimax-voice-clone` 及其可解析的提供方／变体 ID 不再出现在可用模型列表中，`describe` 和直接 `generate` 均拒绝，旧配置不能重新启用克隆。
+- 同步音频 Skill 简介、Codex 展示名、默认 Skill 路由模板和使用说明；文本转语音与语音识别／转写继续提供。
+- Gateway v0.9.15 正式上线后启用已确认默认：TTS `eleven-v4`、异步音乐 `elevenlabs-music-v2.5`；静态文生图使用 GPT Image 2.6，图片编辑使用 2.5，保留 Flare／Sunburst 的速度与细节选择。ASR 和 Gemini 原生音乐默认保持原值，显式型号及个人列表优先。
+- 合入官方 Relay 适配：两个 custom-voice 型号使用已有音色 ID；Scribe V2/V3 支持单 URL JSON 或本地 multipart，保留词、说话人与时间戳；只读 voices 返回完整音色目录，不自动将 V3 降为 V2。
+- ElevenLabs 音乐退出秒制 duration，歌曲使用整数 music_length_ms、段落使用整数 duration_ms；旧字段报迁移错误，不自动换算或重发。官方 Music 支持 MP3/Opus，其余统一编码保留 Fal，实际时长与请求时长分别报告。
+- 共享客户端和诊断保留 requested_options_unavailable / unsupported_parameters 的完整错误、type 与字段数组，停止自动切换，由用户决定修改要求。
+- 克隆移除与音乐字段迁移属于不兼容变化，Plugin、音频、音乐均为 4.0.0；图片 3.1.0，视频 3.1.1，文档／理解 3.0.4。三宿主清单与 Node/Python/Hermes 版本实体同步。
+- Gateway 13 个生产样本及账务证据复用，未重复生成；音频人工试听仍待评审。Windows 原生 Codex 0.167.2 的开发源显式调用、七份成功离线计划及克隆拒绝通过，六个 Skill 规范校验通过。完整回归首轮 165/173，更新图片默认的旧测试夹具后，原失败 8 项复测全部通过。
+- 本批 Claude Code／WorkBuddy 免验；macOS、重新安装与隐式发现待验。当前验收凭证可见 ElevenLabs 七款，未返回 GPT Image 2.6；该账号限制不改变已批准默认，实际调用继续预检，不能自动换回旧版或将生产样本视作所有账号可用。
+
 ## 3.2.0 — 2026-11-12
 
 - C1 默认使用 `sync-3`，C2 默认使用 `fabric-1.0`，多模态理解默认使用 `gemini-4-carbon`。显式模型、配置顺序和已保存任务继续采用原选择。

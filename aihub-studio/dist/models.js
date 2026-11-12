@@ -1,6 +1,6 @@
 import { ApiError } from './apiClient.js';
 import { listModelSummaries, resolveEntry } from './catalog.js';
-import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, validateElevenLabs } from './elevenlabs.js';
+import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, validateElevenLabs } from './elevenlabs.js';
 /**
  * The catalog contains every documented endpoint. This Plugin deliberately
  * exposes the selected task scope instead of treating every media entry as a
@@ -20,14 +20,20 @@ const EXCLUDED_MODELS = {
     'fabric-1.0-text': 'Text-driven avatar video (C3) is outside the selected digital-human scope.',
     'live-avatar': 'Prompt-driven avatar video is outside the selected digital-human scope.',
     'kling-video-create-voice': 'Voice creation is outside the selected media workflows.',
+    'voice-clone': 'Voice cloning has been removed from aihub-audio.',
+    'minimax-voice-clone': 'Voice cloning has been removed from aihub-audio.',
+};
+export const IMAGE_DEFAULT_MODELS = {
+    generation: ['gpt-image-2.6-flare', 'gpt-image-2.6-sunburst'],
+    edit: ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'],
 };
 export const PREFERRED_MODELS = {
-    image: ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'],
+    image: [...IMAGE_DEFAULT_MODELS.generation, ...IMAGE_DEFAULT_MODELS.edit],
     video: [
         'seedance-2.5-text-to-video', 'seedance-2.5-image-to-video',
         'seedance-2.5-reference-to-video',
     ],
-    audio: ['speech-2.8-hd', 'paraformer-v2'],
+    audio: ['eleven-v4', 'paraformer-v2', ELEVEN_MUSIC_MODEL],
     document: ['doc2x-v3'],
     understanding: ['gemini-4-carbon'],
 };
@@ -54,11 +60,11 @@ const VIDEO_SCOPE_MODELS = new Set([
     'fabric-1.0', 'fabric-1.0-fast', 'omnihuman-1.5', 'creatify-aurora',
 ]);
 function excludedModel(model) {
-    return EXCLUDED_MODELS[model];
+    return EXCLUDED_MODELS[model] ?? EXCLUDED_MODELS[resolveEntry(model)?.catalogModel ?? ''];
 }
 function capabilityForModel(model, media) {
     if (media === 'image')
-        return 'A1/A2';
+        return model.startsWith('gpt-image-2.6-') ? 'A1 (static text-to-image)' : 'A1/A2';
     if (media === 'video' && ['lipsync-2', 'lipsync-2-pro', 'sync-3'].includes(model))
         return 'C1';
     if (media === 'video' && ['fabric-1.0', 'fabric-1.0-fast', 'omnihuman-1.5', 'creatify-aurora'].includes(model))
@@ -151,7 +157,11 @@ export async function models(client, media, keyword) {
                             : false;
             rows.push({ model: id, media: found.entry.mediaType, title: found.entry.title, catalog_model: found.catalogModel, preferred,
                 ...(id === 'fabric-1.0' ? { available_resolutions: ['480p', '720p'].filter(resolution => generationModelAvailable(live, id, { resolution })) } : {}),
-                default: (found.entry.mediaType === 'image' && id === 'gpt-image-2.5-flare') ||
+                ...(found.entry.mediaType === 'image' && preferred ? {
+                    default_for: id === IMAGE_DEFAULT_MODELS.generation[0] ? ['image-generate']
+                        : id === IMAGE_DEFAULT_MODELS.edit[0] ? ['image-edit'] : [],
+                } : {}),
+                default: (found.entry.mediaType === 'image' && (id === IMAGE_DEFAULT_MODELS.generation[0] || id === IMAGE_DEFAULT_MODELS.edit[0])) ||
                     (found.entry.mediaType === 'video' && VIDEO_DEFAULT_SET.has(id)) ||
                     (found.entry.mediaType === 'audio' && PREFERRED_MODELS.audio.includes(id)) ||
                     (found.entry.mediaType === 'document' && id === 'doc2x-v3') });
@@ -174,7 +184,7 @@ export function describe(model) {
         catalog_model: catalogModel, match, title: entry.title, params,
         ...(entry.requestSchema ? { request_schema: entry.requestSchema } : {}),
         required_params: entry.requiredParams, conditionally_required_params: entry.conditionalRequiredParams ?? [],
-        capability: capabilityForModel(model, entry.mediaType),
+        capability: capabilityForModel(catalogModel, entry.mediaType),
         note: 'This is bundled schema information, not proof of model availability. Keep the exact ID returned by models. ' +
             (catalogModel === 'seedance-2.5-reference-to-video'
                 ? 'Provide at least one nonempty reference array; image_urls, video_urls and audio_urls may be combined.'
@@ -186,7 +196,7 @@ export function validateGeneration(media, model, params) {
         throw new Error(`This model belongs to ${entry.mediaType}, not ${media}.`);
     if ('model' in params && params.model !== model)
         throw new Error('params.model conflicts with --model. Keep model only in --model.');
-    if (ELEVEN_TTS_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL) {
+    if (ELEVEN_TTS_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL || SCRIBE_MODELS.has(model)) {
         if (!entry.requestSchema)
             throw new Error('The bundled ElevenLabs request contract is missing.');
         validateElevenLabs(model, params, entry.requestSchema);
@@ -232,6 +242,15 @@ export function validateGeneration(media, model, params) {
     }
     if (PREFERRED_MODELS.image.includes(catalogModel))
         validateImage25(params);
+    if (catalogModel.startsWith('gpt-image-2.6-')) {
+        const allowed = new Set(['model', 'prompt', 'num_outputs', 'resolution', 'quality', 'complexity', 'output_format', 'background']);
+        for (const name of Object.keys(params))
+            if (!allowed.has(name)) {
+                throw new Error(`${name} is not supported by GPT Image 2.6; only static text-to-image is available. Use an editing model for reference images or masks.`);
+            }
+        if (typeof params.prompt !== 'string' || !params.prompt.trim())
+            throw new Error('prompt must be a nonempty string.');
+    }
     if (PREFERRED_MODELS.video.includes(catalogModel))
         validateSeedance25(catalogModel, entry, params);
     if (model === 'sync-3' || model === 'fabric-1.0')

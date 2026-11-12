@@ -2,7 +2,7 @@
 
 这个市场提供 AIhub 创作与文档处理、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
 
-当前版本为 AIhub Studio **3.2.0**、Tikin Social **4.0.1** 和 Setup AIHub **4.2.0**。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果；产物页与 Setup 续接流程保持原有入口。实际验证范围见各 Plugin 使用说明。
+当前源码版本为 AIhub Studio **4.0.0**、Tikin Social **4.0.1** 和 Setup AIHub **4.2.0**。Studio 移除声音克隆，启用 ElevenLabs TTS／异步音乐默认和 GPT Image 2.6 文生图，图片编辑保留 2.5；发布与实际验证状态见各 Plugin 使用说明。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果；产物页与 Setup 续接流程保持原有入口。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
@@ -100,7 +100,7 @@ Studio 3.0.1 与 Tikin 4.0.1 修复首次配置保存并显示实际字段名，
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 3.2.0 | [aihub-studio/v3.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv3.2.0) |
+| aihub-studio | 4.0.0 | [aihub-studio/v4.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv4.0.0) |
 | setup-aihub | 4.2.0 | [setup-aihub/v4.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv4.2.0) |
 | tikin-social | 4.0.1 | [tikin-social/v4.0.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.0.1) |
 <!-- release-table:end -->
