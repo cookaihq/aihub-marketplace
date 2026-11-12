@@ -61,12 +61,12 @@ test('Image 2.6 describes and enforces static inputs without promising requested
 
 test('model discovery distinguishes image task defaults and marks the approved audio defaults', async () => {
   const ids = ['gpt-image-2.6-flare', 'gpt-image-2.6-sunburst', 'gpt-image-2.5-flare', 'gpt-image-2.5-sunburst',
-    'eleven-v4', 'eleven-v4-custom-voice', 'speech-2.8-hd', 'elevenlabs-music-v2.5', 'lyria-3-pro', 'paraformer-v2', 'scribe-v3'];
+    'eleven-v4-text-to-speech', 'eleven-v4-text-to-dialogue', 'speech-2.8-hd', 'elevenlabs-music-v2.5', 'lyria-3-pro', 'paraformer-v2', 'scribe-v3'];
   const client = new AihubmaxClient(cfg('aihub-image'));
   client.listLiveModels = async () => new Map(ids.map(id => [id, { id }]));
   const output = await models(client);
   assert.deepEqual(output.models.filter(row => row.default).map(row => row.model), [
-    'gpt-image-2.6-flare', 'gpt-image-2.5-flare', 'eleven-v4', 'elevenlabs-music-v2.5', 'paraformer-v2',
+    'gpt-image-2.6-flare', 'gpt-image-2.5-flare', 'speech-2.8-hd', 'elevenlabs-music-v2.5', 'paraformer-v2',
   ]);
   const imageRows = output.models as Array<{ model: string; default_for?: string[] }>;
   assert.deepEqual(imageRows.find(row => row.model === 'gpt-image-2.6-flare')?.default_for, ['image-generate']);
@@ -82,7 +82,7 @@ test('packaged CLI submits the new defaults and editing model, then resumes with
   const posts: Array<Record<string, unknown>> = []; let base = '';
   const server = createServer(async (req, res) => {
     const json = (value: unknown) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(value)); };
-    if (req.url === '/v1/models') return json({ data: ['gpt-image-2.6-flare', 'gpt-image-2.5-flare', 'eleven-v4', 'elevenlabs-music-v2.5'].map(id => ({ id })) });
+    if (req.url === '/v1/models') return json({ data: ['gpt-image-2.6-flare', 'gpt-image-2.5-flare', 'speech-2.8-hd', 'elevenlabs-music-v2.5'].map(id => ({ id })) });
     if (req.method === 'POST') {
       let raw = ''; for await (const chunk of req) raw += chunk;
       const body = JSON.parse(raw); posts.push(body);
@@ -102,7 +102,7 @@ test('packaged CLI submits the new defaults and editing model, then resumes with
     const cases = [
       ['aihub-image', generation, { prompt: generation.prompt, model: 'gpt-image-2.6-flare' }],
       ['aihub-image', editing, { prompt: generation.prompt, image_urls: editing.inputs.images, mask_url: editing.inputs.mask, model: 'gpt-image-2.5-flare' }],
-      ['aihub-audio', { operation: 'audio-tts', original_request: 'Say hello', prompt: 'Hello', requirements: { voice: 'Rachel' } }, { text: 'Hello', voice: 'Rachel', model: 'eleven-v4' }],
+      ['aihub-audio', { operation: 'audio-tts', original_request: 'Say hello', prompt: 'Hello', requirements: { voice_setting: { voice_id: 'existing-minimax-voice' } } }, { prompt: 'Hello', voice_setting: { voice_id: 'existing-minimax-voice' }, model: 'speech-2.8-hd' }],
       ['aihub-music', { operation: 'music-async', original_request: 'Piano music', prompt: 'Piano music', requirements: { music_length_ms: 3000 } }, { prompt: 'Piano music', music_length_ms: 3000, model: 'elevenlabs-music-v2.5' }],
     ] as const;
     for (const [skill, request, expected] of cases) {

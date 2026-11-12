@@ -4,13 +4,13 @@ import type { Media } from './state.js';
 import { resolve } from 'node:path';
 import { audioContract, remoteAudio, type AudioContract } from './audioMedia.js';
 import { speechParameters } from './speech.js';
-import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS } from './elevenlabs.js';
+import { ELEVEN_SPEECH_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, elevenMigration } from './elevenlabs.js';
 
 export const OPERATIONS = {
   'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
   'video-text': 'aihub-video', 'video-start-frame': 'aihub-video', 'video-reference': 'aihub-video',
   'video-lipsync': 'aihub-video', 'video-avatar': 'aihub-video',
-  'audio-tts': 'aihub-audio', 'audio-transcribe': 'aihub-audio',
+  'audio-tts': 'aihub-audio', 'audio-dialogue': 'aihub-audio', 'audio-transcribe': 'aihub-audio',
   'music-async': 'aihub-music', 'music-native': 'aihub-music',
   understanding: 'aihub-understanding', document: 'aihub-document',
 } as const;
@@ -100,7 +100,8 @@ function defaults(request: TaskRequest): string[] {
     case 'video-reference': return ['seedance-2.5-reference-to-video'];
     case 'video-lipsync': return [...VIDEO_DEFAULT_MODELS.c1];
     case 'video-avatar': return [...VIDEO_DEFAULT_MODELS.c2];
-    case 'audio-tts': return ['eleven-v4'];
+    case 'audio-tts': return ['speech-2.8-hd'];
+    case 'audio-dialogue': return []; // Select a Dialogue model explicitly or in the personal list.
     case 'audio-transcribe': return ['paraformer-v2'];
     case 'music-async': return [ELEVEN_MUSIC_MODEL];
     case 'music-native': return ['lyria-3-pro-preview'];
@@ -123,7 +124,8 @@ function matchesOperation(model: string, operation: Operation): boolean {
     case 'video-reference': return /^seedance-2\.[05]-(fast-)?reference-to-video$/.test(model);
     case 'video-lipsync': return LIPSYNC.includes(model);
     case 'video-avatar': return AVATAR.includes(model);
-    case 'audio-tts': return /^speech-/.test(model) || ELEVEN_TTS_MODELS.has(model);
+    case 'audio-tts': return /^speech-/.test(model) || ELEVEN_SPEECH_MODELS.has(model);
+    case 'audio-dialogue': return ELEVEN_DIALOGUE_MODELS.has(model);
     case 'audio-transcribe': return TRANSCRIBE.includes(model);
     case 'music-async': return /^lyria-|^minimax-music-/.test(model) || model === ELEVEN_MUSIC_MODEL;
     case 'document': return media === 'document';
@@ -187,13 +189,15 @@ function buildCandidate(request: TaskRequest, model: string, defaultVoiceId?: st
         promptField = 'prompt'; allowedRequirements = ['advanced', 'turbo_mode'];
       } else throw new Error('This avatar model needs a verified task parameter mapping before automatic selection.');
     } else if (op === 'audio-tts') {
-      if (ELEVEN_TTS_MODELS.has(model)) {
+      if (ELEVEN_SPEECH_MODELS.has(model)) {
         promptField = 'text';
         allowedRequirements = modelEntry(model).entry.params.filter(name => !['model', 'text'].includes(name));
       } else {
         if (!['speech-2.8-hd', 'speech-2.8-turbo'].includes(model)) throw new Error('Voice IDs and speech options require a verified mapping for this TTS model.');
         promptField = 'prompt'; allowedRequirements = ['voice_setting', 'audio_setting', 'voice_modify', 'pronunciation_dict', 'language_boost'];
       }
+    } else if (op === 'audio-dialogue') {
+      allowedRequirements = modelEntry(model).entry.params.filter(name => name !== 'model');
     } else if (op === 'audio-transcribe') {
       if (SCRIBE_MODELS.has(model)) {
         const audio = inputs.audios;
@@ -267,6 +271,8 @@ export function selectionPlan(cfg: LoadedConfig, value: Record<string, unknown>)
   const candidates: Candidate[] = [];
   const excluded: SelectionPlan['excluded'] = [];
   for (const model of selected) {
+    const migration = elevenMigration(model);
+    if (migration) { excluded.push({ model, reason: migration }); continue; }
     if (request.operation === 'audio-transcribe' && model === 'scribe-v2' && selected.includes('scribe-v3')) {
       excluded.push({ model, reason: 'Scribe V3 must not automatically downgrade to V2. Explicitly select V2 for a new request.' }); continue;
     }

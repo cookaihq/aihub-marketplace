@@ -23,16 +23,16 @@ const planParams = (extra: Record<string, unknown> = {}) => ({ composition_plan:
 const validate = (params: Record<string, unknown>) => validateGeneration('audio', music, params);
 
 test('ElevenLabs defaults preserve explicit selection and personal order', () => {
-  assert.equal(selectionPlan(config('aihub-audio'), speechRequest).candidates[0]?.model, 'eleven-v4');
+  assert.equal(selectionPlan(config('aihub-audio'), speechRequest).candidates[0]?.model, 'speech-2.8-hd');
   assert.equal(selectionPlan(config('aihub-music'), musicRequest).candidates[0]?.model, music);
-  const configured = selectionPlan(config('aihub-audio', ['eleven-v4-turbo', 'eleven-v4', 'paraformer-v2']), speechRequest);
-  assert.deepEqual(configured.candidates.map(c => c.model), ['eleven-v4-turbo', 'eleven-v4']);
+  const configured = selectionPlan(config('aihub-audio', ['eleven-v4-text-to-speech', 'speech-2.8-hd', 'paraformer-v2']), speechRequest);
+  assert.deepEqual(configured.candidates.map(c => c.model), ['eleven-v4-text-to-speech', 'speech-2.8-hd']);
   assert.equal(configured.source, 'configuration'); assert.equal(configured.excluded.length, 1);
   assert.ok(configured.candidates.every(c => !c.rejection));
-  const explicit = selectionPlan(config('aihub-audio', ['speech-2.8-hd']), { ...speechRequest, model: 'eleven-v4' });
+  const explicit = selectionPlan(config('aihub-audio', ['speech-2.8-hd']), { ...speechRequest, model: 'eleven-v4-text-to-speech' });
   assert.equal(explicit.source, 'user'); assert.equal(explicit.policy, 'off');
   assert.deepEqual(explicit.candidates[0]?.params, { text: speechRequest.prompt });
-  assert.deepEqual(explicit.request, { ...speechRequest, model: 'eleven-v4' });
+  assert.deepEqual(explicit.request, { ...speechRequest, model: 'eleven-v4-text-to-speech' });
   const native = selectionPlan(config('aihub-music', [music, 'lyria-3-pro-preview']), { ...musicRequest, operation: 'music-native' });
   assert.deepEqual(native.candidates.map(c => c.model), ['lyria-3-pro-preview']);
 });
@@ -40,7 +40,7 @@ test('ElevenLabs defaults preserve explicit selection and personal order', () =>
 test('TTS options remain exact and MiniMax parameters cannot leak into ElevenLabs', () => {
   const requirements = { voice: 'custom voice ID', stability: 0, similarity_boost: 1, seed: 4294967295, language_code: 'zh',
     apply_text_normalization: 'off', timestamps: true, enable_safety_checker: false, output_format: 'opus_48000_192' };
-  for (const model of ['eleven-v4', 'eleven-v4-turbo']) {
+  for (const model of ['eleven-v4-text-to-speech']) {
     const p = selectionPlan(config('aihub-audio'), { ...speechRequest, model, requirements });
     assert.equal(p.candidates[0]?.rejection, undefined);
     assert.deepEqual(p.candidates[0]?.params, { text: speechRequest.prompt, ...requirements });
@@ -55,13 +55,13 @@ test('TTS options remain exact and MiniMax parameters cannot leak into ElevenLab
 });
 
 test('TTS contract enforces lengths, ranges, formats and nullable fields without altering text', () => {
-  const valid = (params: Record<string, unknown>) => validateGeneration('audio', 'eleven-v4', params);
+  const valid = (params: Record<string, unknown>) => validateGeneration('audio', 'eleven-v4-text-to-speech', params);
   valid({ text: '👋'.repeat(5000), seed: null, language_code: null });
   for (const [field, value] of [['text', ''], ['text', 'a'.repeat(5001)], ['stability', -0.1], ['similarity_boost', 1.01],
     ['seed', 4294967296], ['seed', 0.5], ['timestamps', 'true'], ['voice', null], ['output_format', 'wav'], ['apply_text_normalization', 'yes']] as const) {
     assert.throws(() => valid({ text: 'Hello', [field]: value }), new RegExp(field));
   }
-  const fields = describe('eleven-v4').params;
+  const fields = describe('eleven-v4-text-to-speech').params;
   assert.equal(fields.find(p => p.name === 'output_format')?.enum?.length, 19);
 });
 
@@ -141,8 +141,8 @@ test('packaged CLI preserves timestamps and real containers through billing wait
   }
   const posts: Array<Record<string, unknown>> = [];
   const queries: string[] = [];
-  const models = ['eleven-v4', 'eleven-v4-turbo', music];
-  let base = ''; let settled = false; let serveMusic = false;
+  const models = ['eleven-v4-text-to-speech', 'eleven-v4-text-to-dialogue-custom-voice', music];
+  let base = ''; let settled = false; let serveMusic = false; let serveHistoricalModel = false;
   const server = createServer(async (req, res) => {
     const json = (data: unknown, code = 200) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)); };
     if (req.url === '/v1/models') return json({ data: models.map(id => ({ id })) });
@@ -154,10 +154,12 @@ test('packaged CLI preserves timestamps and real containers through billing wait
     if (req.url?.startsWith('/e/v1/tasks/')) {
       queries.push(req.url);
       const index = Number(req.url.split('-').at(-1)) - 1;
-      const model = posts[index]?.model;
+      const model = serveHistoricalModel ? 'eleven-v4-turbo' : posts[index]?.model;
       const task = { id: `eleven-${index + 1}`, model, status: settled ? 'completed' : 'processing' };
       return json({ ...task, ...(settled ? { results: [{ url: `${base}/asset-${index}.pcm`, content_type: 'application/octet-stream',
-        ...(index < 2 ? { timestamps, alignment, normalized_alignment: alignment } : musicMetadata) }] } : {}) });
+        ...(index === 0 ? { timestamps, alignment, normalized_alignment: null } : index === 1 ? { timestamps: [], alignment: null, normalized_alignment: alignment,
+          voice_segments: [{ voice_id: 'existing-voice', start_time_seconds: 0, end_time_seconds: 0.1,
+            character_start_index: 0, character_end_index: 1, dialogue_input_index: 0 }] } : musicMetadata) }] } : {}) });
     }
     const asset = /^\/asset-(\d)\.pcm$/.exec(req.url ?? '');
     if (asset) {
@@ -184,16 +186,19 @@ test('packaged CLI preserves timestamps and real containers through billing wait
     for (const [index, model] of models.entries()) {
       settled = false;
       const isMusic = model === music; const skill = isMusic ? 'aihub-music' : 'aihub-audio';
-      const request = { ...(isMusic ? musicRequest : speechRequest), model, requirements: isMusic
+      const request = { ...(isMusic ? musicRequest : index === 1 ? { operation: 'audio-dialogue', original_request: 'Read the dialogue in order' } : speechRequest), model, requirements: isMusic
         ? { music_length_ms: 60000, output_format: 'pcm_44100' }
-        : { timestamps: true, ...(index === 1 ? { output_format: 'opus_48000_128' } : {}) } };
+        : { timestamps: true, ...(index === 1 ? { inputs: [{ text: 'Hi', voice: 'existing-voice' }, { text: 'Hello', voice: 'other-voice' }],
+          output_format: 'opus_48000_128', seed: 0, similarity_boost: null } : { enable_safety_checker: false }) } };
       await writeFile(requestPath, JSON.stringify(request));
       const planned = await call(skill, 'plan', '--request-file', requestPath);
       assert.equal(planned.candidates[0].rejection, undefined);
       const start = await call(skill, 'run', '--request-file', requestPath, '--output-dir', dir, '--wait-seconds', '0');
       assert.ok(['submitted', 'waiting'].includes(start.status), JSON.stringify(start));
       assert.equal(posts.length, index + 1);
-      assert.deepEqual(posts[index], { model, ...planned.candidates[0].params });
+      const expected = { model, ...planned.candidates[0].params };
+      delete expected.similarity_boost;
+      assert.deepEqual(posts[index], expected);
       const waiting = await call(skill, 'continue', '--record', start.run_record, '--wait-seconds', '0');
       assert.equal(waiting.status, 'waiting'); assert.equal(waiting.task_id, start.task_id);
       assert.equal(posts.length, index + 1, 'reconciliation wait must query the existing task');
@@ -211,10 +216,12 @@ test('packaged CLI preserves timestamps and real containers through billing wait
       assert.equal(posts.length, index + 1);
       const job = JSON.parse(await readFile(delivered.result.record, 'utf8'));
       if (!isMusic) {
-        assert.deepEqual(delivered.result.result_metadata.timestamps, timestamps);
-        assert.deepEqual(delivered.result.result_metadata.alignment, alignment);
-        assert.deepEqual(delivered.result.result_metadata.normalized_alignment, alignment);
-        assert.deepEqual(job.submission.task.results[0].timestamps, timestamps);
+        const metadata = delivered.result.result_metadata;
+        assert.deepEqual(metadata.timestamps, index === 0 ? timestamps : []);
+        assert.deepEqual(metadata.alignment, index === 0 ? alignment : null);
+        assert.deepEqual(metadata.normalized_alignment, index === 0 ? null : alignment);
+        if (index === 1) assert.deepEqual(metadata.voice_segments, job.submission.task.results[0].voice_segments);
+        assert.deepEqual(job.submission.task.results[0].timestamps, index === 0 ? timestamps : []);
       } else {
         assert.deepEqual(delivered.result.result_metadata, musicMetadata);
         assert.equal(delivered.result.result_metadata.duration, undefined, 'do not invent duration or billed minutes');
@@ -222,9 +229,15 @@ test('packaged CLI preserves timestamps and real containers through billing wait
       }
       const resumed = await call(skill, 'resume', '--record', delivered.result.record, '--wait-seconds', '0');
       assert.equal(resumed.status, 'delivered'); assert.deepEqual(resumed.files, delivered.files);
-      if (!isMusic) assert.deepEqual(resumed.result_metadata.timestamps, timestamps);
+      if (!isMusic) assert.deepEqual(resumed.result_metadata, delivered.result.result_metadata);
       assert.equal(posts.length, index + 1);
     }
+    // Historical IDs remain queryable; adopting one must not POST a replacement.
+    serveHistoricalModel = true;
+    const historical = await call('aihub-audio', 'task', '--task-id', 'eleven-1', '--media', 'audio', '--output-dir', dir, '--wait-seconds', '0');
+    assert.equal(historical.status, 'delivered', JSON.stringify(historical));
+    assert.equal(historical.model, 'eleven-v4-turbo');
+    assert.equal(posts.length, 3);
     assert.ok(queries.length >= 6);
     await writeFile(requestPath, JSON.stringify({ ...musicRequest, model: music, requirements: { negative_prompt: 'no drums' } }));
     assert.equal((await call('aihub-music', 'run', '--request-file', requestPath, '--output-dir', dir, '--wait-seconds', '0')).status, 'no_compatible_model');

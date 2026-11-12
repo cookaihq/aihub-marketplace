@@ -1,4 +1,12 @@
-# AIhub Studio Plugin 4.0.0
+# AIhub Studio Plugin 5.0.0
+
+5.0.0 新增文字转多音色对话：按指定顺序和已有音色合成一段音频。TTS 内置默认为 `speech-2.8-hd`，ASR 为 `paraformer-v2`；新 Eleven Speech / Dialogue 四模型为可选能力，须待对应 Gateway 合同生产部署后启用。
+
+旧 `eleven-v4`、`eleven-v4-turbo` 及其 custom 变体不再接收新请求，没有别名或 Turbo 回退。请让 Agent 按单段语音／对话用途预览迁移方案；个人模型列表不会被自动改写，历史任务继续原 ID 查询与下载。见 [ElevenLabs 使用说明](references/elevenlabs.md)。
+
+本批 Windows 原生脚本已完成首轮 171/177、覆盖全部失败的串行复测 37/37，以及增强历史恢复后的 7/7；Codex CLI 0.167.2 默认沙箱的开发源显式调用通过九项离线计划／拒绝验证，六个 Skill 的规范校验通过。WorkBuddy 按用户要求跳过；macOS、安装／隐式发现、新合同生产调用与人工听审未验。Codex 沙箱内 doctor 的 ffprobe 启动受 EPERM 限制，未据离线计划宣称媒体探测成功。以下历史结果均保留原版本和范围。
+
+以下为历史 4.0.0 的功能与验收记录。
 
 4.0.0 从 `aihub-audio` 移除声音克隆，音频 Skill 现在提供文本转语音和语音识别／转写。旧 `audio-clone` 请求不再受支持；`voice-clone`、`minimax-voice-clone` 及其带提供方前缀或变体后缀的型号不能通过模型列表、`describe` 或 `generate` 发起克隆。使用旧模型列表的用户应移除这两个克隆型号。已有音色 ID 仍可用于语音合成。
 
@@ -20,7 +28,7 @@ Fabric 未指定分辨率时使用 720p，也支持 480p；音频最多 30 秒�
 
 2026-11-12，`gemini-4-carbon` 已通过正式 llm-custom 接口的图片、中文录音、短视频和 PDF 实测，四项均取得最终文本并核对内容。程序仍按当前账号的专用能力清单检查精确型号与输入能力；PDF 的实测结论不扩大到任意文件格式。
 
-本批同时准备了 `eleven-v4`、`eleven-v4-turbo` 和 `elevenlabs-music-v2.5` 的接口适配。API 仍待试听验收及生产正式上线，TTS 默认暂为 `speech-2.8-hd`，异步音乐默认暂为 `lyria-3-pro`。上线确认后才启用已确定的新默认；显式模型和个人模型列表继续优先。详情见 [ElevenLabs 使用说明](references/elevenlabs.md)。
+本批同时准备了 `eleven-v4`、`eleven-v4-turbo` 和 `elevenlabs-music-v2.5` 的接口适配。API 仍待试听验收及生产正式上线，TTS 默认暂为 `speech-2.8-hd`，异步音乐默认暂为 `lyria-3-pro`。该批旧 TTS 默认待办已由 5.0.0 / Spec #28 撤销；显式模型和个人模型列表继续优先。详情见 [ElevenLabs 使用说明](references/elevenlabs.md)。
 
 Windows 原生 Codex 已完成开发源显式调用的默认模型计划、ElevenLabs 计划/拒绝场景和 Carbon 四类真实输入验收；162 项本地回归通过。Sync 3 / Fabric 只确认账号可见性与本地参数流程，生成效果未复测。按本批决定，Claude Code、WorkBuddy 不做实测；macOS、重新安装和隐式触发待验。
 
@@ -104,7 +112,7 @@ Windows 原生 Codex 0.167.1 已通过开发源显式调用、合成配置保存
 | --- | --- | --- |
 | 按描述画图，或参考已有图片进行编辑 | `aihub-image` | 图片文件 |
 | 按文字、首帧图片或参考素材生成视频；用音频驱动人像或同步视频唇形 | `aihub-video` | 视频文件 |
-| 把文字读成语音、把录音转成文字 | `aihub-audio` | 语音文件，或转写文本及服务返回的时间戳等信息 |
+| 把文字读成语音、生成多音色对话、把录音转成文字 | `aihub-audio` | 语音文件，或转写文本及服务返回的时间戳等信息 |
 | 按描述生成音乐 | `aihub-music` | 音乐文件 |
 | 提问图片、音频、视频或文件中的内容 | `aihub-understanding` | 文字回答及文本文件 |
 | 将 PDF 转为 Markdown、LaTeX 或 Word（DOCX） | `aihub-document` | 包含转换结果的 ZIP 压缩包 |
@@ -115,7 +123,9 @@ Windows 原生 Codex 0.167.1 已通过开发源显式调用、合成配置保存
 
 可以把这些话复制给 Agent：
 
-> 用 eleven-v4 的 Rachel 朗读下面的文字，并保存原始时间戳：欢迎来到今天的节目。
+> 用 speech-2.8-hd 朗读下面的文字：欢迎来到今天的节目。
+
+> 用 aihub-audio 的 audio-dialogue 合成这组对话，按我提供的已有音色 ID 和台词顺序执行，保留时间戳；先预览计划并核对服务是否已支持新合同。
 
 > 用 elevenlabs-music-v2.5 创作 30 秒柔和钢琴纯音乐，保存音频。
 

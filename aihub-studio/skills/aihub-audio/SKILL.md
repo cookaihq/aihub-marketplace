@@ -1,8 +1,8 @@
 ---
 name: aihub-audio
 metadata:
-  version: "4.0.0"
-description: v4.0.0｜通过 AIhub D1 合成语音、转写本地或 URL 录音；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
+  version: "5.0.0"
+description: v5.0.0｜通过 AIhub D1 合成语音、生成多音色对话、转写本地或 URL 录音；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 
@@ -23,13 +23,13 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 ## 凭证配置
 
 
-D1 处理文本转语音和语音识别/转写。用户本次指定模型时固定执行；否则读取 `AIHUB_AUDIO_MODELS`，分别筛选 TTS 或 ASR 型号，不跨用途替换。没有配置时分别使用 `eleven-v4` 和 `paraformer-v2`。音乐属于 `aihub-music`，素材理解属于 `aihub-understanding`。本 Skill 不提供声音克隆；遇到克隆请求时说明能力范围，不提交生成请求。
+D1 处理文本转语音、文字转多音色对话和语音识别/转写。用户本次指定模型时固定执行；否则读取 `AIHUB_AUDIO_MODELS`，按用途筛选，不跨用途替换。没有配置时 TTS 使用 `speech-2.8-hd`，ASR 使用 `paraformer-v2`；对话需显式选择或配置 Dialogue 型号，不自动加入个人列表。音乐属于 `aihub-music`，素材理解属于 `aihub-understanding`。本 Skill 不提供声音克隆；遇到克隆请求时说明能力范围，不提交生成请求。
 
-使用默认 `eleven-v4`、其 Turbo／custom-voice 变体或 `scribe-v2` / `scribe-v3` 时，先读取并遵守 [ElevenLabs 参数与恢复](../../references/elevenlabs.md)。TTS 将 prompt 原样映射为 text，使用独立 voice；custom 必须提供已有音色 ID，不创建或克隆声音。MiniMax 默认音色不适用。Scribe 使用一个完整 URL 或本地文件，保留结构化转写，不套用 Paraformer 分段，不自动将 V3 降为 V2。用户指定的音色和旧参数不静默转换或丢弃，时间戳保留原分段及空段。
+使用 `eleven-v4-text-to-speech`、`eleven-v4-text-to-dialogue`、两者的 `-custom-voice` 变体或 `scribe-v2` / `scribe-v3` 时，先读取并遵守 [ElevenLabs 参数与恢复](../../references/elevenlabs.md)。Speech 将 prompt 原样映射为 text，使用独立 voice；Dialogue 将有序台词数组放在 `requirements.inputs`，不填 prompt，控制作用于整次生成。每段显式给出已有音色 ID，不补默认、不拆台词、不换声音或跨账号拼接。MiniMax 默认音色不适用。新四模型须待对应 Gateway 合同部署后才能线上使用；旧 v4/Turbo 四 ID 无别名或回退，个人列表只报告迁移方法，不静默改写。Scribe 使用一个完整 URL 或本地文件，保留结构化转写，不套用 Paraformer 分段，不自动将 V3 降为 V2。
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。已有 `run.json` 用 `continue`；旧 `task.json` / 任务 ID 用 `resume` / `task` 查询原任务。
 
-新任务先执行 `doctor`。保存 `original_request`，选择 `audio-tts` 或 `audio-transcribe`。TTS 将待朗读文本写入 `prompt`，按 `describe` 填写用户要求的 `requirements`。Speech 2.8 HD / Turbo 未显式指定 `voice_setting.voice_id` 时，由程序补入已配置的默认音色；不要自行填一个推荐音色覆盖用户默认值。用户本次明确指定的音色优先，其他语音参数继续保留。转写先读[大文件转写与恢复](../../references/audio-transcription.md)，将原始本地路径或 URL 直接写入 `inputs.audios`；程序按实际模型与上传通道决定整段、转换或波形分段。仅用户本次指定型号才填 `model`。先 `plan` 检查每个候选，再 `run`；不能为了换模型改变指定音色、语言或丢弃输入。
+新任务先执行 `doctor`。保存 `original_request`，选择 `audio-tts`、`audio-dialogue` 或 `audio-transcribe`。TTS 将待朗读文本写入 `prompt`，按 `describe` 填写用户要求的 `requirements`。Speech 2.8 HD / Turbo 未显式指定 `voice_setting.voice_id` 时，由程序补入已配置的默认音色；不要自行填一个推荐音色覆盖用户默认值。用户本次明确指定的音色优先，其他语音参数继续保留。转写先读[大文件转写与恢复](../../references/audio-transcription.md)，将原始本地路径或 URL 直接写入 `inputs.audios`；程序按实际模型与上传通道决定整段、转换或波形分段。仅用户本次指定型号才填 `model`。先 `plan` 检查每个候选，再 `run`；不能为了换模型改变指定音色、语言或丢弃输入。
 
 用户要求选择、试听、收藏或修改默认音色时，按[统一凭证流程](../../references/credential-setup.md)打开完整 AIhub Studio 配置中心，在“MiniMax Speech 默认音色”中打开音色库。搜索、筛选和试听已有样音不生成新语音；收藏只保存候选，不自动选择或轮换。选用音色先回填配置草稿，须在原编辑面板明确保存才生效；保存收藏与保存默认音色分别进行。保留官方 ID 内的空格，允许手填自定义音色 ID。配置层级、作用范围与恢复语义见[模型配置](../../references/model-selection.md#minimax-speech-默认音色)。
 

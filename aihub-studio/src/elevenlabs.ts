@@ -17,7 +17,21 @@ export interface RequestSchema {
   multipleOf?: number;
 }
 
-export const ELEVEN_TTS_MODELS = new Set(['eleven-v4', 'eleven-v4-turbo', 'eleven-v4-custom-voice', 'eleven-v4-turbo-custom-voice']);
+export const ELEVEN_SPEECH_MODELS = new Set(['eleven-v4-text-to-speech', 'eleven-v4-text-to-speech-custom-voice']);
+export const ELEVEN_DIALOGUE_MODELS = new Set(['eleven-v4-text-to-dialogue', 'eleven-v4-text-to-dialogue-custom-voice']);
+export const ELEVEN_AUDIO_MODELS = new Set([...ELEVEN_SPEECH_MODELS, ...ELEVEN_DIALOGUE_MODELS]);
+const RETIRED_ELEVEN_MODELS = new Set(['eleven-v4', 'eleven-v4-turbo', 'eleven-v4-custom-voice', 'eleven-v4-turbo-custom-voice']);
+export function elevenMigration(model: string): string | undefined {
+  if (!RETIRED_ELEVEN_MODELS.has(model)) return;
+  return `Model ${model} no longer accepts new requests and has no alias or Turbo replacement. For audio-tts select eleven-v4-text-to-speech or eleven-v4-text-to-speech-custom-voice; for audio-dialogue select eleven-v4-text-to-dialogue or eleven-v4-text-to-dialogue-custom-voice with ordered inputs. Personal model lists are not rewritten. Query/resume historical task IDs without resubmission.`;
+}
+/** Null means unspecified for these controls; false and zero remain explicit. Validate first. */
+export function elevenAudioParameters(model: string, params: Record<string, unknown>): Record<string, unknown> {
+  if (!ELEVEN_AUDIO_MODELS.has(model)) return params;
+  const nullable = new Set(['similarity_boost', 'seed', 'language_code', 'previous_text', 'future_text',
+    'pronunciation_dictionary_locators', 'clone_strength', ...(ELEVEN_SPEECH_MODELS.has(model) ? ['enable_safety_checker'] : [])]);
+  return Object.fromEntries(Object.entries(params).filter(([key, value]) => value !== null || !nullable.has(key)));
+}
 export const SCRIBE_MODELS = new Set(['scribe-v2', 'scribe-v3']);
 export const ELEVEN_MUSIC_MODEL = 'elevenlabs-music-v2.5';
 
@@ -80,15 +94,25 @@ export function validateElevenLabs(model: string, params: Record<string, unknown
     });
   }
   validateSchema({ ...params, model }, schema, 'params', true);
-  if (ELEVEN_TTS_MODELS.has(model) && model.endsWith('-custom-voice') &&
+  if (ELEVEN_SPEECH_MODELS.has(model) && params.voice !== undefined &&
+    (typeof params.voice !== 'string' || !params.voice.trim())) throw new Error('voice must be nonempty.');
+  if (ELEVEN_SPEECH_MODELS.has(model) && model.endsWith('-custom-voice') &&
     (typeof params.voice !== 'string' || !params.voice.trim() || params.voice === 'Rachel')) {
     throw new Error('custom-voice requires an explicit existing voice ID; it does not create or clone a voice.');
   }
-  if (model.endsWith('-custom-voice')) {
-    if ([...String(params.text)].length > 2000) throw new Error('Official custom-voice text allows at most 2000 characters.');
-    if (model.includes('-turbo-')) {
-      for (const key of ['previous_text', 'future_text', 'similarity_boost']) if (params[key] != null) throw new Error(`Official Turbo does not support ${key}; preserve the request and select a compatible model.`);
-      if (params.seed === 0) throw new Error('Official Turbo seed must be > 0.');
+  if (ELEVEN_SPEECH_MODELS.has(model) && model.endsWith('-custom-voice')) {
+    if ([...String(params.text)].length > 2000) throw new Error('custom-voice text allows at most 2000 Unicode characters.');
+    if (params.enable_safety_checker != null) throw new Error('custom-voice does not support enable_safety_checker; preserve the explicit control and select a compatible model.');
+  }
+  if (ELEVEN_DIALOGUE_MODELS.has(model)) {
+    const inputs = params.inputs as Array<{ text: string; voice: string }>;
+    if (inputs.some(input => !input.voice.trim() || input.voice === 'Rachel')) throw new Error('Each inputs voice requires a nonempty existing voice ID; no default alias.');
+    if (inputs.reduce((total, input) => total + [...input.text].length, 0) > 2000) throw new Error('inputs text must total at most 2000 Unicode characters.');
+    if (new Set(inputs.map(input => input.voice)).size > 10) throw new Error('inputs must use at most 10 distinct voice IDs.');
+  }
+  if (ELEVEN_AUDIO_MODELS.has(model) && Array.isArray(params.pronunciation_dictionary_locators)) {
+    for (const locator of params.pronunciation_dictionary_locators as Array<Record<string, string>>) {
+      if (!locator.pronunciation_dictionary_id?.trim() || !locator.version_id?.trim()) throw new Error('pronunciation_dictionary_locators requires a nonempty dictionary ID and fixed version_id.');
     }
   }
   if (SCRIBE_MODELS.has(model)) {

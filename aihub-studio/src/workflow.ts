@@ -9,7 +9,7 @@ import { speechParameters } from './speech.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { UPLOAD_MAX_BYTES } from './audioMedia.js';
 import { transcriptText } from './transcript.js';
-import { SCRIBE_MODELS } from './elevenlabs.js';
+import { SCRIBE_MODELS, elevenAudioParameters } from './elevenlabs.js';
 import { assertOutsideInstallation, readJob, recordPath, withJobLock, writeJob, writePrivateText, writePrivateRecord, type Job, type Media, type SavedFile } from './state.js';
 import { createTask, findTaskInfo, outputDirectory, participate, readTaskInfo, touchTask } from './taskInfo.js';
 
@@ -51,14 +51,14 @@ function resultMetadata(task: TaskResponse): Record<string, unknown> | undefined
   const metadata: Record<string, unknown> = {};
   for (const key of RESULT_METADATA_KEYS) {
     const value = task[key];
-    if (value !== undefined && value !== null) metadata[key] = value;
+    if (value !== undefined && (value !== null || key === 'alignment' || key === 'normalized_alignment')) metadata[key] = value;
   }
   for (const item of task.results ?? []) {
     if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
     const record = item as Record<string, unknown>;
     for (const key of RESULT_METADATA_KEYS) {
       const value = record[key];
-      if (value !== undefined && value !== null && metadata[key] === undefined) metadata[key] = value;
+      if (value !== undefined && (value !== null || key === 'alignment' || key === 'normalized_alignment') && metadata[key] === undefined) metadata[key] = value;
     }
   }
   return Object.keys(metadata).length ? metadata : undefined;
@@ -245,7 +245,7 @@ export async function generate(cfg: LoadedConfig, options: { media: Media; model
   // Stored run candidates are already resolved, even when they contain no voice ID.
   const params = options.parametersResolved ? options.params : speechParameters(options.model, options.params, cfg.speech?.defaultVoiceId);
   const path = validateGeneration(options.media, options.model, params);
-  let body: Record<string, unknown> | FormData = { ...params, model: options.model };
+  let body: Record<string, unknown> | FormData = { ...elevenAudioParameters(options.model, params), model: options.model };
   if (SCRIBE_MODELS.has(options.model) && typeof params.file === 'string') {
     // Whole-file multipart is independent of Paraformer's splitting and upload protocol.
     // Keep memory bounded in the Node 18 runtime; larger inputs use the documented URL path.

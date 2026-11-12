@@ -14,9 +14,9 @@ import { fixtureTransport } from './fixture-transport.js';
 
 const cfg = (models?: string[]): LoadedConfig => ({ skill: 'aihub-audio', apiKey: 'fixture', baseUrl: 'https://fixture.invalid', sources: { AIHUB_API_KEY: 'fixture' }, modelSelection: { policy: 'auto', models, sources: {} } });
 
-test('custom TTS requires existing voice IDs and enforces official-only constraints without narrowing shared TTS', () => {
+test('custom Speech requires existing IDs, preserves supported controls and rejects explicit safety', () => {
   const validate = (model: string, params: Record<string, unknown>) => validateGeneration('audio', model, { text: 'Hello', ...params });
-  for (const model of ['eleven-v4-custom-voice', 'eleven-v4-turbo-custom-voice']) {
+  for (const model of ['eleven-v4-text-to-speech-custom-voice']) {
     assert.throws(() => validate(model, {}), /existing voice ID/);
     assert.throws(() => validate(model, { voice: 'Rachel' }), /existing voice ID/);
     validate(model, { voice: '21m00Tcm4TlvDq8ikWAM', pronunciation_dictionary_locators: [], clone_strength: 0, enable_safety_checker: null });
@@ -24,9 +24,10 @@ test('custom TTS requires existing voice IDs and enforces official-only constrai
     assert.equal(plan.candidates[0]?.rejection, undefined); assert.deepEqual(plan.candidates[0]?.params, { text: 'Hello', voice: '21m00Tcm4TlvDq8ikWAM', clone_strength: 0 });
     assert.throws(() => validate(model, { voice: '21m00Tcm4TlvDq8ikWAM', text: 'x'.repeat(2001) }), /2000/);
   }
-  validate('eleven-v4', { text: 'x'.repeat(5000), previous_text: null, similarity_boost: 0 });
-  for (const param of [{ previous_text: 'context' }, { similarity_boost: 0 }, { seed: 0 }]) {
-    assert.throws(() => validate('eleven-v4-turbo-custom-voice', { voice: '21m00Tcm4TlvDq8ikWAM', ...param }), /Turbo/);
+  validate('eleven-v4-text-to-speech', { text: 'x'.repeat(5000), previous_text: null, similarity_boost: 0 });
+  validate('eleven-v4-text-to-speech-custom-voice', { voice: 'existing-id', previous_text: 'context', similarity_boost: 0, seed: 0 });
+  for (const enable_safety_checker of [false, true]) {
+    assert.throws(() => validate('eleven-v4-text-to-speech-custom-voice', { voice: 'existing-id', enable_safety_checker }), /enable_safety_checker/);
   }
 });
 
@@ -54,7 +55,7 @@ test('packaged Relay CLI handles URL and multipart Scribe, full voice catalog, e
   const server = createServer(async (req, res) => {
     const json = (data: unknown, status = 200) => res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(data));
     assert.equal(req.headers.authorization, 'Bearer offline-relay');
-    if (req.url === '/v1/models') return json({ data: ['scribe-v2', 'scribe-v3', 'eleven-v4', 'eleven-v4-turbo'].map(id => ({ id })) });
+    if (req.url === '/v1/models') return json({ data: ['scribe-v2', 'scribe-v3', 'eleven-v4-text-to-speech', 'eleven-v4-text-to-speech-custom-voice'].map(id => ({ id })) });
     if (req.url === '/e/v1/configs/elevenlabs-preset-voice-id') return json(Array.from({ length: 15450 }, (_, i) => ({ voice_id: `voice-${i}`, name: `Voice ${i}`, description: 'full metadata', preview_url: 'https://fixtures.invalid/preview.mp3', languages: ['en'], notice_period_days: 730 })));
     if (req.method === 'POST' && req.url === '/e/v1/audios/generations') {
       const parts: Buffer[] = []; for await (const part of req) parts.push(Buffer.from(part)); const bytes = Buffer.concat(parts);
@@ -80,7 +81,7 @@ test('packaged Relay CLI handles URL and multipart Scribe, full voice catalog, e
   server.listen(0, '127.0.0.1'); await once(server, 'listening'); const address = server.address(); assert(address && typeof address === 'object');
   const call = async (...args: string[]) => {
     try {
-      const { stdout } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', 'aihub-audio', '--no-global-config'], { cwd: dir, env: { ...process.env, ...fixtureTransport(`http://127.0.0.1:${address.port}`), AIHUB_API_KEY: 'offline-relay', AIHUB_RESULT_CHECK_ENABLED: '0', AIHUB_AUDIO_MODELS: 'eleven-v4,eleven-v4-turbo' }, timeout: 45_000, maxBuffer: 16 * 1024 * 1024 });
+      const { stdout } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', 'aihub-audio', '--no-global-config'], { cwd: dir, env: { ...process.env, ...fixtureTransport(`http://127.0.0.1:${address.port}`), AIHUB_API_KEY: 'offline-relay', AIHUB_RESULT_CHECK_ENABLED: '0', AIHUB_AUDIO_MODELS: 'eleven-v4-text-to-speech,eleven-v4-text-to-speech-custom-voice' }, timeout: 45_000, maxBuffer: 16 * 1024 * 1024 });
       return JSON.parse(stdout);
     } catch (error) { const { stdout } = error as { stdout?: string }; if (!stdout) throw error; return JSON.parse(stdout); }
   };

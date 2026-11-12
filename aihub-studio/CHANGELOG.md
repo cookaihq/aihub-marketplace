@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.0 — 2026-11-13
+
+- 接收 Gateway Spec #28，退出旧 v4/Turbo 四个新请求 ID，无别名或 Turbo 回退；历史任务继续原 ID 恢复，个人列表给出用途迁移说明但不改写。
+- 新增 audio-dialogue：有序 text/voice 台词数组，一次提交；累计最多 2000 Unicode 字符、10 个不同音色，可超过 10 段重复音色。Speech / Dialogue 各有普通与已有音色 custom 变体。
+- 完整校验共享控制、词典固定版本、custom 安全开关边界；保留 false / 0，仅省略合同允许的 null 控制。保留独立可空 alignment、normalized_alignment 和完整 voice_segments。
+- 内置 TTS=speech-2.8-hd、ASR=paraformer-v2；新 Eleven 四模型为可选能力，等待对应 Gateway 版本生产部署。音乐与 Scribe 行为保持，其他 Skill 版本保持。
+- Studio 与音频 Skill 升至 5.0.0；Windows 脚本首轮 171/177、覆盖全部失败的串行复测 37/37、增强历史恢复后 7/7，Codex 0.167.2 默认沙箱开发源显式调用九项离线验证与六个 Skill 规范校验通过。WorkBuddy 本次跳过；macOS、安装／隐式发现、新合同生产调用与人工听审未验；Codex 沙箱内 ffprobe 启动受 EPERM 限制。
+
 ## 4.0.0 — 2026-11-13
 
 - 移除 `aihub-audio` 的声音克隆能力、`audio-clone` 操作及其参数映射。

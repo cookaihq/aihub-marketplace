@@ -1,7 +1,7 @@
 import { AihubmaxClient, ApiError, type LiveModel } from './apiClient.js';
 import { listModelSummaries, resolveEntry, type CatalogEntry } from './catalog.js';
 import type { Media } from './state.js';
-import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, validateElevenLabs } from './elevenlabs.js';
+import { ELEVEN_AUDIO_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, validateElevenLabs, elevenMigration } from './elevenlabs.js';
 
 /**
  * The catalog contains every documented endpoint. This Plugin deliberately
@@ -37,7 +37,7 @@ export const PREFERRED_MODELS = {
     'seedance-2.5-text-to-video', 'seedance-2.5-image-to-video',
     'seedance-2.5-reference-to-video',
   ],
-  audio: ['eleven-v4', 'paraformer-v2', ELEVEN_MUSIC_MODEL],
+  audio: ['speech-2.8-hd', 'paraformer-v2', ELEVEN_MUSIC_MODEL],
   document: ['doc2x-v3'],
   understanding: ['gemini-4-carbon'],
 } as const;
@@ -85,6 +85,7 @@ function capabilityForModel(model: string, media: string | null): string {
     return `Seedance 2.0 ${mode} (explicit selection)`;
   }
   if (media === 'audio' && model === 'paraformer-v2') return 'D1 ASR';
+  if (ELEVEN_DIALOGUE_MODELS.has(model)) return 'D1 text-to-dialogue (ordered text/voice inputs)';
   if (media === 'audio') return 'D1 TTS/music';
   if (media === 'document') return 'E2';
   return 'D (legacy audio workflow)';
@@ -97,6 +98,8 @@ function supported(model: string, entry: CatalogEntry): boolean {
     entry.mediaType === 'audio';
 }
 export function modelEntry(model: string) {
+  const migration = elevenMigration(model);
+  if (migration) throw new Error(migration);
   const found = resolveEntry(model);
   const excluded = excludedModel(model);
   if (excluded) throw new Error(`Model ${model} is not exposed by this Plugin: ${excluded}`);
@@ -189,7 +192,7 @@ export function validateGeneration(media: Media, model: string, params: Record<s
   const { entry, catalogModel } = modelEntry(model);
   if (entry.mediaType !== media) throw new Error(`This model belongs to ${entry.mediaType}, not ${media}.`);
   if ('model' in params && params.model !== model) throw new Error('params.model conflicts with --model. Keep model only in --model.');
-  if (ELEVEN_TTS_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL || SCRIBE_MODELS.has(model)) {
+  if (ELEVEN_AUDIO_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL || SCRIBE_MODELS.has(model)) {
     if (!entry.requestSchema) throw new Error('The bundled ElevenLabs request contract is missing.');
     validateElevenLabs(model, params, entry.requestSchema);
     return entry.path;

@@ -67,11 +67,11 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" describe --skill "${AIHUB_CALLER}" 
 
 `describe` 离线读取随包模型目录说明字段，无需 API Key。只有 `catalog_only` 中的目录记录不能证明模型在线可用，`availability_known: false` 或 `status: availability_unknown` 应报告可用性未知。账号模型列表使用 `/v1/models`；生成、任务和专用配置查询使用 `/e/v1/`。提交时使用 `models` 返回的请求型号，不自行泛化模型名。Fabric 是已核实的特例：账号的带分辨率 ID 对应生成型号 `fabric-1.0` 和 `resolution`，可用分辨率列在 `available_resolutions`。新流程只在已配置且适用的候选间按保存的策略切换；不得自动追加旧版本或其他模型。Plugin 会在提交前拒绝图片增强/材质/Profile、视频高清放大（B10）/插帧/Topaz、Sora 角色、字幕、提示词数字人和声音创建模型。
 
-当前无配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；图片列表的 default_for 区分 image-generate 与 image-edit。2.6 拒绝参考图、遮罩、markup 和非静态格式，省略尺寸为 auto，允许独立的 complexity。TTS 默认 eleven-v4，异步音乐默认 elevenlabs-music-v2.5，ASR 默认 paraformer-v2。声音克隆模型和 audio-clone 操作已移除。
+当前无配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；图片列表的 default_for 区分 image-generate 与 image-edit。2.6 拒绝参考图、遮罩、markup 和非静态格式，省略尺寸为 auto，允许独立的 complexity。TTS 默认 speech-2.8-hd，异步音乐默认 elevenlabs-music-v2.5，ASR 默认 paraformer-v2。声音克隆模型和 audio-clone 操作已移除。
 
 以下为保留的单模型底层入口，供旧任务流程或用户明确选择尚无自动参数转换的型号使用，**不读取配置列表来换模型**。D1 的 `speech-2.8-hd`（TTS）、`paraformer-v2`（ASR）和 D2 的 `lyria-3-pro` 使用 `generate --media audio`；`lyria-3-pro-preview` 使用 `native-music`。E1 先查询独立 LLM 注册表再调用 `understand`，必须含媒体内容块，纯文本请求属于 F 组并拒绝。E2 使用 `generate --media document`，结果 ZIP 只做文件签名和非空检查。
 
-`eleven-v4` / `eleven-v4-turbo`、其 `-custom-voice` 变体、`elevenlabs-music-v2.5` 和 `scribe-v2` / `scribe-v3` 均使用异步音频路径，完整参数及上线条件见 [ElevenLabs](elevenlabs.md)。新任务优先使用 `plan/run`；单模型 `generate` 的 TTS 参数为 text，新流程 prompt 原样映射为 text。custom-voice 必须提供已有音色 ID，不创建或克隆声音。`voices --skill aihub-audio` 通过鉴权配置接口读取完整 ElevenLabs 音色目录及元数据，不扣生成 quota，也不限制为官方白名单。
+`eleven-v4-text-to-speech` / `eleven-v4-text-to-dialogue`、两者的 `-custom-voice` 变体、`elevenlabs-music-v2.5` 和 `scribe-v2` / `scribe-v3` 均使用异步音频路径，完整参数及上线条件见 [ElevenLabs](elevenlabs.md)。新任务优先使用 `plan/run`；单模型 `generate` 的 TTS 参数为 text，新流程 prompt 原样映射为 text。custom-voice 必须提供已有音色 ID，不创建或克隆声音。`voices --skill aihub-audio` 通过鉴权配置接口读取完整 ElevenLabs 音色目录及元数据，不扣生成 quota，也不限制为官方白名单。
 
 音乐歌曲/段落时长分别使用整数 music_length_ms / duration_ms（毫秒），旧 duration 秒制字段明确拒绝；30 秒歌曲须改为 music_length_ms: 30000。已受理任务继续原 ID，未提交旧请求迁移后重新 plan。Scribe 的 inputs.audios 恰好一个 URL 或本地路径，分别以 JSON audio_url 或 multipart file 提交；不套用 Paraformer 分段/转码，不自动把 V3 降为 V2。`describe.request_schema` 保留嵌套计划、范围及可空字段约束，Scribe 的 file 表示本地文件路径。
 
@@ -184,3 +184,5 @@ outputs/
 程序不自动删除任务目录。用户决定何时归档或删除；删除 `task.json` 会失去该记录提供的恢复入口。任务记录可能含 prompt、输入或结果 URL，应和生成文件一起按用户的访问范围保存。
 
 交付时提供可点击的实际文件路径；远程宿主有已授权的附件能力时可用它交付。只有任务 ID、URL 或 `submitted` 状态不算完成媒体交付。
+
+文字转对话使用 audio-dialogue，台词放 task 的 requirements.inputs，省略 prompt；直接 generate 用 API inputs 数组。新四模型等待对应 Gateway 合同生产部署；旧 v4/Turbo 四 ID 无别名，报告用途迁移说明，历史 task 只恢复原 ID。

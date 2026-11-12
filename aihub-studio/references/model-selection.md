@@ -15,7 +15,7 @@
 | aihub-understanding | `AIHUB_UNDERSTANDING_MODELS` |
 | aihub-document | `AIHUB_DOCUMENT_MODELS` |
 
-列表用逗号分隔精确模型 ID，顺序就是优先级。首个非空来源整体替换低优先级列表，不合并、不追加内置模型。空项、重复 ID 报错。只解析当前 Skill 的模型列表；未配置时沿用对应 Skill 的内置选型，仅产生一个候选。本次用户明确指定模型时固定该模型，忽略配置列表并关闭 fallback。Agent 自己选出的推荐型号不能写成用户指定。
+列表用逗号分隔精确模型 ID，顺序就是优先级。首个非空来源整体替换低优先级列表，不合并、不追加内置模型。空项、重复 ID 报错。只解析当前 Skill 的模型列表；未配置时沿用对应用途的内置选型；audio-dialogue 无内置型号，须显式选择或配置 Dialogue 候选。本次用户明确指定模型时固定该模型，忽略配置列表并关闭 fallback。Agent 自己选出的推荐型号不能写成用户指定。
 
 ```dotenv
 AIHUB_IMAGE_MODELS=gpt-image-2.5-flare,gpt-image-2.5-sunburst
@@ -69,7 +69,8 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 | `video-reference` | 参考图、视频或音频 | 对应参考生型号；2.0 只自动接入图片参考，视频/音频严格限制尚缺可验证的素材元数据 |
 | `video-lipsync` | 一个视频和一个音频 | 默认 `sync-3`；仅可选 `sync_mode`。显式或配置的 `lipsync-2` 另支持 `active_speaker`、`temperature` |
 | `video-avatar` | 一张图片和一个音频 | 默认 `fabric-1.0`；`resolution=480p/720p`，未指定为 `720p`，不接受提示词。显式或配置的 `omnihuman-1.5` 另支持提示词、`advanced`、`turbo_mode` |
-| `audio-tts` | 提示词中的待朗读文本 | 默认 `eleven-v4`，prompt → text，独立 voice；显式 Speech 2.8 保留 `voice_setting` 等原参数，彼此不混用 |
+| `audio-tts` | 提示词中的待朗读文本 | 默认 `speech-2.8-hd`，保留 `voice_setting`；可选新 Eleven Speech：prompt → text，独立 voice |
+| `audio-dialogue` | `requirements.inputs` 有序台词数组，每段 text / voice 必填 | 显式或配置新 Eleven Dialogue；累计 2000 字符／10 种音色，整次控制，不填 prompt |
 | `audio-transcribe` | 原录音路径或 URL 的 `inputs.audios` | `paraformer-v2` / `paraformer-8k-v2`；按模型检查格式、大小、时长并自动分段，8 kHz 型号不接受 `language_hints` |
 | `music-async` | 提示词或段落计划 | 默认 `elevenlabs-music-v2.5`，整数毫秒；显式 `lyria-3-pro` 保留图片参考与 `negative_prompt`，不向 ElevenLabs 转换 |
 | `music-native` | 提示词 | `lyria-3-pro-preview`；不接收额外要求或参考素材，不与异步音乐静默互换 |
@@ -82,9 +83,9 @@ C1/C2 使用各自的契约，不套用 Seedance 时长或比例。`sync-3` 的 
 
 配置一个模型 ID 不代表已接入其参数转换。CLI 先按任务用途筛选，再逐个检查；TTS 不能替代转写、首帧图生不能替代参考生成。不兼容型号会列出原因。有目录说明但尚无自动转换的型号，只能在用户明确选择且按其契约准备参数后使用旧单模型入口；不能借此绕过已经保存的多模型任务或确认要求。
 
-`audio-tts` 另支持 `eleven-v4` / `eleven-v4-turbo` 及其 `-custom-voice` 变体的 prompt → text 映射；custom 必须显式提供已有音色 ID，不属于声音克隆。`music-async` 支持 `elevenlabs-music-v2.5` 的提示词或分段计划，时长使用整数 music_length_ms / duration_ms，拒绝旧秒制 duration。`audio-transcribe` 支持 `scribe-v2` / `scribe-v3` 的单 URL 或 multipart 本地文件输入，不使用 Paraformer 分段与转码；有 V3 的候选列表排除 V2，不能自动降级，需要 V2 时显式新建请求。
+`audio-tts` 另支持 `eleven-v4-text-to-speech` 及其 `-custom-voice` 变体的 prompt → text 映射；`audio-dialogue` 对应 `eleven-v4-text-to-dialogue` 及其 custom 变体，requirements.inputs 原样映射 API inputs；custom 必须显式提供已有音色 ID，不属于声音克隆。`music-async` 支持 `elevenlabs-music-v2.5` 的提示词或分段计划，时长使用整数 music_length_ms / duration_ms，拒绝旧秒制 duration。`audio-transcribe` 支持 `scribe-v2` / `scribe-v3` 的单 URL 或 multipart 本地文件输入，不使用 Paraformer 分段与转码；有 V3 的候选列表排除 V2，不能自动降级，需要 V2 时显式新建请求。
 
-选择这些型号前读取并遵守 [ElevenLabs 参数与交付](elevenlabs.md)，包括模式互斥、nullable 控制、时间戳空段、实际容器和计费边界。官方 Music 仅 MP3/Opus，其余统一编码保留兼容渠道；不强制官方或静默移除参数。`describe.request_schema` 保留完整嵌套约束，`plan` 展示实际请求；新增型号不自动加入个人列表。requested_options_unavailable / unsupported_parameters 停止自动切换，保留完整错误与字段列表，交由用户决定修改要求或稍后处理。Gateway v0.9.15 正式上线后启用上述 TTS／异步音乐默认；ASR 和 Gemini 原生音乐默认保持原值，音频人工试听仍待评审。
+选择这些型号前读取并遵守 [ElevenLabs 参数与交付](elevenlabs.md)，包括模式互斥、nullable 控制、时间戳空段、实际容器和计费边界。官方 Music 仅 MP3/Opus，其余统一编码保留兼容渠道；不强制官方或静默移除参数。`describe.request_schema` 保留完整嵌套约束，`plan` 展示实际请求；新增型号不自动加入个人列表。requested_options_unavailable / unsupported_parameters 停止自动切换，保留完整错误与字段列表，交由用户决定修改要求或稍后处理。新四模型须待 Spec #28 对应 Gateway 版本生产部署后才可线上使用。旧 v4/Turbo 四 ID 不接收新请求，无别名或回退；列出用途迁移说明但不改写个人列表。历史 task ID 仍可恢复。内置 TTS=speech-2.8-hd、ASR=paraformer-v2，音乐默认保持原值。
 
 ## 执行与继续
 
