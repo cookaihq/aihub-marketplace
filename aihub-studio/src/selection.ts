@@ -4,7 +4,7 @@ import type { Media } from './state.js';
 import { resolve } from 'node:path';
 import { audioContract, remoteAudio, type AudioContract } from './audioMedia.js';
 import { speechParameters } from './speech.js';
-import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL } from './elevenlabs.js';
+import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS } from './elevenlabs.js';
 
 export const OPERATIONS = {
   'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
@@ -42,7 +42,7 @@ export interface SelectionPlan {
 }
 
 const IMAGE = ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'];
-const TRANSCRIBE = ['paraformer-v2', 'paraformer-8k-v2', 'cohere-transcribe', 'scribe-v2'];
+const TRANSCRIBE = ['paraformer-v2', 'paraformer-8k-v2', 'cohere-transcribe', ...SCRIBE_MODELS];
 const LIPSYNC = ['lipsync-2', 'lipsync-2-pro', 'sync-3'];
 const AVATAR = ['omnihuman-1.5', 'fabric-1.0', 'fabric-1.0-fast', 'creatify-aurora'];
 
@@ -194,10 +194,16 @@ function buildCandidate(request: TaskRequest, model: string, defaultVoiceId?: st
         promptField = 'prompt'; allowedRequirements = ['voice_setting', 'audio_setting', 'voice_modify', 'pronunciation_dict', 'language_boost'];
       }
     } else if (op === 'audio-transcribe') {
-      candidate.transcription = audioContract(model);
-      inputFields.audios = ['file_urls', 'many']; requiredInputs = ['audios'];
-      allowedRequirements = ['channel_id', 'diarization', 'language_hints', 'recognition'];
-      if (model === 'paraformer-8k-v2') allowedRequirements = allowedRequirements.filter(name => name !== 'language_hints');
+      if (SCRIBE_MODELS.has(model)) {
+        const audio = inputs.audios;
+        inputFields.audios = [audio?.[0] && !remoteAudio(audio[0]) ? 'file' : 'audio_url', 'one']; requiredInputs = ['audios'];
+        allowedRequirements = modelEntry(model).entry.params.filter(name => !['model', 'audio_url', 'file'].includes(name));
+      } else {
+        candidate.transcription = audioContract(model);
+        inputFields.audios = ['file_urls', 'many']; requiredInputs = ['audios'];
+        allowedRequirements = ['channel_id', 'diarization', 'language_hints', 'recognition'];
+        if (model === 'paraformer-8k-v2') allowedRequirements = allowedRequirements.filter(name => name !== 'language_hints');
+      }
     } else if (op === 'audio-clone') {
       inputFields.audios = ['audio_url', 'one']; requiredInputs = ['audios'];
       allowedRequirements = ['accuracy', 'need_volume_normalization', 'noise_reduction', 'preview_model', 'preview_text'];
@@ -263,6 +269,9 @@ export function selectionPlan(cfg: LoadedConfig, value: Record<string, unknown>)
   const candidates: Candidate[] = [];
   const excluded: SelectionPlan['excluded'] = [];
   for (const model of selected) {
+    if (request.operation === 'audio-transcribe' && model === 'scribe-v2' && selected.includes('scribe-v3')) {
+      excluded.push({ model, reason: 'Scribe V3 must not automatically downgrade to V2. Explicitly select V2 for a new request.' }); continue;
+    }
     if (!matchesOperation(model, request.operation)) { excluded.push({ model, reason: 'This exact model is not supported for the selected task purpose/protocol.' }); continue; }
     candidates.push(buildCandidate(request, model, cfg.speech?.defaultVoiceId));
   }

@@ -1,8 +1,8 @@
 ---
 name: aihub-audio
 metadata:
-  version: "3.2.0"
-description: v3.2.0｜通过 AIhub D1 合成语音、转写本地或 URL 录音，以及执行用户明确要求的声音克隆；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
+  version: "3.3.0"
+description: v3.3.0｜通过 AIhub D1 合成语音、转写本地或 URL 录音，以及执行用户明确要求的声音克隆；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 
@@ -25,7 +25,7 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 
 D1 处理文本转语音、语音识别/转写和用户明确要求的声音克隆。用户本次指定模型时固定执行；否则读取 `AIHUB_AUDIO_MODELS`，分别筛选 TTS、ASR 或克隆型号，不跨用途替换。没有配置时使用 `speech-2.8-hd`、`paraformer-v2` 或 `voice-clone`。音乐属于 `aihub-music`，素材理解属于 `aihub-understanding`。
 
-显式选择或配置列表含 `eleven-v4` / `eleven-v4-turbo` 时，先读取并遵守 [ElevenLabs 适配、参数与恢复](../../references/elevenlabs.md)。CLI 将 prompt 原样映射为 text，使用独立的 voice 参数；MiniMax 默认音色不适用，旧字段不静默丢弃。时间戳保留原分段及空段。本版仅完成适配准备，API 验收且生产正式可用后才启用已确认的 eleven-v4 默认值。
+显式选择或配置列表含 `eleven-v4`、`eleven-v4-turbo`、其 `-custom-voice` 变体或 `scribe-v2` / `scribe-v3` 时，先读取并遵守 [ElevenLabs 适配、参数与恢复](../../references/elevenlabs.md)。TTS 将 prompt 原样映射为 text，使用独立 voice；custom 必须提供已有音色 ID，不创建或克隆声音。MiniMax 默认音色不适用。Scribe 使用一个完整 URL 或本地文件，保留结构化转写，不套用 Paraformer 分段，不自动将 V3 降为 V2。正式入口与对应验收通过后才启用已确认的 eleven-v4 默认值。
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。已有 `run.json` 用 `continue`；旧 `task.json` / 任务 ID 用 `resume` / `task` 查询原任务。
 

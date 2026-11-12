@@ -18,7 +18,7 @@ const config = (skill: string, models?: string[]): LoadedConfig => ({ skill, api
   sources: { AIHUB_API_KEY: 'fixture' }, speech: { defaultVoiceId: 'MiniMax-specific-voice', source: 'fixture' }, modelSelection: { policy: 'auto', models, sources: {} } });
 const speechRequest = { operation: 'audio-tts', original_request: 'Read this text aloud', prompt: '[whispering] Hello café 👋' };
 const musicRequest = { operation: 'music-async', original_request: 'Make an instrumental', prompt: 'Gentle piano' };
-const chunk = { text: '', duration: 3, positive_styles: ['ambient'] };
+const chunk = { text: '', duration_ms: 3000, positive_styles: ['ambient'] };
 const planParams = (extra: Record<string, unknown> = {}) => ({ composition_plan: { chunks: [{ ...chunk, ...extra }] } });
 const validate = (params: Record<string, unknown>) => validateGeneration('audio', music, params);
 
@@ -66,12 +66,12 @@ test('TTS contract enforces lengths, ranges, formats and nullable fields without
 });
 
 test('music prompt and plan modes preserve nested inputs and reject discarded legacy requirements', () => {
-  const requirements = { duration: 60.001, force_instrumental: true, output_format: 'pcm_44100', enable_safety_checker: true };
+  const requirements = { music_length_ms: 60001, force_instrumental: true, output_format: 'pcm_44100', enable_safety_checker: true };
   const prompt = selectionPlan(config('aihub-music', [music, 'lyria-3-pro']), { ...musicRequest, requirements });
   assert.deepEqual(prompt.candidates[0]?.params, { prompt: musicRequest.prompt, ...requirements });
   assert.equal(prompt.candidates[0]?.rejection, undefined);
-  assert.match(prompt.candidates[1]?.rejection ?? '', /duration/);
-  const composition = { chunks: [{ ...chunk, duration: 59.9, text: '[Verse 1]\nHello', negative_styles: ['distortion'],
+  assert.match(prompt.candidates[1]?.rejection ?? '', /music_length_ms/);
+  const composition = { chunks: [{ ...chunk, duration_ms: 59900, text: '[Verse 1]\nHello', negative_styles: ['distortion'],
     context_adherence: 'high', audio_reference: { audio_url: 'https://fixtures.invalid/reference.wav', start_ms: 1500, end_ms: 31500, strength: 'xhigh' } }] };
   const plan = selectionPlan(config('aihub-music'), { operation: 'music-async', original_request: 'Follow this plan', model: music,
     requirements: { composition_plan: composition, seed: 42 } });
@@ -85,23 +85,26 @@ test('music prompt and plan modes preserve nested inputs and reject discarded le
 });
 
 test('music contract rejects conflicting modes and invalid duration or plan shapes', () => {
-  for (const params of [{}, { prompt: 'Piano', ...planParams() }, { prompt: 'Piano', seed: 0 }, { ...planParams(), duration: 3 },
-    { ...planParams(), force_instrumental: false }]) assert.throws(() => validate(params), /exactly one|only supported/);
-  for (const duration of [3, 59.9, 60, 60.001, 600]) validate({ prompt: 'Piano', duration });
-  validate({ prompt: 'Piano' }); validate({ prompt: 'Piano', duration: null });
-  for (const duration of [2.999, 600.001, 3.0001, '60']) assert.throws(() => validate({ prompt: 'Piano', duration }), /duration/);
+  for (const params of [{}, { prompt: 'Piano', ...planParams() }, { prompt: 'Piano', seed: 0 }, { ...planParams(), music_length_ms: 3000 },
+    { ...planParams(), force_instrumental: true }]) assert.throws(() => validate(params), /exactly one|only supported/);
+  for (const music_length_ms of [3000, 59900, 60000, 60001, 600000]) validate({ prompt: 'Piano', music_length_ms });
+  validate({ prompt: 'Piano' }); validate({ prompt: 'Piano', music_length_ms: null, seed: null, timestamps: false });
+  validate({ ...planParams(), music_length_ms: null, force_instrumental: false, timestamps: null });
+  for (const music_length_ms of [2999, 600001, 3000.1, '60000']) assert.throws(() => validate({ prompt: 'Piano', music_length_ms }), /music_length_ms/);
+  for (const duration of [60, null]) assert.throws(() => validate({ prompt: 'Piano', duration }), /migrate.*music_length_ms/);
+  for (const duration of [3, null]) assert.throws(() => validate(planParams({ duration })), /migrate.*duration_ms/);
   assert.throws(() => validate({ prompt: 'x'.repeat(4101) }), /4100/);
   assert.throws(() => validate({ composition_plan: { chunks: [] } }), /chunks/);
   assert.throws(() => validate({ composition_plan: { chunks: Array(31).fill(chunk) } }), /30/);
-  assert.throws(() => validate(planParams({ duration: 120.001 })), /duration/);
-  assert.throws(() => validate(planParams({ duration: 3.0001 })), /duration/);
+  assert.throws(() => validate(planParams({ duration_ms: 120001 })), /duration_ms/);
+  assert.throws(() => validate(planParams({ duration_ms: 3000.1 })), /duration_ms/);
   assert.throws(() => validate(planParams({ positive_styles: [42] })), /positive_styles/);
   assert.throws(() => validate(planParams({ context_adherence: 'xhigh' })), /context_adherence/);
   assert.throws(() => validate(planParams({ unexpected: true })), /unexpected/);
   assert.throws(() => validate({ composition_plan: { chunks: [chunk], unexpected: true } }), /unexpected/);
-  const longPlan = { composition_plan: { chunks: Array(5).fill({ ...chunk, duration: 120 }) } };
+  const longPlan = { composition_plan: { chunks: Array(5).fill({ ...chunk, duration_ms: 120000 }) } };
   validate(longPlan);
-  assert.throws(() => validate({ composition_plan: { chunks: [...longPlan.composition_plan.chunks, chunk] } }), /600 seconds/);
+  assert.throws(() => validate({ composition_plan: { chunks: [...longPlan.composition_plan.chunks, chunk] } }), /600000 milliseconds/);
   assert.equal(describe(music).params.find(p => p.name === 'output_format')?.enum?.length, 25);
   assert.deepEqual(describe(music).conditionally_required_params, ['prompt', 'composition_plan']);
   assert.ok(describe(music).request_schema?.properties?.composition_plan);
@@ -126,6 +129,8 @@ test('packaged CLI preserves timestamps and real containers through billing wait
   const exec = promisify(execFile);
   const dir = await mkdtemp(join(tmpdir(), 'aihub-elevenlabs-'));
   const timestamps = JSON.parse(await readFile(new URL('./fixtures/elevenlabs-timestamps.json', import.meta.url), 'utf8'));
+  const alignment = { characters: ['H'], character_start_times_seconds: [0], character_end_times_seconds: [0.1] };
+  const musicMetadata = { composition_plan: { chunks: [{ duration_ms: 60000 }] }, song_metadata: { title: 'Fixture' }, words_timestamps: [] };
   assert.equal(timestamps.length, 7);
   assert.equal(timestamps.filter((t: { characters: string[] }) => !t.characters.length).length, 2);
   const files = new Map<string, Buffer>();
@@ -152,7 +157,7 @@ test('packaged CLI preserves timestamps and real containers through billing wait
       const model = posts[index]?.model;
       const task = { id: `eleven-${index + 1}`, model, status: settled ? 'completed' : 'processing' };
       return json({ ...task, ...(settled ? { results: [{ url: `${base}/asset-${index}.pcm`, content_type: 'application/octet-stream',
-        ...(index < 2 ? { timestamps } : {}) }] } : {}) });
+        ...(index < 2 ? { timestamps, alignment, normalized_alignment: alignment } : musicMetadata) }] } : {}) });
     }
     const asset = /^\/asset-(\d)\.pcm$/.exec(req.url ?? '');
     if (asset) {
@@ -180,7 +185,7 @@ test('packaged CLI preserves timestamps and real containers through billing wait
       settled = false;
       const isMusic = model === music; const skill = isMusic ? 'aihub-music' : 'aihub-audio';
       const request = { ...(isMusic ? musicRequest : speechRequest), model, requirements: isMusic
-        ? { duration: 60, output_format: 'pcm_44100' }
+        ? { music_length_ms: 60000, output_format: 'pcm_44100' }
         : { timestamps: true, ...(index === 1 ? { output_format: 'opus_48000_128' } : {}) } };
       await writeFile(requestPath, JSON.stringify(request));
       const planned = await call(skill, 'plan', '--request-file', requestPath);
@@ -207,10 +212,13 @@ test('packaged CLI preserves timestamps and real containers through billing wait
       const job = JSON.parse(await readFile(delivered.result.record, 'utf8'));
       if (!isMusic) {
         assert.deepEqual(delivered.result.result_metadata.timestamps, timestamps);
+        assert.deepEqual(delivered.result.result_metadata.alignment, alignment);
+        assert.deepEqual(delivered.result.result_metadata.normalized_alignment, alignment);
         assert.deepEqual(job.submission.task.results[0].timestamps, timestamps);
       } else {
-        assert.equal(delivered.result.result_metadata, undefined, 'do not invent lyrics, duration, seed or billed minutes');
-        assert.equal(posts[index]?.duration, 60, 'requested seconds are preserved, never converted to a billing estimate');
+        assert.deepEqual(delivered.result.result_metadata, musicMetadata);
+        assert.equal(delivered.result.result_metadata.duration, undefined, 'do not invent duration or billed minutes');
+        assert.equal(posts[index]?.music_length_ms, 60000, 'requested milliseconds are preserved, never converted to a billing estimate');
       }
       const resumed = await call(skill, 'resume', '--record', delivered.result.record, '--wait-seconds', '0');
       assert.equal(resumed.status, 'delivered'); assert.deepEqual(resumed.files, delivered.files);

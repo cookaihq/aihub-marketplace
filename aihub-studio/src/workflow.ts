@@ -9,6 +9,7 @@ import { speechParameters } from './speech.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { UPLOAD_MAX_BYTES } from './audioMedia.js';
 import { transcriptText } from './transcript.js';
+import { SCRIBE_MODELS } from './elevenlabs.js';
 import { assertOutsideInstallation, readJob, recordPath, withJobLock, writeJob, writePrivateText, writePrivateRecord, type Job, type Media, type SavedFile } from './state.js';
 import { createTask, findTaskInfo, outputDirectory, participate, readTaskInfo, touchTask } from './taskInfo.js';
 
@@ -17,7 +18,7 @@ function cleanError(error: unknown, cfg: LoadedConfig): string {
 }
 export function failureInfo(error: unknown, cfg: LoadedConfig) {
   return sanitized(error instanceof ApiError ? { http_status: error.status, code: error.code,
-    type: error.type, request_id: error.requestId, ambiguous: error.ambiguous }
+    type: error.type, request_id: error.requestId, ambiguous: error.ambiguous, ...(error.details ? { details: error.details } : {}) }
     : { http_status: 0, ambiguous: true }, [cfg.apiKey]);
 }
 export class TaskPersistenceError extends Error {
@@ -39,9 +40,10 @@ const RESULT_METADATA_KEYS = [
   'lyrics', 'seed', 'degraded_reason', 'map_type', 'result_type',
   'profile_id', 'character_id', 'voice_id', 'duration', 'resolution',
   // Keep the provider's segmented alignment unchanged, including empty segments.
-  'timestamps',
+  'timestamps', 'alignment', 'normalized_alignment', 'voice_segments',
+  'composition_plan', 'song_metadata', 'words_timestamps',
 ] as const;
-const STRUCTURED_AUDIO_MODELS = new Set(['paraformer-v2', 'paraformer-8k-v2', 'cohere-transcribe', 'scribe-v2']);
+const STRUCTURED_AUDIO_MODELS = new Set(['paraformer-v2', 'paraformer-8k-v2', 'cohere-transcribe', ...SCRIBE_MODELS]);
 const LLM_SUBMIT_TIMEOUT_MS = 120_000;
 
 /** Keep task-specific fields visible without exposing the full remote response. */
@@ -243,6 +245,24 @@ export async function generate(cfg: LoadedConfig, options: { media: Media; model
   // Stored run candidates are already resolved, even when they contain no voice ID.
   const params = options.parametersResolved ? options.params : speechParameters(options.model, options.params, cfg.speech?.defaultVoiceId);
   const path = validateGeneration(options.media, options.model, params);
+  let body: Record<string, unknown> | FormData = { ...params, model: options.model };
+  if (SCRIBE_MODELS.has(options.model) && typeof params.file === 'string') {
+    // Whole-file multipart is independent of Paraformer's splitting and upload protocol.
+    // Keep memory bounded in the Node 18 runtime; larger inputs use the documented URL path.
+    const info = await stat(params.file);
+    const maxBytes = 256 * 1024 * 1024;
+    if (!info.isFile() || !info.size || info.size > maxBytes) throw new Error('Scribe local file must be nonempty and <=256 MiB; use audio_url for larger inputs.');
+    const bytes = await readFile(params.file);
+    if (bytes.length > maxBytes || bytes.length !== info.size) throw new Error('Scribe file changed while reading; no task was submitted.');
+    const form = new FormData();
+    form.set('model', options.model);
+    form.set('file', new Blob([bytes]), basename(params.file));
+    for (const [key, value] of Object.entries(params)) {
+      if (key === 'file' || value == null) continue; // Nullable controls are unspecified by contract.
+      form.set(key, typeof value === 'string' ? value : JSON.stringify(value));
+    }
+    body = form;
+  }
   assertOutsideInstallation(options.outputDir);
   if (options.media !== 'document') await checkMediaTools();
   const { job, record } = await newJob(cfg, options.media, options.model, options.outputDir);
@@ -264,7 +284,7 @@ export async function generate(cfg: LoadedConfig, options: { media: Media; model
   process.stderr.write(`AIhub task record: ${record}\n`);
   return withJobLock(record, async () => {
     try {
-      const task = await client.submitGeneration(path, { ...params, model: options.model });
+      const task = await client.submitGeneration(path, body);
       job.submission = { state: 'known', task: sanitized(task as TaskResponse, [cfg.apiKey]) };
       await save(record, job, cfg);
     } catch (error) {

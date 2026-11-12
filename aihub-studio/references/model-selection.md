@@ -82,7 +82,9 @@ C1/C2 使用各自的契约，不套用 Seedance 时长或比例。`sync-3` 的 
 
 配置一个模型 ID 不代表已接入其参数转换。CLI 先按任务用途筛选，再逐个检查；TTS 不能替代转写、首帧图生不能替代参考生成。不兼容型号会列出原因。有目录说明但尚无自动转换的型号，只能在用户明确选择且按其契约准备参数后使用旧单模型入口；不能借此绕过已经保存的多模型任务或确认要求。
 
-`audio-tts` 另支持 `eleven-v4` / `eleven-v4-turbo` 的 prompt → text 映射；`music-async` 另支持 `elevenlabs-music-v2.5` 的提示词或分段计划。选择这些型号前读取并遵守 [ElevenLabs 参数与交付](elevenlabs.md)，包括模式互斥、旧参数拒绝、时间戳空段、实际文件容器和计费边界。`describe.request_schema` 保留完整嵌套约束，`plan` 展示实际映射后的请求；新增型号不自动加入个人列表。API 验收及生产正式可用尚未确认，本版不切换 TTS / 音乐内置默认值。
+`audio-tts` 另支持 `eleven-v4` / `eleven-v4-turbo` 及其 `-custom-voice` 变体的 prompt → text 映射；custom 必须显式提供已有音色 ID，不属于声音克隆。`music-async` 支持 `elevenlabs-music-v2.5` 的提示词或分段计划，时长使用整数 music_length_ms / duration_ms，拒绝旧秒制 duration。`audio-transcribe` 支持 `scribe-v2` / `scribe-v3` 的单 URL 或 multipart 本地文件输入，不使用 Paraformer 分段与转码；有 V3 的候选列表排除 V2，不能自动降级，需要 V2 时显式新建请求。
+
+选择这些型号前读取并遵守 [ElevenLabs 参数与交付](elevenlabs.md)，包括模式互斥、nullable 控制、时间戳空段、实际容器和计费边界。官方 Music 仅 MP3/Opus，其余统一编码保留兼容渠道；不强制官方或静默移除参数。`describe.request_schema` 保留完整嵌套约束，`plan` 展示实际请求；新增型号不自动加入个人列表。requested_options_unavailable / unsupported_parameters 停止自动切换，保留完整错误与字段列表，交由用户决定修改要求或稍后处理。API 验收及生产正式可用尚未确认，本版不切换 TTS / 音乐 / 转写内置默认值。
 
 ## 执行与继续
 

@@ -1,6 +1,6 @@
 import { ApiError } from './apiClient.js';
 import { listModelSummaries, resolveEntry } from './catalog.js';
-import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, validateElevenLabs } from './elevenlabs.js';
+import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, validateElevenLabs } from './elevenlabs.js';
 /**
  * The catalog contains every documented endpoint. This Plugin deliberately
  * exposes the selected task scope instead of treating every media entry as a
@@ -186,7 +186,7 @@ export function validateGeneration(media, model, params) {
         throw new Error(`This model belongs to ${entry.mediaType}, not ${media}.`);
     if ('model' in params && params.model !== model)
         throw new Error('params.model conflicts with --model. Keep model only in --model.');
-    if (ELEVEN_TTS_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL) {
+    if (ELEVEN_TTS_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL || SCRIBE_MODELS.has(model)) {
         if (!entry.requestSchema)
             throw new Error('The bundled ElevenLabs request contract is missing.');
         validateElevenLabs(model, params, entry.requestSchema);

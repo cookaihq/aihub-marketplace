@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.0.0 — 未发布
+
+- ElevenLabs Music 退出秒制 `duration`，歌曲改用整数 `music_length_ms`，段落改用整数 `duration_ms`。旧字段（包括 null）报迁移错误，不保留别名或自动换算；已受理任务继续原 ID，未提交旧计划迁移原请求后重新 plan。
+- 对照官方 Relay 合同补齐 v4／Turbo custom-voice、Scribe V2/V3、TTS 控制和详细结果字段。custom 仅接收已有音色 ID；Scribe 支持单 URL JSON 或本地 multipart 文件，不套用 Paraformer 分段转码、不自动把 V3 降为 V2。
+- 新增鉴权只读 `voices --skill aihub-audio`，保留完整 ElevenLabs 目录与元数据。官方 Music 仅 MP3/Opus，统一接口的其他编码保留 Fal；普通 TTS 共享范围与官方限制分别处理，不删参强制渠道。
+- 共享客户端保留 HTTP／任务错误的完整结构、type、unsupported_parameters 和 suggested_remove_parameters；公开错误类别与本地处理建议同步。上述错误停止自动切换，不自动删参、换音色或重新生成。
+- Plugin 4.0.0，音乐 4.0.0（移除已发布字段），音频 3.3.0（新增型号及输入），视频 3.1.1，图片／文档／理解 3.0.4（共享客户端修复）。保持全部实际默认模型。
+- Windows 离线全量回归 165/165 通过，最终提示及诊断变化后的定向回归 12/12 通过；六 Skill schema 与版本检查通过。未使用新收费测试；Gateway 七模型账单证据不计作 Studio 验收。本批 Codex／WorkBuddy 运行验收、macOS、原生安装／发现和线上业务待验，未发布。
+
 ## 3.2.0 — 2026-11-12
 
 - C1 默认使用 `sync-3`，C2 默认使用 `fabric-1.0`，多模态理解默认使用 `gemini-4-carbon`。显式模型、配置顺序和已保存任务继续采用原选择。

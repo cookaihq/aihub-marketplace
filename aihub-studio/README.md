@@ -1,4 +1,14 @@
-# AIhub Studio Plugin 3.2.0
+# AIhub Studio Plugin 4.0.0（未发布）
+
+4.0.0 完成 ElevenLabs 官方 Relay 的离线适配：新增两个 custom-voice 型号及 Scribe V2/V3 转写，支持完整音色目录查询、URL／本地文件提交，保留详细时间戳与结构化错误。目录和代码适配不代表 Gateway 已部署；TTS、异步音乐、转写内置默认仍分别为 `speech-2.8-hd`、`lyria-3-pro`、`paraformer-v2`。
+
+**音乐参数需要迁移。** ElevenLabs 歌曲的 `duration: 30` 改为 `music_length_ms: 30000`，段落 `duration: 15` 改为 `duration_ms: 15000`，全部使用整数毫秒。旧秒制字段明确拒绝，不自动换算。已受理任务继续原 ID 查询与下载；未提交的旧请求修改后重新计划。可直接告诉 Agent：“把这份 ElevenLabs 音乐请求的旧时长字段迁移为整数毫秒，只预览计划，暂不提交。”详细范围见 [ElevenLabs](references/elevenlabs.md)。
+
+官方 Music 仅支持 MP3／Opus；PCM／μ-law／A-law 保留 Fal。custom-voice 使用已有音色 ID，不创建或克隆声音。requested_options_unavailable / unsupported_parameters 会停止自动切换，完整保留错误与相关字段列表，修改要求或重新生成须由用户决定。
+
+本批为 Windows 开发源离线适配：165 项全量回归通过，最终迁移提示与诊断补充后的 12 项定向回归通过。六个 Skill 的 schema 与版本一致性检查通过；未调用真实生成、转写、上传或收费接口。Codex／WorkBuddy 的本批宿主运行、macOS、重新安装、隐式发现和线上业务仍待验；3.2.0 的 WorkBuddy 免验决定只适用于原批次。4.0.0 尚未提交、推送或发布。
+
+以下为历史 3.2.0 的功能与验收记录。
 
 3.2.0 将视频唇形同步默认改为 `sync-3`，人像图片加音频数字人默认改为 `fabric-1.0`，图片、音频、视频和文件理解默认改为 `gemini-4-carbon`。本次明确指定的模型、已有模型列表配置及已开始任务继续优先使用原选择。
 

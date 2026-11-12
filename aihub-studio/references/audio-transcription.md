@@ -2,6 +2,8 @@
 
 `audio-transcribe` 的 `inputs.audios` 接受本地路径和 HTTP(S) URL；路径相对执行 CLI 时的工作文件夹解析，run 保存绝对路径。将原文件直接交给 `plan/run`，由程序在确定实际候选后处理，不由 Agent 固定时长切片。TTS、声音克隆和其他任务的输入契约不变。
 
+指定 `scribe-v2` / `scribe-v3` 时先读并遵守 [ElevenLabs 合同](elevenlabs.md#scribe-转写)，使用一个完整输入；以下分段、转换和合并流程仅适用于 Paraformer。
+
 ```json
 {
   "operation": "audio-transcribe",
@@ -18,7 +20,7 @@
 | `paraformer-v2`（默认） | 单文件 2 GB、12 小时；支持的容器见 `plan.candidates[].transcription.formats` | `channel_id`、`diarization`、`language_hints`、`recognition` |
 | `paraformer-8k-v2` | 同一接口的文件限制；8 kHz、中文 | 不接受 `language_hints`；需要时重采样为 8 kHz，保留声道编号 |
 
-来源：[AIhub Paraformer OpenAPI](https://docs.aihubmax.com/openapi/zh/paraformer-v2.json)，2026-10-28 核对。`cohere-transcribe`、`scribe-v2` 的 AIhub 公开契约没有完整大小/时长限制，本流程明确拒绝，不能借用 Paraformer 的限制；模型目录存在不等于自动转换已实现。
+来源：[AIhub Paraformer OpenAPI](https://docs.aihubmax.com/openapi/zh/paraformer-v2.json)，2026-10-28 核对。`cohere-transcribe` 尚无已核实的自动处理映射，本流程明确拒绝；Scribe 按上述独立合同处理，不能借用 Paraformer 的限制。
 
 本地发送使用既有 `/e/v1/files/upload/base64` 适配器，**20 MiB 是客户端上传上限**，不是所有模型的服务端限制。URL 能整段提交时直接传原 URL，不套用本地上传上限。程序先下载 URL 快照以测量并保留原音频；网络失败在提交前停止，可继续读取。URL 内容应在整个任务期间保持不变。
 

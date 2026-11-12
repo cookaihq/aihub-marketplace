@@ -1,8 +1,8 @@
 ---
 name: aihub-music
 metadata:
-  version: "3.1.0"
-description: v3.1.0｜通过 AIhub 的 lyria-3-pro / elevenlabs-music-v2.5 异步任务或独立的 Gemini 原生 lyria-3-pro-preview 协议生成音乐，保存并核验音频文件。
+  version: "4.0.0"
+description: v4.0.0｜通过 AIhub 的 lyria-3-pro / elevenlabs-music-v2.5 异步任务或独立的 Gemini 原生 lyria-3-pro-preview 协议生成音乐，保存并核验音频文件。
 ---
 
 # AIhub Music
@@ -26,7 +26,7 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 
 保存 `original_request` 和提交提示词 `prompt`，仅用户本次指定型号才填 `model`。其余情况由 CLI 读取 `AIHUB_MUSIC_MODELS`，按已选协议筛选候选并逐一构造参数。Lyria 异步音乐可将图片参考放入 `inputs.images`、负面提示词放入 `requirements.negative_prompt`；原生音乐尚无可验证的额外参数/参考素材转换，不能删除用户要求后提交。先执行 `doctor`、`plan`，核对后 `run`。
 
-显式选择或配置列表含 `elevenlabs-music-v2.5` 时，先读取并遵守 [ElevenLabs 适配、参数与恢复](../../references/elevenlabs.md)。prompt 与 requirements.composition_plan 二选一；计划模式不填写顶层 prompt。歌曲/段落时长用秒，参考音频窗口用毫秒。旧 Lyria 图片参考和 negative_prompt 无直接映射，不能丢弃后提交。费用按实际输出整分钟结算，本轮 60 秒请求实际计 2 分钟。当前仅完成适配准备，API 验收且生产正式可用后才启用已确认的 ElevenLabs 默认值。
+显式选择或配置列表含 `elevenlabs-music-v2.5` 时，先读取并遵守 [ElevenLabs 适配、参数与恢复](../../references/elevenlabs.md)。prompt 与 requirements.composition_plan 二选一；计划模式不填写顶层 prompt。歌曲用整数 music_length_ms，段落用整数 duration_ms，参考音频用 start_ms/end_ms，单位均为毫秒。旧秒制 duration 明确拒绝，须修改原请求后重新 plan，不自动转换或重发。官方 Music 仅 MP3/Opus，PCM/μ-law/A-law 保留 Fal。旧 Lyria 图片参考和 negative_prompt 无直接映射，不能丢弃后提交。费用按实际解码输出分钟向上取整及账单结算。当前仅完成适配准备，API 验收且生产正式可用后才启用已确认的 ElevenLabs 默认值。
 
 ```bash
 AIHUB_PLUGIN_DIR="<实际 Plugin 目录>"

@@ -1,8 +1,8 @@
 ---
 name: aihub-understanding
 metadata:
-  version: "3.0.3"
-description: v3.0.3｜通过 AIhub llm-custom 模型理解图片、音频、视频或文件内容，返回文本结果并支持中断后继续任务。
+  version: "3.0.4"
+description: v3.0.4｜通过 AIhub llm-custom 模型理解图片、音频、视频或文件内容，返回文本结果并支持中断后继续任务。
 ---
 
 # AIhub Understanding

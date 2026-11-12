@@ -1,7 +1,7 @@
 import { AihubmaxClient, ApiError, type LiveModel } from './apiClient.js';
 import { listModelSummaries, resolveEntry, type CatalogEntry } from './catalog.js';
 import type { Media } from './state.js';
-import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, validateElevenLabs } from './elevenlabs.js';
+import { ELEVEN_TTS_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, validateElevenLabs } from './elevenlabs.js';
 
 /**
  * The catalog contains every documented endpoint. This Plugin deliberately
@@ -178,7 +178,7 @@ export function validateGeneration(media: Media, model: string, params: Record<s
   const { entry, catalogModel } = modelEntry(model);
   if (entry.mediaType !== media) throw new Error(`This model belongs to ${entry.mediaType}, not ${media}.`);
   if ('model' in params && params.model !== model) throw new Error('params.model conflicts with --model. Keep model only in --model.');
-  if (ELEVEN_TTS_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL) {
+  if (ELEVEN_TTS_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL || SCRIBE_MODELS.has(model)) {
     if (!entry.requestSchema) throw new Error('The bundled ElevenLabs request contract is missing.');
     validateElevenLabs(model, params, entry.requestSchema);
     return entry.path;
