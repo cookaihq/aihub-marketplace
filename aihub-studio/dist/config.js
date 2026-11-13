@@ -2,7 +2,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { MINIMAX_DEFAULT_VOICE_KEY, validVoiceId } from './speech.js';
+import { MINIMAX_DEFAULT_VOICE_KEY, ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, ELEVEN_CLONE_MODEL_KEY, validVoiceId } from './speech.js';
 export const RESULT_CHECK_DEFAULTS = { enabled: true, provider: 'auto', models: ['gemini-3.8-flash'], sources: {} };
 const BEHAVIOR_DEFAULTS = {
     AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: 'gemini-3.8-flash',
@@ -10,9 +10,10 @@ const BEHAVIOR_DEFAULTS = {
 };
 const BEHAVIOR_KEYS = [...Object.keys(BEHAVIOR_DEFAULTS), 'AIHUB_SUPPORT_URL'];
 const KEYS = ['AIHUB_API_KEY'];
-export const MODEL_KEYS = Object.fromEntries(['image', 'video', 'audio', 'music', 'understanding', 'document'].map(kind => [`aihub-${kind}`, `AIHUB_${kind.toUpperCase()}_MODELS`]));
+export const MODEL_KEYS = Object.fromEntries(['image', 'video', 'audio', 'music', 'understanding'].map(kind => [`aihub-${kind}`, `AIHUB_${kind.toUpperCase()}_MODELS`]));
 const SELECTION_KEYS = ['AIHUB_MODEL_FALLBACK_POLICY', 'AIHUB_MODEL_MAX_ATTEMPTS'];
-const DECLARED_KEYS = new Set([...KEYS, ...Object.values(MODEL_KEYS), ...SELECTION_KEYS, ...BEHAVIOR_KEYS, MINIMAX_DEFAULT_VOICE_KEY]);
+export const ELEVEN_PREFERENCE_KEYS = [ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, ELEVEN_CLONE_MODEL_KEY];
+const DECLARED_KEYS = new Set([...KEYS, ...Object.values(MODEL_KEYS), ...SELECTION_KEYS, ...BEHAVIOR_KEYS, MINIMAX_DEFAULT_VOICE_KEY, ...ELEVEN_PREFERENCE_KEYS]);
 // Stable Plugin manifest name; independent of the installation directory or host Agent.
 const PLUGIN_NAME = 'aihub-studio';
 // Fixed service identity shared by all Skills; configuration cannot redirect it.
@@ -98,7 +99,7 @@ export function resolveConfiguration(options) {
     const sources = {};
     const selectionSources = {};
     const modelKey = skill ? MODEL_KEYS[skill] : undefined;
-    const speechKeys = skill === 'aihub-audio' ? [MINIMAX_DEFAULT_VOICE_KEY] : [];
+    const speechKeys = skill === 'aihub-audio' ? [MINIMAX_DEFAULT_VOICE_KEY, ...ELEVEN_PREFERENCE_KEYS] : [];
     for (const key of [...KEYS, ...(modelKey ? [modelKey] : []), ...SELECTION_KEYS, ...BEHAVIOR_KEYS, ...speechKeys]) {
         for (const layer of layers) {
             if (layer.values[key]?.trim()) {
@@ -128,6 +129,20 @@ export function resolveConfiguration(options) {
     if (speechKeys.length && values[MINIMAX_DEFAULT_VOICE_KEY] && !validVoiceId(values[MINIMAX_DEFAULT_VOICE_KEY])) {
         invalid(MINIMAX_DEFAULT_VOICE_KEY, 'expected_voice_id_without_outer_whitespace_or_control_characters_max_512');
     }
+    if (values[ELEVEN_DEFAULT_VOICE_KEY] && !validVoiceId(values[ELEVEN_DEFAULT_VOICE_KEY]))
+        invalid(ELEVEN_DEFAULT_VOICE_KEY, 'expected_voice_id');
+    if (values[ELEVEN_FAVORITES_KEY]) {
+        try {
+            const ids = JSON.parse(values[ELEVEN_FAVORITES_KEY]);
+            if (!Array.isArray(ids) || ids.length > 2000 || !ids.every(validVoiceId) || new Set(ids).size !== ids.length)
+                throw new Error();
+        }
+        catch {
+            invalid(ELEVEN_FAVORITES_KEY, 'expected_json_array_of_at_most_2000_distinct_voice_ids');
+        }
+    }
+    if (values[ELEVEN_CLONE_MODEL_KEY] && !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(values[ELEVEN_CLONE_MODEL_KEY]))
+        invalid(ELEVEN_CLONE_MODEL_KEY, 'expected_exact_model_id');
     if (!['0', '1'].includes(values.AIHUB_RESULT_CHECK_ENABLED.trim()))
         invalid('AIHUB_RESULT_CHECK_ENABLED', 'expected_0_or_1');
     if (!['auto', 'host', 'aihub'].includes(values.AIHUB_RESULT_CHECK_PROVIDER.trim()))
@@ -218,8 +233,16 @@ export function loadConfig(options) {
     const defaultVoiceId = values[MINIMAX_DEFAULT_VOICE_KEY];
     const voiceSource = selectionSources[MINIMAX_DEFAULT_VOICE_KEY];
     delete selectionSources[MINIMAX_DEFAULT_VOICE_KEY];
+    const elevenSources = Object.fromEntries(ELEVEN_PREFERENCE_KEYS.map(key => [key, selectionSources[key] ?? 'not configured']));
+    for (const key of ELEVEN_PREFERENCE_KEYS)
+        delete selectionSources[key];
     return { skill: options.skill, baseUrl: AIHUB_SERVICE_URL, apiKey: values.AIHUB_API_KEY, sources,
         ...(defaultVoiceId ? { speech: { defaultVoiceId, source: voiceSource } } : {}),
+        ...(options.skill === 'aihub-audio' ? { elevenlabs: {
+                ...(values[ELEVEN_DEFAULT_VOICE_KEY] ? { defaultVoiceId: values[ELEVEN_DEFAULT_VOICE_KEY] } : {}),
+                favoriteVoiceIds: values[ELEVEN_FAVORITES_KEY] ? JSON.parse(values[ELEVEN_FAVORITES_KEY]) : [],
+                ...(values[ELEVEN_CLONE_MODEL_KEY] ? { cloneModel: values[ELEVEN_CLONE_MODEL_KEY] } : {}), sources: elevenSources
+            } } : {}),
         resultCheck: { enabled: values.AIHUB_RESULT_CHECK_ENABLED.trim() === '1', provider: values.AIHUB_RESULT_CHECK_PROVIDER.trim(),
             models: values.AIHUB_RESULT_CHECK_MODELS.split(',').map(item => item.trim()), sources: Object.fromEntries(Object.entries(behaviorSources).filter(([key]) => key.startsWith('AIHUB_RESULT_CHECK_'))) },
         feedback: { threshold: Number(values.AIHUB_ERROR_REPORT_THRESHOLD), ...(values.AIHUB_SUPPORT_URL ? { supportUrl: values.AIHUB_SUPPORT_URL.trim() } : {}),

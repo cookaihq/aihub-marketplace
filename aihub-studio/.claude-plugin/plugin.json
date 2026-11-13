@@ -1,7 +1,7 @@
 {
   "name": "aihub-studio",
   "version": "6.0.0",
-  "description": "AIhub image, video, audio, music, multimodal understanding and document workflows for Claude Code, Codex and WorkBuddy.",
+  "description": "AIhub image, video, audio, music and multimodal understanding workflows for Claude Code, Codex and WorkBuddy.",
   "author": {
     "name": "cookaihq",
     "url": "https://github.com/cookaihq"
@@ -15,7 +15,6 @@
     "video-generation",
     "audio",
     "music",
-    "multimodal-understanding",
-    "document-processing"
+    "multimodal-understanding"
   ]
 }

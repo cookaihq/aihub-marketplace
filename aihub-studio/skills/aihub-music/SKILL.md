@@ -2,7 +2,7 @@
 name: aihub-music
 metadata:
   version: "5.0.0"
-description: v5.0.0｜通过 AIhub 的 elevenlabs-music-v2.5 默认异步任务或独立的 Gemini 原生 lyria-3-pro-preview 协议生成音乐，支持按配置选择 lyria-3-pro，保存并核验音频文件。
+description: v5.0.0｜通过 AIhub 默认使用 Suno 按描述生成歌曲、为已有歌词谱曲演唱，或生成纯音乐与背景配乐；也支持明确选择 ElevenLabs Music 和 Lyria。
 ---
 
 # AIhub Music
@@ -22,11 +22,19 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 ## 凭证配置
 
 
-先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。新任务默认选 `operation=music-async`，没有模型配置时用 `elevenlabs-music-v2.5`。用户选择 Gemini 原生音乐时选 `music-native`，内置型号为 `lyria-3-pro-preview`，不能静默切换协议或用短片段型号替代完整音乐。
+先读取[共用 CLI](../../references/cli.md)、[任务 JSON、模型配置与切换](../../references/model-selection.md)和 [Suno 场景与参数](../../references/suno.md)，保存 original_request，按创作目的选择场景：
 
-保存 `original_request` 和提交提示词 `prompt`，仅用户本次指定型号才填 `model`。其余情况由 CLI 读取 `AIHUB_MUSIC_MODELS`，按已选协议筛选候选并逐一构造参数。Lyria 异步音乐可将图片参考放入 `inputs.images`、负面提示词放入 `requirements.negative_prompt`；原生音乐尚无可验证的额外参数/参考素材转换，不能删除用户要求后提交。先执行 `doctor`、`plan`，核对后 `run`。
+| 场景 | operation | prompt 内容 |
+| --- | --- | --- |
+| 按描述生成歌曲 | music-description | 歌曲主题、风格和人声构想；Suno 自动创作歌词 |
+| 已有歌词谱曲演唱 | music-lyrics | 用户提供的完整歌词原文；不改写、不删减 |
+| 纯音乐／背景配乐 | music-instrumental | 风格、氛围、乐器和使用场景 |
 
-使用 `elevenlabs-music-v2.5` 时，先读取并遵守 [ElevenLabs 参数与恢复](../../references/elevenlabs.md)。Issue #29 合同已随 Gateway v0.9.16 于2026-11-13上线，线上调用沿用既有账号检查、付费授权和任务流程。prompt 与 requirements.composition_plan 二选一；计划模式不填写顶层 prompt，也不传 force_instrumental（包括 false），seed 仅用于计划。歌曲用整数 music_length_ms，段落用整数 duration_ms，参考音频用 start_ms/end_ms，单位均为毫秒。output_format 默认 auto，解析为 mp3_48000_192；sign_with_c2pa 仅支持 auto/MP3，不改变指定格式。显式 timestamps=false 保留，当前可用来源的能力由 Gateway 判断，不删参兜底。旧秒制 duration、Lyria 图片参考及 negative_prompt 无直接映射，须修改原请求后重新 plan，不自动转换或重发。费用按真实输出时长向上整分钟及账单结算；请求时长不保证等于实际输出时长。
+三场景均默认 suno-v6。用户本次指定型号时固定执行；否则已有 AIHUB_MUSIC_MODELS 优先，不把推荐值填入 model 覆盖个人配置。先 doctor、plan，再 run；要求与候选冲突时保留原要求并说明原因，不丢参兜底。目标时长、显式 0/false 与 Mini 限制按 Suno 参考执行，Max 不自动开启。
+
+明确选择 elevenlabs-music-v2.5 时，先读取并遵守[ElevenLabs 参数与恢复](../../references/elevenlabs.md)。描述创作可用 prompt 或 composition_plan；纯音乐使用 force_instrumental=true。已有歌词场景尚无跨模型精确映射时拒绝，不把歌词换成风格描述。Lyria 异步 lyria-3-pro 和 Gemini 原生 lyria-3-pro-preview 保留为描述创作的可选模型；额外要求不能丢弃。旧 music-async / music-native 不再作为新任务场景；已有 run 记录继续保存的候选和协议。
+
+Suno 一次返回一首或两首独立歌曲，分别交付；每首的 url / audio_url 是别名，不重复下载，不为补齐第二首重新生成。
 
 ```bash
 AIHUB_PLUGIN_DIR="<实际 Plugin 目录>"

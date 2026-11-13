@@ -12,7 +12,7 @@ import { reviewTask, DISABLE_CHECK_HINT } from './review.js';
 import { agentDefaults } from './agentDefaults.js';
 import { artifactWarnings, registerOutputs, touchTask, withArtifactContext } from './taskInfo.js';
 
-const SKILLS = ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document'];
+const SKILLS = ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding'];
 const FLAGS: Record<string, string[]> = {
   doctor: [], 'config-check': ['credentials-only', 'plugin-only', 'delete-from', 'delete-fields'], models: ['media', 'keyword'], describe: ['model'],
   'default-skills': ['agent', 'action', 'config-dir'],
@@ -43,7 +43,7 @@ Commands:
   continue --record run.json [--confirm TOKEN] [--wait-seconds 0..600]
   review --record run.json [--provider host|aihub] [--wait-seconds 0..600] [--recheck]
   review-submit --record run.json --review-file JSON --review-token TOKEN
-  models [--media image|video|audio|document|understanding] [--keyword TEXT]
+  models [--media image|video|audio|understanding] [--keyword TEXT]
   describe --model ID
   voices --skill aihub-audio (ElevenLabs catalog, authenticated read; no generation)
   generate --media TYPE --model ID --params-file JSON --output-dir DIR [--wait-seconds 0..600]
@@ -64,7 +64,7 @@ generate defaults to no waiting; resume/task default to 30 seconds. Resume never
 run defaults to data/aihub-studio/ and no waiting. continue resumes the saved plan and may submit
 the next compatible model under its saved fallback policy. --confirm is only for a user's
 explicit approval of the pending model and parameters. plan performs no network requests.
-Optional model configuration: AIHUB_<IMAGE|VIDEO|AUDIO|MUSIC|UNDERSTANDING|DOCUMENT>_MODELS
+Optional model configuration: AIHUB_<IMAGE|VIDEO|AUDIO|MUSIC|UNDERSTANDING>_MODELS
 (ordered comma-separated exact IDs), AIHUB_MODEL_FALLBACK_POLICY=auto|confirm|off|preflight_only,
 AIHUB_MODEL_MAX_ATTEMPTS (positive integer, includes first model). Only AIHUB_API_KEY is required.
 Result checks: AIHUB_RESULT_CHECK_ENABLED=1|0 (default 1), AIHUB_RESULT_CHECK_PROVIDER=auto|host|aihub
@@ -100,7 +100,7 @@ function required(flags: Record<string, string | boolean>, key: string): string 
 }
 function media(flags: Record<string, string | boolean>): Media {
   const value = required(flags, 'media');
-  if (!['image', 'video', 'audio', 'document', 'understanding'].includes(value)) throw new Error('--media must be image, video, audio, document or understanding.');
+  if (!['image', 'video', 'audio', 'understanding'].includes(value)) throw new Error('--media must be image, video, audio or understanding.');
   return value as Media;
 }
 function wait(flags: Record<string, string | boolean>, fallback: number): number {

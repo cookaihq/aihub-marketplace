@@ -2,7 +2,7 @@
 
 Studio 6.0.0 对齐 Gateway Issue #29 的合同，部署基线为 **Gateway v0.9.16（2026-11-13 已上线）**，对应[在线文档](https://docs.aihubmax.com/pages/zh/api-manual/audio-series/elevenlabs/eleven-v4-text-to-speech)已发布。线上任务沿用既有账号检查、付费授权和提交流程；使用其他 Gateway 入口时先核对合同版本。服务端上线与客户端生产业务验收分别记录。
 
-先按[模型选择与恢复](model-selection.md)执行 describe → plan → run。内置 TTS 为 `speech-2.8-hd`，ASR 为 `paraformer-v2`，异步音乐为 `elevenlabs-music-v2.5`；用户显式型号、个人有序列表及保存任务优先。本页不将新增控制写入个人配置。
+先按[模型选择与恢复](model-selection.md)执行 describe → plan → run。内置 TTS 为 `eleven-v4-text-to-speech`，对话为 `eleven-v4-text-to-dialogue`，ASR 为 `paraformer-v2`，三个音乐场景为 `suno-v6`；本页 ElevenLabs Music 需显式或配置选用；用户显式型号、个人有序列表及保存任务优先。本页不将新增控制写入个人配置。
 
 ## 参数迁移
 
@@ -61,7 +61,7 @@ custom 表示支持已有私有音色，也可使用公共音色；普通模型�
 
 ## Music
 
-`music-async` / `elevenlabs-music-v2.5` 的 prompt 与 requirements.composition_plan 严格二选一。prompt 为 1–4100 非空白字符；可选整数 music_length_ms（3000–600000毫秒）及 force_instrumental。省略时长由服务决定，不构造时长默认值。
+`music-description` / `elevenlabs-music-v2.5` 的 prompt 与 requirements.composition_plan 严格二选一。prompt 为 1–4100 非空白字符；可选整数 music_length_ms（3000–600000毫秒）及 force_instrumental。省略时长由服务决定，不构造时长默认值。
 
 计划模式不填顶层 prompt。composition_plan.chunks 按序提供 1–30 段，每段必填 text、duration_ms（整数3000–120000）、positive_styles 字符串数组；总时长3000–600000毫秒。text 可空，最多30行、每行200 Unicode字符；以 `[` 开头时须有1–100字符的完整 `[段落名]`。可选 negative_styles、context_adherence（low/medium/high）。风格列表没有额外50项限制。seed 仅用于计划，整数0–2147483647，不保证复现。计划中显式 force_instrumental（**包括 false**）及非 null music_length_ms 均拒绝。
 
@@ -71,7 +71,7 @@ output_format 默认 **auto**，解析为 mp3_48000_192，完整26项见 describ
 
 ```json
 {
-  "operation": "music-async",
+  "operation": "music-description",
   "original_request": "按两段计划创作纯音乐。",
   "model": "elevenlabs-music-v2.5",
   "requirements": {
@@ -84,7 +84,7 @@ output_format 默认 **auto**，解析为 mp3_48000_192，完整26项见 describ
 }
 ```
 
-旧 Lyria 的 inputs.images / image_urls、negative_prompt 无直接映射；未知字段或未定位段落的 inputs.audios 拒绝。Gemini 原生 music-native 保持独立协议。歌词时间戳、composition_plan、song_metadata 仅在实际返回时保存，不伪造详细结果。
+旧 Lyria 的 inputs.images / image_urls、negative_prompt 无直接映射；未知字段或未定位段落的 inputs.audios 拒绝。明确指定 lyria-3-pro-preview 的描述创作保持 Gemini 原生协议。歌词时间戳、composition_plan、song_metadata 仅在实际返回时保存，不伪造详细结果。
 
 ## Scribe
 

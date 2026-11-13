@@ -1,10 +1,14 @@
 # AIhub Studio Plugin 6.0.0
 
-6.0.0 适配 Gateway Issue #29 的 ElevenLabs Speech、Dialogue、Music 和 Scribe V2 合同。Speech 必须明确 `voice_id`，对话必须逐段明确 `inputs[].voice_id`；语音设置改用嵌套对象。旧 `voice`、平铺设置、Speech `future_text` 和 Scribe V2 `audio_url` 会给出迁移提示，不会自动改写或重发。可告诉 Agent：“按新版合同检查这份音频或音乐请求，只预览迁移计划，保留显式 false 和 0。”详见 [ElevenLabs 使用说明](references/elevenlabs.md)。
+让 Claude Code、Codex、WorkBuddy 或 Hermes 通过 AIhub 生成图片、视频、语音和音乐，理解图片、音频、视频及支持的文件。结果保存在工作文件夹中，并提供文件链接和实际检查结果。
 
-Scribe V2 使用 `source_url` 或本地文件，支持关键词、角色、改写、多声道与实体选项；V3 保持独立合同。音乐新增完整格式及 seed/C2PA 组合校验，完整转写、改写和实体结果按原返回保存。TTS 默认仍为 `speech-2.8-hd`，ASR 为 `paraformer-v2`，异步音乐为 `elevenlabs-music-v2.5`；显式型号及个人模型顺序优先。
+本版单人语音与旁白默认使用 `eleven-v4-text-to-speech`，有序多音色对话默认使用 `eleven-v4-text-to-dialogue`，转写仍用 `paraformer-v2`。音乐提供“按描述生成歌曲”“按已有歌词演唱”“纯音乐／背景音乐”三个场景，均默认 `suno-v6`。静态文生图使用 GPT Image 2.6，图片编辑使用 2.5；按速度或细节要求选择 Flare／Sunburst。显式型号、个人模型顺序和已保存任务继续优先。
 
-**Gateway v0.9.16 及对应文档已于 2026-11-13 上线。** 线上调用沿用既有账号检查、付费授权与任务流程；客户端生产业务尚未验收。Windows 脚本、六个 Skill 规范检查及 Codex 0.167.2 默认沙箱的开发源显式调用已完成离线验证，最终音乐四项复测通过；上线说明更新后，两项音频/音乐正式入口离线计划复测通过。首轮两份音乐验收输入缺少必填 `positive_styles`，保留原失败记录，另用完整输入验证通过；doctor 的 `ffprobe` 因 EPERM 受限。WorkBuddy 本次测试仍待用户确认，因此本机验收尚未全部完成，本批尚未提交发布；macOS、生产生成、重新安装、隐式发现与人工听审未验。`task.usage` 原样展示，其中预扣信息不能当作最终账单。
+新增 **ElevenLabs 预置音色库**：在完整配置中心筛选、试听、选择与收藏，再选择当前项目或全局，点击“保存并使用”同时保存音色和收藏。选择只作为未指定音色的单人语音默认值；对话仍逐段指定音色。ElevenLabs 音色克隆本版只保留空模型占位，不提交克隆请求。移除 `aihub-document`，完整包现含五个 Skill；PDF 转换请另选工具。
+
+本版同时适配 Gateway Issue #29 的 ElevenLabs Speech、Dialogue、Music 与 Scribe V2 合同：语音设置使用嵌套对象，Scribe V2 使用 `source_url` 或本地文件；旧字段给出迁移提示，不自动改写或重发。显式 false、0、完整结果及 `task.usage` 原样保留，预扣信息不当作最终账单。详见 [ElevenLabs 使用说明](references/elevenlabs.md)、[音色库](references/elevenlabs-voices.md)和 [Suno 场景](references/suno.md)。
+
+Gateway v0.9.16 及文档已于 2026-11-13 上线。Windows 整包回归为 188/189，唯一超时用例所在文件串行复测 3/3；UI 回归 40/40，五个 Skill 官方格式与工作区检查通过。Codex 0.167.2 默认沙箱完成九份离线计划、两项预期拒绝及配置中心启动／停止；独立浏览器验证真实目录的筛选、试听、项目／全局保存和手机布局。WorkBuddy 按用户决定本次跳过。沙箱内 ffprobe 的 EPERM 限制仍保留；macOS、重新安装、隐式发现及本批付费生成未验，结果不由服务端上线状态代替。
 
 以下为历史 5.0.0 的功能与验收记录。
 
@@ -94,11 +98,11 @@ Windows 原生 Codex 0.167.1 已通过开发源显式调用、合成配置保存
 
 1.5.0 在 macOS 通过 135 项回归及合成凭证网页保存、原加载器复查。Codex 0.166.0 已通过原生测试 Plugin 安装、业务缺 Key 触发、网页保存与跨轮恢复，默认沙箱保留，启动使用单次命令审批；Claude Code 2.1.317 成功加载完整 Plugin，实际调用被账号额度不足（403）阻断；WorkBuddy 原生窗口因辅助功能权限不可操作，本版会话流程未验证。Windows 原生、真实飞书授权与线上业务仍待验收。
 
-让 Claude Code、Codex、WorkBuddy 或 Hermes 通过 AIhub 帮你生成和编辑图片、制作视频与音频、理解素材内容，或把 PDF 转成可编辑文档。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
+让 Claude Code、Codex、WorkBuddy 或 Hermes 通过 AIhub 帮你生成和编辑图片、制作视频、语音与音乐，理解素材内容。适合已有 AIhub 调用账号、希望直接用对话描述任务的人。结果会保存到你指定的工作文件夹，Agent 会提供文件链接和实际检查结果。
 
 ## 默认使用与提醒
 
-首次在一个会话中调用本 Plugin 的任意 Skill，Agent 会检查自己的全局及当前项目规则是否已明确优先使用对应的六个 Skill。已有等效规则时不询问；缺少时依次提供“设为默认 (推荐) / 本次跳过 / 不再提醒”，同一会话只提示一次，未答复仍继续当前任务。
+首次在一个会话中调用本 Plugin 的任意 Skill，Agent 会检查自己的全局及当前项目规则是否已明确优先使用对应的五个 Skill。已有等效规则时不询问；缺少时依次提供“设为默认 (推荐) / 本次跳过 / 不再提醒”，同一会话只提示一次，未答复仍继续当前任务。
 
 选择“设为默认”后，Agent 直接写入当前 Agent 的全局规则，不再二次确认；完成并回读后，展示实际写入的[完整规则](references/default-skills-rule.md)、文件位置和影响范围。规则仅影响能力适用、且你未指定其他方案的任务，要求实际通过 AIHub 执行；网页或演示文稿中的图片生成等适用子任务也遵循此选择。AIHub 未安装、不可用、失败或能力不适用时，Agent 说明原因；使用其他执行通道需要你对本任务的明确授权，其他不受影响的子任务继续执行。普通对话、代码、搜索、图表、截图和通用 Office 创作不强行转交，辅助文件处理与按 Skill 流程进行的 Agent 结果检查仍可使用适用工具。相同规则文件被多个 Agent 共用时会在选择前说明；写入成功与新会话实际加载会分别报告。
 
@@ -110,7 +114,7 @@ Windows 原生 Codex 0.167.1 已通过开发源显式调用、合成配置保存
 
 > 重新开启 aihub-studio 的默认使用提醒。
 
-偏好自动读取并保存到运行用户的 `~/.config/aihub-studio/settings.json`，按 Agent 类型和实际配置目录分别记录；同一 Plugin 的六个 Skill 与后续版本共用，另一个 Plugin 独立。这个偏好不从环境变量或 `.env` 读取。文件缺失默认开启，检查不创建文件；只有你要求关闭或重新开启才保存。禁用本次全局配置会一起跳过提醒检查并禁止保存。检查不需要 API key、不联网；未知宿主或检查失败会说明情况并继续原任务。
+偏好自动读取并保存到运行用户的 `~/.config/aihub-studio/settings.json`，按 Agent 类型和实际配置目录分别记录；同一 Plugin 的五个 Skill 与后续版本共用，另一个 Plugin 独立。这个偏好不从环境变量或 `.env` 读取。文件缺失默认开启，检查不创建文件；只有你要求关闭或重新开启才保存。禁用本次全局配置会一起跳过提醒检查并禁止保存。检查不需要 API key、不联网；未知宿主或检查失败会说明情况并继续原任务。
 
 本版提供 Codex、Claude Code、WorkBuddy、Hermes 的规则入口和提醒流程。Hermes 使用当前 Profile 的 SOUL.md；提醒选择按实际 HERMES_HOME 隔离。AIhub 既有业务运行支持范围不因这项检查扩大。macOS/Linux 按实际运行用户目录保存；Windows 原生使用 Node 运行时用户目录下的 `.config/aihub-studio/settings.json`，WSL 使用 Linux 用户目录，两者不自动共享。宿主真实会话加载须单独核验。
 
@@ -123,23 +127,28 @@ Windows 原生 Codex 0.167.1 已通过开发源显式调用、合成配置保存
 | 把文字读成语音、生成多音色对话、把录音转成文字 | `aihub-audio` | 语音文件，或转写文本及服务返回的时间戳等信息 |
 | 按描述生成音乐 | `aihub-music` | 音乐文件 |
 | 提问图片、音频、视频或文件中的内容 | `aihub-understanding` | 文字回答及文本文件 |
-| 将 PDF 转为 Markdown、LaTeX 或 Word（DOCX） | `aihub-document` | 包含转换结果的 ZIP 压缩包 |
 
 目前不提供图片增强、材质贴图、人物档案创建、视频高清放大、插帧、Sora 角色创建、仅凭文字生成数字人、字幕制作或纯文本聊天入口。视频的严格首尾帧控制、保留原片的编辑与续写、精确动作控制和转场尚未验证，不能保证达到这些效果。
 
-你可以本次指定模型，也可以为每个 Skill 配置按顺序尝试的模型。没有模型配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；常规任务选 Flare，明确细节优先且速度次要时选 Sunburst。视频按文字、明确首帧、参考素材选择对应的 Seedance 2.5 型号；人像与音频驱动使用 Fabric 1.0，视频唇形同步使用 Sync 3；素材理解使用 Gemini 4 Carbon，并检查当前账号的对应媒体能力。候选必须符合输入和输出要求，切换规则见下文。Flare 与 Sunburst 的速度和细节差异尚无严格对照实测，不能保证固定提升。
+你可以本次指定模型，也可以为每个 Skill 配置按顺序尝试的模型。没有模型配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；常规任务选 Flare，明确细节优先且速度次要时选 Sunburst。视频按文字、明确首帧、参考素材选择对应的 Seedance 2.5 型号；人像与音频驱动使用 Fabric 1.0，视频唇形同步使用 Sync 3；素材理解使用 Gemini 4 Carbon，并检查当前账号的对应媒体能力。语音和旁白默认 Eleven Speech，对话默认 Eleven Dialogue；音乐三个场景均默认 Suno。候选必须符合输入和输出要求，切换规则见下文。Flare 与 Sunburst 的速度和细节差异尚无严格对照实测，不能保证固定提升。
 
 可以把这些话复制给 Agent：
 
-> 用 speech-2.8-hd 朗读下面的文字：欢迎来到今天的节目。
+> 用 aihub-audio 朗读下面的文字：欢迎来到今天的节目。若尚未设置音色，打开 ElevenLabs 预置音色库让我选择。
 
-> 用 aihub-audio 的 audio-dialogue 合成这组对话，按我提供的已有音色 ID 和台词顺序执行，保留时间戳；先预览计划并核对服务是否已支持新合同。
+> 用 aihub-audio 按我提供的台词顺序和音色 ID 生成多音色对话，保留服务返回的时间戳。
 
-> 用 elevenlabs-music-v2.5 创作 30 秒柔和钢琴纯音乐，保存音频。
+> 用 aihub-music 生成柔和钢琴背景音乐，使用纯音乐场景，保存返回的曲目。
 
 > 检查上一次 ElevenLabs 任务并继续下载；使用原任务 ID。
 
 ElevenLabs 音乐按实际输出整分钟向上取整计费；本轮 60 秒请求实际计 2 分钟，请求时长不能用来承诺最终费用。音频按实际文件格式保存，PCM 请求可能得到 WAV；语音时间戳里的空段会完整保留。
+
+## ElevenLabs 预置音色库
+
+> 用 aihub-audio 打开当前项目的 ElevenLabs 预置音色库，给我 HTML 页面链接。我想筛选、试听和收藏，再选择保存到当前项目或全局。
+
+音色库位于完整配置中心。星标和选择在点击保存前保留为页面草稿；“保存并使用”会把所选音色与收藏一起写入选中的配置文件。“保存收藏”只更新收藏。项目收藏整体覆盖全局，空列表表示此项目没有收藏。全局选择可能被当前项目或进程配置覆盖，页面显示实际来源。样音使用已有预览，不提交语音生成。参见 [音色库说明](references/elevenlabs-voices.md)。
 
 ## 大录音转文字
 
@@ -185,7 +194,7 @@ AIhub 通过 CNB 与 GitHub 来源分发。请按当前使用的 Agent 选择对
 
 ### Hermes：通过原生 Plugin 管理安装
 
-> 请在当前 Hermes Profile 安装完整 aihub-studio Plugin。先读仓库及 aihub-studio 的 README，通过 Hermes 原生安装入口使用 https://github.com/cookaihq/aihub-marketplace.git#aihub-studio；网络故障时换为 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git#aihub-studio 的同一版本。保留已有设置和本地修改，启用后核对六个 Skill。显式加载 aihub-studio:aihub-image，运行本机配置检查，分别报告发现、执行与业务请求结果。缺 Key 时使用完整 Setup AIHub 4.1.0 或更新版，不单独复制 Skill 文件。
+> 请在当前 Hermes Profile 安装完整 aihub-studio Plugin。先读仓库及 aihub-studio 的 README，通过 Hermes 原生安装入口使用 https://github.com/cookaihq/aihub-marketplace.git#aihub-studio；网络故障时换为 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git#aihub-studio 的同一版本。保留已有设置和本地修改，启用后核对五个 Skill。显式加载 aihub-studio:aihub-image，运行本机配置检查，分别报告发现、执行与业务请求结果。缺 Key 时使用完整 Setup AIHub 4.1.0 或更新版，不单独复制 Skill 文件。
 
 固定版本时，让 Agent 将已发布的 `aihub-studio/v2.1.0` tag 解析为完整 40 位提交 SHA，再传给安装器的 `--ref`；不能直接传 tag 名。未固定版本的安装可先检查 `hermes plugins check-updates`，你要求更新后由原生 `hermes plugins update aihub-studio` 更新完整包。固定版本不会随普通更新移动；更换版本时确认新提交，再由原生安装器使用同一来源、`--force --ref` 替换。当前 Profile 的安装、显式加载与自然请求选择分别核对；[Profile 与默认规则](references/default-skills.md#hermes-入口与-profile)说明实际目录。业务配置仍使用原有 `.config/aihub-studio/`，不会自动搬入 Profile。
 
@@ -205,7 +214,7 @@ WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套�
 
 ## 从旧 AIhub Plugin 迁移
 
-1.0.0 将安装对象从 `aihub@plugin-marketplace` 改为 **`aihub-studio@aihub-marketplace`**。新市场与旧市场是两个独立安装来源；只更新旧市场中的 `aihub` 不会换成新名称。先核对并准备下文的新配置，再按上面当前 Agent 对应的安装说明安装 AIhub Studio；随后停用旧 `aihub`，打开新会话，核对实际加载的 Plugin 身份、版本与六个 Skill 的来源，再验证调用。确认新版本可用后才卸载旧对象，不自动删除其配置。保留旧市场中的其他 Plugin；不能在两份同名 Skill 都启用时，把调用成功认定为新版通过。
+1.0.0 将安装对象从 `aihub@plugin-marketplace` 改为 **`aihub-studio@aihub-marketplace`**。新市场与旧市场是两个独立安装来源；只更新旧市场中的 `aihub` 不会换成新名称。先核对并准备下文的新配置，再按上面当前 Agent 对应的安装说明安装 AIhub Studio；随后停用旧 `aihub`，打开新会话，核对实际加载的 Plugin 身份、版本与五个 Skill 的来源，再验证调用。确认新版本可用后才卸载旧对象，不自动删除其配置。保留旧市场中的其他 Plugin；不能在两份同名 Skill 都启用时，把调用成功认定为新版通过。
 
 该次迁移保留六个 `aihub-*` Skill 名、`AIHUB_*` 配置字段与既有任务记录；3.0.0 的配置来源变化见下文。**Plugin 个人全局配置目录由 `~/.config/aihub/` 改为 `~/.config/aihub-studio/`；新版本不自动读取或搬迁旧 Plugin 目录。** 如果密钥只保存在旧目录，需要确认迁移或重新配置后才能使用新版本。当前 Skill 的 `~/.config/aihub-image/.env` 等普通 Skill 文件仍可作为末层来源。
 
@@ -239,7 +248,7 @@ WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套�
 
 ### 从 2.x 升级的配置变化
 
-3.0.0 新增项目 `.env.local.aihub-studio` 和 `.env.aihub-studio`，六个 Skill 共用。项目 `.env.<skill-name>` 与全局 `~/.config/aihub-studio/.env.<skill-name>` 不再读取；若 Key 只在这两处，升级后需要重新配置。Skill 子目录的 `.env.local/.env`、普通 Skill 的 `~/.config/<skill-name>/.env` 和普通项目 `.env.local/.env` 仍保留。
+3.0.0 新增项目 `.env.local.aihub-studio` 和 `.env.aihub-studio`，五个 Skill 共用。项目 `.env.<skill-name>` 与全局 `~/.config/aihub-studio/.env.<skill-name>` 不再读取；若 Key 只在这两处，升级后需要重新配置。Skill 子目录的 `.env.local/.env`、普通 Skill 的 `~/.config/<skill-name>/.env` 和普通项目 `.env.local/.env` 仍保留。
 
 可对 Agent 说：“检查本次升级的配置来源，隐藏密钥，列出旧位置及受支持目标，等我确认后再迁移，保留原文件。”共享项目配置可选择 `.env.local.aihub-studio`，独立全局配置可选择 Skill 子目录；程序和安装过程都不会自动迁移。普通 `.env.aihub-studio` 可编辑非密钥设置和修复已有密钥；新增项目密钥使用上述本地文件，写前须被 Git 忽略且未跟踪。
 
@@ -247,28 +256,28 @@ WorkBuddy 使用 **专家·技能·连接器 → 顶部“技能” → “套�
 
 修复按每个字段的实际来源确定原文件；来源为进程环境变量时，在原注入位置修复，页面只读展示其状态。
 
-下面以图片 Skill `aihub-image` 为例，越靠前越优先。视频、音频、音乐、素材理解和文档分别将全局 Skill 子目录名和普通 Skill 回退目录名中的 `aihub-image` 换成 `aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding`、`aihub-document`；Plugin 目录始终叫 `aihub-studio`。
+下面以图片 Skill `aihub-image` 为例，越靠前越优先。视频、音频、音乐和素材理解分别将全局 Skill 子目录名和普通 Skill 回退目录名中的 `aihub-image` 换成 `aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding`；Plugin 目录始终叫 `aihub-studio`。
 
 | 顺序 | 位置 | 作用 |
 | --- | --- | --- |
 | 1 | 运行程序时的环境变量 | 当前进程已有或本次传入的设置 |
-| 2 | 工作文件夹的 `.env.local.aihub-studio` | 当前项目内六个 Skill 共用的本地优先配置 |
-| 3 | 工作文件夹的 `.env.aihub-studio` | 当前项目内六个 Skill 共用 |
+| 2 | 工作文件夹的 `.env.local.aihub-studio` | 当前项目内五个 Skill 共用的本地优先配置 |
+| 3 | 工作文件夹的 `.env.aihub-studio` | 当前项目内五个 Skill 共用 |
 | 4 | 工作文件夹的 `.env.local` | 当前项目内读取同名字段的 Skill 共用 |
 | 5 | 工作文件夹的 `.env` | 当前项目的补充配置 |
 | 6 | `~/.config/aihub-studio/aihub-image/.env.local` | 图片 Skill 子目录中的优先覆盖 |
 | 7 | `~/.config/aihub-studio/aihub-image/.env` | 图片 Skill 子目录中的配置 |
-| 8 | `~/.config/aihub-studio/.env.local` | 六个 Skill 共用的优先覆盖 |
-| 9 | `~/.config/aihub-studio/.env` | 首次新增配置的默认保存位置，六个 Skill 共用 |
+| 8 | `~/.config/aihub-studio/.env.local` | 五个 Skill 共用的优先覆盖 |
+| 9 | `~/.config/aihub-studio/.env` | 首次新增配置的默认保存位置，五个 Skill 共用 |
 | 10 | `~/.config/aihub-image/.env` | 普通图片 Skill 的配置，仅补齐前面各层缺失或为空的项 |
 
-只需要图片 Skill 使用不同全局设置时，可让 Agent 协助使用 `~/.config/aihub-studio/aihub-image/.env`；需要更高优先级时使用该子目录的 `.env.local`。无需预先创建六个子目录或复制相同密钥。每次只读取当前 Skill 的专用文件、Plugin 共享文件和当前 Skill 的普通全局 `.env`，不读取普通 Skill 目录的 `.env.local`，也不扫描其他 Skill、旧产品别名目录或 `.env.backup` 等文件。
+只需要图片 Skill 使用不同全局设置时，可让 Agent 协助使用 `~/.config/aihub-studio/aihub-image/.env`；需要更高优先级时使用该子目录的 `.env.local`。无需预先创建五个子目录或复制相同密钥。每次只读取当前 Skill 的专用文件、Plugin 共享文件和当前 Skill 的普通全局 `.env`，不读取普通 Skill 目录的 `.env.local`，也不扫描其他 Skill、旧产品别名目录或 `.env.backup` 等文件。
 
 **密钥及业务选项按字段取首个非空值。** 子目录不存在、目录为空、文件缺失或某项为空时，继续向下查找；Plugin 目录存在或已填好一项，也不阻止其他缺项读取第 10 层。文件存在但无法读取时会报错，所有来源都没有密钥就提示配置。服务地址始终固定，环境变量或文件中的旧 `AIHUB_BASE_URL` 被忽略，原文件保持不变。
 
 “工作文件夹”是 **Agent 实际执行任务的文件夹**，不是 Plugin 安装目录。程序不向父文件夹搜索项目配置。个人全局配置自动读取，但环境变量和当前工作文件夹中的配置仍优先；全局文件不随工作文件夹切换而改变。
 
-没有具体业务 Skill 时，配置检查可只查看工作文件夹的 `.env.local.aihub-studio`、`.env.aihub-studio`、`.env.local`、`.env` 与 Plugin 共享全局 `.env.local/.env`，不假借某个 Skill 或读取其专用层。这不代表六个 Skill 已全部验证。清除选定字段前可以只读预览清除后是否回退到其他来源；不会为预览临时修改文件。本机凭证检查无需 ffprobe，也不发线上鉴权请求。
+没有具体业务 Skill 时，配置检查可只查看工作文件夹的 `.env.local.aihub-studio`、`.env.aihub-studio`、`.env.local`、`.env` 与 Plugin 共享全局 `.env.local/.env`，不假借某个 Skill 或读取其专用层。这不代表五个 Skill 已全部验证。清除选定字段前可以只读预览清除后是否回退到其他来源；不会为预览临时修改文件。本机凭证检查无需 ffprobe，也不发线上鉴权请求。
 
 | 实际运行环境 | Plugin 共用全局配置文件 | 普通 Skill 回退文件，以图片为例 |
 | --- | --- | --- |
@@ -399,11 +408,10 @@ Markdown 详情现在显示标题、强调、列表、表格和文档同目录�
 | --- | --- |
 | 用 aihub-image 编辑我提供的 product.png，把背景改成浅灰色，尽量保留产品外观；细节优先，不赶时间。 | 编辑后的图片；精确像素尺寸和遮罩外逐像素不变尚未验证 |
 | 用 aihub-video 把我提供的 landscape.png 作为首帧，生成 5 秒、720p 的视频，让镜头缓慢向前移动。 | 视频文件及实际检查说明；Seedance 2.5 的真实生成效果尚未完成验证 |
-| 用 aihub-audio 把“欢迎收听今天的节目”读成中文语音，使用 speech-2.8-hd，保存音频并告诉我文件位置。 | 语音文件和文件检查结果 |
+| 用 aihub-audio 把“欢迎收听今天的节目”读成中文语音，使用我已保存的默认音色，保存音频并告诉我文件位置。 | 语音文件和文件检查结果 |
 | 用 aihub-audio 把我提供的 interview.mp3 转成文字，保留服务返回的时间戳，并给我结果文件。 | 转写文字和保存结构化结果的 JSON 文件；是否含时间戳以服务返回内容为准 |
-| 用 aihub-music 生成一段轻快的钢琴背景音乐，使用 lyria-3-pro，保存到当前项目并给我音频链接。 | 音乐文件；可播放性检查与实际试听结果分别说明 |
+| 用 aihub-music 生成一段轻快的钢琴背景音乐，使用纯音乐场景，保存到当前项目并给我音频链接。 | 音乐文件；可播放性检查与实际试听结果分别说明 |
 | 用 aihub-understanding 描述我提供的 photo.jpg 中有哪些物体及其位置，并把回答保存为文本文件。 | 文字回答和文本文件路径 |
-| 用 aihub-document 把我提供的 report.pdf 转成 Markdown，返回转换结果包；请先读取 PDF 确认页数，无法确定时再问我。 | ZIP 文档包；程序检查包的非空与 ZIP 文件签名，不保证包内文档内容完整 |
 
 ## 任务中断和结果保存
 
@@ -418,13 +426,13 @@ Markdown 详情现在显示标题、强调、列表、表格和文档同目录�
 - **Gemini 原生音乐没有可查询的任务编号。** 新流程会保存 run 和返回音频，但提交结果不明时不能据此找回远端结果或自动重发；直接原生命令也保存任务基本信息和结果记录。`lyria-3-pro` 则使用普通异步任务流程。
 - **记录和结果由你保留。** 程序不会自动清理任务文件夹。删除记录会失去该记录提供的恢复入口；记录可能包含任务内容和素材链接，分享前请检查。文件不会写入 Plugin 安装目录。
 
-文件交付阶段检查非空、类型及能否解析，PDF 包检查 ZIP 签名。开启结果检查后，另读实际媒体或转换正文，并按原素材核对。`review.json` 保存检查结论与证据；继续任务会复用已完成的检查。它不等于完整播放、逐帧检查或内容审核，实际覆盖范围以报告为准。
+文件交付阶段检查非空、类型及能否解析。开启结果检查后，另读实际媒体内容，并按原素材核对。`review.json` 保存检查结论与证据；继续任务会复用已完成的检查。它不等于完整播放、逐帧检查或内容审核，实际覆盖范围以报告为准。
 
 ## 遇到问题时，可以这样问
 
 | 遇到的问题 | 发给 Agent 的话 |
 | --- | --- |
-| 插件市场找不到 AIhub，或安装后找不到 Skill | 请先确认使用的是 GitHub 还是 CNB，核对该来源是否已发布 aihub-studio、是否安装到当前 Agent、六个 Skill 是否完整，以及是否需要新会话；区分尚未发布或同步与本机安装问题。 |
+| 插件市场找不到 AIhub，或安装后找不到 Skill | 请先确认使用的是 GitHub 还是 CNB，核对该来源是否已发布 aihub-studio、是否安装到当前 Agent、五个 Skill 是否完整，以及是否需要新会话；区分尚未发布或同步与本机安装问题。 |
 | WorkBuddy 找不到“添加市场”按钮 | 请在回复中展示随包的添加市场截图，指明“技能 → 套件 → 市场名称右侧的＋”；“添加市场”是点击后的窗口标题。界面不同时先核对当前页面和版本。 |
 | WorkBuddy 查询到空插件列表，或出现新的 `.codebuddy` 目录 | 停止另起 CodeBuddy CLI，按随包的 WorkBuddy 安装说明从原生套件管理查看市场和安装结果；保留已有目录及配置。仅补配置目录环境变量不能阻止旧版 CLI 创建诊断目录。 |
 | 想用 CNB，但已添加 GitHub 的同名插件市场 | 请检查 aihub-marketplace 当前来源，说明切换到 CNB 的方式及对已安装插件的影响，保留我的插件和设置。 |
@@ -438,7 +446,7 @@ Markdown 详情现在显示标题、强调、列表、表格和文档同目录�
 
 ## 更新
 
-AIhub Studio 按完整 Plugin 更新，六个 Skill 会一起更新。更新对象是 `aihub-studio@aihub-marketplace`；从旧 `aihub@plugin-marketplace` 切换时按上面的迁移步骤操作。更新通过你当前使用的 Agent 的插件管理功能进行，读取当前已配置的 GitHub 或 CNB 来源；WorkBuddy 的查询和更新继续遵循 [WorkBuddy 安装说明](references/workbuddy-install.md)，沿用同一宿主配置目录。从 CNB 安装时，需要该版本已同步到 CNB 才能取得。本 Plugin 不带独立 Skill 的自动检查更新脚本，也不读取 `AUTO_UPDATE_CHECK` 开关。是否自动更新取决于宿主提供的功能和设置。
+AIhub Studio 按完整 Plugin 更新，五个 Skill 会一起更新。更新对象是 `aihub-studio@aihub-marketplace`；从旧 `aihub@plugin-marketplace` 切换时按上面的迁移步骤操作。更新通过你当前使用的 Agent 的插件管理功能进行，读取当前已配置的 GitHub 或 CNB 来源；WorkBuddy 的查询和更新继续遵循 [WorkBuddy 安装说明](references/workbuddy-install.md)，沿用同一宿主配置目录。从 CNB 安装时，需要该版本已同步到 CNB 才能取得。本 Plugin 不带独立 Skill 的自动检查更新脚本，也不读取 `AUTO_UPDATE_CHECK` 开关。是否自动更新取决于宿主提供的功能和设置。
 
 想了解新版时可以说：
 
@@ -446,7 +454,7 @@ AIhub Studio 按完整 Plugin 更新，六个 Skill 会一起更新。更新对�
 
 决定更新后可以说：
 
-> 请把完整 AIhub Studio Plugin 更新到当前可用版本，保留我的个人全局配置、项目配置、任务记录和结果文件。完成后检查六个 Skill 能否发现和调用；如需新会话，请指导我操作。
+> 请把完整 AIhub Studio Plugin 更新到当前可用版本，保留我的个人全局配置、项目配置、任务记录和结果文件。完成后检查五个 Skill 能否发现和调用；如需新会话，请指导我操作。
 
 检查更新与提交生成请求是两件事，不需要为检查更新生成图片或其他素材。版本变更见随包的 [更新记录](CHANGELOG.md)；需要进一步诊断时，可让 Agent 参考 [配置与任务恢复说明](references/cli.md)。
 

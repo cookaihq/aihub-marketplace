@@ -1,6 +1,7 @@
 import { ApiError } from './apiClient.js';
 import { listModelSummaries, resolveEntry } from './catalog.js';
 import { ELEVEN_AUDIO_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, validateElevenLabs, elevenMigration } from './elevenlabs.js';
+import { SUNO_MODELS, SUNO_DEFAULT_MODEL, validateSuno } from './suno.js';
 /**
  * The catalog contains every documented endpoint. This Plugin deliberately
  * exposes the selected task scope instead of treating every media entry as a
@@ -20,8 +21,8 @@ const EXCLUDED_MODELS = {
     'fabric-1.0-text': 'Text-driven avatar video (C3) is outside the selected digital-human scope.',
     'live-avatar': 'Prompt-driven avatar video is outside the selected digital-human scope.',
     'kling-video-create-voice': 'Voice creation is outside the selected media workflows.',
-    'voice-clone': 'Voice cloning has been removed from aihub-audio.',
-    'minimax-voice-clone': 'Voice cloning has been removed from aihub-audio.',
+    'voice-clone': 'Only an unconfigured ElevenLabs cloning placeholder is available; no cloning API is enabled.',
+    'minimax-voice-clone': 'Only an unconfigured ElevenLabs cloning placeholder is available; no cloning API is enabled.',
 };
 export const IMAGE_DEFAULT_MODELS = {
     generation: ['gpt-image-2.6-flare', 'gpt-image-2.6-sunburst'],
@@ -33,8 +34,7 @@ export const PREFERRED_MODELS = {
         'seedance-2.5-text-to-video', 'seedance-2.5-image-to-video',
         'seedance-2.5-reference-to-video',
     ],
-    audio: ['speech-2.8-hd', 'paraformer-v2', ELEVEN_MUSIC_MODEL],
-    document: ['doc2x-v3'],
+    audio: ['eleven-v4-text-to-speech', 'eleven-v4-text-to-dialogue', 'paraformer-v2', SUNO_DEFAULT_MODEL],
     understanding: ['gemini-4-carbon'],
 };
 /** Built-in C1/C2 choices; explicit requests and configured lists take priority. */
@@ -86,8 +86,6 @@ function capabilityForModel(model, media) {
         return 'D1 text-to-dialogue (ordered text/voice inputs)';
     if (media === 'audio')
         return 'D1 TTS/music';
-    if (media === 'document')
-        return 'E2';
     return 'D (legacy audio workflow)';
 }
 function supported(model, entry) {
@@ -95,7 +93,7 @@ function supported(model, entry) {
         return false;
     if (entry.mediaType === 'video' && !VIDEO_SCOPE_MODELS.has(model))
         return false;
-    return ['image', 'video', 'document'].includes(entry.mediaType || '') ||
+    return ['image', 'video'].includes(entry.mediaType || '') ||
         entry.mediaType === 'audio';
 }
 export function modelEntry(model) {
@@ -157,9 +155,7 @@ export async function models(client, media, keyword) {
                     ? VIDEO_DEFAULT_SET.has(id)
                     : found.entry.mediaType === 'audio'
                         ? PREFERRED_MODELS.audio.includes(id)
-                        : found.entry.mediaType === 'document'
-                            ? PREFERRED_MODELS.document.includes(id)
-                            : false;
+                        : false;
             rows.push({ model: id, media: found.entry.mediaType, title: found.entry.title, catalog_model: found.catalogModel, preferred,
                 ...(id === 'fabric-1.0' ? { available_resolutions: ['480p', '720p'].filter(resolution => generationModelAvailable(live, id, { resolution })) } : {}),
                 ...(found.entry.mediaType === 'image' && preferred ? {
@@ -168,8 +164,7 @@ export async function models(client, media, keyword) {
                 } : {}),
                 default: (found.entry.mediaType === 'image' && (id === IMAGE_DEFAULT_MODELS.generation[0] || id === IMAGE_DEFAULT_MODELS.edit[0])) ||
                     (found.entry.mediaType === 'video' && VIDEO_DEFAULT_SET.has(id)) ||
-                    (found.entry.mediaType === 'audio' && PREFERRED_MODELS.audio.includes(id)) ||
-                    (found.entry.mediaType === 'document' && id === 'doc2x-v3') });
+                    (found.entry.mediaType === 'audio' && PREFERRED_MODELS.audio.includes(id)) });
         }
         return { status: 'ok', availability_known: true, models: rows, catalog_only: catalog.filter(row => !mapped.has(row.model)),
             preferred_models: media === 'video' ? [...VIDEO_DEFAULT_SET] : media ? (PREFERRED_MODELS[media] ?? []) : { ...PREFERRED_MODELS, video: [...VIDEO_DEFAULT_SET] },
@@ -201,6 +196,10 @@ export function validateGeneration(media, model, params) {
         throw new Error(`This model belongs to ${entry.mediaType}, not ${media}.`);
     if ('model' in params && params.model !== model)
         throw new Error('params.model conflicts with --model. Keep model only in --model.');
+    if (SUNO_MODELS.has(model)) {
+        validateSuno(model, params);
+        return entry.path;
+    }
     if (ELEVEN_AUDIO_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL || SCRIBE_MODELS.has(model)) {
         if (!entry.requestSchema)
             throw new Error('The bundled ElevenLabs request contract is missing.');

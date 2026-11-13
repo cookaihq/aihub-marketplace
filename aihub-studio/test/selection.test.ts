@@ -79,8 +79,8 @@ test('every candidate is independently validated without dropping inputs or lowe
 test('unknown mappings, protocol changes and raw local paths are not silently accepted', () => {
   const unknown = selectionPlan(cfg('aihub-image', ['gpt-image-2']), { operation: 'image-generate', original_request: 'cat', prompt: 'cat' });
   assert.match(unknown.candidates[0]?.rejection ?? '', /verified/);
-  const music = selectionPlan(cfg('aihub-music', ['lyria-3-pro-preview', 'lyria-3-pro']), { operation: 'music-async', original_request: 'music', prompt: 'music' });
-  assert.deepEqual(music.candidates.map(c => c.model), ['lyria-3-pro']);
+  const music = selectionPlan(cfg('aihub-music', ['lyria-3-pro-preview', 'lyria-3-pro']), { operation: 'music-description', original_request: 'music', prompt: 'music' });
+  assert.deepEqual(music.candidates.map(c => c.model), ['lyria-3-pro-preview', 'lyria-3-pro']);
   assert.throws(() => selectionPlan(cfg('aihub-image'), { operation: 'image-edit', original_request: 'edit', prompt: 'edit', inputs: { images: ['/local/image.png'] } }), /remote HTTP/);
 });
 

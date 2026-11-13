@@ -4,10 +4,10 @@ from importlib import import_module
 def fields(field):
     fields = [
         field("AIHUB_API_KEY", "AIhub API Key", "服务连接", sensitive=True, required=True,
-              help="用于调用 AIhub 创作与文档服务。",
+              help="用于调用 AIhub 多媒体创作与理解服务。",
               clear_help="移除本页标明文件中的显式值；可能回退到下一层配置。缺少密钥时下次任务需先补齐。"),
     ]
-    for skill in ("image", "video", "audio", "music", "understanding", "document"):
+    for skill in ("image", "video", "audio", "music", "understanding"):
         module = import_module(__package__ + '.skills.aihub-' + skill + '.configuration')
         fields.extend(module.fields(field))
     fields += [

@@ -50,7 +50,7 @@ export function withAuxiliaryOutputs(action) {
 export function artifactWarnings() { return execution.getStore()?.warnings ?? []; }
 export function taskTitle(skill, secrets = []) {
     const names = { 'aihub-image': '图片生成', 'aihub-video': '视频生成', 'aihub-audio': '音频任务',
-        'aihub-music': '音乐生成', 'aihub-understanding': '多模态分析', 'aihub-document': '文档转换' };
+        'aihub-music': '音乐生成', 'aihub-understanding': '多模态分析' };
     const value = (execution.getStore()?.name ?? names[skill] ?? skill).normalize('NFKC').trim();
     if (sanitized(value, secrets) !== value || /https?:\/\//i.test(value))
         throw new Error('Task name must not contain credentials or URLs.');

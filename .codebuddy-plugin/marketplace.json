@@ -1,6 +1,6 @@
 {
   "name": "aihub-marketplace",
-  "description": "AIhub Studio 创作与文档处理、tikin Social 社交媒体数据与分析。",
+  "description": "AIhub Studio 多媒体创作与理解、tikin Social 社交媒体数据与分析。",
   "owner": {
     "name": "cookaihq"
   },
@@ -9,7 +9,7 @@
       "name": "aihub-studio",
       "source": "./aihub-studio",
       "version": "6.0.0",
-      "description": "AIhub 图片、视频、音频、音乐、多模态理解和文档处理，包含 6 个 Skill。",
+      "description": "AIhub 图片、视频、音频、音乐和多模态理解，包含 5 个 Skill。",
       "author": {
         "name": "cookaihq"
       },

@@ -6,6 +6,7 @@ import { credentialId, sanitized } from './config.js';
 import { checkMediaTools, downloadAssets, downloadJsonAssets, validateLocalMedia } from './download.js';
 import { validateGeneration, generationModelAvailable } from './models.js';
 import { speechParameters } from './speech.js';
+import { SUNO_MODELS, sunoParameters } from './suno.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { UPLOAD_MAX_BYTES } from './audioMedia.js';
 import { transcriptText } from './transcript.js';
@@ -99,11 +100,18 @@ export function result(job, record, statusOverride) {
         ? sub.task.error ?? job.last_error
         : sub.state === 'submitting' ? 'The process stopped before submission was confirmed. Do not resubmit automatically.' : sub.error;
     const metadata = sub.state === 'known' ? resultMetadata(sub.task, job.model) : undefined;
-    const showUsage = ELEVEN_AUDIO_MODELS.has(job.model) || job.model === ELEVEN_MUSIC_MODEL || job.model === 'scribe-v2';
+    const showUsage = ELEVEN_AUDIO_MODELS.has(job.model) || job.model === ELEVEN_MUSIC_MODEL || job.model === 'scribe-v2' || SUNO_MODELS.has(job.model);
+    const tracks = SUNO_MODELS.has(job.model) && sub.state === 'known' ? (sub.task.results ?? []).map(item => {
+        const track = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+        const url = typeof track.audio_url === 'string' && track.audio_url ? track.audio_url : track.url;
+        return { ...Object.fromEntries(['id', 'title', 'lyrics', 'duration'].filter(key => track[key] !== undefined).map(key => [key, track[key]])),
+            ...(typeof url === 'string' ? { audio_url: url, file: job.files.find(file => file.url === url)?.path } : {}) };
+    }) : undefined;
     return { schema_version: 1, status: statusOverride ?? status, record, media: job.media, model: job.model,
         ...(job.failure ? { failure: job.failure } : {}),
         ...(sub.state === 'known' ? { task_id: sub.task.id, remote_status: sub.task.status, progress: sub.task.progress } : {}),
         ...(showUsage && sub.state === 'known' && sub.task.usage !== undefined ? { usage: sub.task.usage } : {}),
+        ...(tracks ? { tracks } : {}),
         ...(job.text !== undefined ? { text: job.text } : {}), files: job.files, failed: job.failed, ...(metadata ? { result_metadata: metadata } : {}), ...(error ? { error } : {}),
         ...(sub.state === 'known' && status !== 'remote_failed' && status !== 'delivered'
             ? { next_action: { command: 'resume', args: ['--skill', job.skill, '--record', record, '--wait-seconds', '30'] } }
@@ -145,6 +153,10 @@ async function finishDownload(job, record, cfg) {
             if (!item || typeof item !== 'object' || Array.isArray(item))
                 return [];
             const result = item;
+            if (SUNO_MODELS.has(job.model)) {
+                const url = typeof result.audio_url === 'string' && result.audio_url ? result.audio_url : result.url;
+                return typeof url === 'string' && url ? [url] : [];
+            }
             return ['url', 'image_url', 'video_url', 'audio_url']
                 .flatMap(key => typeof result[key] === 'string' ? [result[key]] : []);
         }))];
@@ -293,9 +305,9 @@ async function queryAndDeliver(client, cfg, job, record, waitSeconds) {
 }
 export async function generate(cfg, options) {
     // Stored run candidates are already resolved, even when they contain no voice ID.
-    const params = options.parametersResolved ? options.params : speechParameters(options.model, options.params, cfg.speech?.defaultVoiceId);
+    const params = options.parametersResolved ? options.params : speechParameters(options.model, options.params, cfg.speech?.defaultVoiceId, cfg.elevenlabs?.defaultVoiceId);
     const path = validateGeneration(options.media, options.model, params);
-    const requestParams = elevenAudioParameters(options.model, params);
+    const requestParams = SUNO_MODELS.has(options.model) ? sunoParameters(options.model, params) : elevenAudioParameters(options.model, params);
     let body = { ...requestParams, model: options.model };
     if (SCRIBE_MODELS.has(options.model) && typeof params.file === 'string') {
         // Whole-file multipart is independent of Paraformer's splitting and upload protocol.

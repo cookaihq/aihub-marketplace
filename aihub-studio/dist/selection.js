@@ -3,13 +3,14 @@ import { resolve } from 'node:path';
 import { audioContract, remoteAudio } from './audioMedia.js';
 import { speechParameters } from './speech.js';
 import { ELEVEN_SPEECH_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, elevenMigration, assertElevenParameterMigration } from './elevenlabs.js';
+import { SUNO_MODELS, SUNO_DEFAULT_MODEL, sunoParameters, sunoSceneParameters } from './suno.js';
 export const OPERATIONS = {
     'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
     'video-text': 'aihub-video', 'video-start-frame': 'aihub-video', 'video-reference': 'aihub-video',
     'video-lipsync': 'aihub-video', 'video-avatar': 'aihub-video',
-    'audio-tts': 'aihub-audio', 'audio-dialogue': 'aihub-audio', 'audio-transcribe': 'aihub-audio',
-    'music-async': 'aihub-music', 'music-native': 'aihub-music',
-    understanding: 'aihub-understanding', document: 'aihub-document',
+    'audio-tts': 'aihub-audio', 'audio-dialogue': 'aihub-audio', 'audio-transcribe': 'aihub-audio', 'audio-clone': 'aihub-audio',
+    'music-description': 'aihub-music', 'music-lyrics': 'aihub-music', 'music-instrumental': 'aihub-music',
+    understanding: 'aihub-understanding',
 };
 const IMAGE = PREFERRED_MODELS.image;
 const TRANSCRIBE = ['paraformer-v2', 'paraformer-8k-v2', 'cohere-transcribe', ...SCRIBE_MODELS];
@@ -85,21 +86,22 @@ function defaults(request) {
         case 'video-reference': return ['seedance-2.5-reference-to-video'];
         case 'video-lipsync': return [...VIDEO_DEFAULT_MODELS.c1];
         case 'video-avatar': return [...VIDEO_DEFAULT_MODELS.c2];
-        case 'audio-tts': return ['speech-2.8-hd'];
-        case 'audio-dialogue': return []; // Select a Dialogue model explicitly or in the personal list.
+        case 'audio-tts': return ['eleven-v4-text-to-speech'];
+        case 'audio-dialogue': return ['eleven-v4-text-to-dialogue'];
         case 'audio-transcribe': return ['paraformer-v2'];
-        case 'music-async': return [ELEVEN_MUSIC_MODEL];
-        case 'music-native': return ['lyria-3-pro-preview'];
+        case 'audio-clone': return [];
+        case 'music-description':
+        case 'music-lyrics':
+        case 'music-instrumental': return [SUNO_DEFAULT_MODEL];
         case 'understanding': return [PREFERRED_MODELS.understanding[0]];
-        case 'document': return ['doc2x-v3'];
     }
 }
 /** Task purpose is resolved before availability or parameter checks. */
 function matchesOperation(model, operation) {
     if (operation === 'understanding')
         return true; // The live LLM registry is authoritative.
-    if (operation === 'music-native')
-        return ['lyria-3-pro-preview', 'lyria-3-clip-preview'].includes(model);
+    if (model === 'lyria-3-pro-preview')
+        return operation === 'music-description';
     let media;
     try {
         media = modelEntry(model).entry.mediaType;
@@ -118,19 +120,37 @@ function matchesOperation(model, operation) {
         case 'audio-tts': return /^speech-/.test(model) || ELEVEN_SPEECH_MODELS.has(model);
         case 'audio-dialogue': return ELEVEN_DIALOGUE_MODELS.has(model);
         case 'audio-transcribe': return TRANSCRIBE.includes(model);
-        case 'music-async': return /^lyria-|^minimax-music-/.test(model) || model === ELEVEN_MUSIC_MODEL;
-        case 'document': return media === 'document';
+        case 'music-description':
+        case 'music-lyrics':
+        case 'music-instrumental':
+            return SUNO_MODELS.has(model) || model === 'lyria-3-pro' || model === ELEVEN_MUSIC_MODEL;
+        case 'audio-clone': return false;
     }
 }
-function buildCandidate(request, model, defaultVoiceId) {
+function buildCandidate(request, model, defaultVoiceId, elevenVoiceId) {
     const op = request.operation;
-    const protocol = op === 'understanding' ? 'understanding' : op === 'music-native' ? 'native-music' : 'generation';
+    const protocol = op === 'understanding' ? 'understanding' : op.startsWith('music-') && model === 'lyria-3-pro-preview' ? 'native-music' : 'generation';
     const media = op.startsWith('image-') ? 'image' : op.startsWith('video-') ? 'video'
-        : op === 'understanding' ? 'understanding' : op === 'document' ? 'document' : 'audio';
+        : op === 'understanding' ? 'understanding' : 'audio';
     const candidate = { model, media, protocol };
     try {
         const inputs = request.inputs ?? {};
         const requirements = request.requirements ?? {};
+        if (op.startsWith('music-') && SUNO_MODELS.has(model)) {
+            assertKeys(inputs, [], 'inputs');
+            const params = sunoParameters(model, sunoSceneParameters(op, request.prompt, requirements));
+            validateGeneration('audio', model, params);
+            candidate.params = params;
+            return candidate;
+        }
+        if (protocol === 'native-music') {
+            assertKeys(inputs, [], 'inputs');
+            assertKeys(requirements, [], 'requirements');
+            if (!request.prompt)
+                throw new Error('Native music requires a prompt.');
+            candidate.params = { contents: [{ role: 'user', parts: [{ text: request.prompt }] }], generationConfig: { responseModalities: ['AUDIO', 'TEXT'] } };
+            return candidate;
+        }
         const params = {};
         const inputFields = {};
         let allowedRequirements = [];
@@ -243,25 +263,26 @@ function buildCandidate(request, model, defaultVoiceId) {
                     allowedRequirements = allowedRequirements.filter(name => name !== 'language_hints');
             }
         }
-        else if (op === 'music-async') {
+        else if (op.startsWith('music-')) {
             promptField = 'prompt';
+            if (op === 'music-lyrics')
+                throw new Error('This model has no verified mapping for preserving supplied lyrics. Select a Suno model for this scene.');
             if (model === ELEVEN_MUSIC_MODEL) {
                 allowedRequirements = modelEntry(model).entry.params.filter(name => !['model', 'prompt'].includes(name));
+                if (op === 'music-instrumental') {
+                    if (Object.hasOwn(requirements, 'force_instrumental') && requirements.force_instrumental !== true)
+                        throw new Error('force_instrumental conflicts with the instrumental scene.');
+                    params.force_instrumental = true;
+                }
             }
             else {
+                if (op === 'music-instrumental')
+                    throw new Error('This model has no verified instrumental control mapping. Select Suno or ElevenLabs Music.');
                 if (model !== 'lyria-3-pro')
                     throw new Error('This music model needs verified duration, lyrics and parameter mappings before automatic selection.');
                 inputFields.images = ['image_urls', 'many'];
                 allowedRequirements = ['negative_prompt'];
             }
-        }
-        else if (op === 'document') {
-            if (model !== 'doc2x-v3')
-                throw new Error('No verified document conversion mapping for this model.');
-            inputFields.files = ['pdf_url', 'one'];
-            requiredInputs = ['files'];
-            allowedRequirements = ['page_count', 'convert_mode', 'filename', 'formula_mode', 'merge_cross_page_forms'];
-            params.convert_mode = requirements.convert_mode ?? 'md';
         }
         else if (op === 'understanding') {
             assertKeys(requirements, ['system_prompt', 'max_tokens', 'temperature'], 'requirements');
@@ -272,19 +293,6 @@ function buildCandidate(request, model, defaultVoiceId) {
             if (!content.length || !request.prompt)
                 throw new Error('Understanding requires a prompt and at least one media input.');
             candidate.params = { ...requirements, model, prompt: request.prompt, content };
-            return candidate;
-        }
-        else if (op === 'music-native') {
-            if (model !== 'lyria-3-pro-preview')
-                throw new Error('Clip music has a different duration contract and cannot replace full music automatically.');
-            if (Object.keys(inputs).length)
-                throw new Error('Native music reference input mapping is not verified.');
-            assertKeys(requirements, [], 'requirements');
-            if (!request.prompt)
-                throw new Error('Native music requires a prompt.');
-            candidate.params = { contents: [{ role: 'user', parts: [{ text: request.prompt }] }], generationConfig: {
-                    responseModalities: ['AUDIO', 'TEXT'],
-                } };
             return candidate;
         }
         assertElevenParameterMigration(model, requirements);
@@ -307,7 +315,7 @@ function buildCandidate(request, model, defaultVoiceId) {
         }
         Object.assign(params, JSON.parse(JSON.stringify(requirements)));
         if (op === 'audio-tts')
-            Object.assign(params, speechParameters(model, params, defaultVoiceId));
+            Object.assign(params, speechParameters(model, params, defaultVoiceId, elevenVoiceId));
         // Reject every unmapped field even where a catalog schema is permissive.
         const entry = modelEntry(model).entry;
         assertKeys(params, entry.params.filter(name => name !== 'model'), 'model_parameters');
@@ -321,6 +329,8 @@ function buildCandidate(request, model, defaultVoiceId) {
 }
 export function selectionPlan(cfg, value) {
     const request = readTaskRequest(value, cfg.skill);
+    if (request.operation === 'audio-clone')
+        throw new Error('ElevenLabs voice cloning is a configuration placeholder with no default model or enabled API contract. No cloning request was submitted.');
     const source = request.model ? 'user' : cfg.modelSelection?.models ? 'configuration' : 'built-in';
     const selected = request.model ? [request.model] : cfg.modelSelection?.models ?? defaults(request);
     const candidates = [];
@@ -339,7 +349,7 @@ export function selectionPlan(cfg, value) {
             excluded.push({ model, reason: 'This exact model is not supported for the selected task purpose/protocol.' });
             continue;
         }
-        candidates.push(buildCandidate(request, model, cfg.speech?.defaultVoiceId));
+        candidates.push(buildCandidate(request, model, cfg.speech?.defaultVoiceId, cfg.elevenlabs?.defaultVoiceId));
     }
     return { request, candidates, excluded, source,
         policy: source === 'user' ? 'off' : cfg.modelSelection?.policy ?? 'auto',

@@ -1,6 +1,6 @@
 # 本地请求与错误报告
 
-六个 Skill 共用同一请求捕获流程。HTTP 请求失败、成功 HTTP 中的无效协议响应、远端任务执行失败，均在第一次观察到时保存 `error-report.md`、`diagnostic.json` 和 `issue-draft.md`。请求上下文另存 `request-context.json`，供下一轮查询复用；正常请求也会保留脱敏后的实际提交证据。生成任务与其模型切换、结果检查共用同一目录和报告。
+五个 Skill 共用同一请求捕获流程。HTTP 请求失败、成功 HTTP 中的无效协议响应、远端任务执行失败，均在第一次观察到时保存 `error-report.md`、`diagnostic.json` 和 `issue-draft.md`。请求上下文另存 `request-context.json`，供下一轮查询复用；正常请求也会保留脱敏后的实际提交证据。生成任务与其模型切换、结果检查共用同一目录和报告。
 
 ## 每次向用户反馈
 

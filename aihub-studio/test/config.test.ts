@@ -18,7 +18,7 @@ test('Plugin global files are automatic, with project, Skill and process overrid
     const options = { skill: 'aihub-image', cwd: project, homeDirectory: home, env: {} };
     await writeFile(join(ordinary, '.env'), 'AIHUB_API_KEY=ordinary-key\nAIHUB_BASE_URL=https://ordinary.invalid');
     await writeFile(join(plugin, '.env'), 'AIHUB_API_KEY=shared-home-key\nAIHUB_BASE_URL=https://fixture.invalid');
-    for (const skill of ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document']) {
+    for (const skill of ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding']) {
       assert.equal(loadConfig({ ...options, skill }).apiKey, 'shared-home-key');
       assert.equal(loadConfig({ ...options, skill }).baseUrl, 'https://api.aihubmax.com');
     }
@@ -49,7 +49,7 @@ test('Plugin global files are automatic, with project, Skill and process overrid
       assert.equal(report.fields.AIHUB_BASE_URL, undefined);
       assert.equal(report.environment.AIHUB_BASE_URL, undefined);
     }
-    for (const skill of ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding', 'aihub-document']) {
+    for (const skill of ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding']) {
       assert.equal(loadConfig({ ...options, skill }).apiKey, 'project-plugin-local-key');
     }
     assert.equal(inspectConfig({ ...options, skill: null }).fields.AIHUB_API_KEY?.source, join(project, '.env.local.aihub-studio'));

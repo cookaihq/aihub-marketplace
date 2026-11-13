@@ -2,6 +2,9 @@
 export const MINIMAX_DEFAULT_VOICE_KEY = 'AIHUB_MINIMAX_SPEECH_DEFAULT_VOICE_ID';
 export const MINIMAX_FAVORITES_KEY = 'audio.minimax_speech.favorite_voice_ids';
 export const MINIMAX_SPEECH_MODELS = new Set(['speech-2.8-hd', 'speech-2.8-turbo']);
+export const ELEVEN_DEFAULT_VOICE_KEY = 'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID';
+export const ELEVEN_FAVORITES_KEY = 'AIHUB_ELEVENLABS_FAVORITE_VOICE_IDS';
+export const ELEVEN_CLONE_MODEL_KEY = 'AIHUB_ELEVENLABS_VOICE_CLONE_MODEL';
 
 export function validVoiceId(value: unknown): value is string {
   // Official IDs include spaces, e.g. Chinese (Mandarin)_Warm_Girl.
@@ -9,7 +12,10 @@ export function validVoiceId(value: unknown): value is string {
     && !/[\x00-\x1f\x7f-\x9f\u2028\u2029]/.test(value);
 }
 
-export function speechParameters(model: string, params: Record<string, unknown>, defaultVoiceId?: string): Record<string, unknown> {
+export function speechParameters(model: string, params: Record<string, unknown>, defaultVoiceId?: string, elevenVoiceId?: string): Record<string, unknown> {
+  if (['eleven-v4-text-to-speech', 'eleven-v4-text-to-speech-custom-voice'].includes(model)) {
+    return elevenVoiceId && !Object.hasOwn(params, 'voice_id') ? { ...params, voice_id: elevenVoiceId } : params;
+  }
   if (!MINIMAX_SPEECH_MODELS.has(model) || !defaultVoiceId) return params;
   const settings = params.voice_setting;
   // Explicit values, including invalid ones, must be validated rather than replaced.

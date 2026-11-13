@@ -89,7 +89,7 @@ test('public CLI has a working offline entry and every Skill names its shared wo
   const result = spawnSync(process.execPath, [resolve('scripts/aihub.mjs'), 'default-skills', '--skill', 'aihub-image', '--agent', 'workbuddy'], { cwd: root, env, encoding: 'utf8', timeout: 10_000 });
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.equal(JSON.parse(result.stdout).status, 'review_required');
-  for (const skill of ['image', 'video', 'audio', 'music', 'understanding', 'document']) {
+  for (const skill of ['image', 'video', 'audio', 'music', 'understanding']) {
     const doc = readFileSync(resolve(`skills/aihub-${skill}/SKILL.md`), 'utf8');
     assert.match(doc, /默认 Skill 检查与提醒/);
     const version = /^metadata:\r?\n  version: "([^"]+)"\r?$/m.exec(doc)?.[1];

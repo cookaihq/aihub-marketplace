@@ -11,8 +11,8 @@ const inputs = [{ text: '你好 👋', voice_id: 'existing-public-id' }, { text:
 const request = { operation: 'audio-dialogue', original_request: '按顺序用这些音色读出台词', requirements: { inputs } };
 const validate = (model: string, params: Record<string, unknown>) => validateGeneration('audio', model, params);
 
-test('Dialogue maps ordered inputs without a prompt, MiniMax voice, splitting or default model', () => {
-  assert.deepEqual(selectionPlan(cfg(), request).candidates, []);
+test('Dialogue maps ordered inputs without a prompt, MiniMax voice, splitting and uses its dedicated default', () => {
+  assert.equal(selectionPlan(cfg(), request).candidates[0]?.model, 'eleven-v4-text-to-dialogue');
   for (const model of ELEVEN_DIALOGUE_MODELS) {
     const plan = selectionPlan(cfg(), { ...request, model });
     assert.equal(plan.source, 'user'); assert.equal(plan.policy, 'off');

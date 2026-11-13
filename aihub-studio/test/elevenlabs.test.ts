@@ -17,14 +17,14 @@ const music = 'elevenlabs-music-v2.5';
 const config = (skill: string, models?: string[]): LoadedConfig => ({ skill, apiKey: 'fixture', baseUrl: 'https://fixture.invalid',
   sources: { AIHUB_API_KEY: 'fixture' }, speech: { defaultVoiceId: 'MiniMax-specific-voice', source: 'fixture' }, modelSelection: { policy: 'auto', models, sources: {} } });
 const speechRequest = { operation: 'audio-tts', original_request: 'Read this text aloud', prompt: '[whispering] Hello café 👋' };
-const musicRequest = { operation: 'music-async', original_request: 'Make an instrumental', prompt: 'Gentle piano' };
+const musicRequest = { operation: 'music-description', original_request: 'Make an instrumental', prompt: 'Gentle piano' };
 const chunk = { text: '', duration_ms: 3000, positive_styles: ['ambient'] };
 const planParams = (extra: Record<string, unknown> = {}) => ({ composition_plan: { chunks: [{ ...chunk, ...extra }] } });
 const validate = (params: Record<string, unknown>) => validateGeneration('audio', music, params);
 
 test('ElevenLabs defaults preserve explicit selection and personal order', () => {
-  assert.equal(selectionPlan(config('aihub-audio'), speechRequest).candidates[0]?.model, 'speech-2.8-hd');
-  assert.equal(selectionPlan(config('aihub-music'), musicRequest).candidates[0]?.model, music);
+  assert.equal(selectionPlan(config('aihub-audio'), speechRequest).candidates[0]?.model, 'eleven-v4-text-to-speech');
+  assert.equal(selectionPlan(config('aihub-music'), musicRequest).candidates[0]?.model, 'suno-v6');
   const configured = selectionPlan(config('aihub-audio', ['eleven-v4-text-to-speech', 'speech-2.8-hd', 'paraformer-v2']), speechRequest);
   assert.deepEqual(configured.candidates.map(c => c.model), ['eleven-v4-text-to-speech', 'speech-2.8-hd']);
   assert.equal(configured.source, 'configuration'); assert.equal(configured.excluded.length, 1);
@@ -35,7 +35,7 @@ test('ElevenLabs defaults preserve explicit selection and personal order', () =>
   assert.equal(explicit.source, 'user'); assert.equal(explicit.policy, 'off');
   assert.deepEqual(explicit.candidates[0]?.params, { text: speechRequest.prompt, ...requirements });
   assert.deepEqual(explicit.request, { ...speechRequest, model: 'eleven-v4-text-to-speech', requirements });
-  const native = selectionPlan(config('aihub-music', [music, 'lyria-3-pro-preview']), { ...musicRequest, operation: 'music-native' });
+  const native = selectionPlan(config('aihub-music', [music, 'lyria-3-pro-preview']), { ...musicRequest, model: 'lyria-3-pro-preview' });
   assert.deepEqual(native.candidates.map(c => c.model), ['lyria-3-pro-preview']);
 });
 
@@ -76,7 +76,7 @@ test('music prompt and plan modes preserve nested inputs and reject discarded le
   assert.match(prompt.candidates[1]?.rejection ?? '', /music_length_ms/);
   const composition = { chunks: [{ ...chunk, duration_ms: 59900, text: '[Verse 1]\nHello', negative_styles: ['distortion'],
     context_adherence: 'high', audio_reference: { audio_url: 'https://fixtures.invalid/reference.wav', start_ms: 1500, end_ms: 31500, strength: 'xhigh' } }] };
-  const plan = selectionPlan(config('aihub-music'), { operation: 'music-async', original_request: 'Follow this plan', model: music,
+  const plan = selectionPlan(config('aihub-music'), { operation: 'music-description', original_request: 'Follow this plan', model: music,
     requirements: { composition_plan: composition, seed: 42 } });
   assert.equal(plan.candidates[0]?.rejection, undefined);
   assert.deepEqual(plan.candidates[0]?.params, { composition_plan: composition, seed: 42 });

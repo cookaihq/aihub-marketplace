@@ -382,7 +382,7 @@ test('E1 rejects pure text before contacting the LLM model registry', async () =
   } finally { server.closeAllConnections(); server.close(); await rm(dir, { recursive: true, force: true }); }
 });
 
-test('E2 submits doc2x and delivers a validated ZIP without ffprobe', async () => {
+test('removed document Skill rejects conversion without a network submission', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'aihub-document-'));
   const params = join(dir, 'request.json');
   await writeFile(params, JSON.stringify({ pdf_url: 'https://example.test/input.pdf', page_count: 1, convert_mode: 'md' }));
@@ -402,12 +402,10 @@ test('E2 submits doc2x and delivers a validated ZIP without ffprobe', async () =
   server.listen(0, '127.0.0.1'); await once(server, 'listening'); base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   try {
     const outcome = await run(dir, base, 'generate', '--skill', 'aihub-document', '--media', 'document', '--model', 'doc2x-v3', '--params-file', params, '--output-dir', dir);
-    assert.equal(outcome.code, 0);
-    assert.equal(outcome.json.status, 'delivered');
-    assert.equal(outcome.json.files[0].mime_type, 'application/zip');
-    assert.deepEqual(await readFile(outcome.json.files[0].path), zip);
-    assert.equal(posts, 1);
-    assert.equal(body?.model, 'doc2x-v3');
+    assert.equal(outcome.code, 1);
+    assert.match(outcome.json.error, /skill/);
+    assert.equal(posts, 0);
+    assert.equal(body, undefined);
   } finally { server.closeAllConnections(); server.close(); await rm(dir, { recursive: true, force: true }); }
 });
 

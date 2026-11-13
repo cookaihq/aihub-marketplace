@@ -10750,67 +10750,344 @@
       "file": "suno-music-generation.json",
       "operationId": "suno-music-generation",
       "method": "POST",
-      "path": "/e/v1/audio/generations",
-      "title": "Suno Music Generation",
-      "summary": "Suno Music Generation",
-      "description": "- Suno AI 音乐生成模型，支持根据文本描述或歌词生成完整的音乐作品\n- 支持自定义模式（精细控制风格、标题、歌词）和简单模式（AI自动生成）\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 生成的音频链接，有效期为72小时，请尽快保存\n- 每次请求会生成多个音乐变体",
+      "path": "/e/v1/audios/generations",
+      "title": "Suno 音乐生成",
+      "summary": "Suno 音乐生成",
+      "description": "- 通过歌曲构想、自定义歌词或纯音乐风格生成音乐\n- 每个任务返回一首或两首独立曲目，按实际成功曲目数结算\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 完成后返回一首或两首曲目；每首 `url` 与 `audio_url` 指向同一音频。请及时下载保存，链接保留时间取决于文件存储服务。\n",
       "category": "generation",
       "mediaType": "audio",
       "models": [
-        "suno-v4"
+        "suno-v6",
+        "suno-v6-wild",
+        "suno-v6-mini"
       ],
-      "modelSource": "enum",
+      "modelSource": "examples",
       "requestContentTypes": [
         "application/json"
       ],
       "requiredParams": [
-        "model",
-        "prompt"
+        "model"
       ],
       "params": [
-        "callback_url",
         "duration",
+        "is_instrumental",
+        "lyrics",
+        "max_mode",
+        "mode",
         "model",
-        "model_params",
-        "prompt"
+        "negative_prompt",
+        "output_format",
+        "prompt",
+        "rewrite_lyrics",
+        "style",
+        "style_variation",
+        "style_weight",
+        "title",
+        "vocal_gender",
+        "weirdness_constraint"
       ],
       "paramSpecs": [
         {
           "name": "model",
           "type": "string",
           "required": true,
+          "default": "suno-v6",
+          "description": "`suno-v6`、`suno-v6-wild`、`suno-v6-mini`：description／custom 人声或纯音乐，MP3／M4A／WAV。Mini description 不接收显式 duration、title、style、vocal_gender、style_weight；对应控制使用 custom，声线仅人声适用。其他模型保留适用字段。目标时长 10–360 整数秒，不改变按次费用。三模型同价：标准两首 USD 0.118、一首 USD 0.059；仅 custom 可选 Max，分别 USD 0.236／0.118，不保证更好音质。应用实际分组倍率。"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "required": false,
+          "default": "description",
           "enum": [
-            "suno-v4"
+            "description",
+            "custom"
           ],
-          "default": "suno-v4",
-          "description": "Suno v4 模型，用于音乐生成"
+          "description": "创作模式。默认 description 使用 prompt；custom 人声使用 lyrics，纯音乐使用 style。"
         },
         {
           "name": "prompt",
           "type": "string",
-          "required": true,
-          "description": "音乐描述或歌词，用于音频生成"
+          "required": false,
+          "conditional": true,
+          "default": null,
+          "description": "description 必填的非空歌曲构想，最多 3000 字符；custom 不接收。"
         },
         {
-          "name": "callback_url",
+          "name": "lyrics",
           "type": "string",
           "required": false,
-          "description": "任务完成后的HTTPS回调地址\n\n回调时机：\n- 任务完成（completed）、失败（failed）或取消（cancelled）时触发\n\n安全限制：\n- 仅支持HTTPS协议\n- 禁止回调到内网IP地址 (127.0.0.1, 10.x.x.x, 172.16-31.x.x, 192.168.x.x, etc.)\n- URL长度不超过 `2048` 字符\n\n回调机制：\n- 超时时间： `10` 秒\n- 失败后最多重试 `3` 次（会分别在失败的 `1` 秒/`2` 秒/`4` 秒后进行重试）\n- 回调响应体格式与任务查询接口返回的格式一致\n- 回调地址若返回2xx状态码视为成功，其他状态码会…"
+          "conditional": true,
+          "default": null,
+          "description": "custom 人声必填的非空歌词，最多 5000 字符；description 和纯音乐不接收。"
+        },
+        {
+          "name": "style",
+          "type": "string",
+          "required": false,
+          "conditional": true,
+          "default": null,
+          "description": "音乐风格标签，最多 1000 字符；custom 纯音乐必填且非空，其他组合可省略。suno-v6-mini 的 description 不接收显式 style（含 null 或空值），请在 prompt 中表达风格或使用 custom。"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "可选曲目标题，最多 80 字符。suno-v6-mini 的 description 不接收显式 title（含 null 或空值），请省略或使用 custom。"
         },
         {
           "name": "duration",
           "type": "integer",
           "required": false,
-          "description": "音乐时长（秒）"
+          "description": "可选目标时长，整数 10–360 秒；省略时不指定目标。实际曲长可能不同，且不改变按次费用。suno-v6-mini 的 description 不接收显式 duration（含 null 或默认等值），请省略或使用 custom。"
         },
         {
-          "name": "model_params",
-          "type": "object",
+          "name": "vocal_gender",
+          "type": "string",
           "required": false,
-          "description": "模型扩展参数"
+          "enum": [
+            "Male",
+            "Female",
+            "m",
+            "f"
+          ],
+          "description": "人声偏好，可选 Male／Female，兼容 m／f 并归一化；不接受其他大小写，纯音乐不接收。省略时不指定，不保证绝对遵循。suno-v6-mini 的 description 不接收显式 vocal_gender（含 null），仅 custom 人声可用。"
+        },
+        {
+          "name": "style_weight",
+          "type": "number",
+          "required": false,
+          "description": "可选风格遵循偏好，有限数 0–1；保留显式 0，不补默认，不保证单调改善。suno-v6-mini 的 description 不接收显式 style_weight（含 null、0 或默认等值），请省略或使用 custom。"
+        },
+        {
+          "name": "weirdness_constraint",
+          "type": "number",
+          "required": false,
+          "description": "可选实验性偏好，有限数 0–1；保留显式 0，不补默认。不是质量分数，高值可能伴随音质劣化。"
+        },
+        {
+          "name": "style_variation",
+          "type": "string",
+          "required": false,
+          "enum": [
+            "off",
+            "normal",
+            "high",
+            "extra",
+            "max"
+          ],
+          "description": "可选风格变化档位，与两个权重独立；省略时不指定，不保证更高档位改善质量。"
+        },
+        {
+          "name": "negative_prompt",
+          "type": "string",
+          "required": false,
+          "description": "可选的排除风格或特征文本，无默认值；属于偏好，不保证完全排除。"
+        },
+        {
+          "name": "rewrite_lyrics",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "是否允许改写已有歌词，默认 false；仅 custom 人声适用，须提供非空 lyrics。description 和纯音乐不接收显式字段，包括 false；改写可能增长且未必在目标时长内唱完。"
+        },
+        {
+          "name": "max_mode",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "仅 custom 可用，默认 false；true 选择 Max，完整任务价格为标准的两倍。description 不接收显式字段，包括 false；Max 不保证音质必然更好。"
+        },
+        {
+          "name": "is_instrumental",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "true 请求纯音乐，false 请求含人声的音乐。"
+        },
+        {
+          "name": "output_format",
+          "type": "string",
+          "required": false,
+          "default": "mp3",
+          "enum": [
+            "mp3",
+            "m4a",
+            "wav"
+          ],
+          "description": "输出音频格式：mp3／m4a／wav，默认 mp3；不自动转换不匹配的音频。"
         }
       ],
-      "registeredInDocsJson": true
+      "registeredInDocsJson": true,
+      "conditionalRequiredParams": [
+        "prompt",
+        "lyrics",
+        "style"
+      ],
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "model"
+        ],
+        "properties": {
+          "model": {
+            "description": "`suno-v6`、`suno-v6-wild`、`suno-v6-mini`：description／custom 人声或纯音乐，MP3／M4A／WAV。Mini description 不接收显式 duration、title、style、vocal_gender、style_weight；对应控制使用 custom，声线仅人声适用。其他模型保留适用字段。目标时长 10–360 整数秒，不改变按次费用。三模型同价：标准两首 USD 0.118、一首 USD 0.059；仅 custom 可选 Max，分别 USD 0.236／0.118，不保证更好音质。应用实际分组倍率。",
+            "examples": [
+              "suno-v6",
+              "suno-v6-wild",
+              "suno-v6-mini"
+            ],
+            "type": "string",
+            "default": "suno-v6"
+          },
+          "mode": {
+            "default": "description",
+            "description": "创作模式。默认 description 使用 prompt；custom 人声使用 lyrics，纯音乐使用 style。",
+            "enum": [
+              "description",
+              "custom"
+            ],
+            "type": "string",
+            "example": "description"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "maxLength": 3000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "description 必填的非空歌曲构想，最多 3000 字符；custom 不接收。",
+            "example": "Gentle piano for a quiet evening"
+          },
+          "lyrics": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "custom 人声必填的非空歌词，最多 5000 字符；description 和纯音乐不接收。",
+            "example": "[Verse]\nCome home"
+          },
+          "style": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "音乐风格标签，最多 1000 字符；custom 纯音乐必填且非空，其他组合可省略。suno-v6-mini 的 description 不接收显式 style（含 null 或空值），请在 prompt 中表达风格或使用 custom。",
+            "example": "gentle piano, ambient"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "可选曲目标题，最多 80 字符。suno-v6-mini 的 description 不接收显式 title（含 null 或空值），请省略或使用 custom。",
+            "example": "Evening"
+          },
+          "duration": {
+            "description": "可选目标时长，整数 10–360 秒；省略时不指定目标。实际曲长可能不同，且不改变按次费用。suno-v6-mini 的 description 不接收显式 duration（含 null 或默认等值），请省略或使用 custom。",
+            "maximum": 360,
+            "minimum": 10,
+            "type": "integer",
+            "example": 60
+          },
+          "vocal_gender": {
+            "description": "人声偏好，可选 Male／Female，兼容 m／f 并归一化；不接受其他大小写，纯音乐不接收。省略时不指定，不保证绝对遵循。suno-v6-mini 的 description 不接收显式 vocal_gender（含 null），仅 custom 人声可用。",
+            "enum": [
+              "Male",
+              "Female",
+              "m",
+              "f"
+            ],
+            "type": "string",
+            "example": "Female"
+          },
+          "style_weight": {
+            "description": "可选风格遵循偏好，有限数 0–1；保留显式 0，不补默认，不保证单调改善。suno-v6-mini 的 description 不接收显式 style_weight（含 null、0 或默认等值），请省略或使用 custom。",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number",
+            "example": 0
+          },
+          "weirdness_constraint": {
+            "description": "可选实验性偏好，有限数 0–1；保留显式 0，不补默认。不是质量分数，高值可能伴随音质劣化。",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number",
+            "example": 0.35
+          },
+          "style_variation": {
+            "description": "可选风格变化档位，与两个权重独立；省略时不指定，不保证更高档位改善质量。",
+            "enum": [
+              "off",
+              "normal",
+              "high",
+              "extra",
+              "max"
+            ],
+            "type": "string",
+            "example": "normal"
+          },
+          "negative_prompt": {
+            "description": "可选的排除风格或特征文本，无默认值；属于偏好，不保证完全排除。",
+            "type": "string",
+            "example": "heavy drums"
+          },
+          "rewrite_lyrics": {
+            "default": false,
+            "description": "是否允许改写已有歌词，默认 false；仅 custom 人声适用，须提供非空 lyrics。description 和纯音乐不接收显式字段，包括 false；改写可能增长且未必在目标时长内唱完。",
+            "type": "boolean",
+            "example": false
+          },
+          "max_mode": {
+            "default": false,
+            "description": "仅 custom 可用，默认 false；true 选择 Max，完整任务价格为标准的两倍。description 不接收显式字段，包括 false；Max 不保证音质必然更好。",
+            "type": "boolean",
+            "example": false
+          },
+          "is_instrumental": {
+            "default": false,
+            "description": "true 请求纯音乐，false 请求含人声的音乐。",
+            "type": "boolean",
+            "example": true
+          },
+          "output_format": {
+            "default": "mp3",
+            "description": "输出音频格式：mp3／m4a／wav，默认 mp3；不自动转换不匹配的音频。",
+            "enum": [
+              "mp3",
+              "m4a",
+              "wav"
+            ],
+            "type": "string",
+            "example": "mp3"
+          }
+        }
+      }
     },
     {
       "file": "topaz-upscale-video.json",
