@@ -17,28 +17,30 @@ const music = 'elevenlabs-music-v2.5';
 const config = (skill: string, models?: string[]): LoadedConfig => ({ skill, apiKey: 'fixture', baseUrl: 'https://fixture.invalid',
   sources: { AIHUB_API_KEY: 'fixture' }, speech: { defaultVoiceId: 'MiniMax-specific-voice', source: 'fixture' }, modelSelection: { policy: 'auto', models, sources: {} } });
 const speechRequest = { operation: 'audio-tts', original_request: 'Read this text aloud', prompt: '[whispering] Hello café 👋' };
-const musicRequest = { operation: 'music-async', original_request: 'Make an instrumental', prompt: 'Gentle piano' };
+const musicRequest = { operation: 'music-description', original_request: 'Make an instrumental', prompt: 'Gentle piano' };
 const chunk = { text: '', duration_ms: 3000, positive_styles: ['ambient'] };
 const planParams = (extra: Record<string, unknown> = {}) => ({ composition_plan: { chunks: [{ ...chunk, ...extra }] } });
 const validate = (params: Record<string, unknown>) => validateGeneration('audio', music, params);
 
 test('ElevenLabs defaults preserve explicit selection and personal order', () => {
-  assert.equal(selectionPlan(config('aihub-audio'), speechRequest).candidates[0]?.model, 'speech-2.8-hd');
-  assert.equal(selectionPlan(config('aihub-music'), musicRequest).candidates[0]?.model, music);
+  assert.equal(selectionPlan(config('aihub-audio'), speechRequest).candidates[0]?.model, 'eleven-v4-text-to-speech');
+  assert.equal(selectionPlan(config('aihub-music'), musicRequest).candidates[0]?.model, 'suno-v6');
   const configured = selectionPlan(config('aihub-audio', ['eleven-v4-text-to-speech', 'speech-2.8-hd', 'paraformer-v2']), speechRequest);
   assert.deepEqual(configured.candidates.map(c => c.model), ['eleven-v4-text-to-speech', 'speech-2.8-hd']);
   assert.equal(configured.source, 'configuration'); assert.equal(configured.excluded.length, 1);
-  assert.ok(configured.candidates.every(c => !c.rejection));
-  const explicit = selectionPlan(config('aihub-audio', ['speech-2.8-hd']), { ...speechRequest, model: 'eleven-v4-text-to-speech' });
+  assert.match(configured.candidates[0]?.rejection ?? '', /voice_id/);
+  assert.equal(configured.candidates[1]?.rejection, undefined);
+  const requirements = { voice_id: 'explicit-existing-id' };
+  const explicit = selectionPlan(config('aihub-audio', ['speech-2.8-hd']), { ...speechRequest, model: 'eleven-v4-text-to-speech', requirements });
   assert.equal(explicit.source, 'user'); assert.equal(explicit.policy, 'off');
-  assert.deepEqual(explicit.candidates[0]?.params, { text: speechRequest.prompt });
-  assert.deepEqual(explicit.request, { ...speechRequest, model: 'eleven-v4-text-to-speech' });
-  const native = selectionPlan(config('aihub-music', [music, 'lyria-3-pro-preview']), { ...musicRequest, operation: 'music-native' });
+  assert.deepEqual(explicit.candidates[0]?.params, { text: speechRequest.prompt, ...requirements });
+  assert.deepEqual(explicit.request, { ...speechRequest, model: 'eleven-v4-text-to-speech', requirements });
+  const native = selectionPlan(config('aihub-music', [music, 'lyria-3-pro-preview']), { ...musicRequest, model: 'lyria-3-pro-preview' });
   assert.deepEqual(native.candidates.map(c => c.model), ['lyria-3-pro-preview']);
 });
 
 test('TTS options remain exact and MiniMax parameters cannot leak into ElevenLabs', () => {
-  const requirements = { voice: 'custom voice ID', stability: 0, similarity_boost: 1, seed: 4294967295, language_code: 'zh',
+  const requirements = { voice_id: 'custom voice ID', voice_settings: { stability: 0, similarity_boost: 1 }, seed: 4294967295, language_code: 'zh',
     apply_text_normalization: 'off', timestamps: true, enable_safety_checker: false, output_format: 'opus_48000_192' };
   for (const model of ['eleven-v4-text-to-speech']) {
     const p = selectionPlan(config('aihub-audio'), { ...speechRequest, model, requirements });
@@ -47,22 +49,23 @@ test('TTS options remain exact and MiniMax parameters cannot leak into ElevenLab
     for (const field of ['voice_setting', 'audio_setting', 'voice_modify', 'pronunciation_dict', 'language_boost']) {
       const invalid = selectionPlan(config('aihub-audio'), { ...speechRequest, model, requirements: { [field]: {} } });
       assert.match(invalid.candidates[0]?.rejection ?? '', new RegExp(field));
-      assert.throws(() => validateGeneration('audio', model, { text: 'Hello', [field]: {} }), new RegExp(field));
+      assert.throws(() => validateGeneration('audio', model, { text: 'Hello', voice_id: 'v', [field]: {} }), new RegExp(field));
     }
-    assert.equal(describe(model).params.find(p => p.name === 'voice')?.default, 'Rachel');
+    assert.equal(describe(model).params.find(p => p.name === 'voice_id')?.default, undefined);
+    assert.equal(describe(model).params.find(p => p.name === 'voice_id')?.required, true);
     assert.throws(() => validateGeneration('audio', model, { prompt: 'old field' }), /text/);
   }
 });
 
 test('TTS contract enforces lengths, ranges, formats and nullable fields without altering text', () => {
-  const valid = (params: Record<string, unknown>) => validateGeneration('audio', 'eleven-v4-text-to-speech', params);
-  valid({ text: '👋'.repeat(5000), seed: null, language_code: null });
-  for (const [field, value] of [['text', ''], ['text', 'a'.repeat(5001)], ['stability', -0.1], ['similarity_boost', 1.01],
+  const valid = (params: Record<string, unknown>) => validateGeneration('audio', 'eleven-v4-text-to-speech', { voice_id: 'v', ...params });
+  valid({ text: '👋'.repeat(10000), seed: null, language_code: null });
+  for (const [field, value] of [['text', ''], ['text', 'a'.repeat(10001)], ['voice_settings', { stability: -0.1 }], ['voice_settings', { similarity_boost: 1.01 }],
     ['seed', 4294967296], ['seed', 0.5], ['timestamps', 'true'], ['voice', null], ['output_format', 'wav'], ['apply_text_normalization', 'yes']] as const) {
     assert.throws(() => valid({ text: 'Hello', [field]: value }), new RegExp(field));
   }
   const fields = describe('eleven-v4-text-to-speech').params;
-  assert.equal(fields.find(p => p.name === 'output_format')?.enum?.length, 19);
+  assert.equal(fields.find(p => p.name === 'output_format')?.enum?.length, 28);
 });
 
 test('music prompt and plan modes preserve nested inputs and reject discarded legacy requirements', () => {
@@ -73,7 +76,7 @@ test('music prompt and plan modes preserve nested inputs and reject discarded le
   assert.match(prompt.candidates[1]?.rejection ?? '', /music_length_ms/);
   const composition = { chunks: [{ ...chunk, duration_ms: 59900, text: '[Verse 1]\nHello', negative_styles: ['distortion'],
     context_adherence: 'high', audio_reference: { audio_url: 'https://fixtures.invalid/reference.wav', start_ms: 1500, end_ms: 31500, strength: 'xhigh' } }] };
-  const plan = selectionPlan(config('aihub-music'), { operation: 'music-async', original_request: 'Follow this plan', model: music,
+  const plan = selectionPlan(config('aihub-music'), { operation: 'music-description', original_request: 'Follow this plan', model: music,
     requirements: { composition_plan: composition, seed: 42 } });
   assert.equal(plan.candidates[0]?.rejection, undefined);
   assert.deepEqual(plan.candidates[0]?.params, { composition_plan: composition, seed: 42 });
@@ -86,10 +89,10 @@ test('music prompt and plan modes preserve nested inputs and reject discarded le
 
 test('music contract rejects conflicting modes and invalid duration or plan shapes', () => {
   for (const params of [{}, { prompt: 'Piano', ...planParams() }, { prompt: 'Piano', seed: 0 }, { ...planParams(), music_length_ms: 3000 },
-    { ...planParams(), force_instrumental: true }]) assert.throws(() => validate(params), /exactly one|only supported/);
+    { ...planParams(), force_instrumental: true }, { ...planParams(), force_instrumental: false }]) assert.throws(() => validate(params), /exactly one|only supported/);
   for (const music_length_ms of [3000, 59900, 60000, 60001, 600000]) validate({ prompt: 'Piano', music_length_ms });
   validate({ prompt: 'Piano' }); validate({ prompt: 'Piano', music_length_ms: null, seed: null, timestamps: false });
-  validate({ ...planParams(), music_length_ms: null, force_instrumental: false, timestamps: null });
+  validate({ ...planParams(), music_length_ms: null, timestamps: null });
   for (const music_length_ms of [2999, 600001, 3000.1, '60000']) assert.throws(() => validate({ prompt: 'Piano', music_length_ms }), /music_length_ms/);
   for (const duration of [60, null]) assert.throws(() => validate({ prompt: 'Piano', duration }), /migrate.*music_length_ms/);
   for (const duration of [3, null]) assert.throws(() => validate(planParams({ duration })), /migrate.*duration_ms/);
@@ -105,7 +108,7 @@ test('music contract rejects conflicting modes and invalid duration or plan shap
   const longPlan = { composition_plan: { chunks: Array(5).fill({ ...chunk, duration_ms: 120000 }) } };
   validate(longPlan);
   assert.throws(() => validate({ composition_plan: { chunks: [...longPlan.composition_plan.chunks, chunk] } }), /600000 milliseconds/);
-  assert.equal(describe(music).params.find(p => p.name === 'output_format')?.enum?.length, 25);
+  assert.equal(describe(music).params.find(p => p.name === 'output_format')?.enum?.length, 26);
   assert.deepEqual(describe(music).conditionally_required_params, ['prompt', 'composition_plan']);
   assert.ok(describe(music).request_schema?.properties?.composition_plan);
 });
@@ -119,7 +122,12 @@ test('music validates text and reference windows without mixing seconds and mill
     { strength: 'invalid' }, { duration: 30 }]) {
     assert.throws(() => validate(planParams({ audio_reference: { ...reference, ...extra } })), /audio_reference/);
   }
-  for (const text of ['x\n'.repeat(30), '👋'.repeat(201), '[]\nhello', `[${'a'.repeat(101)}]`]) {
+  for (const separator of ['\n', '\r\n', '\r', '\v', '\f', '\u001c', '\u001d', '\u001e', '\u0085', '\u2028', '\u2029']) {
+    validate(planParams({ text: Array(30).fill('line').join(separator) + separator }));
+    assert.throws(() => validate(planParams({ text: Array(31).fill('line').join(separator) })), /text/);
+  }
+  validate(planParams({ text: `[${'👋'.repeat(100)}]` }));
+  for (const text of ['👋'.repeat(201), '[]\nhello', `[${'a'.repeat(101)}]`]) {
     assert.throws(() => validate(planParams({ text })), /text/);
   }
   validate(planParams({ text: '👋'.repeat(200), negative_styles: null, context_adherence: null, audio_reference: null }));
@@ -188,8 +196,8 @@ test('packaged CLI preserves timestamps and real containers through billing wait
       const isMusic = model === music; const skill = isMusic ? 'aihub-music' : 'aihub-audio';
       const request = { ...(isMusic ? musicRequest : index === 1 ? { operation: 'audio-dialogue', original_request: 'Read the dialogue in order' } : speechRequest), model, requirements: isMusic
         ? { music_length_ms: 60000, output_format: 'pcm_44100' }
-        : { timestamps: true, ...(index === 1 ? { inputs: [{ text: 'Hi', voice: 'existing-voice' }, { text: 'Hello', voice: 'other-voice' }],
-          output_format: 'opus_48000_128', seed: 0, similarity_boost: null } : { enable_safety_checker: false }) } };
+        : { timestamps: true, ...(index === 1 ? { inputs: [{ text: 'Hi', voice_id: 'existing-voice' }, { text: 'Hello', voice_id: 'other-voice' }],
+          output_format: 'opus_48000_128', seed: 0, settings: null } : { voice_id: 'existing-voice', voice_settings: { stability: 0, similarity_boost: null }, enable_safety_checker: false }) } };
       await writeFile(requestPath, JSON.stringify(request));
       const planned = await call(skill, 'plan', '--request-file', requestPath);
       assert.equal(planned.candidates[0].rejection, undefined);
@@ -197,7 +205,7 @@ test('packaged CLI preserves timestamps and real containers through billing wait
       assert.ok(['submitted', 'waiting'].includes(start.status), JSON.stringify(start));
       assert.equal(posts.length, index + 1);
       const expected = { model, ...planned.candidates[0].params };
-      delete expected.similarity_boost;
+      delete expected.settings;
       assert.deepEqual(posts[index], expected);
       const waiting = await call(skill, 'continue', '--record', start.run_record, '--wait-seconds', '0');
       assert.equal(waiting.status, 'waiting'); assert.equal(waiting.task_id, start.task_id);

@@ -73,6 +73,40 @@ class Integration(unittest.TestCase):
                 self.assertNotIn('synthetic-only-value', json.dumps(public_config(saved)))
                 self.assertFalse(adapter.transaction.journal.exists())
 
+    def test_elevenlabs_selection_and_favorites_save_together_in_the_chosen_scope(self):
+        voice, favorites = 'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID', 'AIHUB_ELEVENLABS_FAVORITE_VOICE_IDS'
+        adapter, user = self.global_adapter('aihub-studio', skill='aihub-audio')
+        target = user / '.config/aihub-studio/.env'
+        target.parent.mkdir(parents=True)
+        target.write_text('AIHUB_API_KEY=synthetic\nUNRELATED=preserve\n', encoding='utf-8')
+        initial = adapter.snapshot()
+        self.assertNotIn('AIHUB_DOCUMENT_MODELS', self.fields(initial))
+        saved = adapter.save({voice: {'op': 'set', 'value': 'voice-global'},
+                              favorites: {'op': 'set', 'value': ['voice-global', 'voice-second']}},
+                             initial['revision'], self.target(target))
+        self.assertEqual(self.fields(saved)[voice]['effective']['value'], 'voice-global')
+        self.assertEqual(self.fields(saved)[favorites]['effective']['value'], ['voice-global', 'voice-second'])
+        self.assertIn('UNRELATED=preserve', target.read_text(encoding='utf-8'))
+        project = self.project / '.env.local.aihub-studio'
+        selected = adapter.save({voice: {'op': 'set', 'value': 'voice-project'},
+                                 favorites: {'op': 'set', 'value': []}},
+                                saved['revision'], self.target(project))
+        fields = self.fields(selected)
+        self.assertEqual(fields[voice]['effective']['value'], 'voice-project')
+        self.assertEqual(fields[favorites]['effective']['value'], [])
+        self.assertEqual(fields[favorites]['effective']['source'], self.target(project))
+        self.assertIn('voice-global', target.read_text(encoding='utf-8'))
+        self.assertIn('[]', project.read_text(encoding='utf-8'))
+        before = project.read_bytes()
+        with self.assertRaises(UIError):
+            adapter.save({voice: {'op': 'set', 'value': 'stale'}}, saved['revision'], self.target(project))
+        self.assertEqual(project.read_bytes(), before)
+        isolated = Configuration(adapter.package, self.project, {**adapter.options, 'global_enabled': False}, adapter.environment)
+        isolated_fields = self.fields(isolated.snapshot())
+        self.assertEqual(isolated_fields[voice]['effective']['value'], 'voice-project')
+        self.assertEqual(isolated_fields[favorites]['effective']['value'], [])
+        self.assertNotIn(self.target(target), isolated_fields[favorites]['targets'])
+
     def test_speech_sources_are_audio_specific_from_every_caller(self):
         key = 'AIHUB_MINIMAX_SPEECH_DEFAULT_VOICE_ID'
         adapter, user = self.global_adapter('aihub-studio', skill='aihub-image')
@@ -82,10 +116,10 @@ class Integration(unittest.TestCase):
         for path, value in ((audio, 'audio-voice'), (image, 'image-voice')):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(key + '=' + value + '\nAIHUB_API_KEY=fixture\n')
-        for caller in ('aihub-image', 'aihub-audio', 'aihub-video', 'aihub-music', 'aihub-understanding', 'aihub-document', None):
+        for caller in ('aihub-image', 'aihub-audio', 'aihub-video', 'aihub-music', 'aihub-understanding', None):
             adapter.options['skill'] = caller
             fields = self.fields(adapter.snapshot())
-            self.assertEqual(len(fields), 17)
+            self.assertEqual(len(fields), 19)
             self.assertEqual(fields[key]['effective']['value'], 'audio-voice')
             self.assertEqual(fields[key]['effective']['source'], self.target(audio))
             self.assertNotIn(self.target(image), fields[key]['targets'])

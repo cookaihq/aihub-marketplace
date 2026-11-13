@@ -1,6 +1,6 @@
 # 模型配置与可恢复的多模型执行
 
-六个 Skill 的新任务使用 `plan` → `run` → `continue`。Agent 保存用户需求及素材用途，共用 CLI 读取当前 Skill 的配置，分别构造候选模型的参数，再按策略执行。旧 `generate`、`understand`、`native-music` 仍是指定单模型的入口；旧 `resume` / `task` 只查询和下载原任务。配置与上传方式见 [共用 CLI](cli.md)。
+五个 Skill 的新任务使用 `plan` → `run` → `continue`。Agent 保存用户需求及素材用途，共用 CLI 读取当前 Skill 的配置，分别构造候选模型的参数，再按策略执行。旧 `generate`、`understand`、`native-music` 仍是指定单模型的入口；旧 `resume` / `task` 只查询和下载原任务。配置与上传方式见 [共用 CLI](cli.md)。
 
 ## 可选配置
 
@@ -13,9 +13,8 @@
 | aihub-audio | `AIHUB_AUDIO_MODELS` |
 | aihub-music | `AIHUB_MUSIC_MODELS` |
 | aihub-understanding | `AIHUB_UNDERSTANDING_MODELS` |
-| aihub-document | `AIHUB_DOCUMENT_MODELS` |
 
-列表用逗号分隔精确模型 ID，顺序就是优先级。首个非空来源整体替换低优先级列表，不合并、不追加内置模型。空项、重复 ID 报错。只解析当前 Skill 的模型列表；未配置时沿用对应用途的内置选型；audio-dialogue 无内置型号，须显式选择或配置 Dialogue 候选。本次用户明确指定模型时固定该模型，忽略配置列表并关闭 fallback。Agent 自己选出的推荐型号不能写成用户指定。
+列表用逗号分隔精确模型 ID，顺序就是优先级。首个非空来源整体替换低优先级列表，不合并、不追加内置模型。空项、重复 ID 报错。只解析当前 Skill 的模型列表；未配置时沿用对应用途的内置选型；audio-dialogue 默认 eleven-v4-text-to-dialogue。本次用户明确指定模型时固定该模型，忽略配置列表并关闭 fallback。Agent 自己选出的推荐型号不能写成用户指定。
 
 ```dotenv
 AIHUB_IMAGE_MODELS=gpt-image-2.5-flare,gpt-image-2.5-sunburst
@@ -69,13 +68,14 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 | `video-reference` | 参考图、视频或音频 | 对应参考生型号；2.0 只自动接入图片参考，视频/音频严格限制尚缺可验证的素材元数据 |
 | `video-lipsync` | 一个视频和一个音频 | 默认 `sync-3`；仅可选 `sync_mode`。显式或配置的 `lipsync-2` 另支持 `active_speaker`、`temperature` |
 | `video-avatar` | 一张图片和一个音频 | 默认 `fabric-1.0`；`resolution=480p/720p`，未指定为 `720p`，不接受提示词。显式或配置的 `omnihuman-1.5` 另支持提示词、`advanced`、`turbo_mode` |
-| `audio-tts` | 提示词中的待朗读文本 | 默认 `speech-2.8-hd`，保留 `voice_setting`；可选新 Eleven Speech：prompt → text，独立 voice |
-| `audio-dialogue` | `requirements.inputs` 有序台词数组，每段 text / voice 必填 | 显式或配置新 Eleven Dialogue；累计 2000 字符／10 种音色，整次控制，不填 prompt |
+| `audio-tts` | 提示词中的待朗读文本 | 默认 `eleven-v4-text-to-speech`，prompt → text；任务 voice_id 优先，否则读取 ElevenLabs 默认音色 |
+| `audio-dialogue` | `requirements.inputs` 有序台词数组，每段 text / voice_id 必填 | 默认 `eleven-v4-text-to-dialogue`；最多10种音色，2000字仅为建议；可选 settings，不填 prompt |
 | `audio-transcribe` | 原录音路径或 URL 的 `inputs.audios` | `paraformer-v2` / `paraformer-8k-v2`；按模型检查格式、大小、时长并自动分段，8 kHz 型号不接受 `language_hints` |
-| `music-async` | 提示词或段落计划 | 默认 `elevenlabs-music-v2.5`，整数毫秒；显式 `lyria-3-pro` 保留图片参考与 `negative_prompt`，不向 ElevenLabs 转换 |
-| `music-native` | 提示词 | `lyria-3-pro-preview`；不接收额外要求或参考素材，不与异步音乐静默互换 |
+| `music-description` | 音乐构想写入 prompt | Suno description 模式，自动创作歌词并生成歌曲 |
+| `music-lyrics` | 完整歌词原样写入 prompt | Suno custom 人声模式，映射为 lyrics；不默认改写 |
+| `music-instrumental` | 风格、氛围和用途写入 prompt | Suno custom 纯音乐模式，映射为 style |
+| `audio-clone` | 已授权的克隆意图 | ElevenLabs 占位，模型默认空，本版本不调用接口 |
 | `understanding` | 提示词及至少一种媒体输入 | 默认 `gemini-4-carbon`；从线上 LLM 注册表检查精确 ID 和所需媒体能力；`system_prompt`、`max_tokens`、`temperature` |
-| `document` | 一个 PDF 的 `inputs.files` | `doc2x-v3`；`page_count`、`convert_mode`、`filename`、`formula_mode`、`merge_cross_page_forms` |
 
 Seedance 视频的基础要求为 `duration`、`resolution`、`aspect_ratio`。未指定时固定为 5 秒、720p、9:16，再分别构造候选请求，避免各模型默认值不同。2.0 可额外设置 `seed`、`generate_audio`，但这两个字段不能无依据地传给 2.5。字段的枚举、条件必填和限制继续以 `describe` 及 CLI 校验为准。
 
@@ -83,9 +83,9 @@ C1/C2 使用各自的契约，不套用 Seedance 时长或比例。`sync-3` 的 
 
 配置一个模型 ID 不代表已接入其参数转换。CLI 先按任务用途筛选，再逐个检查；TTS 不能替代转写、首帧图生不能替代参考生成。不兼容型号会列出原因。有目录说明但尚无自动转换的型号，只能在用户明确选择且按其契约准备参数后使用旧单模型入口；不能借此绕过已经保存的多模型任务或确认要求。
 
-`audio-tts` 另支持 `eleven-v4-text-to-speech` 及其 `-custom-voice` 变体的 prompt → text 映射；`audio-dialogue` 对应 `eleven-v4-text-to-dialogue` 及其 custom 变体，requirements.inputs 原样映射 API inputs；custom 必须显式提供已有音色 ID，不属于声音克隆。`music-async` 支持 `elevenlabs-music-v2.5` 的提示词或分段计划，时长使用整数 music_length_ms / duration_ms，拒绝旧秒制 duration。`audio-transcribe` 支持 `scribe-v2` / `scribe-v3` 的单 URL 或 multipart 本地文件输入，不使用 Paraformer 分段与转码；有 V3 的候选列表排除 V2，不能自动降级，需要 V2 时显式新建请求。
+`audio-tts` 另支持两款 Eleven Speech，任务 voice_id 优先，否则读取已配置的 ElevenLabs 默认音色，prompt → text，1–10000 Unicode字符。两款 Dialogue 的 requirements.inputs 原样映射 API inputs，每段 text/voice_id 必填，保持顺序。设置对象省略时不补默认；Speech 用 voice_settings.similarity_boost，Dialogue 用 settings.similarity。`music-description` 支持 `elevenlabs-music-v2.5` 的提示词或分段计划，时长使用整数 music_length_ms / duration_ms；计划不传 force_instrumental（含false），seed仅计划可用，C2PA仅auto/MP3可用。`audio-transcribe` 的 Scribe 单URL按v2 source_url / v3 audio_url映射，本地使用multipart file；v2 diarize默认false，v3原合同不变。均不使用Paraformer分段与转码，v3不自动降为v2。
 
-选择这些型号前读取并遵守 [ElevenLabs 参数与交付](elevenlabs.md)，包括模式互斥、nullable 控制、时间戳空段、实际容器和计费边界。官方 Music 仅 MP3/Opus，其余统一编码保留兼容渠道；不强制官方或静默移除参数。`describe.request_schema` 保留完整嵌套约束，`plan` 展示实际请求；新增型号不自动加入个人列表。requested_options_unavailable / unsupported_parameters 停止自动切换，保留完整错误与字段列表，交由用户决定修改要求或稍后处理。新四模型须待 Spec #28 对应 Gateway 版本生产部署后才可线上使用。旧 v4/Turbo 四 ID 不接收新请求，无别名或回退；列出用途迁移说明但不改写个人列表。历史 task ID 仍可恢复。内置 TTS=speech-2.8-hd、ASR=paraformer-v2，音乐默认保持原值。
+选择这些型号前读取并遵守 [ElevenLabs 参数与交付](elevenlabs.md)，包括迁移、模式互斥、null/false/0、Scribe扩展与费用、真实结果及恢复。格式与参数是否可执行由Gateway判断，不删参或换声音。`describe.request_schema` 保留完整嵌套约束，`plan` 展示实际请求；新增型号不自动加入个人列表。requested_options_unavailable / unsupported_parameters / audio_voice_unavailable 停止自动切换，保留完整错误，交由用户决定。Issue #29 合同已随 Gateway v0.9.16 于2026-11-13上线，线上调用沿用既有账号检查、付费授权和任务流程。旧v4/Turbo四ID不接收新请求，无别名或回退；只提供迁移说明，不改写个人列表。历史task ID继续恢复。内置 TTS=eleven-v4-text-to-speech、Dialogue=eleven-v4-text-to-dialogue、ASR=paraformer-v2、音乐=suno-v6。
 
 ## 执行与继续
 
@@ -113,3 +113,11 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" continue --skill "${AIHUB_CALLER}" 
 | `failed` / `no_compatible_model` / `attempt_limit` | 当前计划停止。报告 `attempts`、`excluded` 和已知任务 ID；不自动另建 run 来绕过限制。 |
 
 只有明确的模型不可用/能力不支持错误可切换：已结束任务的 `model_unavailable`、`model_not_support_capability`，或确定未受理的 HTTP 422 同类错误。已结束且未返回结构化错误的任务也可按策略切换。鉴权、余额、内容拒绝、未知服务错误、超时和提交结果不明不触发自动切换；查询失败、下载失败、画面或音频不符合需求也不触发重新生成。真实服务返回的分类不明确时停止并报告，不能根据文字猜测可安全重发。
+
+## ElevenLabs 预置音色库与默认音色
+
+`AIHUB_ELEVENLABS_DEFAULT_VOICE_ID` 用于两款 Eleven Speech，任务显式 voice_id 优先，不用于自动分配对话角色。`AIHUB_ELEVENLABS_FAVORITE_VOICE_IDS` 保存 JSON 音色 ID 数组，如 `["voice-A","voice-B"]`；项目列表整体覆盖全局列表，`[]` 表示明确清空此范围收藏。两项均通过音频 Skill 的真实配置链逐字段读取，禁用全局时不读取全局值。
+
+按[ElevenLabs 预置音色库](elevenlabs-voices.md)在统一配置中心筛选、试听和收藏；选择全局或项目位置后点击“保存并使用”，音色与收藏在同一个文件中原子保存并回读。`AIHUB_ELEVENLABS_VOICE_CLONE_MODEL` 暂留空，仅预留配置；本版本不会提交克隆。已有 run 记录继续保存时确定的音色和模型。
+
+三类 Suno 场景的参数和完整示例见 [Suno](suno.md)。选择 ElevenLabs Music 或 Lyria 时必须明确指定模型或配置列表，按其能力独立构造参数；已有歌词无已核实映射时拒绝，不丢弃歌词。

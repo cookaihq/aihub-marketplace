@@ -2,6 +2,7 @@ import { AihubmaxClient, ApiError, type LiveModel } from './apiClient.js';
 import { listModelSummaries, resolveEntry, type CatalogEntry } from './catalog.js';
 import type { Media } from './state.js';
 import { ELEVEN_AUDIO_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, validateElevenLabs, elevenMigration } from './elevenlabs.js';
+import { SUNO_MODELS, SUNO_DEFAULT_MODEL, validateSuno } from './suno.js';
 
 /**
  * The catalog contains every documented endpoint. This Plugin deliberately
@@ -22,8 +23,8 @@ const EXCLUDED_MODELS: Record<string, string> = {
   'fabric-1.0-text': 'Text-driven avatar video (C3) is outside the selected digital-human scope.',
   'live-avatar': 'Prompt-driven avatar video is outside the selected digital-human scope.',
   'kling-video-create-voice': 'Voice creation is outside the selected media workflows.',
-  'voice-clone': 'Voice cloning has been removed from aihub-audio.',
-  'minimax-voice-clone': 'Voice cloning has been removed from aihub-audio.',
+  'voice-clone': 'Only an unconfigured ElevenLabs cloning placeholder is available; no cloning API is enabled.',
+  'minimax-voice-clone': 'Only an unconfigured ElevenLabs cloning placeholder is available; no cloning API is enabled.',
 };
 
 export const IMAGE_DEFAULT_MODELS = {
@@ -37,8 +38,7 @@ export const PREFERRED_MODELS = {
     'seedance-2.5-text-to-video', 'seedance-2.5-image-to-video',
     'seedance-2.5-reference-to-video',
   ],
-  audio: ['speech-2.8-hd', 'paraformer-v2', ELEVEN_MUSIC_MODEL],
-  document: ['doc2x-v3'],
+  audio: ['eleven-v4-text-to-speech', 'eleven-v4-text-to-dialogue', 'paraformer-v2', SUNO_DEFAULT_MODEL],
   understanding: ['gemini-4-carbon'],
 } as const;
 
@@ -87,14 +87,13 @@ function capabilityForModel(model: string, media: string | null): string {
   if (media === 'audio' && model === 'paraformer-v2') return 'D1 ASR';
   if (ELEVEN_DIALOGUE_MODELS.has(model)) return 'D1 text-to-dialogue (ordered text/voice inputs)';
   if (media === 'audio') return 'D1 TTS/music';
-  if (media === 'document') return 'E2';
   return 'D (legacy audio workflow)';
 }
 
 function supported(model: string, entry: CatalogEntry): boolean {
   if (excludedModel(model)) return false;
   if (entry.mediaType === 'video' && !VIDEO_SCOPE_MODELS.has(model)) return false;
-  return ['image', 'video', 'document'].includes(entry.mediaType || '') ||
+  return ['image', 'video'].includes(entry.mediaType || '') ||
     entry.mediaType === 'audio';
 }
 export function modelEntry(model: string) {
@@ -149,9 +148,7 @@ export async function models(client: AihubmaxClient, media?: Media, keyword?: st
           ? VIDEO_DEFAULT_SET.has(id)
           : found.entry.mediaType === 'audio'
             ? PREFERRED_MODELS.audio.includes(id as typeof PREFERRED_MODELS.audio[number])
-            : found.entry.mediaType === 'document'
-              ? PREFERRED_MODELS.document.includes(id as typeof PREFERRED_MODELS.document[number])
-              : false;
+            : false;
       rows.push({ model: id, media: found.entry.mediaType, title: found.entry.title, catalog_model: found.catalogModel, preferred,
         ...(id === 'fabric-1.0' ? { available_resolutions: ['480p', '720p'].filter(resolution => generationModelAvailable(live, id, { resolution })) } : {}),
         ...(found.entry.mediaType === 'image' && preferred ? {
@@ -160,11 +157,10 @@ export async function models(client: AihubmaxClient, media?: Media, keyword?: st
         } : {}),
         default: (found.entry.mediaType === 'image' && (id === IMAGE_DEFAULT_MODELS.generation[0] || id === IMAGE_DEFAULT_MODELS.edit[0])) ||
           (found.entry.mediaType === 'video' && VIDEO_DEFAULT_SET.has(id)) ||
-          (found.entry.mediaType === 'audio' && PREFERRED_MODELS.audio.includes(id as typeof PREFERRED_MODELS.audio[number])) ||
-          (found.entry.mediaType === 'document' && id === 'doc2x-v3') });
+          (found.entry.mediaType === 'audio' && PREFERRED_MODELS.audio.includes(id as typeof PREFERRED_MODELS.audio[number])) });
     }
     return { status: 'ok', availability_known: true, models: rows, catalog_only: catalog.filter(row => !mapped.has(row.model)),
-      preferred_models: media === 'video' ? [...VIDEO_DEFAULT_SET] : media ? (PREFERRED_MODELS[media] ?? []) : { ...PREFERRED_MODELS, video: [...VIDEO_DEFAULT_SET] },
+      preferred_models: media === 'video' ? [...VIDEO_DEFAULT_SET] : media ? (PREFERRED_MODELS[media as keyof typeof PREFERRED_MODELS] ?? []) : { ...PREFERRED_MODELS, video: [...VIDEO_DEFAULT_SET] },
       note: 'Listed request models are visible to this key; a working generation channel is not guaranteed. Fabric uses model fabric-1.0 plus resolution; available_resolutions maps the account billing IDs. preferred marks built-in recommendations, not the configured model order. Read model_selection for current configuration and use plan for task-specific candidates. run and continue follow the saved fallback policy and preserve all input requirements; no model is appended automatically. Explicit user model choices remain fixed. Legacy single-model commands do not perform fallback.' };
   } catch (error) {
     return { status: 'availability_unknown', availability_known: false, models: [], catalog_only: catalog, error: (error as Error).message,
@@ -192,6 +188,7 @@ export function validateGeneration(media: Media, model: string, params: Record<s
   const { entry, catalogModel } = modelEntry(model);
   if (entry.mediaType !== media) throw new Error(`This model belongs to ${entry.mediaType}, not ${media}.`);
   if ('model' in params && params.model !== model) throw new Error('params.model conflicts with --model. Keep model only in --model.');
+  if (SUNO_MODELS.has(model)) { validateSuno(model, params); return entry.path; }
   if (ELEVEN_AUDIO_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL || SCRIBE_MODELS.has(model)) {
     if (!entry.requestSchema) throw new Error('The bundled ElevenLabs request contract is missing.');
     validateElevenLabs(model, params, entry.requestSchema);

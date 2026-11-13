@@ -5,11 +5,20 @@ import { validVoiceId } from './speech.js';
 export interface PresetVoice {
   voice_id: string; voice_name: string; language: string; accent: string;
   gender: string; age: string; tag_list: string[]; description: string; sample_audio: string;
+  languages?: string[];
+}
+
+export function elevenPresetVoices(value: unknown): PresetVoice[] {
+  if (!Array.isArray(value)) throw new Error('Invalid ElevenLabs voice library response.');
+  return presetVoices(value.map(row => row && typeof row === 'object' ? { ...row, voice_name: row.name,
+    language: Array.isArray(row.languages) ? row.languages.filter((v: unknown) => typeof v === 'string').join(', ') : '',
+    tag_list: row.category, sample_audio: row.preview_url } : row)).map(voice => ({ ...voice,
+      languages: voice.language ? voice.language.split(', ') : [] }));
 }
 
 /** Only documented display fields leave the private loader. Never return credentials. */
 export function presetVoices(value: unknown): PresetVoice[] {
-  if (!Array.isArray(value) || value.length > 10000) throw new Error('Invalid voice library response.');
+  if (!Array.isArray(value) || value.length > 50000) throw new Error('Invalid voice library response.');
   const voices = new Map<string, PresetVoice>();
   const text = (value: unknown) => typeof value === 'string' ? value.slice(0, 4000) : '';
   for (const row of value) {
@@ -23,13 +32,13 @@ export function presetVoices(value: unknown): PresetVoice[] {
   return [...voices.values()];
 }
 
-export async function loadVoiceLibrary(options: Omit<ConfigOptions, 'skill'>): Promise<PresetVoice[]> {
+export async function loadVoiceLibrary(options: Omit<ConfigOptions, 'skill'>, provider: 'minimax' | 'elevenlabs' = 'minimax'): Promise<PresetVoice[]> {
   const resolved = resolveConfiguration({...options, skill: 'aihub-audio'});
   if (resolved.inspection.problems.some(p => p.reason === 'unreadable')) throw new Error('configuration');
   const apiKey = resolved.values.AIHUB_API_KEY;
   if (!apiKey) throw new Error('missing_key');
   const client = new AihubmaxClient({baseUrl: AIHUB_SERVICE_URL, apiKey});
-  const result = await client.request<unknown>('GET', '/e/v1/configs/minimax-preset-voice-id?language=zh', undefined,
+  const result = await client.request<unknown>('GET', provider === 'elevenlabs' ? '/e/v1/configs/elevenlabs-preset-voice-id' : '/e/v1/configs/minimax-preset-voice-id?language=zh', undefined,
     {timeoutMs: 12000, deadline: Date.now() + 30000});
-  return sanitized(presetVoices(result), [apiKey]);
+  return sanitized(provider === 'elevenlabs' ? elevenPresetVoices(result) : presetVoices(result), [apiKey]);
 }

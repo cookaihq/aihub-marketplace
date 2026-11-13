@@ -14,11 +14,11 @@ const cloningIds = cloningModels.flatMap(model => [model, `minimax/${model}`, `$
 const config: LoadedConfig = { skill: 'aihub-audio', apiKey: 'offline-fixture', baseUrl: 'https://example.invalid',
   sources: { AIHUB_API_KEY: 'fixture' }, modelSelection: { policy: 'auto', sources: {} } };
 
-test('audio planning rejects the removed cloning operation', () => {
+test('audio planning stops the unconfigured ElevenLabs cloning placeholder', () => {
   assert.throws(() => selectionPlan(config, {
     operation: 'audio-clone', original_request: 'Clone this voice',
     inputs: { audios: ['https://example.invalid/reference.wav'] },
-  }), /Supported operations: audio-tts, audio-dialogue, audio-transcribe/);
+  }), /configuration placeholder.*No cloning request/);
 });
 
 test('old cloning preferences cannot replace speech synthesis or transcription', () => {
@@ -53,7 +53,7 @@ test('cloning models and their family aliases are absent from live and offline m
   const offline = await models(client, 'audio');
   assert.equal(offline.status, 'availability_unknown');
   assert.ok(offline.catalog_only.every(row => !cloningModels.includes(row.model)));
-  for (const model of cloningIds) assert.throws(() => describe(model), /Voice cloning has been removed/);
+  for (const model of cloningIds) assert.throws(() => describe(model), /no cloning API is enabled/);
 });
 
 test('direct generation rejects cloning before network calls or task creation', async t => {
@@ -65,7 +65,7 @@ test('direct generation rejects cloning before network calls or task creation', 
       await assert.rejects(generate(config, {
         media: 'audio', model, params: { audio_url: 'https://example.invalid/reference.wav' },
         outputDir: join(directory, 'output'), waitSeconds: 0,
-      }), /Voice cloning has been removed/);
+      }), /no cloning API is enabled/);
     }
     assert.equal(list.mock.callCount(), 0);
     assert.equal(submit.mock.callCount(), 0);

@@ -14,7 +14,7 @@
 
 ```bash
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" default-skills \
-  --skill <当前六个 Skill 之一> --agent <当前Agent>
+  --skill <当前五个 Skill 之一> --agent <当前Agent>
 ```
 
 `AIHUB_PLUGIN_DIR` 为当前 Skill 所属的实际完整 Plugin 目录。

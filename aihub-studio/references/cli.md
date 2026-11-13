@@ -2,7 +2,7 @@
 
 WorkBuddy 的 Plugin 安装、查询或更新按 [workbuddy-install.md](workbuddy-install.md) 使用当前应用的原生套件管理；给用户手动操作步骤时按该说明同时展示随包截图，指明“技能 → 套件 → 市场名称右侧的＋”。禁止另起 CodeBuddy CLI（包括帮助或校验命令）。下面的 `scripts/aihub.mjs` 是业务程序，使用 AIhub 配置；它不管理宿主插件安装。
 
-六个 Skill 共用 Plugin 根目录下的 `scripts/aihub.mjs`。每会话的默认选择检查先按 [default-skills.md](default-skills.md) 执行；该离线入口只需要 Node，不读取业务凭证、不要求 ffprobe。业务调用再按“首次配置、缺项与配置修复”核对来源。以下命令中的 `AIHUB_PLUGIN_DIR` 必须替换为实际安装目录，`AIHUB_CALLER` 固定为当前 Skill 的名称：`aihub-image`、`aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding` 或 `aihub-document`。当前工作目录是用户任务目录，决定项目配置从哪里读取。
+五个 Skill 共用 Plugin 根目录下的 `scripts/aihub.mjs`。每会话的默认选择检查先按 [default-skills.md](default-skills.md) 执行；该离线入口只需要 Node，不读取业务凭证、不要求 ffprobe。业务调用再按“首次配置、缺项与配置修复”核对来源。以下命令中的 `AIHUB_PLUGIN_DIR` 必须替换为实际安装目录，`AIHUB_CALLER` 固定为当前 Skill 的名称：`aihub-image`、`aihub-video`、`aihub-audio`、`aihub-music`、`aihub-understanding`。当前工作目录是用户任务目录，决定项目配置从哪里读取。
 
 **Windows 原生统一使用 `scripts/aihub.ps1` 入口。** 它检查 Node.js 18+ 并固定入口/模块的路径解析选项，避免 Codex 默认沙箱中 Node 在启动前遍历不可列举的用户目录而报 `EPERM`；不修改沙箱、权限、环境配置或 cwd。下面及各 Skill 的 Bash 示例在 Windows 中将 `node ".../scripts/aihub.mjs"` 换为 `& ".../scripts/aihub.ps1"`，参数保持原样；无需由 Agent 每次补 Node 选项。纯凭证请求按下一节使用 `config-check --credentials-only`，不先跑 doctor。
 
@@ -27,8 +27,8 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" doctor --skill "${AIHUB_CALLER}"
 凭证配置只需 `AIHUB_API_KEY`。业务行为另支持当前 Skill 的 `AIHUB_<类型>_MODELS`、`AIHUB_MODEL_FALLBACK_POLICY` 和 `AIHUB_MODEL_MAX_ATTEMPTS`，完整名称与语义见 [模型配置](model-selection.md#可选配置)。`AIHUB_RESULT_CHECK_*`、`AIHUB_ERROR_REPORT_THRESHOLD` 与 `AIHUB_SUPPORT_URL` 见 [结果检查与错误反馈](result-checks.md)，不属于 Secret Book 的凭证声明。每个变量独立按以下顺序使用首个非空值，模型列表整体替换、不跨层合并：
 
 1. 当前进程环境变量。
-2. 当前工作目录 `.env.local.aihub-studio`，六个 Skill 共用。
-3. 当前工作目录 `.env.aihub-studio`，六个 Skill 共用。
+2. 当前工作目录 `.env.local.aihub-studio`，五个 Skill 共用。
+3. 当前工作目录 `.env.aihub-studio`，五个 Skill 共用。
 4. 当前工作目录 `.env.local`。
 5. 当前工作目录 `.env`。
 6. 自动读取 `~/.config/aihub-studio/<skill-name>/.env.local`。
@@ -63,17 +63,17 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" models --skill "${AIHUB_CALLER}" --
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" describe --skill "${AIHUB_CALLER}" --model "<线上模型 ID>"
 ```
 
-`--media` 可取 `image`、`video`、`audio`、`document`；E1 使用 `models --media understanding` 查询独立的 LLM 注册表。`models` 的 `preferred` 仍是随包目录推荐；生效的列表和策略以 `model_selection` 为准，具体任务候选以 `plan` 为准。没有配置时按 [图片 Skill](../skills/aihub-image/SKILL.md#选择图片模型) 或 [视频 Skill](../skills/aihub-video/SKILL.md#选择视频模型) 的规则选择；C1/C2 保留各自专用用途。
+`--media` 可取 `image`、`video`、`audio`；E1 使用 `models --media understanding` 查询独立的 LLM 注册表。`models` 的 `preferred` 仍是随包目录推荐；生效的列表和策略以 `model_selection` 为准，具体任务候选以 `plan` 为准。没有配置时按 [图片 Skill](../skills/aihub-image/SKILL.md#选择图片模型) 或 [视频 Skill](../skills/aihub-video/SKILL.md#选择视频模型) 的规则选择；C1/C2 保留各自专用用途。
 
 `describe` 离线读取随包模型目录说明字段，无需 API Key。只有 `catalog_only` 中的目录记录不能证明模型在线可用，`availability_known: false` 或 `status: availability_unknown` 应报告可用性未知。账号模型列表使用 `/v1/models`；生成、任务和专用配置查询使用 `/e/v1/`。提交时使用 `models` 返回的请求型号，不自行泛化模型名。Fabric 是已核实的特例：账号的带分辨率 ID 对应生成型号 `fabric-1.0` 和 `resolution`，可用分辨率列在 `available_resolutions`。新流程只在已配置且适用的候选间按保存的策略切换；不得自动追加旧版本或其他模型。Plugin 会在提交前拒绝图片增强/材质/Profile、视频高清放大（B10）/插帧/Topaz、Sora 角色、字幕、提示词数字人和声音创建模型。
 
-当前无配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；图片列表的 default_for 区分 image-generate 与 image-edit。2.6 拒绝参考图、遮罩、markup 和非静态格式，省略尺寸为 auto，允许独立的 complexity。TTS 默认 speech-2.8-hd，异步音乐默认 elevenlabs-music-v2.5，ASR 默认 paraformer-v2。声音克隆模型和 audio-clone 操作已移除。
+当前无配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；图片列表的 default_for 区分 image-generate 与 image-edit。2.6 拒绝参考图、遮罩、markup 和非静态格式，省略尺寸为 auto，允许独立的 complexity。TTS 默认 eleven-v4-text-to-speech，多音色对话默认 eleven-v4-text-to-dialogue；三类音乐场景默认 suno-v6，ASR 默认 paraformer-v2。audio-clone 是空模型占位，本版本不调用克隆接口。
 
-以下为保留的单模型底层入口，供旧任务流程或用户明确选择尚无自动参数转换的型号使用，**不读取配置列表来换模型**。D1 的 `speech-2.8-hd`（TTS）、`paraformer-v2`（ASR）和 D2 的 `lyria-3-pro` 使用 `generate --media audio`；`lyria-3-pro-preview` 使用 `native-music`。E1 先查询独立 LLM 注册表再调用 `understand`，必须含媒体内容块，纯文本请求属于 F 组并拒绝。E2 使用 `generate --media document`，结果 ZIP 只做文件签名和非空检查。
+以下为保留的单模型底层入口，供旧任务流程或用户明确选择尚无自动参数转换的型号使用，**不读取配置列表来换模型**。D1 的 `speech-2.8-hd`（TTS）、`paraformer-v2`（ASR）和 D2 的 `lyria-3-pro` 使用 `generate --media audio`；`lyria-3-pro-preview` 使用 `native-music`。E1 先查询独立 LLM 注册表再调用 `understand`，必须含媒体内容块，纯文本请求属于 F 组并拒绝。
 
 `eleven-v4-text-to-speech` / `eleven-v4-text-to-dialogue`、两者的 `-custom-voice` 变体、`elevenlabs-music-v2.5` 和 `scribe-v2` / `scribe-v3` 均使用异步音频路径，完整参数及上线条件见 [ElevenLabs](elevenlabs.md)。新任务优先使用 `plan/run`；单模型 `generate` 的 TTS 参数为 text，新流程 prompt 原样映射为 text。custom-voice 必须提供已有音色 ID，不创建或克隆声音。`voices --skill aihub-audio` 通过鉴权配置接口读取完整 ElevenLabs 音色目录及元数据，不扣生成 quota，也不限制为官方白名单。
 
-音乐歌曲/段落时长分别使用整数 music_length_ms / duration_ms（毫秒），旧 duration 秒制字段明确拒绝；30 秒歌曲须改为 music_length_ms: 30000。已受理任务继续原 ID，未提交旧请求迁移后重新 plan。Scribe 的 inputs.audios 恰好一个 URL 或本地路径，分别以 JSON audio_url 或 multipart file 提交；不套用 Paraformer 分段/转码，不自动把 V3 降为 V2。`describe.request_schema` 保留嵌套计划、范围及可空字段约束，Scribe 的 file 表示本地文件路径。
+ElevenLabs 音乐歌曲/段落时长分别使用整数 music_length_ms / duration_ms（毫秒），旧 duration 秒制字段明确拒绝；30 秒歌曲须改为 music_length_ms: 30000。已受理任务继续原 ID，未提交旧请求迁移后重新 plan。Scribe 的 inputs.audios 恰好一个 URL 或本地路径，分别以 V2 source_url／V3 audio_url 或 multipart file 提交；不套用 Paraformer 分段/转码，不自动把 V3 降为 V2。`describe.request_schema` 保留嵌套计划、范围及可空字段约束，Scribe 的 file 表示本地文件路径。
 
 ```bash
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" models --skill aihub-understanding --media understanding
@@ -81,8 +81,6 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" understand --skill aihub-understand
   --params-file "/任务目录/understanding.json" --output-dir "/任务目录/outputs" --wait-seconds 30
 node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" native-music --skill aihub-music \
   --model lyria-3-pro-preview --params-file "/任务目录/gemini-music.json" --output-dir "/任务目录/outputs"
-node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" generate --skill aihub-document --media document \
-  --model doc2x-v3 --params-file "/任务目录/document.json" --output-dir "/任务目录/outputs" --wait-seconds 30
 ```
 
 根据 `describe` 选定用户实际需要的请求变体。必须字段与条件必填字段不是同一集合；互斥输入不得同时填写。Seedance 2.5 参考生视频的 `image_urls`、`video_urls`、`audio_urls` 是可混合的参考素材列表，要求至少一项非空，不属于三选一。它的文生和首帧图生型号分别有独立输入契约，不能为了通过校验丢弃用户素材。三个型号均为整数 `4–30` 秒，`1080p` 仅接受 `5`、`10`、`30` 秒；不静默改用户的时长或分辨率。

@@ -14,20 +14,17 @@ import { fixtureTransport } from './fixture-transport.js';
 
 const cfg = (models?: string[]): LoadedConfig => ({ skill: 'aihub-audio', apiKey: 'fixture', baseUrl: 'https://fixture.invalid', sources: { AIHUB_API_KEY: 'fixture' }, modelSelection: { policy: 'auto', models, sources: {} } });
 
-test('custom Speech requires existing IDs, preserves supported controls and rejects explicit safety', () => {
+test('both Speech variants require existing voice IDs and support nested controls and explicit safety', () => {
   const validate = (model: string, params: Record<string, unknown>) => validateGeneration('audio', model, { text: 'Hello', ...params });
-  for (const model of ['eleven-v4-text-to-speech-custom-voice']) {
-    assert.throws(() => validate(model, {}), /existing voice ID/);
-    assert.throws(() => validate(model, { voice: 'Rachel' }), /existing voice ID/);
-    validate(model, { voice: '21m00Tcm4TlvDq8ikWAM', pronunciation_dictionary_locators: [], clone_strength: 0, enable_safety_checker: null });
-    const plan = selectionPlan(cfg(), { operation: 'audio-tts', original_request: 'Use my existing voice', model, prompt: 'Hello', requirements: { voice: '21m00Tcm4TlvDq8ikWAM', clone_strength: 0 } });
-    assert.equal(plan.candidates[0]?.rejection, undefined); assert.deepEqual(plan.candidates[0]?.params, { text: 'Hello', voice: '21m00Tcm4TlvDq8ikWAM', clone_strength: 0 });
-    assert.throws(() => validate(model, { voice: '21m00Tcm4TlvDq8ikWAM', text: 'x'.repeat(2001) }), /2000/);
-  }
-  validate('eleven-v4-text-to-speech', { text: 'x'.repeat(5000), previous_text: null, similarity_boost: 0 });
-  validate('eleven-v4-text-to-speech-custom-voice', { voice: 'existing-id', previous_text: 'context', similarity_boost: 0, seed: 0 });
-  for (const enable_safety_checker of [false, true]) {
-    assert.throws(() => validate('eleven-v4-text-to-speech-custom-voice', { voice: 'existing-id', enable_safety_checker }), /enable_safety_checker/);
+  for (const model of ['eleven-v4-text-to-speech', 'eleven-v4-text-to-speech-custom-voice']) {
+    assert.throws(() => validate(model, {}), /voice_id.*required/);
+    assert.throws(() => validate(model, { voice: 'Rachel' }), /voice.*migrate.*voice_id/);
+    const requirements = { voice_id: 'existing-id', voice_settings: { clone_strength: 0 } };
+    validate(model, { ...requirements, pronunciation_dictionary_locators: [], enable_safety_checker: null });
+    const plan = selectionPlan(cfg(), { operation: 'audio-tts', original_request: 'Use my existing voice', model, prompt: 'Hello', requirements });
+    assert.equal(plan.candidates[0]?.rejection, undefined); assert.deepEqual(plan.candidates[0]?.params, { text: 'Hello', ...requirements });
+    validate(model, { voice_id: 'existing-id', text: '👋'.repeat(10000), previous_text: 'context', voice_settings: { similarity_boost: 0 }, seed: 0 });
+    for (const enable_safety_checker of [false, true]) validate(model, { voice_id: 'existing-id', enable_safety_checker });
   }
 });
 
@@ -43,7 +40,7 @@ test('Scribe preserves nullable and explicit controls, rejects conflicts and nev
   for (const params of [{}, { audio_url: 'https://fixtures.invalid/a', file: 'a.wav' },
     { audio_url: 'https://fixtures.invalid/a', diarize: false, num_speakers: 2 },
     { audio_url: 'https://fixtures.invalid/a', num_speakers: 2, diarization_threshold: 0.2 }]) assert.throws(() => validate(params));
-  assert.throws(() => validateGeneration('audio', 'scribe-v2', { audio_url: 'https://fixtures.invalid/a', secondary_language_codes: [] }), /secondary_language_codes/);
+  assert.throws(() => validateGeneration('audio', 'scribe-v2', { source_url: 'https://fixtures.invalid/a', secondary_language_codes: [] }), /secondary_language_codes/);
   assert.ok(selectionPlan(cfg(), { ...request, model: 'scribe-v3', inputs: { audios: ['a.wav', 'b.wav'] } }).candidates[0]?.rejection);
 });
 
@@ -97,7 +94,7 @@ test('packaged Relay CLI handles URL and multipart Scribe, full voice catalog, e
     }
     for (const code of ['requested_options_unavailable', 'unsupported_parameters']) for (const remoteFailure of [false, true]) {
       errorCode = code; taskFailure = remoteFailure;
-      await writeFile(requestFile, JSON.stringify({ operation: 'audio-tts', original_request: 'Keep timestamps', prompt: 'Hello', requirements: { timestamps: true, clone_strength: 0 } }));
+      await writeFile(requestFile, JSON.stringify({ operation: 'audio-tts', original_request: 'Keep timestamps', prompt: 'Hello', requirements: { voice_id: 'existing-id', timestamps: true, voice_settings: { clone_strength: 0 } } }));
       const before: number = posts.length; let failed = await call('run', '--request-file', requestFile, '--output-dir', dir);
       if (remoteFailure) failed = await call('continue', '--record', failed.run_record, '--wait-seconds', '0');
       assert.equal(posts.length, before + 1, 'option errors must not submit a replacement model');
@@ -111,7 +108,7 @@ test('packaged Relay CLI handles URL and multipart Scribe, full voice catalog, e
       assert.deepEqual(event.suggested_remove_parameters, detail.suggested_remove_parameters);
       assert.match(await readFile(join(failed.run_record, '..', 'error-report.md'), 'utf8'), /不得自动删参/);
       assert.match(await readFile(join(failed.run_record, '..', 'issue-draft.md'), 'utf8'), new RegExp(code));
-      assert.equal(posts.at(-1)?.timestamps, true); assert.equal(posts.at(-1)?.clone_strength, 0);
+      assert.equal(posts.at(-1)?.timestamps, true); assert.deepEqual(posts.at(-1)?.voice_settings, { clone_strength: 0 });
       await call('continue', '--record', failed.run_record, '--wait-seconds', '0'); assert.equal(posts.length, before + 1);
     }
   } finally { server.closeAllConnections(); await new Promise<void>(done => server.close(() => done())); await rm(dir, { recursive: true, force: true }); }

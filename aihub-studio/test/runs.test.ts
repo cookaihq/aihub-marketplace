@@ -53,8 +53,11 @@ async function fixture(skill = 'aihub-image') {
     const env = { ...process.env, ...fixtureTransport(base), AIHUB_API_KEY: 'fixture-run-secret',
       AIHUB_IMAGE_MODELS: `${first},${second}`, AIHUB_MODEL_FALLBACK_POLICY: 'auto', AIHUB_MODEL_MAX_ATTEMPTS: '', ...options };
     let stdout: string; let stderr: string;
-    try { ({ stdout, stderr } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', skill, '--no-global-config'], { cwd: dir, env, timeout: 20_000 })); }
-    catch (error) { ({ stdout, stderr } = error as { stdout: string; stderr: string }); }
+    try { ({ stdout, stderr } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', skill, '--no-global-config'], { cwd: dir, env, timeout: process.platform === 'win32' ? 60_000 : 20_000 })); }
+    catch (error) {
+      ({ stdout, stderr } = error as { stdout: string; stderr: string });
+      if (!stdout?.trim()) throw error;
+    }
     assert.ok(!(stdout! + stderr!).includes('fixture-run-secret'));
     return JSON.parse(stdout!);
   };
@@ -185,7 +188,7 @@ test('native runs preflight before POST and preserve delivered or ambiguous outc
     const audio = join(f.dir, 'music.wav');
     await exec('ffmpeg', ['-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=0.1', '-y', audio]);
     f.state.nativeAudio = (await readFile(audio)).toString('base64');
-    await writeFile(f.request, JSON.stringify({ operation: 'music-native', original_request: 'Piano music', prompt: 'Piano music' }));
+    await writeFile(f.request, JSON.stringify({ operation: 'music-description', model: 'lyria-3-pro-preview', original_request: 'Piano music', prompt: 'Piano music' }));
     const preflight = await f.start({ PATH: '' });
     assert.equal(preflight.status, 'preflight_failed'); assert.deepEqual(f.state.posts, []);
     const done = await f.call({}, 'continue', '--record', preflight.run_record);

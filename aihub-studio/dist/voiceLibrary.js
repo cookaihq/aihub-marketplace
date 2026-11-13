@@ -1,9 +1,17 @@
 import { AihubmaxClient } from './apiClient.js';
 import { AIHUB_SERVICE_URL, resolveConfiguration, sanitized } from './config.js';
 import { validVoiceId } from './speech.js';
+export function elevenPresetVoices(value) {
+    if (!Array.isArray(value))
+        throw new Error('Invalid ElevenLabs voice library response.');
+    return presetVoices(value.map(row => row && typeof row === 'object' ? { ...row, voice_name: row.name,
+        language: Array.isArray(row.languages) ? row.languages.filter((v) => typeof v === 'string').join(', ') : '',
+        tag_list: row.category, sample_audio: row.preview_url } : row)).map(voice => ({ ...voice,
+        languages: voice.language ? voice.language.split(', ') : [] }));
+}
 /** Only documented display fields leave the private loader. Never return credentials. */
 export function presetVoices(value) {
-    if (!Array.isArray(value) || value.length > 10000)
+    if (!Array.isArray(value) || value.length > 50000)
         throw new Error('Invalid voice library response.');
     const voices = new Map();
     const text = (value) => typeof value === 'string' ? value.slice(0, 4000) : '';
@@ -18,7 +26,7 @@ export function presetVoices(value) {
     }
     return [...voices.values()];
 }
-export async function loadVoiceLibrary(options) {
+export async function loadVoiceLibrary(options, provider = 'minimax') {
     const resolved = resolveConfiguration({ ...options, skill: 'aihub-audio' });
     if (resolved.inspection.problems.some(p => p.reason === 'unreadable'))
         throw new Error('configuration');
@@ -26,6 +34,6 @@ export async function loadVoiceLibrary(options) {
     if (!apiKey)
         throw new Error('missing_key');
     const client = new AihubmaxClient({ baseUrl: AIHUB_SERVICE_URL, apiKey });
-    const result = await client.request('GET', '/e/v1/configs/minimax-preset-voice-id?language=zh', undefined, { timeoutMs: 12000, deadline: Date.now() + 30000 });
-    return sanitized(presetVoices(result), [apiKey]);
+    const result = await client.request('GET', provider === 'elevenlabs' ? '/e/v1/configs/elevenlabs-preset-voice-id' : '/e/v1/configs/minimax-preset-voice-id?language=zh', undefined, { timeoutMs: 12000, deadline: Date.now() + 30000 });
+    return sanitized(provider === 'elevenlabs' ? elevenPresetVoices(result) : presetVoices(result), [apiKey]);
 }

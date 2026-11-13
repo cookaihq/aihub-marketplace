@@ -1,12 +1,12 @@
 # AIhub Marketplace
 
-这个市场提供 AIhub 创作与文档处理、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
+这个市场提供 AIhub 多媒体创作与理解、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
 
-当前源码版本为 AIhub Studio **5.0.0**、Tikin Social **4.0.1** 和 Setup AIHub **4.2.0**。Studio 新增多音色文字转对话，TTS 默认 Speech 2.8 HD，新 Eleven 四模型等待对应 Gateway 部署；保留异步音乐默认和 GPT Image 2.6 文生图，图片编辑保留 2.5；发布与实际验证状态见各 Plugin 使用说明。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果；产物页与 Setup 续接流程保持原有入口。
+当前源码版本为 AIhub Studio **6.0.0**、Tikin Social **4.0.1** 和 Setup AIHub **4.2.0**。Studio 适配 Gateway Issue #29 的音频/音乐参数迁移与 Scribe V2 扩展，新合同等待 Gateway 部署；TTS 默认 Speech 2.8 HD、ASR 默认 Paraformer V2，异步音乐默认 ElevenLabs Music 2.5。GPT Image 2.6 文生图、2.5 图片编辑及个人模型优先级保持；发布与实际验证状态见各 Plugin 使用说明。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果；产物页与 Setup 续接流程保持原有入口。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
-| [AIhub Studio](aihub-studio/README.md)（`aihub-studio`） | 图片、视频、音频、音乐、多模态理解、文档处理 | 6 个 `aihub-*` Skill |
+| [AIhub Studio](aihub-studio/README.md)（`aihub-studio`） | 图片、视频、音频、音乐、多模态理解 | 5 个 `aihub-*` Skill |
 | [tikin Social](tikin-social/README.md)（`tikin-social`） | 社交媒体数据查询、素材下载、账号与评论分析、趋势研究 | 17 个 `tikin-*` Skill |
 | [Setup AIHub](setup-aihub/README.md)（`setup-aihub`） | 管理上述业务服务密钥和六类客户端的原生模型配置 | `setup-api-key`、`setup-agent-model` |
 
@@ -81,7 +81,7 @@ CNB 网络故障时，可改填 `https://github.com/cookaihq/aihub-marketplace.g
 | `aihub@plugin-marketplace` | `aihub-studio@aihub-marketplace` | `~/.config/aihub-studio/` |
 | `tikin-plugin@plugin-marketplace` 或 `tikin-plugin@tikin-plugins` | `tikin-social@aihub-marketplace` | `~/.config/tikin-social/` |
 
-Plugin 安装身份已经改变，现有安装不会自动变成新名称。请先读新 Plugin 的配置迁移说明，安装新版本并准备配置，再通过宿主入口停用旧 Plugin。开启新会话，确认 Plugin 身份和 Skill 来源指向新版本后再验证；验证成功后才卸载旧版。保留旧配置，只有你明确选择时才删除。六个 `aihub-*`、十七个 `tikin-*` Skill 名称及 `AIHUB_*`、`TIKIN_*` 配置字段保持原名。
+Plugin 安装身份已经改变，现有安装不会自动变成新名称。请先读新 Plugin 的配置迁移说明，安装新版本并准备配置，再通过宿主入口停用旧 Plugin。开启新会话，确认 Plugin 身份和 Skill 来源指向新版本后再验证；验证成功后才卸载旧版。保留旧配置，只有你明确选择时才删除。五个 `aihub-*`、十七个 `tikin-*` Skill 名称及 `AIHUB_*`、`TIKIN_*` 配置字段保持原名。
 
 旧 `~/.config/aihub/` 与 `~/.config/tikin/`（或原 tikin 的 XDG 配置位置）不会自动搬迁或作为旧别名继续读取。需要复用旧配置时，让 Agent 核对源文件、目标文件及已有设置，再按你的明确选择迁移；不要把密钥写进 Plugin 安装目录。项目配置及各 Skill 的普通配置回退规则见对应 README。
 
@@ -100,7 +100,7 @@ Studio 3.0.1 与 Tikin 4.0.1 修复首次配置保存并显示实际字段名，
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 5.0.0 | [aihub-studio/v5.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv5.0.0) |
+| aihub-studio | 6.0.0 | [aihub-studio/v6.0.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv6.0.0) |
 | setup-aihub | 4.2.0 | [setup-aihub/v4.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv4.2.0) |
 | tikin-social | 4.0.1 | [tikin-social/v4.0.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.0.1) |
 <!-- release-table:end -->

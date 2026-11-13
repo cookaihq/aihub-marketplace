@@ -5,7 +5,8 @@ let input = '';
 for await (const chunk of process.stdin) input += chunk;
 try {
   const options = JSON.parse(input);
-  const voices = await loadVoiceLibrary({cwd: options.project, useGlobalConfig: options.global_enabled});
+  if (options.provider !== undefined && !['minimax', 'elevenlabs'].includes(options.provider)) throw new Error('provider');
+  const voices = await loadVoiceLibrary({cwd: options.project, useGlobalConfig: options.global_enabled}, options.provider);
   process.stdout.write(JSON.stringify({voices}));
 } catch (error) {
   const status = error instanceof ApiError ? error.status : 0;

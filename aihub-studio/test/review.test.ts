@@ -62,8 +62,8 @@ async function fixture(audio = false) {
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   const request = join(dir, 'request.json');
-  await writeFile(request, JSON.stringify({ operation: audio ? 'music-native' : 'image-generate', original_request: audio ? '生成一段音乐' : '生成纯红色正方形，不要文字',
-    prompt: audio ? 'A short tone' : 'Red square', review_requirements: [{ id: 'content', text: audio ? '确实含有音频' : '纯红色且无文字', priority: 'required' }] }));
+  await writeFile(request, JSON.stringify({ operation: audio ? 'music-description' : 'image-generate', original_request: audio ? '生成一段音乐' : '生成纯红色正方形，不要文字',
+    ...(audio ? {model:'lyria-3-pro-preview'} : {}), prompt: audio ? 'A short tone' : 'Red square', review_requirements: [{ id: 'content', text: audio ? '确实含有音频' : '纯红色且无文字', priority: 'required' }] }));
   const call = async (env: Record<string, string>, ...args: string[]) => {
     let stdout: string;
     try { ({ stdout } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', audio ? 'aihub-music' : 'aihub-image', '--no-global-config'],

@@ -117,6 +117,11 @@ class Configuration:
         if field['type'] == 'boolean':
             return raw.strip() == '1' if raw.strip() in ('0', '1') else raw
         if field['type'] == 'list':
+            if field.get('encoding') == 'json':
+                try:
+                    return json.loads(raw)
+                except ValueError:
+                    return raw
             return [part.strip() for part in raw.split(',')]
         if field['type'] == 'number':
             return int(raw.strip()) if re.fullmatch(r'\d+', raw.strip()) else raw
@@ -339,7 +344,7 @@ class Configuration:
                 if type(value) is bool:
                     value = '1' if value else '0'
                 elif isinstance(value, list):
-                    value = ','.join(value)
+                    value = json.dumps(value, ensure_ascii=False) if field.get('encoding') == 'json' else ','.join(value)
                 elif value is not None:
                     value = str(value)
                 updates[key] = value

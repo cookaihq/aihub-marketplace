@@ -172,16 +172,15 @@ test('a later report update failure retains only links to existing artifacts', a
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
-test('all six Skill workflows and native music retain original inputs and one report on terminal failure', async t => {
+test('all five Skill workflows and native music retain original inputs and one report on terminal failure', async t => {
   const root = await mkdtemp(join(tmpdir(), 'aihub-all-error-routes-'));
   const cases: Array<{ skill: LoadedConfig['skill']; operation: string; model: string; inputs?: unknown }> = [
     { skill: 'aihub-image', operation: 'image-generate', model: 'gpt-image-2.5-flare' },
     { skill: 'aihub-video', operation: 'video-text', model: 'seedance-2.5-text-to-video' },
     { skill: 'aihub-audio', operation: 'audio-transcribe', model: 'paraformer-v2', inputs: { audios: ['https://fixtures.invalid/voice.wav'] } },
-    { skill: 'aihub-music', operation: 'music-async', model: 'lyria-3-pro' },
+    { skill: 'aihub-music', operation: 'music-description', model: 'lyria-3-pro' },
     { skill: 'aihub-understanding', operation: 'understanding', model: 'gemini-3.1-pro-preview', inputs: { images: ['https://fixtures.invalid/reference.png?sign=private-signature'] } },
-    { skill: 'aihub-document', operation: 'document', model: 'doc2x-v3', inputs: { files: ['https://fixtures.invalid/file.pdf'] } },
-    { skill: 'aihub-music', operation: 'music-native', model: 'lyria-3-pro-preview' },
+    { skill: 'aihub-music', operation: 'music-description', model: 'lyria-3-pro-preview' },
   ];
   let posts = 0;
   const wav = Buffer.alloc(44 + 16000);

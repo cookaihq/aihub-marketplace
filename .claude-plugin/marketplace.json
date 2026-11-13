@@ -8,8 +8,8 @@
     {
       "name": "aihub-studio",
       "source": "./aihub-studio",
-      "version": "5.0.0",
-      "description": "AIhub 图片、视频、音频、音乐、多模态理解和文档处理，包含 6 个 Skill。",
+      "version": "6.0.0",
+      "description": "AIhub 图片、视频、音频、音乐和多模态理解，包含 5 个 Skill。",
       "category": "productivity"
     },
     {

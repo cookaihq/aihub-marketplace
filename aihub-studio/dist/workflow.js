@@ -6,10 +6,11 @@ import { credentialId, sanitized } from './config.js';
 import { checkMediaTools, downloadAssets, downloadJsonAssets, validateLocalMedia } from './download.js';
 import { validateGeneration, generationModelAvailable } from './models.js';
 import { speechParameters } from './speech.js';
+import { SUNO_MODELS, sunoParameters } from './suno.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { UPLOAD_MAX_BYTES } from './audioMedia.js';
 import { transcriptText } from './transcript.js';
-import { SCRIBE_MODELS, elevenAudioParameters } from './elevenlabs.js';
+import { ELEVEN_AUDIO_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, elevenAudioParameters } from './elevenlabs.js';
 import { assertOutsideInstallation, readJob, recordPath, withJobLock, writeJob, writePrivateText, writePrivateRecord } from './state.js';
 import { createTask, findTaskInfo, outputDirectory, participate, readTaskInfo, touchTask } from './taskInfo.js';
 function cleanError(error, cfg) {
@@ -45,12 +46,15 @@ const RESULT_METADATA_KEYS = [
     'timestamps', 'alignment', 'normalized_alignment', 'voice_segments',
     'composition_plan', 'song_metadata', 'words_timestamps',
 ];
+const SCRIBE_RESULT_METADATA_KEYS = ['words', 'transcripts', 'edited_transcript', 'entities', 'language_code',
+    'language_probability', 'audio_duration_secs', 'channel_index'];
 const STRUCTURED_AUDIO_MODELS = new Set(['paraformer-v2', 'paraformer-8k-v2', 'cohere-transcribe', ...SCRIBE_MODELS]);
 const LLM_SUBMIT_TIMEOUT_MS = 120_000;
 /** Keep task-specific fields visible without exposing the full remote response. */
-function resultMetadata(task) {
+function resultMetadata(task, model) {
     const metadata = {};
-    for (const key of RESULT_METADATA_KEYS) {
+    const keys = model === 'scribe-v2' ? [...RESULT_METADATA_KEYS, ...SCRIBE_RESULT_METADATA_KEYS] : RESULT_METADATA_KEYS;
+    for (const key of keys) {
         const value = task[key];
         if (value !== undefined && (value !== null || key === 'alignment' || key === 'normalized_alignment'))
             metadata[key] = value;
@@ -59,7 +63,7 @@ function resultMetadata(task) {
         if (!item || typeof item !== 'object' || Array.isArray(item))
             continue;
         const record = item;
-        for (const key of RESULT_METADATA_KEYS) {
+        for (const key of keys) {
             const value = record[key];
             if (value !== undefined && (value !== null || key === 'alignment' || key === 'normalized_alignment') && metadata[key] === undefined)
                 metadata[key] = value;
@@ -95,10 +99,19 @@ export function result(job, record, statusOverride) {
     const error = sub.state === 'known'
         ? sub.task.error ?? job.last_error
         : sub.state === 'submitting' ? 'The process stopped before submission was confirmed. Do not resubmit automatically.' : sub.error;
-    const metadata = sub.state === 'known' ? resultMetadata(sub.task) : undefined;
+    const metadata = sub.state === 'known' ? resultMetadata(sub.task, job.model) : undefined;
+    const showUsage = ELEVEN_AUDIO_MODELS.has(job.model) || job.model === ELEVEN_MUSIC_MODEL || job.model === 'scribe-v2' || SUNO_MODELS.has(job.model);
+    const tracks = SUNO_MODELS.has(job.model) && sub.state === 'known' ? (sub.task.results ?? []).map(item => {
+        const track = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+        const url = typeof track.audio_url === 'string' && track.audio_url ? track.audio_url : track.url;
+        return { ...Object.fromEntries(['id', 'title', 'lyrics', 'duration'].filter(key => track[key] !== undefined).map(key => [key, track[key]])),
+            ...(typeof url === 'string' ? { audio_url: url, file: job.files.find(file => file.url === url)?.path } : {}) };
+    }) : undefined;
     return { schema_version: 1, status: statusOverride ?? status, record, media: job.media, model: job.model,
         ...(job.failure ? { failure: job.failure } : {}),
         ...(sub.state === 'known' ? { task_id: sub.task.id, remote_status: sub.task.status, progress: sub.task.progress } : {}),
+        ...(showUsage && sub.state === 'known' && sub.task.usage !== undefined ? { usage: sub.task.usage } : {}),
+        ...(tracks ? { tracks } : {}),
         ...(job.text !== undefined ? { text: job.text } : {}), files: job.files, failed: job.failed, ...(metadata ? { result_metadata: metadata } : {}), ...(error ? { error } : {}),
         ...(sub.state === 'known' && status !== 'remote_failed' && status !== 'delivered'
             ? { next_action: { command: 'resume', args: ['--skill', job.skill, '--record', record, '--wait-seconds', '30'] } }
@@ -140,6 +153,10 @@ async function finishDownload(job, record, cfg) {
             if (!item || typeof item !== 'object' || Array.isArray(item))
                 return [];
             const result = item;
+            if (SUNO_MODELS.has(job.model)) {
+                const url = typeof result.audio_url === 'string' && result.audio_url ? result.audio_url : result.url;
+                return typeof url === 'string' && url ? [url] : [];
+            }
             return ['url', 'image_url', 'video_url', 'audio_url']
                 .flatMap(key => typeof result[key] === 'string' ? [result[key]] : []);
         }))];
@@ -288,23 +305,24 @@ async function queryAndDeliver(client, cfg, job, record, waitSeconds) {
 }
 export async function generate(cfg, options) {
     // Stored run candidates are already resolved, even when they contain no voice ID.
-    const params = options.parametersResolved ? options.params : speechParameters(options.model, options.params, cfg.speech?.defaultVoiceId);
+    const params = options.parametersResolved ? options.params : speechParameters(options.model, options.params, cfg.speech?.defaultVoiceId, cfg.elevenlabs?.defaultVoiceId);
     const path = validateGeneration(options.media, options.model, params);
-    let body = { ...elevenAudioParameters(options.model, params), model: options.model };
+    const requestParams = SUNO_MODELS.has(options.model) ? sunoParameters(options.model, params) : elevenAudioParameters(options.model, params);
+    let body = { ...requestParams, model: options.model };
     if (SCRIBE_MODELS.has(options.model) && typeof params.file === 'string') {
         // Whole-file multipart is independent of Paraformer's splitting and upload protocol.
         // Keep memory bounded in the Node 18 runtime; larger inputs use the documented URL path.
         const info = await stat(params.file);
         const maxBytes = 256 * 1024 * 1024;
         if (!info.isFile() || !info.size || info.size > maxBytes)
-            throw new Error('Scribe local file must be nonempty and <=256 MiB; use audio_url for larger inputs.');
+            throw new Error(`Scribe local file must be nonempty and <=256 MiB; use ${options.model === 'scribe-v2' ? 'source_url' : 'audio_url'} for larger inputs.`);
         const bytes = await readFile(params.file);
         if (bytes.length > maxBytes || bytes.length !== info.size)
             throw new Error('Scribe file changed while reading; no task was submitted.');
         const form = new FormData();
         form.set('model', options.model);
         form.set('file', new Blob([bytes]), basename(params.file));
-        for (const [key, value] of Object.entries(params)) {
+        for (const [key, value] of Object.entries(requestParams)) {
             if (key === 'file' || value == null)
                 continue; // Nullable controls are unspecified by contract.
             form.set(key, typeof value === 'string' ? value : JSON.stringify(value));

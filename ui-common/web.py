@@ -34,14 +34,15 @@ class MarketplaceHandler(CoreHandler):
             if self.server.page == 'configuration' and self.server.adapter.plugin == 'aihub-studio':
                 content += '\n' + import_module('plugins.aihub-studio.web').assets('js' if name.endswith('.js') else 'css')
             return self.send(200, content.encode(), ('text/javascript' if name.endswith('.js') else 'text/css') + '; charset=utf-8')
-        if parsed.path == '/api/minimax-voices':
+        if parsed.path in ('/api/minimax-voices', '/api/elevenlabs-voices'):
             self.check_origin()
             self.authorized()
             self.server.lifetime()
             if self.server.page != 'configuration' or self.server.adapter.plugin != 'aihub-studio':
                 raise UIError('page', '此页面不提供音色库。', 404)
             # A fresh read uses the latest credential; never cache a previous key's response.
-            return self.send(200, import_module('plugins.aihub-studio.web').voices(self.server.adapter.configuration))
+            provider = 'elevenlabs' if parsed.path == '/api/elevenlabs-voices' else 'minimax'
+            return self.send(200, import_module('plugins.aihub-studio.web').voices(self.server.adapter.configuration, provider))
         if parsed.path == '/api/artifacts':
             self.check_origin()
             self.authorized()
