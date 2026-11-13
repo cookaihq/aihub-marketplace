@@ -1,4 +1,12 @@
-# AIhub Studio Plugin 5.0.0
+# AIhub Studio Plugin 6.0.0
+
+6.0.0 适配 Gateway Issue #29 的 ElevenLabs Speech、Dialogue、Music 和 Scribe V2 合同。Speech 必须明确 `voice_id`，对话必须逐段明确 `inputs[].voice_id`；语音设置改用嵌套对象。旧 `voice`、平铺设置、Speech `future_text` 和 Scribe V2 `audio_url` 会给出迁移提示，不会自动改写或重发。可告诉 Agent：“按新版合同检查这份音频或音乐请求，只预览迁移计划，保留显式 false 和 0。”详见 [ElevenLabs 使用说明](references/elevenlabs.md)。
+
+Scribe V2 使用 `source_url` 或本地文件，支持关键词、角色、改写、多声道与实体选项；V3 保持独立合同。音乐新增完整格式及 seed/C2PA 组合校验，完整转写、改写和实体结果按原返回保存。TTS 默认仍为 `speech-2.8-hd`，ASR 为 `paraformer-v2`，异步音乐为 `elevenlabs-music-v2.5`；显式型号及个人模型顺序优先。
+
+**Gateway v0.9.16 及对应文档已于 2026-11-13 上线。** 线上调用沿用既有账号检查、付费授权与任务流程；客户端生产业务尚未验收。Windows 脚本、六个 Skill 规范检查及 Codex 0.167.2 默认沙箱的开发源显式调用已完成离线验证，最终音乐四项复测通过；上线说明更新后，两项音频/音乐正式入口离线计划复测通过。首轮两份音乐验收输入缺少必填 `positive_styles`，保留原失败记录，另用完整输入验证通过；doctor 的 `ffprobe` 因 EPERM 受限。WorkBuddy 本次测试仍待用户确认，因此本机验收尚未全部完成，本批尚未提交发布；macOS、生产生成、重新安装、隐式发现与人工听审未验。`task.usage` 原样展示，其中预扣信息不能当作最终账单。
+
+以下为历史 5.0.0 的功能与验收记录。
 
 5.0.0 新增文字转多音色对话：按指定顺序和已有音色合成一段音频。TTS 内置默认为 `speech-2.8-hd`，ASR 为 `paraformer-v2`；新 Eleven Speech / Dialogue 四模型为可选能力，须待对应 Gateway 合同生产部署后启用。
 

@@ -2,7 +2,7 @@ import { modelEntry, validateGeneration, VIDEO_DEFAULT_MODELS, IMAGE_DEFAULT_MOD
 import { resolve } from 'node:path';
 import { audioContract, remoteAudio } from './audioMedia.js';
 import { speechParameters } from './speech.js';
-import { ELEVEN_SPEECH_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, elevenMigration } from './elevenlabs.js';
+import { ELEVEN_SPEECH_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, elevenMigration, assertElevenParameterMigration } from './elevenlabs.js';
 export const OPERATIONS = {
     'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
     'video-text': 'aihub-video', 'video-start-frame': 'aihub-video', 'video-reference': 'aihub-video',
@@ -230,9 +230,9 @@ function buildCandidate(request, model, defaultVoiceId) {
         else if (op === 'audio-transcribe') {
             if (SCRIBE_MODELS.has(model)) {
                 const audio = inputs.audios;
-                inputFields.audios = [audio?.[0] && !remoteAudio(audio[0]) ? 'file' : 'audio_url', 'one'];
+                inputFields.audios = [audio?.[0] && !remoteAudio(audio[0]) ? 'file' : model === 'scribe-v2' ? 'source_url' : 'audio_url', 'one'];
                 requiredInputs = ['audios'];
-                allowedRequirements = modelEntry(model).entry.params.filter(name => !['model', 'audio_url', 'file'].includes(name));
+                allowedRequirements = modelEntry(model).entry.params.filter(name => !['model', 'source_url', 'audio_url', 'file'].includes(name));
             }
             else {
                 candidate.transcription = audioContract(model);
@@ -287,6 +287,7 @@ function buildCandidate(request, model, defaultVoiceId) {
                 } };
             return candidate;
         }
+        assertElevenParameterMigration(model, requirements);
         assertKeys(requirements, allowedRequirements, 'requirements');
         assertKeys(inputs, Object.keys(inputFields), 'inputs');
         for (const key of requiredInputs)

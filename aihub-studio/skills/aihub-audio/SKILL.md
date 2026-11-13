@@ -1,8 +1,8 @@
 ---
 name: aihub-audio
 metadata:
-  version: "5.0.0"
-description: v5.0.0｜通过 AIhub D1 合成语音、生成多音色对话、转写本地或 URL 录音；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
+  version: "6.0.0"
+description: v6.0.0｜通过 AIhub D1 合成语音、生成多音色对话、转写本地或 URL 录音；按模型限制分析波形并自动分段，合并全文与全局时间戳，支持逐片恢复任务。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 
@@ -25,7 +25,7 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 
 D1 处理文本转语音、文字转多音色对话和语音识别/转写。用户本次指定模型时固定执行；否则读取 `AIHUB_AUDIO_MODELS`，按用途筛选，不跨用途替换。没有配置时 TTS 使用 `speech-2.8-hd`，ASR 使用 `paraformer-v2`；对话需显式选择或配置 Dialogue 型号，不自动加入个人列表。音乐属于 `aihub-music`，素材理解属于 `aihub-understanding`。本 Skill 不提供声音克隆；遇到克隆请求时说明能力范围，不提交生成请求。
 
-使用 `eleven-v4-text-to-speech`、`eleven-v4-text-to-dialogue`、两者的 `-custom-voice` 变体或 `scribe-v2` / `scribe-v3` 时，先读取并遵守 [ElevenLabs 参数与恢复](../../references/elevenlabs.md)。Speech 将 prompt 原样映射为 text，使用独立 voice；Dialogue 将有序台词数组放在 `requirements.inputs`，不填 prompt，控制作用于整次生成。每段显式给出已有音色 ID，不补默认、不拆台词、不换声音或跨账号拼接。MiniMax 默认音色不适用。新四模型须待对应 Gateway 合同部署后才能线上使用；旧 v4/Turbo 四 ID 无别名或回退，个人列表只报告迁移方法，不静默改写。Scribe 使用一个完整 URL 或本地文件，保留结构化转写，不套用 Paraformer 分段，不自动将 V3 降为 V2。
+使用 `eleven-v4-text-to-speech`、`eleven-v4-text-to-dialogue`、两者的 `-custom-voice` 变体或 `scribe-v2` / `scribe-v3` 时，先读取并遵守 [ElevenLabs 参数与恢复](../../references/elevenlabs.md)。Speech 将 prompt 原样映射为 text，显式填写 requirements.voice_id 和可选 voice_settings；Dialogue 将有序台词及 voice_id 放在 requirements.inputs，可选 settings 使用 similarity，不填 prompt。两款 Speech 均为1–10000字；Dialogue 最多10种音色、2000字仅为可靠性建议，不截断或拆分。设置对象省略时不主动填充，false/0保留；MiniMax 默认音色不适用。Issue #29 合同已随 Gateway v0.9.16 于2026-11-13上线，线上调用沿用既有账号检查、付费授权和任务流程。旧 v4/Turbo 四 ID 无别名或回退，个人列表只报告迁移方法，不静默改写。Scribe 使用一个完整 URL 或本地文件：v2 的 URL 为 source_url、diarize 默认 false，支持角色、改写、实体及多声道；v3 保持旧合同与默认值。保留完整结果，不套用 Paraformer 分段，不自动将 v3 降为 v2；旧任务恢复不重发。
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。已有 `run.json` 用 `continue`；旧 `task.json` / 任务 ID 用 `resume` / `task` 查询原任务。
 
