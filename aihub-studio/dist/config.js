@@ -2,7 +2,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { MINIMAX_DEFAULT_VOICE_KEY, ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, ELEVEN_CLONE_MODEL_KEY, validVoiceId } from './speech.js';
+import { MINIMAX_DEFAULT_VOICE_KEY, ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, validVoiceId } from './speech.js';
 export const RESULT_CHECK_DEFAULTS = { enabled: true, provider: 'auto', models: ['gemini-3.8-flash'], sources: {} };
 const BEHAVIOR_DEFAULTS = {
     AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: 'gemini-3.8-flash',
@@ -12,7 +12,7 @@ const BEHAVIOR_KEYS = [...Object.keys(BEHAVIOR_DEFAULTS), 'AIHUB_SUPPORT_URL'];
 const KEYS = ['AIHUB_API_KEY'];
 export const MODEL_KEYS = Object.fromEntries(['image', 'video', 'audio', 'music', 'understanding'].map(kind => [`aihub-${kind}`, `AIHUB_${kind.toUpperCase()}_MODELS`]));
 const SELECTION_KEYS = ['AIHUB_MODEL_FALLBACK_POLICY', 'AIHUB_MODEL_MAX_ATTEMPTS'];
-export const ELEVEN_PREFERENCE_KEYS = [ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, ELEVEN_CLONE_MODEL_KEY];
+export const ELEVEN_PREFERENCE_KEYS = [ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY];
 const DECLARED_KEYS = new Set([...KEYS, ...Object.values(MODEL_KEYS), ...SELECTION_KEYS, ...BEHAVIOR_KEYS, MINIMAX_DEFAULT_VOICE_KEY, ...ELEVEN_PREFERENCE_KEYS]);
 // Stable Plugin manifest name; independent of the installation directory or host Agent.
 const PLUGIN_NAME = 'aihub-studio';
@@ -141,8 +141,6 @@ export function resolveConfiguration(options) {
             invalid(ELEVEN_FAVORITES_KEY, 'expected_json_array_of_at_most_2000_distinct_voice_ids');
         }
     }
-    if (values[ELEVEN_CLONE_MODEL_KEY] && !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(values[ELEVEN_CLONE_MODEL_KEY]))
-        invalid(ELEVEN_CLONE_MODEL_KEY, 'expected_exact_model_id');
     if (!['0', '1'].includes(values.AIHUB_RESULT_CHECK_ENABLED.trim()))
         invalid('AIHUB_RESULT_CHECK_ENABLED', 'expected_0_or_1');
     if (!['auto', 'host', 'aihub'].includes(values.AIHUB_RESULT_CHECK_PROVIDER.trim()))
@@ -241,7 +239,7 @@ export function loadConfig(options) {
         ...(options.skill === 'aihub-audio' ? { elevenlabs: {
                 ...(values[ELEVEN_DEFAULT_VOICE_KEY] ? { defaultVoiceId: values[ELEVEN_DEFAULT_VOICE_KEY] } : {}),
                 favoriteVoiceIds: values[ELEVEN_FAVORITES_KEY] ? JSON.parse(values[ELEVEN_FAVORITES_KEY]) : [],
-                ...(values[ELEVEN_CLONE_MODEL_KEY] ? { cloneModel: values[ELEVEN_CLONE_MODEL_KEY] } : {}), sources: elevenSources
+                sources: elevenSources
             } } : {}),
         resultCheck: { enabled: values.AIHUB_RESULT_CHECK_ENABLED.trim() === '1', provider: values.AIHUB_RESULT_CHECK_PROVIDER.trim(),
             models: values.AIHUB_RESULT_CHECK_MODELS.split(',').map(item => item.trim()), sources: Object.fromEntries(Object.entries(behaviorSources).filter(([key]) => key.startsWith('AIHUB_RESULT_CHECK_'))) },

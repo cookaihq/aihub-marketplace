@@ -14,11 +14,11 @@ const cloningIds = cloningModels.flatMap(model => [model, `minimax/${model}`, `$
 const config: LoadedConfig = { skill: 'aihub-audio', apiKey: 'offline-fixture', baseUrl: 'https://example.invalid',
   sources: { AIHUB_API_KEY: 'fixture' }, modelSelection: { policy: 'auto', sources: {} } };
 
-test('audio planning stops the unconfigured ElevenLabs cloning placeholder', () => {
+test('audio planning rejects cloning as an unsupported operation', () => {
   assert.throws(() => selectionPlan(config, {
     operation: 'audio-clone', original_request: 'Clone this voice',
     inputs: { audios: ['https://example.invalid/reference.wav'] },
-  }), /configuration placeholder.*No cloning request/);
+  }), /Supported operations: audio-tts, audio-dialogue, audio-transcribe$/);
 });
 
 test('old cloning preferences cannot replace speech synthesis or transcription', () => {

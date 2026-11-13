@@ -1,8 +1,8 @@
 ---
 name: aihub-audio
 metadata:
-  version: "6.0.0"
-description: v6.0.0｜通过 AIhub 合成语音和旁白、按台词顺序生成多音色对话、转写录音；支持 ElevenLabs 预置音色库筛选、试听与收藏，预留未启用的音色克隆配置入口。
+  version: "6.0.1"
+description: v6.0.1｜通过 AIhub 合成语音和旁白、按台词顺序生成多音色对话、转写录音；支持 ElevenLabs 预置音色库筛选、试听与收藏。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 
@@ -23,13 +23,13 @@ Windows 原生命令统一使用 [共用 CLI](../../references/cli.md) 中的 `s
 ## 凭证配置
 
 
-D1 处理文本转语音、文字转多音色对话和语音识别/转写。用户本次指定模型时固定执行；否则读取 `AIHUB_AUDIO_MODELS`，按用途筛选，不跨用途替换。没有配置时 TTS／旁白使用 `eleven-v4-text-to-speech`，按台词顺序生成多音色对话使用 `eleven-v4-text-to-dialogue`，ASR 使用 `paraformer-v2`。音乐属于 `aihub-music`，素材理解属于 `aihub-understanding`。ElevenLabs 音色克隆仅预留场景与空模型配置；本版本不提交克隆请求。
+D1 处理文本转语音、文字转多音色对话和语音识别/转写。用户本次指定模型时固定执行；否则读取 `AIHUB_AUDIO_MODELS`，按用途筛选，不跨用途替换。没有配置时 TTS／旁白使用 `eleven-v4-text-to-speech`，按台词顺序生成多音色对话使用 `eleven-v4-text-to-dialogue`，ASR 使用 `paraformer-v2`。音乐属于 `aihub-music`，素材理解属于 `aihub-understanding`。
 
 使用 `eleven-v4-text-to-speech`、`eleven-v4-text-to-dialogue`、两者的 `-custom-voice` 变体或 `scribe-v2` / `scribe-v3` 时，先读取并遵守 [ElevenLabs 参数与恢复](../../references/elevenlabs.md)。Speech 将 prompt 原样映射为 text，任务显式 requirements.voice_id 优先，否则读取已配置的 ElevenLabs 默认音色；可选 voice_settings；Dialogue 将有序台词及 voice_id 放在 requirements.inputs，可选 settings 使用 similarity，不填 prompt。两款 Speech 均为1–10000字；Dialogue 最多10种音色、2000字仅为可靠性建议，不截断或拆分。设置对象省略时不主动填充，false/0保留；MiniMax 默认音色不适用。Issue #29 合同已随 Gateway v0.9.16 于2026-11-13上线，线上调用沿用既有账号检查、付费授权和任务流程。旧 v4/Turbo 四 ID 无别名或回退，个人列表只报告迁移方法，不静默改写。Scribe 使用一个完整 URL 或本地文件：v2 的 URL 为 source_url、diarize 默认 false，支持角色、改写、实体及多声道；v3 保持旧合同与默认值。保留完整结果，不套用 Paraformer 分段，不自动将 v3 降为 v2；旧任务恢复不重发。
 
 先读取 [共用 CLI](../../references/cli.md) 和 [任务 JSON、模型配置与切换](../../references/model-selection.md)。已有 `run.json` 用 `continue`；旧 `task.json` / 任务 ID 用 `resume` / `task` 查询原任务。
 
-新任务先执行 `doctor`。保存 `original_request`，选择 `audio-tts`、`audio-dialogue` 或 `audio-transcribe`；`audio-clone` 仅为占位并会停止执行。TTS 将待朗读文本写入 `prompt`，按 `describe` 填写用户要求的 `requirements`。Speech 2.8 HD / Turbo 未显式指定 `voice_setting.voice_id` 时，由程序补入已配置的默认音色；不要自行填一个推荐音色覆盖用户默认值。用户本次明确指定的音色优先，其他语音参数继续保留。转写先读[大文件转写与恢复](../../references/audio-transcription.md)，将原始本地路径或 URL 直接写入 `inputs.audios`；程序按实际模型与上传通道决定整段、转换或波形分段。仅用户本次指定型号才填 `model`。先 `plan` 检查每个候选，再 `run`；不能为了换模型改变指定音色、语言或丢弃输入。
+新任务先执行 `doctor`。保存 `original_request`，选择 `audio-tts`、`audio-dialogue` 或 `audio-transcribe`。TTS 将待朗读文本写入 `prompt`，按 `describe` 填写用户要求的 `requirements`。Speech 2.8 HD / Turbo 未显式指定 `voice_setting.voice_id` 时，由程序补入已配置的默认音色；不要自行填一个推荐音色覆盖用户默认值。用户本次明确指定的音色优先，其他语音参数继续保留。转写先读[大文件转写与恢复](../../references/audio-transcription.md)，将原始本地路径或 URL 直接写入 `inputs.audios`；程序按实际模型与上传通道决定整段、转换或波形分段。仅用户本次指定型号才填 `model`。先 `plan` 检查每个候选，再 `run`；不能为了换模型改变指定音色、语言或丢弃输入。
 
 用户要求获取、筛选、试听、选择或收藏 ElevenLabs 预置音色时，读取并遵守[ElevenLabs 预置音色库](../../references/elevenlabs-voices.md)，实际启动统一配置中心并返回可点击的 HTML 页面链接，定位此音色库。用户选择全局／项目范围后，点击“保存并使用”将所选音色和收藏原子保存并回读；关闭或到期不算已保存。已保存选择用于 Eleven Speech 的单人语音默认值，对话仍逐段指定音色，收藏不会自动轮换。未配置默认音色时打开此页面让用户选择，不能由 Agent 随意填一个音色。
 

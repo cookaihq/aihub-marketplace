@@ -4,7 +4,6 @@ export const MINIMAX_FAVORITES_KEY = 'audio.minimax_speech.favorite_voice_ids';
 export const MINIMAX_SPEECH_MODELS = new Set(['speech-2.8-hd', 'speech-2.8-turbo']);
 export const ELEVEN_DEFAULT_VOICE_KEY = 'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID';
 export const ELEVEN_FAVORITES_KEY = 'AIHUB_ELEVENLABS_FAVORITE_VOICE_IDS';
-export const ELEVEN_CLONE_MODEL_KEY = 'AIHUB_ELEVENLABS_VOICE_CLONE_MODEL';
 export function validVoiceId(value) {
     // Official IDs include spaces, e.g. Chinese (Mandarin)_Warm_Girl.
     return typeof value === 'string' && value.length > 0 && value.length <= 512 && value === value.trim()

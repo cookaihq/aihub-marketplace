@@ -1,12 +1,18 @@
-# AIhub Studio Plugin 6.0.0
+# AIhub Studio Plugin 6.1.0
 
 让 Claude Code、Codex、WorkBuddy 或 Hermes 通过 AIhub 生成图片、视频、语音和音乐，理解图片、音频、视频及支持的文件。结果保存在工作文件夹中，并提供文件链接和实际检查结果。
 
 本版单人语音与旁白默认使用 `eleven-v4-text-to-speech`，有序多音色对话默认使用 `eleven-v4-text-to-dialogue`，转写仍用 `paraformer-v2`。音乐提供“按描述生成歌曲”“按已有歌词演唱”“纯音乐／背景音乐”三个场景，均默认 `suno-v6`。静态文生图使用 GPT Image 2.6，图片编辑使用 2.5；按速度或细节要求选择 Flare／Sunburst。显式型号、个人模型顺序和已保存任务继续优先。
 
-新增 **ElevenLabs 预置音色库**：在完整配置中心筛选、试听、选择与收藏，再选择当前项目或全局，点击“保存并使用”同时保存音色和收藏。选择只作为未指定音色的单人语音默认值；对话仍逐段指定音色。ElevenLabs 音色克隆本版只保留空模型占位，不提交克隆请求。移除 `aihub-document`，完整包现含五个 Skill；PDF 转换请另选工具。
+新增 **ElevenLabs 预置音色库**：在完整配置中心筛选、试听、选择与收藏，再选择当前项目或全局，点击“保存并使用”同时保存音色和收藏。选择只作为未指定音色的单人语音默认值；对话仍逐段指定音色。完整包现含五个 Skill；PDF 转换请另选工具。
+
+6.1.0 移除 ElevenLabs 音色克隆占位场景、模型配置与页面字段。旧占位配置不再读取，已有文件不会自动删除或改写。音频 Skill 为 6.0.1，其余内置 Skill 版本保持。
+
+6.1.0 Windows 整包回归首轮 188/189；唯一 review 用例因子进程空输出解析失败，原测试串行复测 1/1 通过，首轮失败保留。UI 回归 40/40，五个 Skill 官方格式与工作区检查通过。独立 Codex 0.167.2 默认沙箱验证 Speech／Dialogue 离线选型、克隆拒绝，以及配置中心启动、授权 HTTP、18 个实际字段无克隆配置和停止后端口关闭；首次 uv 访问失败保留，仅在测试子进程使用既有可读工具副本后复测通过。WorkBuddy 按本次决定跳过；ffprobe 的沙箱 EPERM 限制仍在。macOS、重新安装／隐式发现、付费业务及本版新的浏览器操作未验，6.0.0 浏览器结果仅覆盖其原范围。
 
 本版同时适配 Gateway Issue #29 的 ElevenLabs Speech、Dialogue、Music 与 Scribe V2 合同：语音设置使用嵌套对象，Scribe V2 使用 `source_url` 或本地文件；旧字段给出迁移提示，不自动改写或重发。显式 false、0、完整结果及 `task.usage` 原样保留，预扣信息不当作最终账单。详见 [ElevenLabs 使用说明](references/elevenlabs.md)、[音色库](references/elevenlabs-voices.md)和 [Suno 场景](references/suno.md)。
+
+以下为历史 6.0.0 的验收记录。
 
 Gateway v0.9.16 及文档已于 2026-11-13 上线。Windows 整包回归为 188/189，唯一超时用例所在文件串行复测 3/3；UI 回归 40/40，五个 Skill 官方格式与工作区检查通过。Codex 0.167.2 默认沙箱完成九份离线计划、两项预期拒绝及配置中心启动／停止；独立浏览器验证真实目录的筛选、试听、项目／全局保存和手机布局。WorkBuddy 按用户决定本次跳过。沙箱内 ffprobe 的 EPERM 限制仍保留；macOS、重新安装、隐式发现及本批付费生成未验，结果不由服务端上线状态代替。
 

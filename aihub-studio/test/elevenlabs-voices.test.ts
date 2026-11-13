@@ -13,12 +13,14 @@ test('ElevenLabs voice and favorites use audio layers, support explicit empty fa
   await mkdir(project);await mkdir(join(home,'.config','aihub-studio'),{recursive:true});
   const global=join(home,'.config','aihub-studio','.env'), local=join(project,'.env.local.aihub-studio');
   await writeFile(global,'AIHUB_API_KEY=fixture\nAIHUB_ELEVENLABS_DEFAULT_VOICE_ID=global-voice\nAIHUB_ELEVENLABS_FAVORITE_VOICE_IDS=["global-voice"]\n');
-  await writeFile(local,'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID=project-voice\nAIHUB_ELEVENLABS_FAVORITE_VOICE_IDS=[]\n');
+  await writeFile(local,'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID=project-voice\nAIHUB_ELEVENLABS_FAVORITE_VOICE_IDS=[]\nAIHUB_ELEVENLABS_VOICE_CLONE_MODEL=retired invalid value\n');
   const options={cwd:project,homeDirectory:home,env:{},skill:'aihub-audio'};
   try {
     const cfg=loadConfig(options);
     assert.equal(cfg.elevenlabs?.defaultVoiceId,'project-voice');assert.deepEqual(cfg.elevenlabs?.favoriteVoiceIds,[]);
-    assert.equal(cfg.elevenlabs?.sources.AIHUB_ELEVENLABS_DEFAULT_VOICE_ID,local);assert.equal(cfg.elevenlabs?.cloneModel,undefined);
+    assert.equal(cfg.elevenlabs?.sources.AIHUB_ELEVENLABS_DEFAULT_VOICE_ID,local);
+    assert.equal(Object.hasOwn(cfg.elevenlabs!, 'cloneModel'),false);
+    assert.equal(Object.hasOwn(resolveConfiguration(options).inspection.fields,'AIHUB_ELEVENLABS_VOICE_CLONE_MODEL'),false);
     const request={operation:'audio-tts',original_request:'Read aloud',prompt:'Hello'};
     const speech=selectionPlan(cfg,request).candidates[0]!;
     assert.equal(speech.model,'eleven-v4-text-to-speech');assert.deepEqual(speech.params,{text:'Hello',voice_id:'project-voice'});
@@ -26,7 +28,6 @@ test('ElevenLabs voice and favorites use audio layers, support explicit empty fa
     assert.match(selectionPlan(cfg,{...request,requirements:{voice_id:''}}).candidates[0]?.rejection??'',/voice_id/);
     const inputs=[{text:'One',voice_id:'A'},{text:'Two',voice_id:'B'}];
     assert.deepEqual(selectionPlan(cfg,{operation:'audio-dialogue',original_request:'A dialogue',requirements:{inputs}}).candidates[0]?.params,{inputs});
-    assert.throws(()=>selectionPlan(cfg,{operation:'audio-clone',original_request:'Clone'}),/placeholder.*No cloning request/);
     assert.equal(loadConfig({...options,skill:'aihub-image'}).elevenlabs,undefined);
     const isolated=loadConfig({...options,useGlobalConfig:false,env:{AIHUB_API_KEY:'fixture'}});
     assert.equal(isolated.elevenlabs?.defaultVoiceId,'project-voice');

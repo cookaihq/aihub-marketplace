@@ -1,6 +1,6 @@
 {
   "name": "aihub-studio",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "AIhub image, video, audio, music and multimodal understanding workflows for Claude Code, Codex and WorkBuddy.",
   "author": {
     "name": "cookaihq",

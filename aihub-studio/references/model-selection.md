@@ -74,7 +74,6 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 | `music-description` | 音乐构想写入 prompt | Suno description 模式，自动创作歌词并生成歌曲 |
 | `music-lyrics` | 完整歌词原样写入 prompt | Suno custom 人声模式，映射为 lyrics；不默认改写 |
 | `music-instrumental` | 风格、氛围和用途写入 prompt | Suno custom 纯音乐模式，映射为 style |
-| `audio-clone` | 已授权的克隆意图 | ElevenLabs 占位，模型默认空，本版本不调用接口 |
 | `understanding` | 提示词及至少一种媒体输入 | 默认 `gemini-4-carbon`；从线上 LLM 注册表检查精确 ID 和所需媒体能力；`system_prompt`、`max_tokens`、`temperature` |
 
 Seedance 视频的基础要求为 `duration`、`resolution`、`aspect_ratio`。未指定时固定为 5 秒、720p、9:16，再分别构造候选请求，避免各模型默认值不同。2.0 可额外设置 `seed`、`generate_audio`，但这两个字段不能无依据地传给 2.5。字段的枚举、条件必填和限制继续以 `describe` 及 CLI 校验为准。
@@ -118,6 +117,6 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" continue --skill "${AIHUB_CALLER}" 
 
 `AIHUB_ELEVENLABS_DEFAULT_VOICE_ID` 用于两款 Eleven Speech，任务显式 voice_id 优先，不用于自动分配对话角色。`AIHUB_ELEVENLABS_FAVORITE_VOICE_IDS` 保存 JSON 音色 ID 数组，如 `["voice-A","voice-B"]`；项目列表整体覆盖全局列表，`[]` 表示明确清空此范围收藏。两项均通过音频 Skill 的真实配置链逐字段读取，禁用全局时不读取全局值。
 
-按[ElevenLabs 预置音色库](elevenlabs-voices.md)在统一配置中心筛选、试听和收藏；选择全局或项目位置后点击“保存并使用”，音色与收藏在同一个文件中原子保存并回读。`AIHUB_ELEVENLABS_VOICE_CLONE_MODEL` 暂留空，仅预留配置；本版本不会提交克隆。已有 run 记录继续保存时确定的音色和模型。
+按[ElevenLabs 预置音色库](elevenlabs-voices.md)在统一配置中心筛选、试听和收藏；选择全局或项目位置后点击“保存并使用”，音色与收藏在同一个文件中原子保存并回读。已有 run 记录继续保存时确定的音色和模型。
 
 三类 Suno 场景的参数和完整示例见 [Suno](suno.md)。选择 ElevenLabs Music 或 Lyria 时必须明确指定模型或配置列表，按其能力独立构造参数；已有歌词无已核实映射时拒绝，不丢弃歌词。

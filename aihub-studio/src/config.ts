@@ -2,7 +2,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { MINIMAX_DEFAULT_VOICE_KEY, ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, ELEVEN_CLONE_MODEL_KEY, validVoiceId } from './speech.js';
+import { MINIMAX_DEFAULT_VOICE_KEY, ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, validVoiceId } from './speech.js';
 
 export interface Config { baseUrl: string; apiKey: string }
 export type FallbackPolicy = 'auto' | 'confirm' | 'off' | 'preflight_only';
@@ -18,7 +18,7 @@ export interface LoadedConfig extends Config {
   modelSelection?: ModelSelectionConfig;
   resultCheck?: ResultCheckConfig;
   speech?: { defaultVoiceId: string; source: string };
-  elevenlabs?: { defaultVoiceId?: string; favoriteVoiceIds: string[]; cloneModel?: string; sources: Record<string, string> };
+  elevenlabs?: { defaultVoiceId?: string; favoriteVoiceIds: string[]; sources: Record<string, string> };
   feedback?: { threshold: number; supportUrl?: string; sources: Record<string, string> };
 }
 export interface ResultCheckConfig {
@@ -35,7 +35,7 @@ export const MODEL_KEYS: Record<string, string> = Object.fromEntries(
   ['image', 'video', 'audio', 'music', 'understanding'].map(kind => [`aihub-${kind}`, `AIHUB_${kind.toUpperCase()}_MODELS`]),
 );
 const SELECTION_KEYS = ['AIHUB_MODEL_FALLBACK_POLICY', 'AIHUB_MODEL_MAX_ATTEMPTS'];
-export const ELEVEN_PREFERENCE_KEYS = [ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, ELEVEN_CLONE_MODEL_KEY];
+export const ELEVEN_PREFERENCE_KEYS = [ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY];
 const DECLARED_KEYS = new Set<string>([...KEYS, ...Object.values(MODEL_KEYS), ...SELECTION_KEYS, ...BEHAVIOR_KEYS, MINIMAX_DEFAULT_VOICE_KEY, ...ELEVEN_PREFERENCE_KEYS]);
 // Stable Plugin manifest name; independent of the installation directory or host Agent.
 const PLUGIN_NAME = 'aihub-studio';
@@ -154,7 +154,6 @@ export function resolveConfiguration(options: ConfigOptions) {
       if (!Array.isArray(ids) || ids.length > 2000 || !ids.every(validVoiceId) || new Set(ids).size !== ids.length) throw new Error();
     } catch { invalid(ELEVEN_FAVORITES_KEY, 'expected_json_array_of_at_most_2000_distinct_voice_ids'); }
   }
-  if (values[ELEVEN_CLONE_MODEL_KEY] && !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(values[ELEVEN_CLONE_MODEL_KEY])) invalid(ELEVEN_CLONE_MODEL_KEY, 'expected_exact_model_id');
   if (!['0', '1'].includes(values.AIHUB_RESULT_CHECK_ENABLED!.trim())) invalid('AIHUB_RESULT_CHECK_ENABLED', 'expected_0_or_1');
   if (!['auto', 'host', 'aihub'].includes(values.AIHUB_RESULT_CHECK_PROVIDER!.trim())) invalid('AIHUB_RESULT_CHECK_PROVIDER', 'expected_auto_host_aihub');
   const reviewModels = values.AIHUB_RESULT_CHECK_MODELS!.split(',').map(item => item.trim());
@@ -237,7 +236,7 @@ export function loadConfig(options: ConfigOptions): LoadedConfig {
     ...(options.skill === 'aihub-audio' ? {elevenlabs: {
       ...(values[ELEVEN_DEFAULT_VOICE_KEY] ? {defaultVoiceId: values[ELEVEN_DEFAULT_VOICE_KEY]} : {}),
       favoriteVoiceIds: values[ELEVEN_FAVORITES_KEY] ? JSON.parse(values[ELEVEN_FAVORITES_KEY]) as string[] : [],
-      ...(values[ELEVEN_CLONE_MODEL_KEY] ? {cloneModel: values[ELEVEN_CLONE_MODEL_KEY]} : {}), sources: elevenSources }} : {}),
+      sources: elevenSources }} : {}),
     resultCheck: { enabled: values.AIHUB_RESULT_CHECK_ENABLED!.trim() === '1', provider: values.AIHUB_RESULT_CHECK_PROVIDER!.trim() as ResultCheckConfig['provider'],
       models: values.AIHUB_RESULT_CHECK_MODELS!.split(',').map(item => item.trim()), sources: Object.fromEntries(Object.entries(behaviorSources).filter(([key]) => key.startsWith('AIHUB_RESULT_CHECK_'))) },
     feedback: { threshold: Number(values.AIHUB_ERROR_REPORT_THRESHOLD), ...(values.AIHUB_SUPPORT_URL ? { supportUrl: values.AIHUB_SUPPORT_URL.trim() } : {}),

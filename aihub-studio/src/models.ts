@@ -23,8 +23,8 @@ const EXCLUDED_MODELS: Record<string, string> = {
   'fabric-1.0-text': 'Text-driven avatar video (C3) is outside the selected digital-human scope.',
   'live-avatar': 'Prompt-driven avatar video is outside the selected digital-human scope.',
   'kling-video-create-voice': 'Voice creation is outside the selected media workflows.',
-  'voice-clone': 'Only an unconfigured ElevenLabs cloning placeholder is available; no cloning API is enabled.',
-  'minimax-voice-clone': 'Only an unconfigured ElevenLabs cloning placeholder is available; no cloning API is enabled.',
+  'voice-clone': 'Voice cloning is not supported by AIhub Studio; no cloning API is enabled.',
+  'minimax-voice-clone': 'Voice cloning is not supported by AIhub Studio; no cloning API is enabled.',
 };
 
 export const IMAGE_DEFAULT_MODELS = {

@@ -1,6 +1,6 @@
 [project]
 name = "aihub-studio-ui"
-version = "6.0.0"
+version = "6.1.0"
 requires-python = ">=3.13"
 dependencies = ["markdown-it-py==4.0.0"]
 

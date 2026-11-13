@@ -67,7 +67,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" describe --skill "${AIHUB_CALLER}" 
 
 `describe` 离线读取随包模型目录说明字段，无需 API Key。只有 `catalog_only` 中的目录记录不能证明模型在线可用，`availability_known: false` 或 `status: availability_unknown` 应报告可用性未知。账号模型列表使用 `/v1/models`；生成、任务和专用配置查询使用 `/e/v1/`。提交时使用 `models` 返回的请求型号，不自行泛化模型名。Fabric 是已核实的特例：账号的带分辨率 ID 对应生成型号 `fabric-1.0` 和 `resolution`，可用分辨率列在 `available_resolutions`。新流程只在已配置且适用的候选间按保存的策略切换；不得自动追加旧版本或其他模型。Plugin 会在提交前拒绝图片增强/材质/Profile、视频高清放大（B10）/插帧/Topaz、Sora 角色、字幕、提示词数字人和声音创建模型。
 
-当前无配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；图片列表的 default_for 区分 image-generate 与 image-edit。2.6 拒绝参考图、遮罩、markup 和非静态格式，省略尺寸为 auto，允许独立的 complexity。TTS 默认 eleven-v4-text-to-speech，多音色对话默认 eleven-v4-text-to-dialogue；三类音乐场景默认 suno-v6，ASR 默认 paraformer-v2。audio-clone 是空模型占位，本版本不调用克隆接口。
+当前无配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；图片列表的 default_for 区分 image-generate 与 image-edit。2.6 拒绝参考图、遮罩、markup 和非静态格式，省略尺寸为 auto，允许独立的 complexity。TTS 默认 eleven-v4-text-to-speech，多音色对话默认 eleven-v4-text-to-dialogue；三类音乐场景默认 suno-v6，ASR 默认 paraformer-v2。
 
 以下为保留的单模型底层入口，供旧任务流程或用户明确选择尚无自动参数转换的型号使用，**不读取配置列表来换模型**。D1 的 `speech-2.8-hd`（TTS）、`paraformer-v2`（ASR）和 D2 的 `lyria-3-pro` 使用 `generate --media audio`；`lyria-3-pro-preview` 使用 `native-music`。E1 先查询独立 LLM 注册表再调用 `understand`，必须含媒体内容块，纯文本请求属于 F 组并拒绝。
 

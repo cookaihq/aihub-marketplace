@@ -11,7 +11,7 @@ export const OPERATIONS = {
   'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
   'video-text': 'aihub-video', 'video-start-frame': 'aihub-video', 'video-reference': 'aihub-video',
   'video-lipsync': 'aihub-video', 'video-avatar': 'aihub-video',
-  'audio-tts': 'aihub-audio', 'audio-dialogue': 'aihub-audio', 'audio-transcribe': 'aihub-audio', 'audio-clone': 'aihub-audio',
+  'audio-tts': 'aihub-audio', 'audio-dialogue': 'aihub-audio', 'audio-transcribe': 'aihub-audio',
   'music-description': 'aihub-music', 'music-lyrics': 'aihub-music', 'music-instrumental': 'aihub-music',
   understanding: 'aihub-understanding',
 } as const;
@@ -104,7 +104,6 @@ function defaults(request: TaskRequest): string[] {
     case 'audio-tts': return ['eleven-v4-text-to-speech'];
     case 'audio-dialogue': return ['eleven-v4-text-to-dialogue'];
     case 'audio-transcribe': return ['paraformer-v2'];
-    case 'audio-clone': return [];
     case 'music-description': case 'music-lyrics': case 'music-instrumental': return [SUNO_DEFAULT_MODEL];
     case 'understanding': return [PREFERRED_MODELS.understanding[0]];
   }
@@ -129,7 +128,6 @@ function matchesOperation(model: string, operation: Operation): boolean {
     case 'audio-transcribe': return TRANSCRIBE.includes(model);
     case 'music-description': case 'music-lyrics': case 'music-instrumental':
       return SUNO_MODELS.has(model) || model === 'lyria-3-pro' || model === ELEVEN_MUSIC_MODEL;
-    case 'audio-clone': return false;
   }
 }
 
@@ -273,7 +271,6 @@ function buildCandidate(request: TaskRequest, model: string, defaultVoiceId?: st
 
 export function selectionPlan(cfg: LoadedConfig, value: Record<string, unknown>): SelectionPlan {
   const request = readTaskRequest(value, cfg.skill);
-  if (request.operation === 'audio-clone') throw new Error('ElevenLabs voice cloning is a configuration placeholder with no default model or enabled API contract. No cloning request was submitted.');
   const source = request.model ? 'user' : cfg.modelSelection?.models ? 'configuration' : 'built-in';
   const selected = request.model ? [request.model] : cfg.modelSelection?.models ?? defaults(request);
   const candidates: Candidate[] = [];

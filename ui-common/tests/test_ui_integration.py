@@ -78,15 +78,17 @@ class Integration(unittest.TestCase):
         adapter, user = self.global_adapter('aihub-studio', skill='aihub-audio')
         target = user / '.config/aihub-studio/.env'
         target.parent.mkdir(parents=True)
-        target.write_text('AIHUB_API_KEY=synthetic\nUNRELATED=preserve\n', encoding='utf-8')
+        target.write_text('AIHUB_API_KEY=synthetic\nUNRELATED=preserve\nAIHUB_ELEVENLABS_VOICE_CLONE_MODEL=retired invalid value\n', encoding='utf-8')
         initial = adapter.snapshot()
         self.assertNotIn('AIHUB_DOCUMENT_MODELS', self.fields(initial))
+        self.assertNotIn('AIHUB_ELEVENLABS_VOICE_CLONE_MODEL', self.fields(initial))
         saved = adapter.save({voice: {'op': 'set', 'value': 'voice-global'},
                               favorites: {'op': 'set', 'value': ['voice-global', 'voice-second']}},
                              initial['revision'], self.target(target))
         self.assertEqual(self.fields(saved)[voice]['effective']['value'], 'voice-global')
         self.assertEqual(self.fields(saved)[favorites]['effective']['value'], ['voice-global', 'voice-second'])
         self.assertIn('UNRELATED=preserve', target.read_text(encoding='utf-8'))
+        self.assertIn('AIHUB_ELEVENLABS_VOICE_CLONE_MODEL=retired invalid value', target.read_text(encoding='utf-8'))
         project = self.project / '.env.local.aihub-studio'
         selected = adapter.save({voice: {'op': 'set', 'value': 'voice-project'},
                                  favorites: {'op': 'set', 'value': []}},
@@ -119,7 +121,7 @@ class Integration(unittest.TestCase):
         for caller in ('aihub-image', 'aihub-audio', 'aihub-video', 'aihub-music', 'aihub-understanding', None):
             adapter.options['skill'] = caller
             fields = self.fields(adapter.snapshot())
-            self.assertEqual(len(fields), 19)
+            self.assertEqual(len(fields), 18)
             self.assertEqual(fields[key]['effective']['value'], 'audio-voice')
             self.assertEqual(fields[key]['effective']['source'], self.target(audio))
             self.assertNotIn(self.target(image), fields[key]['targets'])

@@ -11,6 +11,4 @@ def fields(field):
         field(FAVORITES, 'ElevenLabs 收藏音色', '语音合成', 'list', default=[], encoding='json',
               max_items=2000, item_label='音色 ID', **voice_options,
               help='在用户选择的项目或全局配置中保存。项目列表覆盖全局列表，空列表表示当前范围不收藏音色。'),
-        field('AIHUB_ELEVENLABS_VOICE_CLONE_MODEL', 'ElevenLabs 音色克隆模型', '音色克隆', default='',
-              help='预留配置，暂不设置默认模型；本版本不执行克隆请求。'),
     ]
