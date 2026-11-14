@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.3.0 — 2026-11-14
+
+- 各随包 Skill 增加八种纯配置/设置短语的快捷分支，直接打开本 Plugin 的统一配置中心，保留实际项目、调用方和身份。
+- 复用原启动入口的归属检查、探活和失效重启，直接返回有效链接与实际余期；纯页面请求跳过业务预检、更新联网和默认 Skill 提醒，不调用业务服务。
+- Windows 原生 Codex 0.169.0 默认沙箱通过开发源 5 个 Skill 的实际快捷调用、授权 HTTP 访问及停止检查；定向脚本验证复用、重启、隔离和实际余期。未重新安装完整 Plugin 或调用线上业务；WorkBuddy 用户确认本次跳过，macOS 待验。
+
 ## 6.2.0 — 2026-11-14
 
 - Added ElevenLabs Voice Design and guarded Voice Create: deliver every candidate for audition, require an explicit user choice, then save only that candidate.

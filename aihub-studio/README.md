@@ -1,4 +1,10 @@
-# AIhub Studio Plugin 6.2.0
+# AIhub Studio Plugin 6.3.0
+
+## 快速打开配置
+
+在 Codex 发送 `$aihub-image 配置` 或 `$aihub-image 打开设置页面`，可直接取得本 Plugin 统一配置中心的有效链接和实际空闲期限；其余随包 Skill 同样支持。Claude Code 用对应 `/` 入口，WorkBuddy 明确选中该 Skill 后发送相同短语。缺少业务 Key 也能打开，页面保留实际项目、调用方和配置范围；只打开页面不会调用业务接口。
+
+6.3.0 已在 Windows 原生 Codex 0.169.0 默认沙箱通过开发源 5 个 Skill 的实际快捷调用、授权 HTTP 访问和停止检查，保留实际项目、caller 与配置范围。页面复用、失效重启、实例隔离及余期已通过定向脚本；本批未重新安装完整 Plugin 或调用线上业务。WorkBuddy 用户确认本次跳过，macOS 待验。
 
 让 Claude Code、Codex、WorkBuddy 或 Hermes 通过 AIhub 生成图片、视频、语音和音乐，理解图片、音频、视频及支持的文件。结果保存在工作文件夹中，并提供文件链接和实际检查结果。
 

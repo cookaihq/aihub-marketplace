@@ -1,5 +1,11 @@
 # tikin Social
 
+## 快速打开配置
+
+在 Codex 发送 `$tikin-douyin 配置` 或 `$tikin-douyin 打开设置页面`，可直接取得本 Plugin 统一配置中心的有效链接和实际空闲期限；其余随包 Skill 同样支持。Claude Code 用对应 `/` 入口，WorkBuddy 明确选中该 Skill 后发送相同短语。缺少业务 Key 也能打开，页面保留实际项目、调用方和配置范围；只打开页面不会调用业务接口。
+
+4.1.0 已在 Windows 原生 Codex 0.169.0 默认沙箱通过开发源 17 个 Skill 的实际快捷调用、授权 HTTP 访问和停止检查，保留实际项目、caller 与配置范围。页面复用、失效重启、实例隔离及余期已通过定向脚本；本批未重新安装完整 Plugin 或调用线上业务。WorkBuddy 用户确认本次跳过，macOS 待验。
+
 4.0.2 的凭证配置直接使用本套件自带配置中心，移除已退役 Setup 的转交和续接入口；`tikin-setup` 为 4.0.2。既有业务配置与用户任务数据保留。
 
 本次 Windows 原生 Codex 0.169.0 默认沙箱通过开发源显式加载、配置页面 HTTP 预览／保存、原入口无值回读、停止与合成数据清理。配置回归 33/33、独立分发 3/3、版本 1/1、共享配置保存集成 22/22 通过。本版未验证原生重新安装／发现、浏览器交互或线上业务；WorkBuddy 按本次决定跳过，macOS 待验。
@@ -51,12 +57,9 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **4.0.2**. `tikin-setup` is **4.0.2**; the other 15 Skills using the shared business request
-entry remain **4.0.1**; offline `tikin-endpoint-discovery` remains **3.0.0**. New API runs
-require the Agent to supply a concise task name; existing records resume by their saved paths.
-This release includes the previously unpublished 1.5.0/1.6.0 changes and the
-second-batch catalog of 1029 operations; the retained first-batch catalog contains
-919. Neither catalog is evidence of live availability. The previous 3.0.0 release has native Windows Codex/WorkBuddy acceptance; current host checks are recorded separately. macOS and live requests remain pending.
+Plugin version: **4.1.0**. `tikin-setup` and the 15 other business Skills are **4.1.0**; `tikin-endpoint-discovery` is **3.1.0**. All 17 entries support the configuration shortcut and continue to ship as one Plugin.
+
+New API runs require the Agent to supply a concise task name; existing records resume by their saved paths. The retained second-batch catalog contains 1029 operations and the first-batch catalog contains 919. Neither catalog is evidence of live availability.
 
 For the 2.0.0 task-directory update on macOS, 119 automated behavior tests, 68 structural checks
 and all 17 official Skill schemas pass. Codex 0.166.0 loads the native test Plugin and

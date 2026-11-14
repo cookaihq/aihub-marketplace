@@ -1,11 +1,17 @@
 ---
 name: aihub-understanding
 metadata:
-  version: "3.0.5"
-description: v3.0.5｜通过 AIhub llm-custom 模型理解图片、音频、视频或文件内容，返回文本结果并支持中断后继续任务。
+  version: "3.1.0"
+description: v3.1.0｜通过 AIhub llm-custom 模型理解图片、音频、视频或文件内容，返回文本结果并支持中断后继续任务。
 ---
 
 # AIhub Understanding
+
+## 配置页面快捷入口
+
+先分流：显式调用本 Skill 后，内容去掉首尾空白后恰为 `配置`、`配置页面`、`打开配置`、`打开配置页面`、`设置`、`设置页面`、`打开设置`、`打开设置页面` 中任一项时，直接按[配置快捷分支](../../references/credential-setup.md#配置页面快捷入口)打开本 Plugin 的统一配置中心，caller 为 `aihub-understanding`。先取得可用链接和实际期限，交付后结束本次请求。
+
+仅这些完整短语进入快捷分支；带业务正文、预设、参数或字面 `--` 的请求继续原流程。
 
 ## 先选择图片理解通道
 

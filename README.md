@@ -103,6 +103,6 @@ Studio 3.0.1 与 Tikin 4.0.1 修复首次配置保存并显示实际字段名，
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 6.2.0 | [aihub-studio/v6.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv6.2.0) |
-| tikin-social | 4.0.2 | [tikin-social/v4.0.2](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.0.2) |
+| aihub-studio | 6.3.0 | [aihub-studio/v6.3.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv6.3.0) |
+| tikin-social | 4.1.0 | [tikin-social/v4.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.1.0) |
 <!-- release-table:end -->

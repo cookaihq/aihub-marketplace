@@ -1,11 +1,17 @@
 ---
 name: tikin-tiktok
 metadata:
-  version: "4.0.1"
-description: v4.0.1｜通过 Tikin 处理 TikTok 链接与数据，获取视频、用户资料、作品列表，搜索内容，并查询趋势、广告洞察、创作者分析、评论关键词和商店搜索结果。用户提供 TikTok 链接或任务针对该平台时使用；覆盖 App-V3、Ads、Creator、Analytics 与 Shop 接口。
+  version: "4.1.0"
+description: v4.1.0｜通过 Tikin 处理 TikTok 链接与数据，获取视频、用户资料、作品列表，搜索内容，并查询趋势、广告洞察、创作者分析、评论关键词和商店搜索结果。用户提供 TikTok 链接或任务针对该平台时使用；覆盖 App-V3、Ads、Creator、Analytics 与 Shop 接口。
 ---
 
 # TikTok (via tikin)
+
+## 配置页面快捷入口
+
+先分流：显式调用本 Skill 后，内容去掉首尾空白后恰为 `配置`、`配置页面`、`打开配置`、`打开配置页面`、`设置`、`设置页面`、`打开设置`、`打开设置页面` 中任一项时，直接按[配置快捷分支](../tikin-setup/references/credential-setup.md#配置页面快捷入口)打开本 Plugin 的统一配置中心，caller 为 `tikin-tiktok`。先取得可用链接和实际期限，交付后结束本次请求。
+
+仅这些完整短语进入快捷分支；带业务正文、预设、参数或字面 `--` 的请求继续原流程。
 
 新建、继续或交付业务任务前，读取并遵守[任务保存与产物页面](../tikin-setup/references/artifacts.md)；它规定任务命名、可靠会话/Agent 身份、最终文件登记与页面入口。离线查询或配置本身不创建成果任务。
 

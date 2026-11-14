@@ -1,11 +1,17 @@
 ---
 name: tikin-social-media-downloader
 metadata:
-  version: "4.0.1"
-description: v4.0.1｜从一个或多个社交媒体链接下载视频、音频或图片，平台支持时获取无水印素材。适用于用户提供 TikTok、抖音、Instagram、YouTube、Twitter/X、小红书链接并要求下载视频、保存无水印素材或提取音频；调用对应平台的 Tikin 接口。
+  version: "4.1.0"
+description: v4.1.0｜从一个或多个社交媒体链接下载视频、音频或图片，平台支持时获取无水印素材。适用于用户提供 TikTok、抖音、Instagram、YouTube、Twitter/X、小红书链接并要求下载视频、保存无水印素材或提取音频；调用对应平台的 Tikin 接口。
 ---
 
 # Social Media Downloader
+
+## 配置页面快捷入口
+
+先分流：显式调用本 Skill 后，内容去掉首尾空白后恰为 `配置`、`配置页面`、`打开配置`、`打开配置页面`、`设置`、`设置页面`、`打开设置`、`打开设置页面` 中任一项时，直接按[配置快捷分支](../tikin-setup/references/credential-setup.md#配置页面快捷入口)打开本 Plugin 的统一配置中心，caller 为 `tikin-social-media-downloader`。先取得可用链接和实际期限，交付后结束本次请求。
+
+仅这些完整短语进入快捷分支；带业务正文、预设、参数或字面 `--` 的请求继续原流程。
 
 新建、继续或交付业务任务前，读取并遵守[任务保存与产物页面](../tikin-setup/references/artifacts.md)；它规定任务命名、可靠会话/Agent 身份、最终文件登记与页面入口。离线查询或配置本身不创建成果任务。
 
