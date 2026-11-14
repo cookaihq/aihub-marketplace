@@ -66,6 +66,8 @@ async function fixture(audio = false) {
     ...(audio ? {model:'lyria-3-pro-preview'} : {}), prompt: audio ? 'A short tone' : 'Red square', review_requirements: [{ id: 'content', text: audio ? '确实含有音频' : '纯红色且无文字', priority: 'required' }] }));
   const call = async (env: Record<string, string>, ...args: string[]) => {
     let stdout: string;
+    // Windows ACL subprocesses add local record-writing time to these CLI fixtures.
+    // This allowance does not change the runtime's request or polling budgets.
     try { ({ stdout } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', audio ? 'aihub-music' : 'aihub-image', '--no-global-config'],
       { cwd: dir, env: { ...process.env, ...fixtureTransport(base), AIHUB_API_KEY: 'fixture-review-secret',
         AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: '', AIHUB_ERROR_REPORT_THRESHOLD: '3', ...env }, timeout: process.platform === 'win32' ? 60_000 : 20_000 })); }

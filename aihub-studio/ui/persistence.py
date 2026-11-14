@@ -1,6 +1,6 @@
 """Private, revision-checked local transactions. Locks coordinate cooperating UI writers.
 
-Path and Git checks follow setup-api-key's local_config protocol. A private journal
+Path and Git checks protect the selected local configuration files. A private journal
 allows a later page instance to recover an interrupted multi-file save. External
 editors do not participate in the locks; hashes prevent overwriting their changes.
 """

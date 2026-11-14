@@ -56,7 +56,7 @@ macOS/Linux 按实际运行用户的 home 定位；Windows 原生用实际运行
 
 ## Hermes 入口与 Profile
 
-使用当前 Hermes local backend 的实际 cwd 和进程环境；从 `skill_view("<plugin>:<skill>")` 返回的路径定位完整 Plugin。启用后的 Skill 进入当前版本的 `skills_list` 和可用技能索引；显式加载与自然触发分别核对。安装与更新见同包 README。缺业务 Key 时复用本 Plugin 配置中心；存在 Setup 任务时加载 `setup-aihub:setup-api-key` 并沿用任务编号。
+使用当前 Hermes local backend 的实际 cwd 和进程环境；从 `skill_view("<plugin>:<skill>")` 返回的路径定位完整 Plugin。启用后的 Skill 进入当前版本的 `skills_list` 和可用技能索引；显式加载与自然触发分别核对。安装与更新见同包 README。缺业务 Key 时复用本 Plugin 配置中心，保留真实 caller、cwd 和原任务提交状态。
 
 提醒按实际 `HERMES_HOME`（或明确的 `--config-dir`）隔离，规则目标是其中的 `SOUL.md`；macOS/Linux 默认 `~/.hermes`，当前 Windows 默认 `%LOCALAPPDATA%/hermes`，默认目录还遵循 `HERMES_DATA_DIR_SUFFIX`。自定义/非默认 Profile 必须传当前实际目录，不从默认目录猜测；不要将 Hermes 全局规则写入 `~/.hermes/AGENTS.md`。保留 SOUL 原有人格与其他规则，只追加获授权的 Plugin 块；当前 Profile 的范围不等于全部 Profile。业务 Key 仍使用运行用户的 `.config/<plugin>/` 分层，与 Profile 的提醒和配置任务分开。
 

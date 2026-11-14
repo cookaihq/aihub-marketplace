@@ -1,6 +1,6 @@
 """Private, revision-checked local transactions. Locks coordinate cooperating UI writers.
 
-Path and Git checks follow setup-api-key's local_config protocol. A private journal
+Path and Git checks protect the selected local configuration files. A private journal
 allows a later page instance to recover an interrupted multi-file save. External
 editors do not participate in the locks; hashes prevent overwriting their changes.
 """
@@ -191,10 +191,11 @@ def lock(path, owner_path=None):
 
 
 class Transaction:
-    def __init__(self, directory, owner_path=None):
+    def __init__(self, directory, owner_path=None, extra_lock=None):
         self.directory = Path(directory)
         self.journal = self.directory / 'pending.json'
         self.owner_path = owner_path
+        self.extra_lock = extra_lock
 
     def _rollback(self, entries):
         for entry in reversed(entries):
@@ -225,6 +226,8 @@ class Transaction:
         with ExitStack() as stack:
             for path in sorted({entry['path'] for entry in entries}):
                 stack.enter_context(lock(path + '.ui.lock', self.owner_path))
+                if self.extra_lock:
+                    stack.enter_context(self.extra_lock(path, self.owner_path))
             if not journal.get('committed'):
                 self._rollback(entries)
             self.journal.unlink()
@@ -242,6 +245,8 @@ class Transaction:
             with ExitStack() as stack:
                 for path in sorted(changes):
                     stack.enter_context(lock(path + '.ui.lock', self.owner_path))
+                    if self.extra_lock:
+                        stack.enter_context(self.extra_lock(path, self.owner_path))
                 verify(False)
                 entries = []
                 for path, (before, after) in sorted(changes.items()):

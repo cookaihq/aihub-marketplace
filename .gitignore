@@ -8,8 +8,6 @@ __pycache__/
 .worktrees/
 tmp/
 data/
-!setup-aihub/skills/setup-agent-model/data/
-!setup-aihub/skills/setup-agent-model/data/**
 .DS_Store
 Thumbs.db
 

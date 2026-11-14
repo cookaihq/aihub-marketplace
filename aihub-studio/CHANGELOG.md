@@ -6,6 +6,16 @@
 - Retain the full Design/Create responses, preview downloads and task recovery; repeated Create commands recover the original attempt and never replay unknown or failed submissions.
 - Deliver the created voice ID with a prominent reminder to save it; the platform has no voice list, lookup or ID recovery. Existing synthesis defaults and preset-library preferences stay intact.
 - Audio Skill 6.1.0; other Skill versions unchanged. Gateway v0.9.17 is deployed. Upstream capacity remains 30/30: current production Create/new-voice TTS are pending, with historical success kept separate from local fixture checks.
+- Windows typecheck, UI 40/40 and all five Skill format checks passed. The merged full suite passed 188/193; five review CLI fixtures exceeded their 20-second allowance. Serial review at the original limit passed 7/8. With a Windows-only 60-second fixture allowance, review/configuration reruns passed 11/11, covering every earlier failure; production request/polling and suite budgets are unchanged. WorkBuddy skipped by user choice; macOS pending.
+- Codex 0.169.0 with its default Windows sandbox passed native test-package installation/discovery, the choice gate, fixture Design, explicit second-candidate Create and recovery of the same task. All candidate audio played to completion in the artifact page. Earlier private-record and system ffprobe EPERM failures are retained; the final run used sandbox-owned records and identical media-tool copies on the test subprocess PATH. No production Create/TTS or voice-quality success is claimed.
+
+## 6.1.2 — 2026-11-14
+
+- 随市场移除 Setup AIHub，清理凭证与 Hermes 流程中已退出的 Setup 任务转交、wrapper 和续接入口；直接使用本包配置中心和原加载器复查。
+- 共用文件操作模块由市场 `ui-common/private_platform.py` 维护，随完整 Plugin 分发；安装和配置不依赖已删除的 Setup 源码。
+- 内置五个 Skill 已直接使用本包页面，行为和各自版本保持；用户既有密钥、宿主模型配置与任务数据不迁移或删除。
+- 减少 Windows 私有文件写入时重复加载 PowerShell cmdlet 的开销，使用直接 .NET 构造调用；保留相同账户、项目所有者、SYSTEM、DACL 保护及回读校验，未延长测试时限。
+- Windows 原生 Codex 0.169.0 默认沙箱已通过两包配置页面 HTTP 预览／保存、原入口无值回读、停服与合成数据清理。Studio 最终配置／结果检查／打包／权限定向回归 16/16，重新编译后的权限与锁回归 3/3，五个 Skill 官方格式及工作区检查通过。完整 npm 首轮达到 900 秒总时限，其余用例分批执行，失败与基线复现证据保留；本版未验证原生重新安装／发现、浏览器交互、线上业务或 macOS，WorkBuddy 本次跳过。
 
 ## 6.1.1 — 2026-11-14
 

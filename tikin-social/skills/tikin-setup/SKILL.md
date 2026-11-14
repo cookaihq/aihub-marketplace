@@ -1,8 +1,8 @@
 ---
 name: tikin-setup
 metadata:
-  version: "4.0.1"
-description: v4.0.1｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒。既有接口密钥的填写、更换、缺项与修复优先交给 setup-api-key；其不可用时提供本机配置回退。
+  version: "4.0.2"
+description: v4.0.2｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒，通过本套件配置中心填写、更换或修复接口密钥。
 ---
 
 # tikin Setup
@@ -11,9 +11,9 @@ description: v4.0.1｜安装、更新或修复 Tikin 套件，管理平台路由
 
 ## 先确定当前任务
 
-用户问“接口密钥怎么填”、配置既有 Key、首次配置或修复缺项时，**先读取[统一凭证流程](references/credential-setup.md)**。当前宿主能调用兼容的 `setup-aihub:setup-api-key`，就实际调用该 Skill 并将来源/范围选择、原任务和真实 caller 交给它；没有业务 caller 时保持共享检查。只询问填写方法而尚未授权执行检查时，同样由该入口提供说明，不运行程序。
+用户问“接口密钥怎么填”、配置既有 Key、首次配置或修复缺项时，**先读取[配置检查与配置中心](references/credential-setup.md)**，通过本 Plugin 自带页面完成配置，保留真实 caller、cwd、全局开关与原任务提交状态；没有业务 caller 时保持共享检查。只询问填写方法而尚未授权执行检查时，提供说明，不运行程序。
 
-Setup 不可用时，按同一引用的最小回退办理。此凭证分支以真实加载器的本机复查结束；下面的安装、更新、路由和远端 Key 管理是其他任务，只有用户明确请求对应动作时才进入。已有可读配置的正常业务直接返回原业务 Skill。
+此凭证分支以真实加载器的本机复查结束；下面的安装、更新、路由和远端 Key 管理是其他任务，只有用户明确请求对应动作时才进入。已有可读配置的正常业务直接返回原业务 Skill。
 
 ## 默认 Skill 检查
 
@@ -75,7 +75,7 @@ Put these options before the subcommand. `status`, `config-check`, `get-policy`,
 `run` do not create, chmod or migrate configuration files. `init` only initializes routing and
 protects the current Plugin’s shared files; it does not migrate old `tikin` or XDG locations.
 
-For credentials, read [the unified inspection, Setup handoff and fallback](references/credential-setup.md). That flow uses config-check, preserves the real caller and never initializes routing. `set-key` is reserved for an explicitly authorized shared-file write that also allows its routing initialization; it is not a generic repair command.
+For credentials, read [configuration inspection and the bundled configuration center](references/credential-setup.md). That flow uses config-check, preserves the real caller and never initializes routing. `set-key` is reserved for an explicitly authorized shared-file write that also allows its routing initialization; it is not a generic repair command.
 
 Old `~/.config/tikin/.env`, `~/.config/tikin/settings.json` and custom XDG locations are not read.
 Migration is optional and requires an explicit source, target and overwrite decision; preserve
@@ -190,7 +190,7 @@ platforms/actions into that prompt, and do not ask again for pagination within t
 
 | User outcome | Owning skill |
 |---|---|
-| 既有接口密钥配置、更换、缺项或修复 | 当前发现的 `setup-aihub:setup-api-key`；不可用时按[凭证回退](references/credential-setup.md) |
+| 既有接口密钥配置、更换、缺项或修复 | `tikin-setup` 自带的[配置中心](references/credential-setup.md) |
 | Install, updates, routing settings; explicitly requested remote key creation or online validation | `tikin-setup` |
 | Find an endpoint among 1,000+ | `tikin-endpoint-discovery` |
 | Direct REST details | `tikin-rest-api` |

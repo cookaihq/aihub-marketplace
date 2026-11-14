@@ -10,7 +10,7 @@ AIhub 的 macOS/Linux 入口使用 `node scripts/aihub.mjs`；Windows 用随包 
 
 ## 实际打开页面
 
-从实际项目目录调用本 Plugin 自带配置中心，无需额外安装 Setup 或开发 UI Skill：
+从实际项目目录调用本 Plugin 自带配置中心：
 
 ```text
 uv run --frozen --project "<Plugin实体>" python "<Plugin实体>/scripts/ui.py" start --project "<真实业务cwd>" --page configuration --skill <实际业务Skill> --agent <codex|claude-code|workbuddy|hermes>
@@ -24,12 +24,10 @@ WorkBuddy 使用宿主 `Bash` 工具的 `run_in_background: true` 执行 `start`
 
 将返回的 URL 作为可点击链接交付，旁边注明 **📱 跨设备访问需要 FRP / Tailscale，当前配置状态未核实时明确说明。** 默认本机访问，实际活动续期 60 分钟；轮询不续期。`status` 和 `stop` 使用相同项目、页面、caller、Agent 和保存范围参数。服务失效后重新 `start`，保留原业务上下文。
 
-## Setup 任务与接续
+## 保存后接续
 
-已在 `setup-aihub:setup-api-key` 中开始的任务沿用其网页入口和任务编号；新 wrapper 打开同一业务配置中心并绑定原任务。先读取该 Skill 的 `references/browser.md`，使用其 `start/status/stop --task <编号>`；不要再启动一个独立保存流程。旧业务包没有 `scripts/ui.py` 时报告需要更新该完整 Plugin，不恢复已退出的配置方式。
+保存后运行上面的真实无值检查，并按本 Plugin 的默认 Skill 流程核对原有默认设置。返回原业务前核对关联：未提交且内容、原授权仍有效才继续；已提交或状态不明先查询原结果，修复不授权重发。
 
-保存后运行上面的真实无值检查。Setup 任务再用其 helper `continue` 完成本机复查和原有默认设置检查。返回原业务前核对关联：未提交且内容、原授权仍有效才继续；已提交或状态不明先查询原结果，修复不授权重发。
-
-明确选择本机文件编辑或环境无浏览器时，沿用相同来源规则：新增共享 `~/.config/aihub-studio/.env`，明确项目新增默认 `.env.local.aihub-studio`（普通 `.env.local` 仍可选择），已有值修复原文件。给出完整本机路径和字段，由用户本机填写；保存前明确目标与影响，保护权限、Git 忽略及无关内容。Setup 可用时复用其 `start → plan → apply → continue` 安全准备。业务配置不提供 Secret Book 入口、备用或委托分支；受支持的本机配置按当前加载器顺序读取，退出的 Skill 后缀不再参与，不自动迁移或删除。
+明确选择本机文件编辑或环境无浏览器时，沿用相同来源规则：新增共享 `~/.config/aihub-studio/.env`，明确项目新增默认 `.env.local.aihub-studio`（普通 `.env.local` 仍可选择），已有值修复原文件。给出完整本机路径和字段，由用户本机填写；保存前明确目标与影响，保护权限、Git 忽略及无关内容。业务配置不提供 Secret Book 入口、备用或委托分支；受支持的本机配置按当前加载器顺序读取，退出的 Skill 后缀不再参与，不自动迁移或删除。
 
 仅用户要求清除时，先用原加载器的 `--delete-from` / `--delete-fields` 投影说明会暴露的来源，再清除选定字段。仅本轮使用采用已有安全进程注入，不转成持久保存。来源、本机读取、线上鉴权和真实业务结果分别报告。

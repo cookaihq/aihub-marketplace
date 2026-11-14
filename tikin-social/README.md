@@ -1,5 +1,11 @@
 # tikin Social
 
+4.0.2 的凭证配置直接使用本套件自带配置中心，移除已退役 Setup 的转交和续接入口；`tikin-setup` 为 4.0.2。既有业务配置与用户任务数据保留。
+
+本次 Windows 原生 Codex 0.169.0 默认沙箱通过开发源显式加载、配置页面 HTTP 预览／保存、原入口无值回读、停止与合成数据清理。配置回归 33/33、独立分发 3/3、版本 1/1、共享配置保存集成 22/22 通过。本版未验证原生重新安装／发现、浏览器交互或线上业务；WorkBuddy 按本次决定跳过，macOS 待验。
+
+以下为历史 4.0.1 的功能与验收记录。
+
 4.0.1 修复首次保存被 Git 忽略检查拦住的问题：点击保存后自动准备所需保护，填写后即可保存，无需手动添加规则。配置项标题下新增实际字段名，便于对照文件；密钥值仍脱敏显示。
 
 本版通过 Windows 回归、Codex 0.166.0 默认沙箱的正式配置入口保存与回读，以及两套浏览器页面和 390×844 布局检查。本次 WorkBuddy 按用户要求免验；macOS 待验，未重新安装或调用线上业务。
@@ -45,8 +51,8 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **4.0.0**. The 16 Skills using the shared business request
-entry are **4.0.0**; offline `tikin-endpoint-discovery` is **3.0.0**. New API runs
+Plugin version: **4.0.2**. `tikin-setup` is **4.0.2**; the other 15 Skills using the shared business request
+entry remain **4.0.1**; offline `tikin-endpoint-discovery` remains **3.0.0**. New API runs
 require the Agent to supply a concise task name; existing records resume by their saved paths.
 This release includes the previously unpublished 1.5.0/1.6.0 changes and the
 second-batch catalog of 1029 operations; the retained first-batch catalog contains
