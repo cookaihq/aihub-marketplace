@@ -2,7 +2,7 @@
 
 这个市场提供 AIhub 多媒体创作与理解、tikin 社交媒体数据与分析的完整 Plugin。按需要选择安装对象。
 
-当前源码版本为 AIhub Studio **6.1.1**、Tikin Social **4.0.2**。Studio 已适配上线的 Gateway v0.9.16 合同，单人语音默认 Eleven Speech、有序多音色对话默认 Eleven Dialogue，ASR 默认 Paraformer V2；音乐的描述歌曲、已有歌词演唱、纯音乐三个场景默认 Suno V6。提供 ElevenLabs 预置音色库，支持筛选、试听、收藏及项目／全局保存；本版移除音色克隆占位。文生图使用 GPT Image 2.6，图片编辑使用 2.5，完整包现含五个 Skill。发布与实际验证状态见各 Plugin 使用说明。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果。
+当前源码版本为 AIhub Studio **6.1.2**、Tikin Social **4.0.2**。Studio 已适配上线的 Gateway v0.9.16 合同，单人语音默认 Eleven Speech、有序多音色对话默认 Eleven Dialogue，ASR 默认 Paraformer V2；音乐的描述歌曲、已有歌词演唱、纯音乐三个场景默认 Suno V6。提供 ElevenLabs 预置音色库，支持筛选、试听、收藏及项目／全局保存；本版移除音色克隆占位。文生图使用 GPT Image 2.6，图片编辑使用 2.5，完整包现含五个 Skill。发布与实际验证状态见各 Plugin 使用说明。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
@@ -103,6 +103,6 @@ Studio 3.0.1 与 Tikin 4.0.1 修复首次配置保存并显示实际字段名，
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 6.1.1 | [aihub-studio/v6.1.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv6.1.1) |
+| aihub-studio | 6.1.2 | [aihub-studio/v6.1.2](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv6.1.2) |
 | tikin-social | 4.0.2 | [tikin-social/v4.0.2](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.0.2) |
 <!-- release-table:end -->

@@ -9,14 +9,19 @@ $path = $env:AIHUB_PRIVATE_FILE_PATH
 $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
 $project = [System.IO.Directory]::GetAccessControl($env:AIHUB_PRIVATE_PROJECT_PATH)
 $owner = $project.GetOwner([System.Security.Principal.SecurityIdentifier])
-$allowed = @(@($user.Value, 'S-1-5-18', $owner.Value) | Select-Object -Unique)
-$acl = New-Object System.Security.AccessControl.FileSecurity
+# Native constructors avoid loading PowerShell's utility cmdlets for every
+# atomic write. Keep the same unique SIDs, protected DACL and verification.
+$allowed = [System.Collections.Generic.List[string]]::new()
+foreach ($sid in @($user.Value, 'S-1-5-18', $owner.Value)) {
+  if (-not $allowed.Contains($sid)) { $allowed.Add($sid) }
+}
+$acl = [System.Security.AccessControl.FileSecurity]::new()
 # Preserve the newly created file's owner. Setting it again requires WRITE_OWNER,
 # while the creator can safely restrict its DACL without transferring ownership.
 $acl.SetAccessRuleProtection($true, $false)
 foreach ($sid in $allowed) {
-  $identity = New-Object System.Security.Principal.SecurityIdentifier($sid)
-  $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($identity, 'FullControl', 'Allow')
+  $identity = [System.Security.Principal.SecurityIdentifier]::new($sid)
+  $rule = [System.Security.AccessControl.FileSystemAccessRule]::new($identity, 'FullControl', 'Allow')
   $acl.AddAccessRule($rule)
 }
 [System.IO.File]::SetAccessControl($path, $acl)

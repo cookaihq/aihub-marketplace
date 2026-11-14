@@ -20,7 +20,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" doctor --skill "${AIHUB_CALLER}"
 
 ## 首次配置、缺项与配置修复
 
-先按[统一凭证检查、Setup 衔接及最小回退](credential-setup.md)执行。保留真实业务 cwd、caller 与关闭全局的选择；检查无需媒体工具或线上请求。
+先按[配置检查与配置中心](credential-setup.md)执行。保留真实业务 cwd、caller 与关闭全局的选择；检查无需媒体工具或线上请求。
 
 ## 配置来源
 
