@@ -8,7 +8,7 @@
     {
       "name": "aihub-studio",
       "source": "./aihub-studio",
-      "version": "6.1.0",
+      "version": "6.1.1",
       "description": "AIhub 图片、视频、音频、音乐和多模态理解，包含 5 个 Skill。",
       "author": {
         "name": "cookaihq"
