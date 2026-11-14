@@ -4,7 +4,7 @@ import type { Media } from './state.js';
 import { resolve } from 'node:path';
 import { audioContract, remoteAudio, type AudioContract } from './audioMedia.js';
 import { speechParameters } from './speech.js';
-import { ELEVEN_SPEECH_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, elevenMigration, assertElevenParameterMigration } from './elevenlabs.js';
+import { ELEVEN_SPEECH_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, VOICE_DESIGN_MODEL, SCRIBE_MODELS, elevenMigration, assertElevenParameterMigration } from './elevenlabs.js';
 import { SUNO_MODELS, SUNO_DEFAULT_MODEL, sunoParameters, sunoSceneParameters, type MusicScene } from './suno.js';
 
 export const OPERATIONS = {
@@ -12,6 +12,7 @@ export const OPERATIONS = {
   'video-text': 'aihub-video', 'video-start-frame': 'aihub-video', 'video-reference': 'aihub-video',
   'video-lipsync': 'aihub-video', 'video-avatar': 'aihub-video',
   'audio-tts': 'aihub-audio', 'audio-dialogue': 'aihub-audio', 'audio-transcribe': 'aihub-audio',
+  'audio-voice-design': 'aihub-audio',
   'music-description': 'aihub-music', 'music-lyrics': 'aihub-music', 'music-instrumental': 'aihub-music',
   understanding: 'aihub-understanding',
 } as const;
@@ -104,6 +105,7 @@ function defaults(request: TaskRequest): string[] {
     case 'audio-tts': return ['eleven-v4-text-to-speech'];
     case 'audio-dialogue': return ['eleven-v4-text-to-dialogue'];
     case 'audio-transcribe': return ['paraformer-v2'];
+    case 'audio-voice-design': return [VOICE_DESIGN_MODEL];
     case 'music-description': case 'music-lyrics': case 'music-instrumental': return [SUNO_DEFAULT_MODEL];
     case 'understanding': return [PREFERRED_MODELS.understanding[0]];
   }
@@ -126,6 +128,7 @@ function matchesOperation(model: string, operation: Operation): boolean {
     case 'audio-tts': return /^speech-/.test(model) || ELEVEN_SPEECH_MODELS.has(model);
     case 'audio-dialogue': return ELEVEN_DIALOGUE_MODELS.has(model);
     case 'audio-transcribe': return TRANSCRIBE.includes(model);
+    case 'audio-voice-design': return model === VOICE_DESIGN_MODEL;
     case 'music-description': case 'music-lyrics': case 'music-instrumental':
       return SUNO_MODELS.has(model) || model === 'lyria-3-pro' || model === ELEVEN_MUSIC_MODEL;
   }
@@ -208,6 +211,8 @@ function buildCandidate(request: TaskRequest, model: string, defaultVoiceId?: st
         if (!['speech-2.8-hd', 'speech-2.8-turbo'].includes(model)) throw new Error('Voice IDs and speech options require a verified mapping for this TTS model.');
         promptField = 'prompt'; allowedRequirements = ['voice_setting', 'audio_setting', 'voice_modify', 'pronunciation_dict', 'language_boost'];
       }
+    } else if (op === 'audio-voice-design') {
+      allowedRequirements = modelEntry(model).entry.params.filter(name => name !== 'model');
     } else if (op === 'audio-dialogue') {
       allowedRequirements = modelEntry(model).entry.params.filter(name => name !== 'model');
     } else if (op === 'audio-transcribe') {

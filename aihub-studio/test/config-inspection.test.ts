@@ -114,7 +114,7 @@ test('CLI distinguishes authentication rejection from balance, permissions and r
     assert.equal(requests, 0);
     for (const code of [401, 402, 403, 429]) {
       status = code;
-      await assert.rejects(exec(process.execPath, [cli, 'models', '--skill', 'aihub-image', '--media', 'image'], { cwd: root, env, timeout: 20_000 }), (error: unknown) => {
+      await assert.rejects(exec(process.execPath, [cli, 'models', '--skill', 'aihub-image', '--media', 'image'], { cwd: root, env, timeout: process.platform === 'win32' ? 60_000 : 20_000 }), (error: unknown) => {
         const stdout = (error as { stdout: string }).stdout;
         assert.ok(!stdout.includes('synthetic-cli-secret'));
         const output = JSON.parse(stdout);

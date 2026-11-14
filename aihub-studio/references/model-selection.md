@@ -71,6 +71,7 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 | `audio-tts` | 提示词中的待朗读文本 | 默认 `eleven-v4-text-to-speech`，prompt → text；任务 voice_id 优先，否则读取 ElevenLabs 默认音色 |
 | `audio-dialogue` | `requirements.inputs` 有序台词数组，每段 text / voice_id 必填 | 默认 `eleven-v4-text-to-dialogue`；最多10种音色，2000字仅为建议；可选 settings，不填 prompt |
 | `audio-transcribe` | 原录音路径或 URL 的 `inputs.audios` | `paraformer-v2` / `paraformer-8k-v2`；按模型检查格式、大小、时长并自动分段，8 kHz 型号不接受 `language_hints` |
+| `audio-voice-design` | `requirements.voice_description`，以及手填试听 `text` 或 `auto_generate_text=true` | `elevenlabs-voice-design`；返回全部候选，按[音色设计与创建](elevenlabs-voice-creation.md)试听、明确选择后用专用 `voice-create` 保存 |
 | `music-description` | 音乐构想写入 prompt | Suno description 模式，自动创作歌词并生成歌曲 |
 | `music-lyrics` | 完整歌词原样写入 prompt | Suno custom 人声模式，映射为 lyrics；不默认改写 |
 | `music-instrumental` | 风格、氛围和用途写入 prompt | Suno custom 纯音乐模式，映射为 style |

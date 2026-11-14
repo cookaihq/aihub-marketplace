@@ -2,7 +2,7 @@
   "generatedAt": "2026-08-04T02:57:58.577Z",
   "lang": "zh",
   "specBaseUrl": "https://docs.aihubmax.com/openapi/zh/",
-  "specFileCount": 156,
+  "specFileCount": 158,
   "entries": [
     {
       "file": "claude-format-messages.json",
@@ -16251,6 +16251,361 @@
         "audio_url",
         "file"
       ]
+    },
+    {
+      "file": "elevenlabs-voice-design.json",
+      "operationId": "elevenlabs-voice-design",
+      "method": "POST",
+      "path": "/e/v1/audios/generations",
+      "title": "ElevenLabs Voice Design",
+      "summary": "ElevenLabs Voice Design",
+      "description": "- 通过文字描述设计候选音色，可选参考音频引导\n- 返回试听文本和全部候选的试听链接及 generated_voice_id\n- 试听并明确选择后，再调用 Voice Create\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 完成后读取 `results[0].text` 与 `results[0].previews[]`；试听全部候选后，让用户明确选择一个 `generated_voice_id`，再调用 `elevenlabs-voice-create`。候选音频返回可下载 URL，不返回 Base64。\n- 按实际返回的试听文本字符数计费一次，不乘候选数量。请及时保存试听音频。\n",
+      "category": "generation",
+      "mediaType": "audio",
+      "models": [
+        "elevenlabs-voice-design"
+      ],
+      "modelSource": "const",
+      "requestContentTypes": [
+        "application/json"
+      ],
+      "requiredParams": [
+        "model",
+        "voice_description"
+      ],
+      "params": [
+        "model",
+        "voice_description",
+        "text",
+        "auto_generate_text",
+        "reference_audio_base64",
+        "prompt_strength",
+        "loudness",
+        "guidance_scale",
+        "seed",
+        "should_enhance"
+      ],
+      "paramSpecs": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "enum": [
+            "elevenlabs-voice-design"
+          ],
+          "default": "elevenlabs-voice-design",
+          "description": "`elevenlabs-voice-design`：设计候选音色；按实际返回的试听文本 Unicode 字符数一次计费，$0.08/1000字符，不乘候选数量。"
+        },
+        {
+          "name": "voice_description",
+          "type": "string",
+          "required": true,
+          "description": "声音描述，20–1000 字符；可描述语言、音色、年龄感和表达风格，不计费。"
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "试听文本，100–1000 字符。与 auto_generate_text=true 二选一。按响应 text 的实际字符数只计一次费用，不乘候选数量。"
+        },
+        {
+          "name": "auto_generate_text",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "自动生成试听文本。启用时不传 text；先预扣 1000 字符，按实际返回文本结算。"
+        },
+        {
+          "name": "reference_audio_base64",
+          "type": "string",
+          "required": false,
+          "default": null,
+          "description": "可选参考音频的裸 Base64 字符串，不接受 URL 或 Data URI。使用本人或已获授权的声音素材。"
+        },
+        {
+          "name": "prompt_strength",
+          "type": "number",
+          "required": false,
+          "default": null,
+          "description": "描述与参考音频的权重：0 偏向参考音频，1 偏向描述。"
+        },
+        {
+          "name": "loudness",
+          "type": "number",
+          "required": false,
+          "default": 0.5,
+          "description": "试听音量，-1–1。"
+        },
+        {
+          "name": "guidance_scale",
+          "type": "number",
+          "required": false,
+          "default": 5,
+          "description": "声音描述引导强度，0–100。"
+        },
+        {
+          "name": "seed",
+          "type": "integer",
+          "required": false,
+          "default": null,
+          "description": "随机种子。"
+        },
+        {
+          "name": "should_enhance",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "是否增强声音描述。"
+        }
+      ],
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "model",
+          "voice_description"
+        ],
+        "properties": {
+          "model": {
+            "const": "elevenlabs-voice-design",
+            "description": "`elevenlabs-voice-design`：设计候选音色；按实际返回的试听文本 Unicode 字符数一次计费，$0.08/1000字符，不乘候选数量。",
+            "enum": [
+              "elevenlabs-voice-design"
+            ],
+            "examples": [
+              "elevenlabs-voice-design"
+            ],
+            "type": "string",
+            "default": "elevenlabs-voice-design"
+          },
+          "voice_description": {
+            "description": "声音描述，20–1000 字符；可描述语言、音色、年龄感和表达风格，不计费。",
+            "maxLength": 1000,
+            "minLength": 20,
+            "type": "string",
+            "example": "自然、温暖、清晰的成年中文旁白声音，适合长篇讲解。"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "试听文本，100–1000 字符。与 auto_generate_text=true 二选一。按响应 text 的实际字符数只计一次费用，不乘候选数量。",
+            "example": "欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。欢迎收听今天的分享。"
+          },
+          "auto_generate_text": {
+            "default": false,
+            "description": "自动生成试听文本。启用时不传 text；先预扣 1000 字符，按实际返回文本结算。",
+            "type": "boolean",
+            "example": true
+          },
+          "reference_audio_base64": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "可选参考音频的裸 Base64 字符串，不接受 URL 或 Data URI。使用本人或已获授权的声音素材。",
+            "example": "<base64-encoded-audio>"
+          },
+          "prompt_strength": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "描述与参考音频的权重：0 偏向参考音频，1 偏向描述。",
+            "example": 0.5
+          },
+          "loudness": {
+            "default": 0.5,
+            "description": "试听音量，-1–1。",
+            "maximum": 1.0,
+            "minimum": -1.0,
+            "type": "number",
+            "example": 0.5
+          },
+          "guidance_scale": {
+            "default": 5,
+            "description": "声音描述引导强度，0–100。",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "type": "number",
+            "example": 5
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 2147483647,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "随机种子。",
+            "example": 0
+          },
+          "should_enhance": {
+            "default": false,
+            "description": "是否增强声音描述。",
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "registeredInDocsJson": true
+    },
+    {
+      "file": "elevenlabs-voice-create.json",
+      "operationId": "elevenlabs-voice-create",
+      "method": "POST",
+      "path": "/e/v1/audios/generations",
+      "title": "ElevenLabs Voice Create",
+      "summary": "ElevenLabs Voice Create",
+      "description": "- 保存用户明确选中的 generated_voice_id，返回完整音色对象和 voice_id\n- 创建免费；请自行保存 voice_id，平台不提供音色列表、查询或找回功能\n- 异步处理模式，使用返回的任务ID [进行查询](/pages/zh/api-manual/task-management/get-task-detail)\n- 完成后 `results[0]` 返回完整音色对象，其中 `voice_id` 可用于后续语音合成。\n- 请务必自行保存生成的 `voice_id`；平台不提供音色列表、查询或找回功能。任务查询仍可使用，但不能替代自行保存音色 ID。\n",
+      "category": "generation",
+      "mediaType": "audio",
+      "models": [
+        "elevenlabs-voice-create"
+      ],
+      "modelSource": "const",
+      "requestContentTypes": [
+        "application/json"
+      ],
+      "requiredParams": [
+        "model",
+        "voice_name",
+        "voice_description",
+        "generated_voice_id"
+      ],
+      "params": [
+        "model",
+        "voice_name",
+        "voice_description",
+        "generated_voice_id",
+        "labels"
+      ],
+      "paramSpecs": [
+        {
+          "name": "model",
+          "type": "string",
+          "required": true,
+          "enum": [
+            "elevenlabs-voice-create"
+          ],
+          "default": "elevenlabs-voice-create",
+          "description": "`elevenlabs-voice-create`：保存选中候选并返回 voice_id，创建免费；请自行保存 ID，平台不提供音色查询或找回功能。"
+        },
+        {
+          "name": "voice_name",
+          "type": "string",
+          "required": true,
+          "description": "音色名称。"
+        },
+        {
+          "name": "voice_description",
+          "type": "string",
+          "required": true,
+          "description": "音色描述；去除首尾空白后 20–1000 字符。"
+        },
+        {
+          "name": "generated_voice_id",
+          "type": "string",
+          "required": true,
+          "description": "Design 返回、且用户明确选中的候选 ID。每个候选只能创建一次；候选可能过期，选定后请及时保存。"
+        },
+        {
+          "name": "labels",
+          "type": "object",
+          "required": false,
+          "default": null,
+          "description": "自定义标签，键和值均为字符串。"
+        }
+      ],
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "model",
+          "voice_name",
+          "voice_description",
+          "generated_voice_id"
+        ],
+        "properties": {
+          "model": {
+            "const": "elevenlabs-voice-create",
+            "description": "`elevenlabs-voice-create`：保存选中候选并返回 voice_id，创建免费；请自行保存 ID，平台不提供音色查询或找回功能。",
+            "enum": [
+              "elevenlabs-voice-create"
+            ],
+            "examples": [
+              "elevenlabs-voice-create"
+            ],
+            "type": "string",
+            "default": "elevenlabs-voice-create"
+          },
+          "voice_name": {
+            "description": "音色名称。",
+            "minLength": 1,
+            "type": "string",
+            "example": "温暖中文旁白"
+          },
+          "voice_description": {
+            "description": "音色描述；去除首尾空白后 20–1000 字符。",
+            "maxLength": 1000,
+            "minLength": 20,
+            "type": "string",
+            "example": "自然、温暖、清晰的成年中文旁白声音，适合长篇讲解。"
+          },
+          "generated_voice_id": {
+            "description": "Design 返回、且用户明确选中的候选 ID。每个候选只能创建一次；候选可能过期，选定后请及时保存。",
+            "minLength": 1,
+            "type": "string",
+            "example": "selected-generated-voice-id"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "自定义标签，键和值均为字符串。",
+            "example": {
+              "language": "zh"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "registeredInDocsJson": true
     }
   ],
   "crossCheck": {

@@ -1,8 +1,8 @@
 ---
 name: aihub-audio
 metadata:
-  version: "6.0.1"
-description: v6.0.1｜通过 AIhub 合成语音和旁白、按台词顺序生成多音色对话、转写录音；支持 ElevenLabs 预置音色库筛选、试听与收藏。
+  version: "6.1.0"
+description: v6.1.0｜通过 AIhub 合成语音和旁白、按台词顺序生成多音色对话、转写录音；支持 ElevenLabs 预置音色库和音色设计。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 
@@ -47,6 +47,12 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill aihub-audio \
 
 用返回的 `run_record` 继续任务。`confirmation_required` 必须展示下一模型与参数，用户同意后才传 `--confirm`；不能直接执行含 token 的 `next_action`。只交付已检查的文件及实际转写结果，报告最终模型和尝试摘要。提交结果不明、查询/下载失败或试听不符合要求不触发替换生成。
 
+
+## ElevenLabs 音色设计
+
+用户询问或要求设计、创建新音色时，读取并遵守 [ElevenLabs 音色设计与创建](../../references/elevenlabs-voice-creation.md)。使用 `audio-voice-design` / `elevenlabs-voice-design` 生成候选，展示返回的全部试听文本、音频及候选编号；让用户试听全部候选后明确选择，再用 `voice-create` / `elevenlabs-voice-create` 保存所选候选。不能自动选择第一个、自动全部创建、把试听当成创建成功，也不能把 `generated_voice_id` 当作合成音色 ID。可选参考音频仅使用本人或已授权素材，不承诺专业克隆或精确复刻。
+
+保留完整 Design、Create 结果及任务 ID。用户选择前停在候选交付；选择文件只记录真实用户确认和全部试听候选，不能由 Agent 填造。Create 的重复调用只恢复同一任务；提交结果不明、容量失败或下载失败不重发。创建成功后醒目展示 `voice_id` 并逐字提醒：**生成的 `voice_id` 请自行妥善保存。平台不提供音色列表、音色查询或 ID 找回功能。** 任务查询仍可用。默认语音模型及预置音色库配置不因此改变，后续新音色合成显式使用适用的 custom-voice 模型及真实 `voice_id`。
 
 ## 结果检查与用户提示
 

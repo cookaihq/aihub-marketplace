@@ -10,9 +10,10 @@ import { SUNO_MODELS, sunoParameters } from './suno.js';
 import { bindDiagnosticRecord } from './diagnostics.js';
 import { UPLOAD_MAX_BYTES } from './audioMedia.js';
 import { transcriptText } from './transcript.js';
-import { ELEVEN_AUDIO_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, elevenAudioParameters } from './elevenlabs.js';
+import { ELEVEN_AUDIO_MODELS, ELEVEN_MUSIC_MODEL, ELEVEN_VOICE_MODELS, VOICE_DESIGN_MODEL, VOICE_CREATE_MODEL, SCRIBE_MODELS, elevenAudioParameters } from './elevenlabs.js';
+import { voiceObject, voiceDesign, createdVoice, previewOutput, designBinding, selectionParams, SAVE_VOICE_ID_NOTICE } from './voiceCreation.js';
 import { assertOutsideInstallation, readJob, recordPath, withJobLock, writeJob, writePrivateText, writePrivateRecord } from './state.js';
-import { createTask, findTaskInfo, outputDirectory, participate, readTaskInfo, touchTask } from './taskInfo.js';
+import { createTask, findTaskInfo, outputDirectory, participate, readTaskInfo, touchTask, updateTaskInfo } from './taskInfo.js';
 function cleanError(error, cfg) {
     return sanitized(error instanceof Error ? error.message : String(error), [cfg.apiKey]);
 }
@@ -52,6 +53,14 @@ const STRUCTURED_AUDIO_MODELS = new Set(['paraformer-v2', 'paraformer-8k-v2', 'c
 const LLM_SUBMIT_TIMEOUT_MS = 120_000;
 /** Keep task-specific fields visible without exposing the full remote response. */
 function resultMetadata(task, model) {
+    if (ELEVEN_VOICE_MODELS.has(model)) {
+        try {
+            return voiceObject(task);
+        }
+        catch {
+            return;
+        }
+    }
     const metadata = {};
     const keys = model === 'scribe-v2' ? [...RESULT_METADATA_KEYS, ...SCRIBE_RESULT_METADATA_KEYS] : RESULT_METADATA_KEYS;
     for (const key of keys) {
@@ -100,7 +109,18 @@ export function result(job, record, statusOverride) {
         ? sub.task.error ?? job.last_error
         : sub.state === 'submitting' ? 'The process stopped before submission was confirmed. Do not resubmit automatically.' : sub.error;
     const metadata = sub.state === 'known' ? resultMetadata(sub.task, job.model) : undefined;
-    const showUsage = ELEVEN_AUDIO_MODELS.has(job.model) || job.model === ELEVEN_MUSIC_MODEL || job.model === 'scribe-v2' || SUNO_MODELS.has(job.model);
+    const showUsage = ELEVEN_AUDIO_MODELS.has(job.model) || ELEVEN_VOICE_MODELS.has(job.model) || job.model === ELEVEN_MUSIC_MODEL || job.model === 'scribe-v2' || SUNO_MODELS.has(job.model);
+    let voice = {};
+    if (sub.state === 'known' && sub.task.status === 'completed') {
+        try {
+            if (job.model === VOICE_DESIGN_MODEL)
+                voice = { voice_design: previewOutput(voiceDesign(sub.task), job.files),
+                    selection_required: true, user_notice: '请试听全部候选后明确选择一个；候选 generated_voice_id 不能用于语音合成，尚未创建音色。' };
+            if (job.model === VOICE_CREATE_MODEL)
+                voice = { voice: createdVoice(sub.task), voice_id: createdVoice(sub.task).voice_id, user_notice: SAVE_VOICE_ID_NOTICE };
+        }
+        catch { /* Incomplete provider results stay visible in the saved task; never invent an ID. */ }
+    }
     const tracks = SUNO_MODELS.has(job.model) && sub.state === 'known' ? (sub.task.results ?? []).map(item => {
         const track = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
         const url = typeof track.audio_url === 'string' && track.audio_url ? track.audio_url : track.url;
@@ -108,6 +128,7 @@ export function result(job, record, statusOverride) {
             ...(typeof url === 'string' ? { audio_url: url, file: job.files.find(file => file.url === url)?.path } : {}) };
     }) : undefined;
     return { schema_version: 1, status: statusOverride ?? status, record, media: job.media, model: job.model,
+        ...voice,
         ...(job.failure ? { failure: job.failure } : {}),
         ...(sub.state === 'known' ? { task_id: sub.task.id, remote_status: sub.task.status, progress: sub.task.progress } : {}),
         ...(showUsage && sub.state === 'known' && sub.task.usage !== undefined ? { usage: sub.task.usage } : {}),
@@ -149,7 +170,7 @@ async function finishTextResult(job, record, cfg) {
 async function finishDownload(job, record, cfg) {
     if (job.submission.state !== 'known' || job.submission.task.status !== 'completed' || job.media === 'understanding')
         return;
-    const urls = [...new Set((job.submission.task.results ?? []).flatMap(item => {
+    const urls = [...new Set(job.model === VOICE_DESIGN_MODEL ? voiceDesign(job.submission.task).previews.map(p => p.url) : (job.submission.task.results ?? []).flatMap(item => {
             if (!item || typeof item !== 'object' || Array.isArray(item))
                 return [];
             const result = item;
@@ -186,6 +207,36 @@ async function finishDownload(job, record, cfg) {
     }
     else
         job.failed = [];
+    await save(record, job, cfg);
+}
+async function finishVoiceResult(job, record, cfg) {
+    if (job.submission.state !== 'known' || job.submission.task.status !== 'completed')
+        return;
+    const task = job.submission.task;
+    let body;
+    let markdown;
+    if (job.model === VOICE_DESIGN_MODEL) {
+        body = voiceDesign(task);
+        await finishDownload(job, record, cfg);
+        job.files.sort((a, b) => body.previews.findIndex(p => p.url === a.url) - body.previews.findIndex(p => p.url === b.url));
+        const output = previewOutput(body, job.files);
+        markdown = '# ElevenLabs 音色候选\n\n请试听全部候选，然后在对话中明确选择一个。候选 ID 不能用于语音合成；尚未创建音色。\n\n' +
+            '试听文本：\n\n' + JSON.stringify(body.text) + '\n\n' + output.previews.map(p => `- 候选 ${p.candidate_number}：${JSON.stringify(p.generated_voice_id)}\n  [试听音频](${encodeURI(p.url).replace(/[()]/g, c => encodeURIComponent(c))})` +
+            (p.file ? `\n  本地音频：${JSON.stringify(basename(String(p.file)))}（也可在任务音频列表中试听）` : '')).join('\n') + '\n';
+    }
+    else {
+        body = createdVoice(task);
+        job.failed = [];
+        markdown = '# ElevenLabs 音色已创建\n\n**' + SAVE_VOICE_ID_NOTICE + '**\n\nvoice_id：' + JSON.stringify(body.voice_id) +
+            '\n\n后续自定义音色合成请显式选择 Speech / Dialogue 的 custom-voice 模型，并使用此 voice_id。平台任务查询仍可用，但不能替代自行保存。\n';
+    }
+    await mkdir(job.output_dir, { recursive: true, mode: 0o700 });
+    for (const [extension, text, mime] of [['json', JSON.stringify(body, null, 2) + '\n', 'application/json'], ['md', markdown, 'text/markdown']]) {
+        const path = join(job.output_dir, `${job.model}-${job.local_id}.${extension}`);
+        await writePrivateText(path, text);
+        job.files = job.files.filter(file => file.path !== path);
+        job.files.push({ url: `task://${task.id}/voice.${extension}`, path, bytes: Buffer.byteLength(text), mime_type: mime });
+    }
     await save(record, job, cfg);
 }
 function structuredResultUrls(task) {
@@ -244,7 +295,9 @@ async function finishStructuredAudio(job, record, cfg) {
     await save(record, job, cfg);
 }
 async function finishResult(job, record, cfg) {
-    if (job.media === 'understanding')
+    if (ELEVEN_VOICE_MODELS.has(job.model))
+        await finishVoiceResult(job, record, cfg);
+    else if (job.media === 'understanding')
         await finishTextResult(job, record, cfg);
     else if (job.media === 'audio' && STRUCTURED_AUDIO_MODELS.has(job.model))
         await finishStructuredAudio(job, record, cfg);
@@ -304,6 +357,11 @@ async function queryAndDeliver(client, cfg, job, record, waitSeconds) {
     return result(job, record);
 }
 export async function generate(cfg, options) {
+    if (options.model === VOICE_CREATE_MODEL)
+        throw new Error('Use voice-create with a completed Design record and explicit user selection after all candidate auditions. Direct Create generation is disabled.');
+    return generateJob(cfg, options);
+}
+async function generateJob(cfg, options) {
     // Stored run candidates are already resolved, even when they contain no voice ID.
     const params = options.parametersResolved ? options.params : speechParameters(options.model, options.params, cfg.speech?.defaultVoiceId, cfg.elevenlabs?.defaultVoiceId);
     const path = validateGeneration(options.media, options.model, params);
@@ -330,7 +388,7 @@ export async function generate(cfg, options) {
         body = form;
     }
     assertOutsideInstallation(options.outputDir);
-    if (options.media !== 'document')
+    if (options.media !== 'document' && options.model !== VOICE_CREATE_MODEL)
         await checkMediaTools();
     const { job, record } = await newJob(cfg, options.media, options.model, options.outputDir);
     await bindDiagnosticRecord(cfg, record, { model: options.model, parameters: params, original_request: null });
@@ -387,6 +445,95 @@ export async function generate(cfg, options) {
         if (!options.waitSeconds)
             return result(job, record, 'submitted');
         return queryAndDeliver(client, cfg, job, record, options.waitSeconds);
+    });
+}
+async function registerVoiceCreateTask(designRecord, taskRecord, cfg, result) {
+    try {
+        const infoPath = await findTaskInfo(designRecord);
+        if (!infoPath)
+            return;
+        const path = relative(dirname(infoPath), taskRecord).split(sep).join('/');
+        await updateTaskInfo(infoPath, info => {
+            if (!info.records.some(entry => resolve(dirname(infoPath), entry.path) === resolve(taskRecord))) {
+                info.records.push({ path, kind: 'aihub-job', purpose: 'primary' });
+            }
+            const completed = result?.status === 'delivered' && typeof result.voice_id === 'string' && result.voice_id.trim();
+            info.delivery = { status: completed ? 'completed' : 'partial', at: new Date().toISOString(),
+                reason: completed ? '已创建用户选中的音色，请自行妥善保存 voice_id；平台不提供音色查询或 ID 找回。'
+                    : result?.status === 'remote_failed' ? '候选已交付；音色创建失败，尚未获得可合成的 voice_id。请由 Agent 核对原任务。'
+                        : '候选已交付；音色创建结果尚未确认。请由 Agent 继续原任务，勿重复创建。' };
+        });
+    }
+    catch (error) {
+        // Metadata can be repaired on recovery; it must never cause another Create submission.
+        process.stderr.write(`Create task metadata update failed; recover the saved task, do not resubmit: ${cleanError(error, cfg)}\n`);
+    }
+}
+/** One local Create attempt per Design; subsequent calls recover that exact attempt. */
+export async function createVoice(cfg, designRecord, selection, waitSeconds) {
+    const source = resolve(designRecord);
+    assertOutsideInstallation(source);
+    const record = join(dirname(source), 'voice-create.json');
+    return withJobLock(record, async () => {
+        const job = await readJob(source);
+        let state;
+        try {
+            state = JSON.parse(await readFile(record, 'utf8'));
+        }
+        catch (error) {
+            if (error.code !== 'ENOENT')
+                throw error;
+        }
+        const binding = await designBinding(cfg, job, !state);
+        const saveState = () => writePrivateRecord(record, sanitized(state, [cfg.apiKey]));
+        const present = () => ({ ...(state?.result ?? { status: 'submission_unknown', error: 'Create was prepared but its submission outcome is unknown. Reconcile the original task; never submit another Create.' }),
+            creation_record: record, design_record: source, selected_generated_voice_id: state.selection.generated_voice_id });
+        if (state) {
+            if (state.schema_version !== 1 || state.kind !== 'aihub-voice-create' || state.design_record !== source || state.design_fingerprint !== binding.fingerprint)
+                throw new Error('Create recovery does not match this Design result. Preserve the original records.');
+            const parsed = selectionParams(state.selection, binding.design, binding.taskId);
+            if (JSON.stringify(parsed.params) !== JSON.stringify(state.params))
+                throw new Error('Saved Create parameters no longer match the user selection.');
+            if (selection && JSON.stringify(selectionParams(selection, binding.design, binding.taskId).params) !== JSON.stringify(state.params))
+                throw new Error('A Create attempt already exists for another selection. Recover that attempt; do not create all candidates.');
+            if (state.task_record) {
+                const childPath = relative(dirname(source), state.task_record);
+                if (!childPath || childPath === '..' || childPath.startsWith(`..${sep}`) || isAbsolute(childPath))
+                    throw new Error('Create task record must remain inside its Design task.');
+                const child = await readJob(state.task_record);
+                if (child.model !== VOICE_CREATE_MODEL)
+                    throw new Error('Create recovery refers to another model.');
+                await registerVoiceCreateTask(source, state.task_record, cfg);
+                state.result = await resume(cfg, state.task_record, waitSeconds);
+                await saveState();
+                await registerVoiceCreateTask(source, state.task_record, cfg, state.result);
+            }
+            return present();
+        }
+        if (!selection)
+            throw new Error('First Create requires --selection-file with the explicit user choice and all auditioned candidate IDs.');
+        const parsed = selectionParams(selection, binding.design, binding.taskId);
+        validateGeneration('audio', VOICE_CREATE_MODEL, parsed.params);
+        state = { schema_version: 1, kind: 'aihub-voice-create', design_record: source, design_fingerprint: binding.fingerprint,
+            selection: parsed.selection, params: parsed.params };
+        // Persist intent before any submission. A crash without a known task record cannot safely replay.
+        await saveState();
+        try {
+            state.result = await generateJob(cfg, { media: 'audio', model: VOICE_CREATE_MODEL, params: parsed.params, outputDir: dirname(source), waitSeconds,
+                onRecord: async (path) => { state.task_record = path; await saveState(); await registerVoiceCreateTask(source, path, cfg); } });
+        }
+        catch (error) {
+            if (error instanceof TaskPersistenceError) {
+                state.task_record = error.record;
+                state.result = error.output();
+            }
+            else
+                state.result = { status: state.task_record ? 'submission_unknown' : 'not_submitted', error: cleanError(error, cfg) };
+        }
+        await saveState();
+        if (state.task_record)
+            await registerVoiceCreateTask(source, state.task_record, cfg, state.result);
+        return present();
     });
 }
 export async function resume(cfg, recordInput, waitSeconds) {

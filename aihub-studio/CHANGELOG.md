@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.2.0 — 2026-11-14
+
+- Added ElevenLabs Voice Design and guarded Voice Create: deliver every candidate for audition, require an explicit user choice, then save only that candidate.
+- Retain the full Design/Create responses, preview downloads and task recovery; repeated Create commands recover the original attempt and never replay unknown or failed submissions.
+- Deliver the created voice ID with a prominent reminder to save it; the platform has no voice list, lookup or ID recovery. Existing synthesis defaults and preset-library preferences stay intact.
+- Audio Skill 6.1.0; other Skill versions unchanged. Gateway v0.9.17 is deployed. Upstream capacity remains 30/30: current production Create/new-voice TTS are pending, with historical success kept separate from local fixture checks.
+
 ## 6.1.1 — 2026-11-14
 
 - 图片问答、识字、看图分析和截图查看优先使用当前会话的原生视觉能力；明确指定 AIHub 或确实缺少所需视觉能力时才由 Understanding 补位。任务复杂、Plugin 已安装或猜测外部模型更好不构成缺少能力的依据。

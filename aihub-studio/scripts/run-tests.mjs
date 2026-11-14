@@ -8,6 +8,6 @@ const tests = (await readdir(new URL('../.test-build/test/', import.meta.url))).
 // Windows private-record checks launch PowerShell; unbounded file concurrency
 // can starve unrelated CLI timeout tests. Keep the suite bounded on that host.
 const run = spawnSync(process.execPath, ['--test', ...(process.platform === 'win32' ? ['--test-concurrency=2'] : []), ...tests],
-  { stdio: 'inherit', timeout: process.platform === 'win32' ? 900_000 : 180_000 });
+  { stdio: 'inherit', timeout: process.platform === 'win32' ? 1_800_000 : 180_000 });
 if (run.error) console.error(run.error.message);
 process.exit(run.status ?? 1);

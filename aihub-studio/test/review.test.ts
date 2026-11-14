@@ -68,7 +68,7 @@ async function fixture(audio = false) {
     let stdout: string;
     try { ({ stdout } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', audio ? 'aihub-music' : 'aihub-image', '--no-global-config'],
       { cwd: dir, env: { ...process.env, ...fixtureTransport(base), AIHUB_API_KEY: 'fixture-review-secret',
-        AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: '', AIHUB_ERROR_REPORT_THRESHOLD: '3', ...env }, timeout: 20_000 })); }
+        AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: '', AIHUB_ERROR_REPORT_THRESHOLD: '3', ...env }, timeout: process.platform === 'win32' ? 60_000 : 20_000 })); }
     catch (error) { stdout = (error as { stdout: string }).stdout; }
     assert.ok(!stdout!.includes('fixture-review-secret'));
     return JSON.parse(stdout!);

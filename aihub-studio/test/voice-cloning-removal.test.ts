@@ -18,7 +18,7 @@ test('audio planning rejects cloning as an unsupported operation', () => {
   assert.throws(() => selectionPlan(config, {
     operation: 'audio-clone', original_request: 'Clone this voice',
     inputs: { audios: ['https://example.invalid/reference.wav'] },
-  }), /Supported operations: audio-tts, audio-dialogue, audio-transcribe$/);
+  }), /Supported operations: audio-tts, audio-dialogue, audio-transcribe, audio-voice-design$/);
 });
 
 test('old cloning preferences cannot replace speech synthesis or transcription', () => {

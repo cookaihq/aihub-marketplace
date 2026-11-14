@@ -65,7 +65,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" describe --skill "${AIHUB_CALLER}" 
 
 `--media` 可取 `image`、`video`、`audio`；E1 使用 `models --media understanding` 查询独立的 LLM 注册表。`models` 的 `preferred` 仍是随包目录推荐；生效的列表和策略以 `model_selection` 为准，具体任务候选以 `plan` 为准。没有配置时按 [图片 Skill](../skills/aihub-image/SKILL.md#选择图片模型) 或 [视频 Skill](../skills/aihub-video/SKILL.md#选择视频模型) 的规则选择；C1/C2 保留各自专用用途。
 
-`describe` 离线读取随包模型目录说明字段，无需 API Key。只有 `catalog_only` 中的目录记录不能证明模型在线可用，`availability_known: false` 或 `status: availability_unknown` 应报告可用性未知。账号模型列表使用 `/v1/models`；生成、任务和专用配置查询使用 `/e/v1/`。提交时使用 `models` 返回的请求型号，不自行泛化模型名。Fabric 是已核实的特例：账号的带分辨率 ID 对应生成型号 `fabric-1.0` 和 `resolution`，可用分辨率列在 `available_resolutions`。新流程只在已配置且适用的候选间按保存的策略切换；不得自动追加旧版本或其他模型。Plugin 会在提交前拒绝图片增强/材质/Profile、视频高清放大（B10）/插帧/Topaz、Sora 角色、字幕、提示词数字人和声音创建模型。
+`describe` 离线读取随包模型目录说明字段，无需 API Key。只有 `catalog_only` 中的目录记录不能证明模型在线可用，`availability_known: false` 或 `status: availability_unknown` 应报告可用性未知。账号模型列表使用 `/v1/models`；生成、任务和专用配置查询使用 `/e/v1/`。提交时使用 `models` 返回的请求型号，不自行泛化模型名。Fabric 是已核实的特例：账号的带分辨率 ID 对应生成型号 `fabric-1.0` 和 `resolution`，可用分辨率列在 `available_resolutions`。新流程只在已配置且适用的候选间按保存的策略切换；不得自动追加旧版本或其他模型。Plugin 会在提交前拒绝图片增强/材质/Profile、视频高清放大（B10）/插帧/Topaz、Sora 角色、字幕、提示词数字人和旧声音克隆模型；ElevenLabs 音色设计与创建使用专用流程。
 
 当前无配置时，静态文生图使用 GPT Image 2.6，编辑使用 2.5；图片列表的 default_for 区分 image-generate 与 image-edit。2.6 拒绝参考图、遮罩、markup 和非静态格式，省略尺寸为 auto，允许独立的 complexity。TTS 默认 eleven-v4-text-to-speech，多音色对话默认 eleven-v4-text-to-dialogue；三类音乐场景默认 suno-v6，ASR 默认 paraformer-v2。
 
@@ -184,3 +184,7 @@ outputs/
 交付时提供可点击的实际文件路径；远程宿主有已授权的附件能力时可用它交付。只有任务 ID、URL 或 `submitted` 状态不算完成媒体交付。
 
 文字转对话使用 audio-dialogue，台词放 task 的 requirements.inputs，省略 prompt；直接 generate 用 API inputs 数组。新四模型等待对应 Gateway 合同生产部署；旧 v4/Turbo 四 ID 无别名，报告用途迁移说明，历史 task 只恢复原 ID。
+
+## ElevenLabs 音色设计与创建
+
+`audio-voice-design` 使用 plan/run/continue。全部候选试听并明确选择后使用 `voice-create --skill aihub-audio --record <Design的task.json> --selection-file <selection.json>`；再次调用省略选择文件，只恢复原 Create。通用 generate 禁止直接 Create。完整字段、计费、选择记录和 ID 保存提醒见[专用流程](elevenlabs-voice-creation.md)。

@@ -1,6 +1,6 @@
 import { ApiError } from './apiClient.js';
 import { listModelSummaries, resolveEntry } from './catalog.js';
-import { ELEVEN_AUDIO_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, validateElevenLabs, elevenMigration } from './elevenlabs.js';
+import { ELEVEN_AUDIO_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, ELEVEN_VOICE_MODELS, VOICE_DESIGN_MODEL, VOICE_CREATE_MODEL, SCRIBE_MODELS, validateElevenLabs, elevenMigration } from './elevenlabs.js';
 import { SUNO_MODELS, SUNO_DEFAULT_MODEL, validateSuno } from './suno.js';
 /**
  * The catalog contains every documented endpoint. This Plugin deliberately
@@ -84,6 +84,10 @@ function capabilityForModel(model, media) {
         return 'D1 ASR';
     if (ELEVEN_DIALOGUE_MODELS.has(model))
         return 'D1 text-to-dialogue (ordered text/voice inputs)';
+    if (model === VOICE_DESIGN_MODEL)
+        return 'Voice Design (all previews; explicit user selection before Create)';
+    if (model === VOICE_CREATE_MODEL)
+        return 'Voice Create (selected Design candidate only; use voice-create)';
     if (media === 'audio')
         return 'D1 TTS/music';
     return 'D (legacy audio workflow)';
@@ -200,7 +204,7 @@ export function validateGeneration(media, model, params) {
         validateSuno(model, params);
         return entry.path;
     }
-    if (ELEVEN_AUDIO_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL || SCRIBE_MODELS.has(model)) {
+    if (ELEVEN_AUDIO_MODELS.has(model) || ELEVEN_VOICE_MODELS.has(model) || model === ELEVEN_MUSIC_MODEL || SCRIBE_MODELS.has(model)) {
         if (!entry.requestSchema)
             throw new Error('The bundled ElevenLabs request contract is missing.');
         validateElevenLabs(model, params, entry.requestSchema);

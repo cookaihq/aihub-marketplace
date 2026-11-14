@@ -1,6 +1,9 @@
 export const ELEVEN_SPEECH_MODELS = new Set(['eleven-v4-text-to-speech', 'eleven-v4-text-to-speech-custom-voice']);
 export const ELEVEN_DIALOGUE_MODELS = new Set(['eleven-v4-text-to-dialogue', 'eleven-v4-text-to-dialogue-custom-voice']);
 export const ELEVEN_AUDIO_MODELS = new Set([...ELEVEN_SPEECH_MODELS, ...ELEVEN_DIALOGUE_MODELS]);
+export const VOICE_DESIGN_MODEL = 'elevenlabs-voice-design';
+export const VOICE_CREATE_MODEL = 'elevenlabs-voice-create';
+export const ELEVEN_VOICE_MODELS = new Set([VOICE_DESIGN_MODEL, VOICE_CREATE_MODEL]);
 const RETIRED_ELEVEN_MODELS = new Set(['eleven-v4', 'eleven-v4-turbo', 'eleven-v4-custom-voice', 'eleven-v4-turbo-custom-voice']);
 export function elevenMigration(model) {
     if (!RETIRED_ELEVEN_MODELS.has(model))
@@ -104,6 +107,8 @@ function validateSchema(value, schema, path, strictObject = false) {
             const field = Object.hasOwn(schema.properties ?? {}, name) ? schema.properties[name] : undefined;
             if (field)
                 validateSchema(item, field, `${path}.${name}`);
+            else if (typeof schema.additionalProperties === 'object')
+                validateSchema(item, schema.additionalProperties, `${path}.${name}`);
             else if (strictObject || schema.additionalProperties === false)
                 throw new Error(`${path}.${name} is not supported; no parameter may be silently discarded.`);
         }
@@ -123,7 +128,33 @@ export function validateElevenLabs(model, params, schema) {
                 }
             });
     }
-    validateSchema({ ...params, model }, schema, 'params', true);
+    const schemaParams = { ...params, model };
+    if (model === VOICE_CREATE_MODEL)
+        for (const name of ['voice_name', 'voice_description', 'generated_voice_id']) {
+            // Gateway Create trims these fields before its schema length checks.
+            if (typeof schemaParams[name] === 'string')
+                schemaParams[name] = schemaParams[name].trim();
+        }
+    validateSchema(schemaParams, schema, 'params', true);
+    if (ELEVEN_VOICE_MODELS.has(model)) {
+        const description = params.voice_description;
+        if ([...description.trim()].length < 20 || [...description.trim()].length > 1000)
+            throw new Error('voice_description requires 20–1000 characters after trimming.');
+        if (model === VOICE_DESIGN_MODEL) {
+            if ((params.auto_generate_text === true) === (params.text != null))
+                throw new Error('Provide exactly one of text or auto_generate_text=true.');
+            if (typeof params.text === 'string' && !params.text.trim())
+                throw new Error('text must contain non-whitespace characters.');
+            if (typeof params.reference_audio_base64 === 'string' && (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(params.reference_audio_base64) || !params.reference_audio_base64.length))
+                throw new Error('reference_audio_base64 must be bare Base64, not a URL or Data URI.');
+        }
+        else {
+            for (const name of ['voice_name', 'generated_voice_id'])
+                if (!params[name].trim())
+                    throw new Error(`${name} must not be blank.`);
+        }
+        return;
+    }
     if (ELEVEN_SPEECH_MODELS.has(model)) {
         if (!params.voice_id.trim())
             throw new Error('voice_id must be a nonempty existing voice ID.');

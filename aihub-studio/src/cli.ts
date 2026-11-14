@@ -3,7 +3,7 @@ import { loadConfig, inspectConfig, ConfigurationError, CREDENTIAL_SETUP_HINT, r
 import { checkMediaTools } from './download.js';
 import { models, describe } from './models.js';
 import { AihubmaxClient, ApiError } from './apiClient.js';
-import { generate, resume, adoptTask, upload, understand, nativeMusic, TaskPersistenceError, failureInfo } from './workflow.js';
+import { generate, createVoice, resume, adoptTask, upload, understand, nativeMusic, TaskPersistenceError, failureInfo } from './workflow.js';
 import type { Media } from './state.js';
 import { selectionPlan } from './selection.js';
 import { startRun, continueRun } from './runs.js';
@@ -17,6 +17,7 @@ const FLAGS: Record<string, string[]> = {
   doctor: [], 'config-check': ['credentials-only', 'plugin-only', 'delete-from', 'delete-fields'], models: ['media', 'keyword'], describe: ['model'],
   'default-skills': ['agent', 'action', 'config-dir'],
   voices: [],
+  'voice-create': ['record', 'selection-file', 'wait-seconds'],
   'artifact-register': ['record', 'files-file', 'delivery', 'reason'],
   generate: ['media', 'model', 'params-file', 'output-dir', 'wait-seconds'],
   understand: ['model', 'params-file', 'output-dir', 'wait-seconds'],
@@ -46,6 +47,8 @@ Commands:
   models [--media image|video|audio|understanding] [--keyword TEXT]
   describe --model ID
   voices --skill aihub-audio (ElevenLabs catalog, authenticated read; no generation)
+  voice-create --skill aihub-audio --record DESIGN_TASK_JSON [--selection-file JSON] [--wait-seconds 0..600]
+    First call requires every auditioned candidate ID and explicit user choice. Repeats recover the same Create.
   generate --media TYPE --model ID --params-file JSON --output-dir DIR [--wait-seconds 0..600]
   understand --model ID --params-file JSON --output-dir DIR [--wait-seconds 0..600]
   native-music --model lyria-3-pro-preview --params-file JSON --output-dir DIR
@@ -177,6 +180,10 @@ async function mainWithDiagnostics(argv: string[], events: Parameters<typeof fee
         const voices = await new AihubmaxClient(cfg).request<unknown>('GET', '/e/v1/configs/elevenlabs-preset-voice-id');
         if (!Array.isArray(voices) || voices.some(row => !row || typeof row.voice_id !== 'string')) throw new Error('Invalid ElevenLabs voice catalog.');
         output = { schema_version: 1, status: 'ok', voices };
+      }
+      else if (command === 'voice-create') {
+        if (skill !== 'aihub-audio') throw new Error('--skill must be aihub-audio.');
+        output = await createVoice(cfg, required(flags, 'record'), flags['selection-file'] ? await jsonFile(required(flags, 'selection-file')) : undefined, wait(flags, 30));
       }
       else if (command === 'generate') {
         const kind = media(flags);

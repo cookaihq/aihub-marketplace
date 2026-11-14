@@ -1,5 +1,7 @@
 # ElevenLabs 语音、对话、音乐与转写
 
+音色设计及保存候选按 [ElevenLabs 音色设计与创建](elevenlabs-voice-creation.md) 执行：Design、全部候选试听、明确选择后 Create。它与下述已有音色合成模型分开，不改变默认或显式选择。
+
 Studio 6.0.0 对齐 Gateway Issue #29 的合同，部署基线为 **Gateway v0.9.16（2026-11-13 已上线）**，对应[在线文档](https://docs.aihubmax.com/pages/zh/api-manual/audio-series/elevenlabs/eleven-v4-text-to-speech)已发布。线上任务沿用既有账号检查、付费授权和提交流程；使用其他 Gateway 入口时先核对合同版本。服务端上线与客户端生产业务验收分别记录。
 
 先按[模型选择与恢复](model-selection.md)执行 describe → plan → run。内置 TTS 为 `eleven-v4-text-to-speech`，对话为 `eleven-v4-text-to-dialogue`，ASR 为 `paraformer-v2`，三个音乐场景为 `suno-v6`；本页 ElevenLabs Music 需显式或配置选用；用户显式型号、个人有序列表及保存任务优先。本页不将新增控制写入个人配置。

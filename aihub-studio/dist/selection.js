@@ -2,13 +2,14 @@ import { modelEntry, validateGeneration, VIDEO_DEFAULT_MODELS, IMAGE_DEFAULT_MOD
 import { resolve } from 'node:path';
 import { audioContract, remoteAudio } from './audioMedia.js';
 import { speechParameters } from './speech.js';
-import { ELEVEN_SPEECH_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, SCRIBE_MODELS, elevenMigration, assertElevenParameterMigration } from './elevenlabs.js';
+import { ELEVEN_SPEECH_MODELS, ELEVEN_DIALOGUE_MODELS, ELEVEN_MUSIC_MODEL, VOICE_DESIGN_MODEL, SCRIBE_MODELS, elevenMigration, assertElevenParameterMigration } from './elevenlabs.js';
 import { SUNO_MODELS, SUNO_DEFAULT_MODEL, sunoParameters, sunoSceneParameters } from './suno.js';
 export const OPERATIONS = {
     'image-generate': 'aihub-image', 'image-edit': 'aihub-image',
     'video-text': 'aihub-video', 'video-start-frame': 'aihub-video', 'video-reference': 'aihub-video',
     'video-lipsync': 'aihub-video', 'video-avatar': 'aihub-video',
     'audio-tts': 'aihub-audio', 'audio-dialogue': 'aihub-audio', 'audio-transcribe': 'aihub-audio',
+    'audio-voice-design': 'aihub-audio',
     'music-description': 'aihub-music', 'music-lyrics': 'aihub-music', 'music-instrumental': 'aihub-music',
     understanding: 'aihub-understanding',
 };
@@ -89,6 +90,7 @@ function defaults(request) {
         case 'audio-tts': return ['eleven-v4-text-to-speech'];
         case 'audio-dialogue': return ['eleven-v4-text-to-dialogue'];
         case 'audio-transcribe': return ['paraformer-v2'];
+        case 'audio-voice-design': return [VOICE_DESIGN_MODEL];
         case 'music-description':
         case 'music-lyrics':
         case 'music-instrumental': return [SUNO_DEFAULT_MODEL];
@@ -119,6 +121,7 @@ function matchesOperation(model, operation) {
         case 'audio-tts': return /^speech-/.test(model) || ELEVEN_SPEECH_MODELS.has(model);
         case 'audio-dialogue': return ELEVEN_DIALOGUE_MODELS.has(model);
         case 'audio-transcribe': return TRANSCRIBE.includes(model);
+        case 'audio-voice-design': return model === VOICE_DESIGN_MODEL;
         case 'music-description':
         case 'music-lyrics':
         case 'music-instrumental':
@@ -241,6 +244,9 @@ function buildCandidate(request, model, defaultVoiceId, elevenVoiceId) {
                 promptField = 'prompt';
                 allowedRequirements = ['voice_setting', 'audio_setting', 'voice_modify', 'pronunciation_dict', 'language_boost'];
             }
+        }
+        else if (op === 'audio-voice-design') {
+            allowedRequirements = modelEntry(model).entry.params.filter(name => name !== 'model');
         }
         else if (op === 'audio-dialogue') {
             allowedRequirements = modelEntry(model).entry.params.filter(name => name !== 'model');
