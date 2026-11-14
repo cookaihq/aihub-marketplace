@@ -1,18 +1,17 @@
 # AIhub Marketplace
 
-这个市场提供 AIhub 多媒体创作与理解、tikin 社交媒体数据与分析的完整 Plugin，并新增统一凭证入口 Setup AIHub。按需要选择安装对象。
+这个市场提供 AIhub 多媒体创作与理解、tikin 社交媒体数据与分析的完整 Plugin。按需要选择安装对象。
 
-当前源码版本为 AIhub Studio **6.1.0**、Tikin Social **4.0.1** 和 Setup AIHub **4.2.0**。Studio 已适配上线的 Gateway v0.9.16 合同，单人语音默认 Eleven Speech、有序多音色对话默认 Eleven Dialogue，ASR 默认 Paraformer V2；音乐的描述歌曲、已有歌词演唱、纯音乐三个场景默认 Suno V6。提供 ElevenLabs 预置音色库，支持筛选、试听、收藏及项目／全局保存；本版移除音色克隆占位。文生图使用 GPT Image 2.6，图片编辑使用 2.5，完整包现含五个 Skill。发布与实际验证状态见各 Plugin 使用说明。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果。
+当前源码版本为 AIhub Studio **6.1.1**、Tikin Social **4.0.2**。Studio 已适配上线的 Gateway v0.9.16 合同，单人语音默认 Eleven Speech、有序多音色对话默认 Eleven Dialogue，ASR 默认 Paraformer V2；音乐的描述歌曲、已有歌词演唱、纯音乐三个场景默认 Suno V6。提供 ElevenLabs 预置音色库，支持筛选、试听、收藏及项目／全局保存；本版移除音色克隆占位。文生图使用 GPT Image 2.6，图片编辑使用 2.5，完整包现含五个 Skill。发布与实际验证状态见各 Plugin 使用说明。业务 Plugin 配置中心显示当前生效值、逐项来源与分层编辑，支持选择文件并预览保存或移除覆盖后的结果。
 
 | Plugin | 能做什么 | 包含的 Skill |
 | --- | --- | --- |
 | [AIhub Studio](aihub-studio/README.md)（`aihub-studio`） | 图片、视频、音频、音乐、多模态理解 | 5 个 `aihub-*` Skill |
 | [tikin Social](tikin-social/README.md)（`tikin-social`） | 社交媒体数据查询、素材下载、账号与评论分析、趋势研究 | 17 个 `tikin-*` Skill |
-| [Setup AIHub](setup-aihub/README.md)（`setup-aihub`） | 管理上述业务服务密钥和六类客户端的原生模型配置 | `setup-api-key`、`setup-agent-model` |
 
-仓库提供 Claude Code、Codex 和 WorkBuddy 的市场清单，以及 Hermes 的三个原生 Plugin 入口；共享 25 个 Skill 与业务实现。清单登记不代表所有宿主与操作系统的完整调用都已验证；各 Plugin 的运行工具、配置要求与验证范围见其 README。
+仓库提供 Claude Code、Codex 和 WorkBuddy 的市场清单，以及 Hermes 的两个原生 Plugin 入口；共享 22 个 Skill 与业务实现。清单登记不代表所有宿主与操作系统的完整调用都已验证；各 Plugin 的运行工具、配置要求与验证范围见其 README。
 
-配置服务时可以说“帮我配置 AIhub 创作服务的密钥”或“换一下刚才的 tikin Key”。已加载 Setup 后，仅说 `setup-api-key` 即可开始中文菜单；Setup 尚未安装时先使用[完整安装提示词](setup-aihub/README.md#让-agent-帮你安装)。业务凭证已可读时无需运行 Setup。
+配置服务时可以说“帮我配置 AIhub 创作服务的密钥”或“换一下刚才的 tikin Key”。由对应 Plugin 自带的配置中心填写和保存，保存后通过原业务加载器复查。
 
 ## 让 Agent 帮你安装
 
@@ -30,7 +29,7 @@
 完成后逐项报告实际来源、Plugin 名称、版本、安装状态和 Skill 加载结果。需要刷新应用或开启新会话时，告诉我具体操作；无法完成的步骤明确说明原因。
 ```
 
-该入口已核对[官方 CLI 说明](https://learn.chatgpt.com/plugins/build/plugins#add-a-marketplace-from-the-cli)和本机 CLI 帮助，ChatGPT 内的完整安装与 Skill 加载尚未实测。安装后需要配置业务密钥时，继续按 [Setup AIHub 使用说明](setup-aihub/README.md#配置密钥)操作。
+该入口已核对[官方 CLI 说明](https://learn.chatgpt.com/plugins/build/plugins#add-a-marketplace-from-the-cli)和本机 CLI 帮助，ChatGPT 内的完整安装与 Skill 加载尚未实测。安装后需要配置业务密钥时，让 Agent 打开所需 Plugin 自带的配置中心。
 
 ### Claude Code / Codex：让 Agent 通过原生 Plugin 入口安装
 
@@ -40,14 +39,14 @@ Claude Code 和 Codex 支持原生 Plugin 管理。将下面这段话复制到�
 请从 AIhub Marketplace 安装 aihub-studio 和 tikin-social：优先使用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git，CNB 网络故障时改用 https://github.com/cookaihq/aihub-marketplace.git，保持同一 Plugin 和版本。先阅读仓库 README 和对应 Plugin 的 README，核对当前宿主的支持范围，再使用原生插件管理入口安装受支持的完整 Plugin，保留已有设置。分别报告市场添加、Plugin 安装、Skill 发现与调用的结果。
 ```
 
-各 Plugin 的完整媒体、文档和数据业务验证范围以对应 README 为准；Setup 的凭证配置验收不代表这些业务全部通过。业务调用还需要对应服务的配置与权限。
+各 Plugin 的完整媒体、文档和数据业务验证范围以对应 README 为准。业务调用还需要对应服务的配置与权限。
 
 ### Hermes：安装完整原生 Plugin
 
 将下面这段话复制到 Hermes；安装对象可保留为所需的一个或多个 Plugin：
 
 ```text
-请在当前 Hermes Profile 安装 AIhub Marketplace 的 aihub-studio、tikin-social、setup-aihub 三个完整 Plugin。先阅读仓库 README 与各 Plugin README，核对本机 hermes plugins install 的子目录及固定 ref 支持。来源为 https://github.com/cookaihq/aihub-marketplace.git#aihub-studio、https://github.com/cookaihq/aihub-marketplace.git#tikin-social、https://github.com/cookaihq/aihub-marketplace.git#setup-aihub；网络故障时使用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git 的相同 #子目录和同一版本。保留已有配置和本地修改，通过 Hermes 原生入口安装并启用，不单独复制 SKILL.md。分别报告来源、Plugin 版本、25 个 Skill 的发现与实际调用结果。未加载时开启新会话，显式使用 aihub-studio:aihub-image、tikin-social:tikin-endpoint-discovery 或 setup-aihub:setup-api-key 检查；不得以安装成功代替业务通过。
+请在当前 Hermes Profile 安装 AIhub Marketplace 的 aihub-studio、tikin-social 两个完整 Plugin。先阅读仓库 README 与各 Plugin README，核对本机 hermes plugins install 的子目录及固定 ref 支持。来源为 https://github.com/cookaihq/aihub-marketplace.git#aihub-studio、https://github.com/cookaihq/aihub-marketplace.git#tikin-social；网络故障时使用 https://cnb.cool/zhidateam/tannt/aihub-marketplace.git 的相同 #子目录和同一版本。保留已有配置和本地修改，通过 Hermes 原生入口安装并启用，不单独复制 SKILL.md。分别报告来源、Plugin 版本、22 个 Skill 的发现与实际调用结果。未加载时开启新会话，显式使用 aihub-studio:aihub-image、tikin-social:tikin-endpoint-discovery 检查；不得以安装成功代替业务通过。
 ```
 
 Hermes 支持 Git URL 的 `#子目录`。需要固定版本时，让 Agent 将已发布的 Plugin tag（如 `aihub-studio/v2.1.0`）解析为完整 40 位提交 SHA，再传给安装器的 `--ref`；不能直接传 tag 名。未固定版本的安装可先检查 `hermes plugins check-updates`，你要求更新后由原生 `hermes plugins update <plugin>` 更新完整包。固定版本不会随普通更新移动；更换版本时先确认新提交，再由原生安装器使用同一来源、`--force --ref` 替换。自然请求的 Skill 选择与显式加载分别核对。
@@ -87,11 +86,15 @@ Plugin 安装身份已经改变，现有安装不会自动变成新名称。请�
 
 旧 `tikin-plugins` 转发市场固定在 `tikin-plugin` 0.3.0；新功能和维护版本在本市场的 `tikin-social` 发布。
 
+## Setup AIHub 已退役
+
+市场已移除 Setup AIHub 及其两个 Skill。AIhub Studio 与 Tikin Social 的密钥配置由各自自带的配置中心完成；客户端模型配置请使用对应宿主的原生设置。已安装的旧 Setup 可通过宿主原生入口卸载，用户配置和历史任务数据保留，历史 tag 仍可取得。
+
 ## 版本与 Release
 
 版本标签随代码同步到 CNB，下表链接到对应的 GitHub Release。
 
-Studio 3.0.1 与 Tikin 4.0.1 修复首次配置保存并显示实际字段名，已通过 Windows 回归、Codex 0.166.0 正式入口保存与回读，以及独立浏览器桌面/390×844 检查；本次 WorkBuddy 按用户要求免验，macOS 待验。未重新安装现用 Plugin，未调用线上业务。Setup AIHub 保持 4.2.0。
+Studio 3.0.1 与 Tikin 4.0.1 修复首次配置保存并显示实际字段名，已通过 Windows 回归、Codex 0.166.0 正式入口保存与回读，以及独立浏览器桌面/390×844 检查；本次 WorkBuddy 按用户要求免验，macOS 待验。未重新安装现用 Plugin，未调用线上业务。
 
 历史 Studio 2.1.0、Tikin 3.1.0、Setup 4.1.0 已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；对应版本的 macOS 待验，Claude Code 保持兼容但未实测。
 
@@ -100,7 +103,6 @@ Studio 3.0.1 与 Tikin 4.0.1 修复首次配置保存并显示实际字段名，
 <!-- release-table:begin -->
 | 目标 | 版本 | Release |
 |---|---|---|
-| aihub-studio | 6.1.0 | [aihub-studio/v6.1.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv6.1.0) |
-| setup-aihub | 4.2.0 | [setup-aihub/v4.2.0](https://github.com/cookaihq/aihub-marketplace/releases/tag/setup-aihub%2Fv4.2.0) |
-| tikin-social | 4.0.1 | [tikin-social/v4.0.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.0.1) |
+| aihub-studio | 6.1.1 | [aihub-studio/v6.1.1](https://github.com/cookaihq/aihub-marketplace/releases/tag/aihub-studio%2Fv6.1.1) |
+| tikin-social | 4.0.2 | [tikin-social/v4.0.2](https://github.com/cookaihq/aihub-marketplace/releases/tag/tikin-social%2Fv4.0.2) |
 <!-- release-table:end -->

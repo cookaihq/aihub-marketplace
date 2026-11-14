@@ -69,7 +69,7 @@ npx --yes skills@1.7.6 add "<fixed source>/tikin-social" --skill '*' --agent <ac
 
 Select the previously chosen project/user scope (`--global` only for user scope).
 Do not use `--all`, which targets every agent, or a repository-wide install that also
-installs aihub-studio/setup-aihub. A direct complete-directory copy is also valid when
+installs aihub-studio. A direct complete-directory copy is also valid when
 the client's documented installation entry supports it; preserve sibling paths.
 The installer is transport, not an independent release channel. Do not run per-Skill
 `skills update` on this suite: stage and reinstall the next fixed complete suite instead.

@@ -1,10 +1,14 @@
-# AIhub Studio Plugin 6.1.0
+# AIhub Studio Plugin 6.1.1
 
 让 Claude Code、Codex、WorkBuddy 或 Hermes 通过 AIhub 生成图片、视频、语音和音乐，理解图片、音频、视频及支持的文件。结果保存在工作文件夹中，并提供文件链接和实际检查结果。
 
 本版单人语音与旁白默认使用 `eleven-v4-text-to-speech`，有序多音色对话默认使用 `eleven-v4-text-to-dialogue`，转写仍用 `paraformer-v2`。音乐提供“按描述生成歌曲”“按已有歌词演唱”“纯音乐／背景音乐”三个场景，均默认 `suno-v6`。静态文生图使用 GPT Image 2.6，图片编辑使用 2.5；按速度或细节要求选择 Flare／Sunburst。显式型号、个人模型顺序和已保存任务继续优先。
 
 新增 **ElevenLabs 预置音色库**：在完整配置中心筛选、试听、选择与收藏，再选择当前项目或全局，点击“保存并使用”同时保存音色和收藏。选择只作为未指定音色的单人语音默认值；对话仍逐段指定音色。完整包现含五个 Skill；PDF 转换请另选工具。
+
+6.1.1 清理已退役 Setup 的任务转交和续接引用，凭证配置直接使用本 Plugin 自带配置中心。既有业务配置与用户任务数据保留。
+
+以下为历史 6.1.0 的功能与验收记录。
 
 6.1.0 移除 ElevenLabs 音色克隆占位场景、模型配置与页面字段。旧占位配置不再读取，已有文件不会自动删除或改写。音频 Skill 为 6.0.1，其余内置 Skill 版本保持。
 
@@ -86,7 +90,7 @@ Windows 原生 Codex 0.167.1 已通过开发源显式调用、合成配置保存
 
 以下为历史 2.1.0 的功能与验收记录。
 
-2.1.0 新增 Hermes 原生入口，完整注册六个 Skill，继续使用共享业务脚本。默认规则与提醒识别当前 Hermes Profile；缺 Key 配置可交由 Setup AIHub 4.1.0 的 setup-api-key。
+Hermes 原生入口注册当前五个 Skill，继续使用共享业务脚本。默认规则与提醒识别当前 Hermes Profile；缺 Key 时打开本 Plugin 自带配置中心。
 
 本版已通过 Windows 原生 Codex、WorkBuddy、Hermes 的入口加载与本机合成配置流程；Hermes 另验证 Profile 隔离及任务身份。未调用付费业务，未验证真实线上鉴权；macOS 本轮待验，Claude Code 保持兼容但未实测。历史结果仅覆盖所列版本。
 

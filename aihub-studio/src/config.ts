@@ -41,7 +41,7 @@ const DECLARED_KEYS = new Set<string>([...KEYS, ...Object.values(MODEL_KEYS), ..
 const PLUGIN_NAME = 'aihub-studio';
 // Fixed service identity shared by all Skills; configuration cannot redirect it.
 export const AIHUB_SERVICE_URL = 'https://api.aihubmax.com';
-export const CREDENTIAL_SETUP_HINT = 'Follow references/credential-setup.md: launch this Plugin\'s bundled configuration center and give the user its clickable link. Continue an existing setup-api-key task through its bound page. Preserve caller, cwd, global option, save scope and business submission state; after saving, recheck with the original loader before resuming the authorized task. Local inspection never authorizes a business retry.';
+export const CREDENTIAL_SETUP_HINT = 'Follow references/credential-setup.md: launch this Plugin\'s bundled configuration center and give the user its clickable link. Preserve caller, cwd, global option, save scope and business submission state; after saving, recheck with the original loader before resuming the authorized task. Local inspection never authorizes a business retry.';
 
 export function parseEnv(text: string): Record<string, string> {
   const values: Record<string, string> = {};

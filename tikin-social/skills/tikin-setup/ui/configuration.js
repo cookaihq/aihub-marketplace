@@ -15,7 +15,7 @@
     this.snapshot = {...original, layers: original.layers.filter(layer =>
       field.rows.some(row => row.layer === layer.id && row.status !== 'skipped') ||
       (!layer.enabled && layer.path.endsWith('settings.json') &&
-       (field.id.startsWith('routing.') || field.id === 'default_skill_reminders')))};
+       (field.readonly && !field.targets?.length)))};
     try { return trace.call(this, field); } finally { this.snapshot = original; }
   };
   // Input updates paint the preview without rebuilding the focused control.

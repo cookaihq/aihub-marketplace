@@ -37,7 +37,7 @@ CONFIG_KEYS = ("TIKIN_API_KEY", "TIKIN_BASE_URL")
 # remains available when an Agent Skills client installs only Skill directories.
 PLUGIN_NAME = "tikin-social"
 DEFAULT_BASE_URL = "https://console.tikin.net"
-CREDENTIAL_SETUP_HINT = 'follow tikin-setup/references/credential-setup.md to launch this Plugin\'s bundled configuration center and return its clickable link. Preserve caller, cwd, global option and submission state. Continue an existing setup-api-key task through its bound page; recheck configuration after saving before resuming the original business task.'
+CREDENTIAL_SETUP_HINT = 'follow tikin-setup/references/credential-setup.md to launch this Plugin\'s bundled configuration center and return its clickable link. Preserve caller, cwd, global option and submission state; recheck configuration after saving before resuming the original business task.'
 SKILL_NAMES = frozenset({
     "tikin-bulk-data-export", "tikin-comments-analysis", "tikin-competitor-analysis",
     "tikin-creator-analytics", "tikin-douyin", "tikin-endpoint-discovery",
