@@ -41,6 +41,7 @@
     }
     async open() {
       if(this.dialog?.open||this.ui.expired)return;
+      this.syncAccount();
       const scopes=['global','project'].filter(scope=>[VOICE,FAVORITES].every(id=>this.ui.targets(this.ui.field(id)).some(layer=>layer.id===this.ui.snapshot.default_targets[scope])));
       const draftId=[VOICE,FAVORITES].find(id=>this.ui.hasFieldDraft(id));
       const draftScope=draftId&&this.ui.layer(this.ui.switchIntents[draftId]?.target||this.ui.fieldTarget(draftId))?.scope;
@@ -95,12 +96,14 @@
     async load(refresh=false) {
       if(this.loading||this.ui.expired||this.ui.busy||this.ui.uncertain)return;
       this.loading=true;const dialog=this.dialog;
+      const generation=this.loadGeneration=(this.loadGeneration||0)+1;
+      const current=()=>this.dialog===dialog&&this.loadGeneration===generation;
       const first=!this.rows.length;
       this.message('');this.paintCache();
       if(first)this.renderLoading();else this.message('正在重新下载音色库，你可以继续浏览已有缓存。');
       try {
         const result=refresh ? await this.ui.api('/api/elevenlabs-voices/refresh',{}) : await this.ui.api('/api/elevenlabs-voices');
-        if(this.dialog!==dialog)return;
+        if(!current())return;
         const genderNames={female:'女声',male:'男声'};
         const tagNames={narration:'旁白',conversational:'对话',social_media:'社交媒体',audiobook:'有声书',advertisement:'广告',education:'教育'};
         const rows=result.voices.map((voice,index)=>({...voice,color:index%8,
@@ -114,20 +117,20 @@
             index.push({voice,text:[voice.voice_id,voice.voice_name,voice.description,voice.gender,voice.age,...translated,...voice.languages,...voice.tag_list].join(' ').toLowerCase()});
           }
           await new Promise(resolve=>setTimeout(resolve,0));
-          if(this.dialog!==dialog)return;
+          if(!current())return;
         }
         const tags=[...new Set(rows.flatMap(voice=>voice.tag_list))].sort((a,b)=>a.localeCompare(b,'zh-CN'));
         this.dialog.querySelector('#el-tag').innerHTML='<option value="">全部风格</option>'+tags.map(tag=>`<option>${encode(tag)}</option>`).join('');
         this.restoreFilters();this.savedAt=result.saved_at;this.rows=rows;this.loaded=true;
         this.byId=byId;this.index=index;this.filterCache=null;this.message(refresh?'音色库已更新，本机缓存已保存。':'');
       }catch(error){
-        if(this.dialog!==dialog)return;
+        if(!current())return;
         this.message(error.message,true);
         if(!this.rows.length){
           this.dialog.querySelector('#el-list').innerHTML=`<div class="el-empty"><span class="el-empty-icon">${icon('info')}</span><h3>音色库暂时没有加载成功</h3><p>请检查网络后重试，已保存的音色与收藏会保留。</p><button data-el="refresh">重新下载</button></div>`;
         }
       }finally{
-        if(this.dialog===dialog){this.loading=false;this.paintCache();if(this.loaded)this.renderRows();this.paintFooter();}
+        if(current()){this.loading=false;this.paintCache();if(this.loaded)this.renderRows();this.paintFooter();}
       }
     }
     paintCache() {
@@ -184,11 +187,14 @@
         button.hidden=!this.allowedScopes.includes(button.dataset.elScope);button.setAttribute('aria-checked',String(button.dataset.elScope===this.scope));button.disabled=!!locked;
         button.tabIndex=button.dataset.elScope===this.scope?0:-1;
       }
-      this.dialog.querySelector('#el-scope-help').textContent=this.scope==='global'?'多个项目共用':'仅当前项目';
+      const exactDraft=this.fieldsToSave().some(id=>this.ui.hasFieldDraft(id)&&this.targetFor(id)!==this.ui.snapshot.default_targets[this.scope]);
+      this.dialog.querySelector('#el-scope-help').textContent=exactDraft?'沿用主表各项保存位置':this.scope==='global'?'多个项目共用':'仅当前项目';
       const voice=this.byId.get(this.selected);
       this.dialog.querySelector('#el-selection').innerHTML=voice?`<span class="el-selection-dot el-color-${voice.color}"></span><div><small>已选择</small><strong>${encode(voice.voice_name)}</strong></div>`:'选择一个音色';
       const save=this.dialog.querySelector('[data-el="save"]');save.disabled=this.saving||!this.selected&&!this.favoritesDirty;
-      save.disabled=locked||this.fieldsToSave().some(id=>this.ui.needsReview?.[id])||!this.selected&&!this.favoritesDirty;
+      const transfer=this.prepareTransfer();
+      const pendingSwitch=this.fieldsToSave().some(id=>this.ui.switchIntents[id]&&this.ui.preview?.scope_plans?.[id]?.state!=='ready');
+      save.disabled=locked||pendingSwitch||transfer&&(transfer.loading||transfer.error||transfer.plan?.state!=='ready')||this.fieldsToSave().some(id=>this.ui.needsReview?.[id])||!this.selected&&!this.favoritesDirty;
       save.textContent=this.saving?'正在保存…':this.fieldsToSave().length===1&&this.fieldsToSave()[0]===FAVORITES?'保存收藏':'保存并使用';
       for(const button of this.dialog.querySelectorAll('[data-el-select],[data-el-favorite]'))button.disabled=!!locked;
       this.dialog.querySelector('#el-refresh').disabled=!!locked||this.loading;
@@ -206,6 +212,29 @@
     message(text,error=false) {
       this.notice=text;this.noticeError=error;this.paintFeedback();
     }
+    targetFor(id) {
+      return this.ui.switchIntents[id]?.target||(this.ui.hasFieldDraft(id)?this.ui.fieldTarget(id):this.ui.snapshot.default_targets[this.scope]);
+    }
+    prepareTransfer() {
+      // Opening a picker is read-only. Preview an unedited transfer without
+      // creating a main-form switch, so its exact cleanup is visible before saving.
+      if(this.saving)return this.prospectiveTransfer;
+      if(!this.selected||!this.fieldsToSave().includes(VOICE)||this.ui.hasFieldDraft(VOICE)||this.ui.field(VOICE).effective.source===this.targetFor(VOICE)){
+        this.prospectiveTransfer=null;return null;
+      }
+      const intent={target:this.targetFor(VOICE),mode:'input'},revision=this.ui.snapshot.revision;
+      const signature=JSON.stringify([revision,intent]);
+      if(this.prospectiveTransfer?.signature===signature)return this.prospectiveTransfer;
+      const proposal=this.prospectiveTransfer={signature,intent,loading:true},dialog=this.dialog;
+      this.ui.api('/api/preview',{revision,changes:{files:{},switches:{[VOICE]:intent}}}).then(result=>{
+        if(this.dialog!==dialog||this.prospectiveTransfer!==proposal)return;
+        proposal.plan=result.config.scope_plans[VOICE];
+        if(result.config.validation_errors?.length)proposal.error=result.config.validation_errors.join(' ');
+      }).catch(error=>{if(this.prospectiveTransfer===proposal)proposal.error=error.message;}).finally(()=>{
+        if(this.dialog===dialog&&this.prospectiveTransfer===proposal){proposal.loading=false;this.paintFooter();this.paintFeedback();}
+      });
+      return proposal;
+    }
     fieldsToSave() {
       const ids=[VOICE,FAVORITES].filter(id=>this.ui.hasFieldDraft(id));
       if(this.transferVoice&&!ids.includes(VOICE))ids.push(VOICE);
@@ -219,6 +248,7 @@
       this.paintFooter();this.paintFeedback();
     }
     syncDrafts() {
+      this.syncAccount();
       const revision=this.ui.snapshot?.revision;
       if(this.revision!==revision&&!this.ui.hasFieldDraft(VOICE))this.transferVoice=false;
       this.revision=revision;
@@ -229,6 +259,23 @@
       if(changed)this.renderRows();else this.paintFooter();
       this.paintFeedback();
     }
+    syncAccount() {
+      const revision=this.ui.snapshot?.fields.find(field=>field.id==='AIHUB_API_KEY')?.edit_revision;
+      if(!revision||this.accountRevision===revision)return;
+      this.accountRevision=revision;this.loadGeneration=(this.loadGeneration||0)+1;
+      this.rows=[];this.byId=new Map();this.index=[];this.filterCache=null;
+      this.loaded=false;this.loading=false;this.savedAt=null;this.page=1;
+      this.audio.pause();this.audio.removeAttribute('src');this.playing=null;
+      if(!this.dialog)return;
+      this.dialog.querySelector('.el-details')?.remove();
+      this.dialog.querySelector('#el-total').textContent='—';
+      this.dialog.querySelector('#el-match-count').textContent='等待载入当前账号音色';
+      this.dialog.querySelector('#el-range').textContent='';
+      this.dialog.querySelector('#el-page').textContent='1 / 1';
+      for(const action of ['previous','next'])this.dialog.querySelector(`[data-el="${action}"]`).disabled=true;
+      this.dialog.querySelector('#el-list').innerHTML='<div class="el-empty"><h3>音色库账号已改变</h3><p>重新下载当前账号的目录，已保存的音色和收藏会保留。</p><button data-el="refresh">重新下载</button></div>';
+      this.message('');this.paintCache();
+    }
     paintFeedback() {
       if(!this.dialog)return;
       const banner=this.dialog.querySelector('#el-banner'),ui=this.ui;
@@ -237,7 +284,11 @@
       if(ui.uncertain)html+='<button data-config="reload">重新载入并核对</button>';
       for(const id of [VOICE,FAVORITES]){
         if(ui.needsReview?.[id])html+=`<p class="el-feedback-error">${encode(ui.field(id).label)}已在文件中发生变化。已保存：${encode(JSON.stringify(ui.field(id).effective.value))}；草稿：${encode(JSON.stringify(ui.draftValue(id)))}。</p><button data-config="review-draft" data-id="${encode(id)}">已核对，保留这份草稿</button>`;
-        const template=document.createElement('template');template.innerHTML=ui.selectionHTML(id);
+        const proposal=id===VOICE&&this.prospectiveTransfer;
+        const prospective=proposal&&(!ui.switchIntents[id]||this.saving&&!ui.preview);
+        if(prospective&&proposal.error)html+=`<p class="el-feedback-error">${encode(proposal.error)}</p>`;
+        const template=document.createElement('template');template.innerHTML=prospective?ui.selectionHTML(id,proposal.intent,proposal.plan):ui.selectionHTML(id);
+        if(prospective)template.content.querySelectorAll('[data-config]').forEach(button=>button.remove());
         template.content.querySelector('.switch-commit')?.remove();
         html+=template.innerHTML;
       }
@@ -248,14 +299,14 @@
     }
     async save() {
       if(this.saving||this.ui.expired||this.ui.uncertain)return;
-      const target=this.ui.snapshot.default_targets[this.scope];
       const ids=this.fieldsToSave();
-      if(!ids.length||!ids.every(key=>this.ui.targets(this.ui.field(key)).some(layer=>layer.id===target))){this.message('所选范围当前无法保存，请选择另一个位置。',true);return;}
-      for(const id of ids)this.ui.requestSwitch(id,target,'input');
+      const targets=Object.fromEntries(ids.map(id=>[id,this.targetFor(id)]));
+      if(!ids.length||!ids.every(key=>this.ui.targets(this.ui.field(key)).some(layer=>layer.id===targets[key]))){this.message('所选范围当前无法保存，请选择另一个位置。',true);return;}
       this.saving=true;this.paintFooter();
+      for(const id of ids)this.ui.requestSwitch(id,targets[id],'input');
       try{
         const result=await this.ui.save(ids);
-        if(result?.saved){this.transferVoice=false;this.syncDrafts();this.message(`已保存到${this.scope==='global'?'全局':'本项目'}配置，已核对实际来源。`);}
+        if(result?.saved){this.transferVoice=false;this.syncDrafts();const scopes=[...new Set(Object.values(targets).map(target=>this.ui.layer(target).scope==='global'?'全局':'本项目'))];this.message(`已保存到${scopes.join('、')}配置，已核对实际来源。`);}
         else this.message(this.ui.error||'请核对上方内容选择，再点击保存。',!!this.ui.error);
       }catch(error){this.message(error.message+' 选择和收藏保留，可重新核对后保存。',true);}
       finally{this.saving=false;this.paintFooter();this.paintFeedback();}
@@ -284,13 +335,14 @@
         try{await this.audio.play();}catch{this.message('请再次点击试听以播放样音。',true);}return;
       }
       if(data.elFavorite){
+        const target=this.targetFor(FAVORITES);
         const id=data.elFavorite;this.favoriteSet.has(id)?this.favoriteSet.delete(id):this.favoriteSet.add(id);
         this.ui.fileEdits?.[this.ui.fieldTarget(FAVORITES)]?.delete(FAVORITES);
         this.ui.stage(FAVORITES,{op:'set',value:[...this.favoriteSet]});
-        this.ui.requestSwitch(FAVORITES,this.ui.snapshot.default_targets[this.scope],'input');
+        this.ui.requestSwitch(FAVORITES,target,'input');
         this.favoritesDirty=this.ui.hasFieldDraft(FAVORITES);this.renderRows();this.dialog.querySelector(`[data-el-favorite="${CSS.escape(id)}"]`)?.focus();return;
       }
-      if(data.elSelect){this.selected=data.elSelect;this.transferVoice=true;this.ui.fileEdits?.[this.ui.fieldTarget(VOICE)]?.delete(VOICE);this.ui.stage(VOICE,{op:'set',value:this.selected});this.ui.requestSwitch(VOICE,this.ui.snapshot.default_targets[this.scope],'input');this.message('');this.renderRows();this.dialog.querySelector('[data-el="save"]').focus();return;}
+      if(data.elSelect){const target=this.targetFor(VOICE);this.selected=data.elSelect;this.transferVoice=true;this.ui.fileEdits?.[this.ui.fieldTarget(VOICE)]?.delete(VOICE);this.ui.stage(VOICE,{op:'set',value:this.selected});this.ui.requestSwitch(VOICE,target,'input');this.message('');this.renderRows();this.dialog.querySelector('[data-el="save"]').focus();return;}
       if(data.elTag){this.tag=data.elTag;this.page=1;this.restoreFilters();this.renderRows();return;}
       if(data.elTab||action==='all'){this.tab=data.elTab||'all';this.page=1;this.renderRows();return;}
       if(action==='clear'){
@@ -303,7 +355,7 @@
     }
     close() {
       if(this.saving)return;
-      this.audio.pause();clearTimeout(this.timer);this.dialog.close();this.dialog.remove();this.dialog=null;this.loading=false;
+      this.audio.pause();clearTimeout(this.timer);this.dialog.close();this.dialog.remove();this.dialog=null;this.loading=false;this.prospectiveTransfer=null;
       this.ui.root.querySelector('[data-voice-open="'+VOICE+'"]')?.focus();
     }
   }

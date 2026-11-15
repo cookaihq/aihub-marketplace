@@ -83,7 +83,11 @@ class FieldScopes(unittest.TestCase):
         self.assertEqual(self.field(saved, key)['effective']['source'], target)
         self.assertEqual(project.read_text(), 'UNRELATED=keep\n')
         self.assertEqual(shared.read_text(), '')
-        self.assertEqual(self.field(self.snapshot(), key)['effective']['source'], target)
+        reread = self.snapshot()
+        self.assertEqual(self.field(reread, key)['effective']['source'], target)
+        # A client recovering a lost save response can recognize this exact
+        # completed projection without resubmitting the destructive switch.
+        self.assertEqual(self.field(preview, key)['edit_revision'], self.field(reread, key)['edit_revision'])
         self.assertFalse(self.adapter.configuration.transaction.journal.exists())
 
     def test_voice_cache_survives_reload_and_failed_refresh_and_isolates_credentials(self):
@@ -157,10 +161,13 @@ class FieldScopes(unittest.TestCase):
         self.assertIn('synthetic-project-A', project.read_text())
         preview = self.request('/api/preview', {'changes': changes, 'revision': initial['revision']})['config']
         changes['switches'][key]['choice_token'] = preview['scope_plans'][key]['choice_token']
+        checked = self.request('/api/preview', {'changes': changes, 'revision': initial['revision']})['config']
+        self.assertEqual(checked['scope_plans'][key]['state'], 'ready')
         saved = self.request('/api/save', {'changes': changes, 'revision': initial['revision']})['config']
         self.assertEqual(self.field(saved, key)['effective']['source'], target)
         self.assertEqual(project.read_text(), '')
         self.assertIn('synthetic-entered-D', global_file.read_text())
+        self.assertEqual(self.field(checked, key)['edit_revision'], self.field(saved, key)['edit_revision'])
         with self.assertRaises(HTTPError) as error:
             self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
         self.assertEqual(error.exception.code, 409)
