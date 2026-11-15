@@ -10,7 +10,7 @@ compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, ff
 
 ## 配置页面快捷入口
 
-先分流：显式调用本 Skill 后，内容去掉首尾空白后恰为 `配置`、`配置页面`、`打开配置`、`打开配置页面`、`设置`、`设置页面`、`打开设置`、`打开设置页面` 中任一项时，直接按[配置快捷分支](../../references/credential-setup.md#配置页面快捷入口)打开本 Plugin 的统一配置中心，caller 为 `aihub-image`。先取得可用链接和实际期限，交付后结束本次请求。
+先分流：显式调用本 Skill 后，内容去掉首尾空白后恰为 `配置`、`配置页面`、`打开配置`、`打开配置页面`、`设置`、`设置页面`、`打开设置`、`打开设置页面` 中任一项时，直接按[配置快捷分支](../../references/credential-setup.md#配置页面快捷入口)打开本 Plugin 的统一配置中心，caller 为 `aihub-image`。传 `--fields AIHUB_API_KEY,AIHUB_IMAGE_MODELS,AIHUB_RESULT_CHECK_ENABLED` 聚焦相关项，完整表单仍可展开；保留真实项目、全局开关、已选范围及已有任务绑定。先取得可用链接和实际期限，交付后结束本次请求。
 
 仅这些完整短语进入快捷分支；带业务正文、预设、参数或字面 `--` 的请求继续原流程。
 

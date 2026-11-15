@@ -35,13 +35,23 @@ class VoiceLibrary(unittest.TestCase):
             self.assertEqual(eleven.sample_url(url), '')
         cfg = SimpleNamespace(package=MARKET / 'aihub-studio', project=MARKET, environment={}, options={'global_enabled':False})
         fixture = {'voices':[{'voice_id':'voice-A','sample_audio':'https://localhost/private'}]}
-        with patch.object(eleven.subprocess, 'run', return_value=subprocess.CompletedProcess([],0,json.dumps(fixture),'')) as run:
-            result = eleven.load(cfg)
-            self.assertEqual(result['voices'], [{'voice_id':'voice-A','sample_audio':''}])
-            payload = json.loads(run.call_args.kwargs['input'])
-            self.assertEqual(payload['provider'], 'elevenlabs')
-            self.assertFalse(payload['global_enabled'])
-            self.assertNotIn('url', payload)
+        with tempfile.TemporaryDirectory(dir=os.environ['TEMP'], prefix='eleven-cache-') as folder:
+            cfg.project = Path(folder)
+            identity = {'identity': 'a' * 64, 'home_directory': folder}
+            replies = iter([identity, fixture, identity])
+            node_calls, actual_run = [], subprocess.run
+            def pipe(command, **kwargs):
+                if command[0] != 'node':
+                    return actual_run(command, **kwargs)
+                node_calls.append(kwargs)
+                return subprocess.CompletedProcess([], 0, json.dumps(next(replies)), '')
+            with patch.object(eleven.subprocess, 'run', side_effect=pipe):
+                result = eleven.load(cfg)
+                self.assertEqual(result['voices'], [{'voice_id':'voice-A','sample_audio':''}])
+                payload = json.loads(node_calls[1]['input'])
+                self.assertEqual(payload['provider'], 'elevenlabs')
+                self.assertFalse(payload['global_enabled'])
+                self.assertNotIn('url', payload)
         with patch.object(eleven.subprocess, 'run', side_effect=subprocess.TimeoutExpired('node',35)):
             with self.assertRaises(UIError) as error: eleven.load(cfg)
             self.assertEqual(error.exception.status, 502)

@@ -9,12 +9,17 @@ eleven_library = import_module(__package__ + '.skills.aihub-audio.models.elevenl
 
 
 def assets(extension):
-    names = ['skills/aihub-audio/voice-library.' + extension]
+    names = ['form.css', 'skills/aihub-audio/voice-library.css'] if extension == 'css' else ['skills/aihub-audio/voice-library.js']
     if extension == 'js':
         names.extend([SPEECH + 'voice-library.js', SPEECH + 'integration.js', ELEVEN + 'voice-library.js', ELEVEN + 'integration.js'])
     else:
         names.append(ELEVEN + 'voice-library.css')
-    return '\n'.join((ROOT / name).read_text(encoding='utf-8') for name in names)
+    content = '\n'.join((ROOT / name).read_text(encoding='utf-8') for name in names)
+    if extension == 'js':
+        # The pinned app bootstraps with top-level await before these business
+        # controls are installed. Apply all controls to its initial snapshot.
+        content += "\nif(state?.page==='configuration'&&!ended)render();\n"
+    return content
 
 
 def media_policy(value):

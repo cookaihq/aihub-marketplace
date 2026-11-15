@@ -12,6 +12,10 @@ class AudioVoiceLibrary {
     this.voices = [];
     this.query = ''; this.language = ''; this.gender = ''; this.tag = ''; this.samplesOnly = false;
     this.tab = 'all'; this.page = 1; this.pageSize = 12;
+    ui.subscribe(() => {
+      this.selected = ui.draftValue(this.key) || '';
+      this.paintStatus();
+    });
   }
   escape(value) { return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   favoriteTarget() { return this.ui.field(this.favoritesKey).targets?.[0] || ''; }
@@ -22,8 +26,7 @@ class AudioVoiceLibrary {
   async open(mode) {
     if (this.dialog) return;
     this.mode = mode; this.tab = mode === 'favorites' ? 'favorites' : 'all'; this.page = 1;
-    const field = this.ui.field(this.key), draft = this.ui.changes()[this.key];
-    this.selected = draft?.op === 'set' ? draft.value : draft?.op === 'unset' ? '' : field.effective.value || '';
+    this.selected = this.ui.draftValue(this.key) || '';
     this.playing = ''; this.notice = ''; this.loading = true;
     this.dialog = document.createElement('dialog');
     this.dialog.id = 'voice-library-dialog'; this.dialog.className = 'speech-library';
@@ -127,9 +130,11 @@ class AudioVoiceLibrary {
     const dirty = !!this.ui.drafts[this.favoriteTarget()]?.[this.favoritesKey], count = this.favorites().length;
     this.dialog.querySelector('#speech-favorite-count').textContent = `已收藏 ${count} 个${dirty?' · 未保存':''}`;
     const save = this.dialog.querySelector('[data-voice-action="save-favorites"]');
-    save.hidden = !dirty || !this.favoriteTarget(); save.disabled = this.saving;
+    save.hidden = !dirty || !this.favoriteTarget(); save.disabled = this.saving || this.ui.busy || this.ui.expired || this.ui.uncertain || this.ui.needsReview?.[this.favoritesKey];
+    for (const button of this.dialog.querySelectorAll('[data-voice-use],[data-voice-favorite],[data-voice-action="retry"]')) button.disabled = !!(this.saving || this.ui.busy || this.ui.expired || this.ui.uncertain);
     this.dialog.querySelector('[data-voice-action="retry"]').hidden = !this.failed;
-    this.dialog.querySelector('#speech-notice').textContent = this.notice;
+    this.dialog.querySelector('#speech-notice').textContent = this.ui.expired || this.ui.uncertain ? this.ui.error : this.notice;
+    if (this.ui.expired) this.audio.pause();
   }
   paintPlayer() {
     if (!this.dialog) return;
@@ -151,15 +156,13 @@ class AudioVoiceLibrary {
   async saveFavorites() {
     if (this.saving) return;
     const change = this.ui.drafts[this.favoriteTarget()]?.[this.favoritesKey]; if (!change) return;
-    this.saving = true; this.ui.busy = true; this.paintStatus();
+    if (this.ui.expired || this.ui.uncertain || this.ui.busy) return;
+    this.saving = true; this.paintStatus();
     try {
-      const result = await this.ui.api('/api/save', {target:this.favoriteTarget(), revision:this.ui.snapshot.revision, changes:{[this.favoritesKey]:change}});
-      delete this.ui.drafts[this.favoriteTarget()][this.favoritesKey];
-      delete (this.ui.inputs[this.favoriteTarget()] || {})[this.favoritesKey];
-      this.ui.set(result.config); this.ui.queuePreview();
-      this.notice = '收藏已保存。';
+      const result = await this.ui.save(this.favoritesKey);
+      this.notice = result?.saved ? '收藏已保存。' : this.ui.error || '请回到主表核对收藏草稿。';
     } catch (error) { this.notice = error.message + ' 收藏草稿仍保留。'; }
-    finally { this.saving = false; this.ui.busy = false; this.ui.paint(); this.renderResults(); this.dialog?.querySelector('#speech-search').focus(); }
+    finally { this.saving = false; this.ui.paint(); this.renderResults(); this.dialog?.querySelector('#speech-search').focus(); }
   }
   async click(event) {
     const button = event.target.closest('button'); if (!button || button.disabled || this.saving) return;
@@ -168,16 +171,16 @@ class AudioVoiceLibrary {
       if (!this.favoriteTarget()) return;
       const id = button.dataset.voiceFavorite, values = this.favorites();
       if (!values.includes(id) && values.length >= 2000) { this.notice = '最多收藏 2000 个音色。'; this.paintStatus(); return; }
-      (this.ui.drafts[this.favoriteTarget()] ??= {})[this.favoritesKey] = {op:'set', value:values.includes(id)?values.filter(v => v!==id):[...values,id]};
-      delete (this.ui.inputs[this.favoriteTarget()] || {})[this.favoritesKey];
-      delete (this.ui.errors[this.favoriteTarget()] || {})[this.favoritesKey];
+      this.ui.fileEdits?.[this.favoriteTarget()]?.delete(this.favoritesKey);
+      this.ui.stage(this.favoritesKey, {op:'set', value:values.includes(id)?values.filter(v => v!==id):[...values,id]});
       this.notice = '';
       this.renderResults(); this.dialog.querySelector(`[data-voice-favorite="${CSS.escape(id)}"]`)?.focus(); return;
     }
     if (button.dataset.voicePlay) { await this.play(button.dataset.voicePlay); return; }
     if (button.dataset.voiceUse && !this.saving) {
       this.selected = button.dataset.voiceUse;
-      this.ui.stage({op:'set',value:this.selected}, this.selected); this.close(); return;
+      this.ui.fileEdits?.[this.ui.fieldTarget(this.key)]?.delete(this.key);
+      this.ui.stage(this.key, {op:'set',value:this.selected}); this.close(); return;
     }
     const action = button.dataset.voiceAction;
     if (action === 'close') this.close();

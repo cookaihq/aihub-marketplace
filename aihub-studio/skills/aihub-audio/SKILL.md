@@ -10,7 +10,7 @@ compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, FF
 
 ## 配置页面快捷入口
 
-先分流：显式调用本 Skill 后，内容去掉首尾空白后恰为 `配置`、`配置页面`、`打开配置`、`打开配置页面`、`设置`、`设置页面`、`打开设置`、`打开设置页面` 中任一项时，直接按[配置快捷分支](../../references/credential-setup.md#配置页面快捷入口)打开本 Plugin 的统一配置中心，caller 为 `aihub-audio`。先取得可用链接和实际期限，交付后结束本次请求。
+先分流：显式调用本 Skill 后，内容去掉首尾空白后恰为 `配置`、`配置页面`、`打开配置`、`打开配置页面`、`设置`、`设置页面`、`打开设置`、`打开设置页面` 中任一项时，直接按[配置快捷分支](../../references/credential-setup.md#配置页面快捷入口)打开本 Plugin 的统一配置中心，caller 为 `aihub-audio`。传 `--fields AIHUB_API_KEY,AIHUB_AUDIO_MODELS,AIHUB_ELEVENLABS_DEFAULT_VOICE_ID,AIHUB_ELEVENLABS_FAVORITE_VOICE_IDS,AIHUB_RESULT_CHECK_ENABLED` 聚焦相关项，完整表单仍可展开；保留真实项目、全局开关、已选范围及已有任务绑定。先取得可用链接和实际期限，交付后结束本次请求。
 
 仅这些完整短语进入快捷分支；带业务正文、预设、参数或字面 `--` 的请求继续原流程。
 
@@ -39,7 +39,7 @@ D1 处理文本转语音、文字转多音色对话和语音识别/转写。用�
 
 用户要求获取、筛选、试听、选择或收藏 ElevenLabs 预置音色时，读取并遵守[ElevenLabs 预置音色库](../../references/elevenlabs-voices.md)，实际启动统一配置中心并返回可点击的 HTML 页面链接，定位此音色库。用户选择全局／项目范围后，点击“保存并使用”将所选音色和收藏原子保存并回读；关闭或到期不算已保存。已保存选择用于 Eleven Speech 的单人语音默认值，对话仍逐段指定音色，收藏不会自动轮换。未配置默认音色时打开此页面让用户选择，不能由 Agent 随意填一个音色。
 
-MiniMax Speech 仍为显式可选模型。用户明确要求其音色时，按[统一凭证流程](../../references/credential-setup.md)打开完整配置中心中的“MiniMax Speech 默认音色”。搜索、筛选和试听已有样音不生成新语音；选用音色先回填草稿，在原编辑面板保存才生效。其收藏继续使用原全局偏好，不与 ElevenLabs 收藏混用。
+MiniMax Speech 仍为显式可选模型。用户明确要求其音色时，按[统一凭证流程](../../references/credential-setup.md)打开完整配置中心中的“MiniMax Speech 默认音色”。搜索、筛选和试听已有样音不生成新语音；选用音色回填主表共享草稿，通过统一保存流程生效；单独保存收藏不夹带默认音色。其收藏继续使用原全局偏好，不与 ElevenLabs 收藏混用。
 
 ```bash
 AIHUB_PLUGIN_DIR="<实际 Plugin 目录>"

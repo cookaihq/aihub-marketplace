@@ -1,6 +1,16 @@
 import { AihubmaxClient } from './apiClient.js';
 import { AIHUB_SERVICE_URL, resolveConfiguration, sanitized, type ConfigOptions } from './config.js';
 import { validVoiceId } from './speech.js';
+import { createHash } from 'node:crypto';
+
+const cataloguePaths = {
+  minimax: '/e/v1/configs/minimax-preset-voice-id?language=zh',
+  elevenlabs: '/e/v1/configs/elevenlabs-preset-voice-id',
+};
+
+export function voiceLibraryIdentity(apiKey: string, provider: 'minimax' | 'elevenlabs'): string {
+  return createHash('sha256').update(JSON.stringify([AIHUB_SERVICE_URL, provider, apiKey, cataloguePaths[provider]])).digest('hex');
+}
 
 export interface PresetVoice {
   voice_id: string; voice_name: string; language: string; accent: string;
@@ -32,13 +42,14 @@ export function presetVoices(value: unknown): PresetVoice[] {
   return [...voices.values()];
 }
 
-export async function loadVoiceLibrary(options: Omit<ConfigOptions, 'skill'>, provider: 'minimax' | 'elevenlabs' = 'minimax'): Promise<PresetVoice[]> {
+export async function loadVoiceLibrary(options: Omit<ConfigOptions, 'skill'>, provider: 'minimax' | 'elevenlabs' = 'minimax', expectedIdentity?: string): Promise<PresetVoice[]> {
   const resolved = resolveConfiguration({...options, skill: 'aihub-audio'});
   if (resolved.inspection.problems.some(p => p.reason === 'unreadable')) throw new Error('configuration');
   const apiKey = resolved.values.AIHUB_API_KEY;
   if (!apiKey) throw new Error('missing_key');
+  if (expectedIdentity && voiceLibraryIdentity(apiKey, provider) !== expectedIdentity) throw new Error('configuration_changed');
   const client = new AihubmaxClient({baseUrl: AIHUB_SERVICE_URL, apiKey});
-  const result = await client.request<unknown>('GET', provider === 'elevenlabs' ? '/e/v1/configs/elevenlabs-preset-voice-id' : '/e/v1/configs/minimax-preset-voice-id?language=zh', undefined,
+  const result = await client.request<unknown>('GET', cataloguePaths[provider], undefined,
     {timeoutMs: 12000, deadline: Date.now() + 30000});
   return sanitized(provider === 'elevenlabs' ? elevenPresetVoices(result) : presetVoices(result), [apiKey]);
 }

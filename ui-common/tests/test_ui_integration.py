@@ -12,10 +12,28 @@ from unittest.mock import patch
 
 MARKET = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(MARKET / 'aihub-studio/shared'), str(MARKET / 'ui-common')]
-from configuration import Configuration
+from configuration import Configuration as FileConfiguration
+from importlib import import_module, util
+StudioConfiguration = import_module("plugins.aihub-studio.scopes").StudioConfiguration
 from persistence import Transaction, digest, replace
 from catalog import Catalog
-from skill_ui.contracts import UIError, public_config
+from skill_ui.contracts import UIError, public_config as scoped_public_config
+
+# Tikin keeps its own pinned protocol; exercise its shipped public projection.
+legacy_spec = util.spec_from_file_location('tikin_contracts', MARKET / 'tikin-social/skills/tikin-setup/shared/skill_ui/contracts.py')
+legacy_contracts = util.module_from_spec(legacy_spec)
+legacy_spec.loader.exec_module(legacy_contracts)
+
+
+def public_config(snapshot):
+    return (scoped_public_config if snapshot.get('configuration_protocol') == 'field-scopes-v1'
+            else legacy_contracts.public_config)(snapshot)
+
+
+def configuration(package, project, options, environment=None):
+    cls = StudioConfiguration if options['plugin'] == 'aihub-studio' else FileConfiguration
+    return cls(package, project, options, environment)
+
 
 
 class Integration(unittest.TestCase):
@@ -27,9 +45,21 @@ class Integration(unittest.TestCase):
         self.environment.start()
         self.addCleanup(self.environment.stop)
 
+    def submit(self, adapter, method, changes, revision, target):
+        if adapter.plugin == 'aihub-studio':
+            changes = {'files': {target: changes}, 'switches': {}}
+            return getattr(adapter, method)(changes, revision)
+        return getattr(adapter, method)(changes, revision, target)
+
+    def save(self, adapter, changes, revision, target):
+        return self.submit(adapter, 'save', changes, revision, target)
+
+    def preview(self, adapter, changes, revision, target):
+        return self.submit(adapter, 'preview', changes, revision, target)
+
     def adapter(self, plugin):
         package = MARKET / ('aihub-studio' if plugin == 'aihub-studio' else 'tikin-social/skills/tikin-setup')
-        return Configuration(package, self.project, {'plugin': plugin, 'global_enabled': False, 'save_scope': 'project', 'agent': 'codex'})
+        return configuration(package, self.project, {'plugin': plugin, 'global_enabled': False, 'save_scope': 'project', 'agent': 'codex'})
 
     @unittest.skipUnless(os.name == 'nt', 'Windows project-owner ACL')
     def test_project_owner_can_read_files_written_with_a_different_execution_sid(self):
@@ -50,7 +80,7 @@ class Integration(unittest.TestCase):
         return {f['id']: f for f in snapshot['fields']}
 
     def target(self, path):
-        return Configuration._layer_id(str(path))
+        return FileConfiguration._layer_id(str(path))
 
     def global_adapter(self, plugin, **options):
         user = self.project / 'synthetic-user'
@@ -58,7 +88,7 @@ class Integration(unittest.TestCase):
         environment = dict(os.environ, HOME=str(user), USERPROFILE=str(user))
         environment.pop('UV_PROJECT_ENVIRONMENT', None)
         package = MARKET / ('aihub-studio' if plugin == 'aihub-studio' else 'tikin-social/skills/tikin-setup')
-        return Configuration(package, self.project, {'plugin': plugin, 'global_enabled': True,
+        return configuration(package, self.project, {'plugin': plugin, 'global_enabled': True,
                              'save_scope': 'global', 'agent': 'codex', 'config_dir': str(user / 'agent'), **options}, environment), user
 
     def test_missing_key_starts_and_real_loader_reads_saved_value(self):
@@ -67,7 +97,7 @@ class Integration(unittest.TestCase):
                 adapter = self.adapter(plugin)
                 initial = adapter.snapshot()
                 self.assertFalse(self.fields(public_config(initial))[key]['effective']['configured'])
-                saved = adapter.save({key: {'op': 'set', 'value': 'synthetic-only-value'}},
+                saved = self.save(adapter, {key: {'op': 'set', 'value': 'synthetic-only-value'}},
                                      initial['revision'], self.target(self.project / '.env.local'))
                 self.assertEqual(self.fields(saved)[key]['effective']['value'], 'synthetic-only-value')
                 self.assertNotIn('synthetic-only-value', json.dumps(public_config(saved)))
@@ -82,7 +112,7 @@ class Integration(unittest.TestCase):
         initial = adapter.snapshot()
         self.assertNotIn('AIHUB_DOCUMENT_MODELS', self.fields(initial))
         self.assertNotIn('AIHUB_ELEVENLABS_VOICE_CLONE_MODEL', self.fields(initial))
-        saved = adapter.save({voice: {'op': 'set', 'value': 'voice-global'},
+        saved = self.save(adapter, {voice: {'op': 'set', 'value': 'voice-global'},
                               favorites: {'op': 'set', 'value': ['voice-global', 'voice-second']}},
                              initial['revision'], self.target(target))
         self.assertEqual(self.fields(saved)[voice]['effective']['value'], 'voice-global')
@@ -90,7 +120,7 @@ class Integration(unittest.TestCase):
         self.assertIn('UNRELATED=preserve', target.read_text(encoding='utf-8'))
         self.assertIn('AIHUB_ELEVENLABS_VOICE_CLONE_MODEL=retired invalid value', target.read_text(encoding='utf-8'))
         project = self.project / '.env.local.aihub-studio'
-        selected = adapter.save({voice: {'op': 'set', 'value': 'voice-project'},
+        selected = self.save(adapter, {voice: {'op': 'set', 'value': 'voice-project'},
                                  favorites: {'op': 'set', 'value': []}},
                                 saved['revision'], self.target(project))
         fields = self.fields(selected)
@@ -101,9 +131,9 @@ class Integration(unittest.TestCase):
         self.assertIn('[]', project.read_text(encoding='utf-8'))
         before = project.read_bytes()
         with self.assertRaises(UIError):
-            adapter.save({voice: {'op': 'set', 'value': 'stale'}}, saved['revision'], self.target(project))
+            self.save(adapter, {voice: {'op': 'set', 'value': 'stale'}}, saved['revision'], self.target(project))
         self.assertEqual(project.read_bytes(), before)
-        isolated = Configuration(adapter.package, self.project, {**adapter.options, 'global_enabled': False}, adapter.environment)
+        isolated = configuration(adapter.package, self.project, {**adapter.options, 'global_enabled': False}, adapter.environment)
         isolated_fields = self.fields(isolated.snapshot())
         self.assertEqual(isolated_fields[voice]['effective']['value'], 'voice-project')
         self.assertEqual(isolated_fields[favorites]['effective']['value'], [])
@@ -127,9 +157,9 @@ class Integration(unittest.TestCase):
             self.assertNotIn(self.target(image), fields[key]['targets'])
         adapter.options['skill'] = 'aihub-audio'
         path = self.project / '.env.local.aihub-studio'
-        saved = adapter.save({key: {'op':'set', 'value':'custom-voice'}}, adapter.snapshot()['revision'], self.target(path))
+        saved = self.save(adapter, {key: {'op':'set', 'value':'custom-voice'}}, adapter.snapshot()['revision'], self.target(path))
         self.assertEqual(self.fields(saved)[key]['effective']['value'], 'custom-voice')
-        cleared = adapter.save({key: {'op':'unset'}}, saved['revision'], self.target(path))
+        cleared = self.save(adapter, {key: {'op':'unset'}}, saved['revision'], self.target(path))
         self.assertEqual(self.fields(cleared)[key]['effective']['value'], 'audio-voice')
 
     def test_speech_favorites_preserve_settings_and_coordinate_node_writer(self):
@@ -146,17 +176,17 @@ class Integration(unittest.TestCase):
         initial = adapter.snapshot()
         values = ['Chinese (Mandarin)_Warm_Girl'] + ['voice-' + str(i) for i in range(75)]
         changes = {key:{'op':'set','value':values}}
-        adapter.preview(changes, initial['revision'], self.target(path))
+        self.preview(adapter, changes, initial['revision'], self.target(path))
         self.assertEqual(json.loads(path.read_text()), original)
         lock = Path(str(path) + '.default-skills.lock')
         lock.write_text('another writer')
         with self.assertRaises(UIError) as error:
-            adapter.save(changes, initial['revision'], self.target(path))
+            self.save(adapter, changes, initial['revision'], self.target(path))
         self.assertEqual(error.exception.code, 'busy')
         self.assertEqual(lock.read_text(), 'another writer')
         self.assertEqual(json.loads(path.read_text()), original)
         lock.unlink()
-        saved = adapter.save(changes, initial['revision'], self.target(path))
+        saved = self.save(adapter, changes, initial['revision'], self.target(path))
         self.assertEqual(self.fields(saved)[key]['effective']['value'], values)
         data = json.loads(path.read_text())
         self.assertEqual(data['custom'], original['custom'])
@@ -172,7 +202,7 @@ class Integration(unittest.TestCase):
                        env=adapter.environment, capture_output=True, check=True)
         self.assertEqual(json.loads(path.read_text())['audio'], data['audio'])
         updated = adapter.snapshot()
-        cleared = adapter.save({key:{'op':'unset'}}, updated['revision'], self.target(path))
+        cleared = self.save(adapter, {key:{'op':'unset'}}, updated['revision'], self.target(path))
         self.assertEqual(self.fields(cleared)[key]['effective']['value'], [])
         self.assertFalse(json.loads(path.read_text())['default_skill_reminders']['agents'][0]['enabled'])
         disabled = self.fields(self.adapter('aihub-studio').snapshot())[key]
@@ -206,18 +236,18 @@ class Integration(unittest.TestCase):
                 initial = adapter.snapshot()
                 before_ignore = ignore.read_bytes()
                 changes = {key: {'op': 'set', 'value': 'synthetic-first-save'}}
-                adapter.preview(changes, initial['revision'], self.target(path))
+                self.preview(adapter, changes, initial['revision'], self.target(path))
                 self.assertEqual(ignore.read_bytes(), before_ignore)
                 self.assertFalse(path.exists())
                 self.assertFalse(adapter.transaction.directory.exists())
-                saved = adapter.save(changes, initial['revision'], self.target(path))
+                saved = self.save(adapter, changes, initial['revision'], self.target(path))
                 self.assertEqual(self.fields(saved)[key]['effective']['value'], 'synthetic-first-save')
                 for protected in (path, Path(str(path) + '.ui.lock'),
                                   Path(str(path) + '.ui-1234567890abcdef.tmp'),
                                   adapter.transaction.journal, adapter.transaction.directory / 'transaction.lock'):
                     self.git('check-ignore', '--quiet', '--', str(protected))
                 after_ignore = ignore.read_bytes()
-                adapter.save({key: {'op': 'set', 'value': 'synthetic-second-save'}},
+                self.save(adapter, {key: {'op': 'set', 'value': 'synthetic-second-save'}},
                              saved['revision'], self.target(path))
                 self.assertEqual(ignore.read_bytes(), after_ignore)
                 self.assertTrue(after_ignore.startswith(original + b'\r\n'))
@@ -229,7 +259,7 @@ class Integration(unittest.TestCase):
         self.git('init', '--quiet')
         adapter, user = self.global_adapter('tikin-social')
         path = user / '.config/tikin-social/.env'
-        saved = adapter.save({'TIKIN_API_KEY': {'op': 'set', 'value': 'synthetic-global'}},
+        saved = self.save(adapter, {'TIKIN_API_KEY': {'op': 'set', 'value': 'synthetic-global'}},
                              adapter.snapshot()['revision'], self.target(path))
         self.assertEqual(self.fields(saved)['TIKIN_API_KEY']['effective']['value'], 'synthetic-global')
         self.git('check-ignore', '--quiet', '--', str(adapter.transaction.journal))
@@ -258,7 +288,7 @@ class Integration(unittest.TestCase):
         before_index = self.git('ls-files', '--stage').stdout
         adapter = self.adapter('tikin-social')
         with self.assertRaises(UIError) as error:
-            adapter.save({'TIKIN_API_KEY': {'op': 'set', 'value': 'synthetic-new'}},
+            self.save(adapter, {'TIKIN_API_KEY': {'op': 'set', 'value': 'synthetic-new'}},
                          adapter.snapshot()['revision'], self.target(path))
         self.assertEqual(error.exception.code, 'tracked')
         self.assertEqual(path.read_bytes(), b'TIKIN_API_KEY=synthetic-tracked\n')
@@ -273,10 +303,10 @@ class Integration(unittest.TestCase):
         changes = {'TIKIN_API_KEY': {'op': 'set', 'value': 'synthetic-retry'}}
         with patch('persistence._add_ignore', side_effect=PermissionError('synthetic-denied')):
             with self.assertRaises(UIError) as error:
-                adapter.save(changes, initial['revision'], self.target(path))
+                self.save(adapter, changes, initial['revision'], self.target(path))
         self.assertEqual(error.exception.code, 'git')
         self.assertFalse(path.exists())
-        saved = adapter.save(changes, initial['revision'], self.target(path))
+        saved = self.save(adapter, changes, initial['revision'], self.target(path))
         self.assertEqual(self.fields(saved)['TIKIN_API_KEY']['effective']['value'], 'synthetic-retry')
 
     def test_explicit_file_save_preserves_unknowns_and_other_file(self):
@@ -290,16 +320,16 @@ class Integration(unittest.TestCase):
         self.assertEqual(fields['AIHUB_IMAGE_MODELS']['effective']['source'], self.target(model))
         changes = {'AIHUB_API_KEY': {'op': 'set', 'value': 'literal-$(keep)'},
                    'AIHUB_IMAGE_MODELS': {'op': 'set', 'value': ['new-model', 'second-model']}}
-        preview = adapter.preview(changes, initial['revision'], self.target(local))
+        preview = self.preview(adapter, changes, initial['revision'], self.target(local))
         self.assertEqual(fields['AIHUB_IMAGE_MODELS']['effective'], self.fields(preview)['AIHUB_IMAGE_MODELS']['effective'])
         self.assertIn('last', local.read_text())
-        saved = adapter.save(changes, initial['revision'], self.target(local))
+        saved = self.save(adapter, changes, initial['revision'], self.target(local))
         raw = local.read_text()
         self.assertIn('# keep me\nOTHER=value\n', raw)
         self.assertEqual(raw.count('AIHUB_API_KEY='), 1)
         self.assertEqual(model.read_text(), 'AIHUB_IMAGE_MODELS=old-model\n')
         self.assertEqual(self.fields(saved)['AIHUB_IMAGE_MODELS']['effective']['value'], ['old-model'])
-        adapter.save({'AIHUB_IMAGE_MODELS': {'op': 'unset'}}, saved['revision'], self.target(model))
+        self.save(adapter, {'AIHUB_IMAGE_MODELS': {'op': 'unset'}}, saved['revision'], self.target(model))
         self.assertEqual(self.fields(adapter.snapshot())['AIHUB_IMAGE_MODELS']['effective']['value'], ['new-model', 'second-model'])
 
     def test_global_settings_and_key_save_separately(self):
@@ -310,19 +340,19 @@ class Integration(unittest.TestCase):
             target = self.target(user / '.config' / plugin / '.env')
             self.assertIn(target, self.fields(snapshot)[key]['targets'])
             with self.assertRaises(UIError):
-                adapter.save({key: {'op': 'set', 'value': 'synthetic-global-value'},
+                self.save(adapter, {key: {'op': 'set', 'value': 'synthetic-global-value'},
                               'default_skill_reminders': {'op': 'set', 'value': False}}, snapshot['revision'], target)
-            saved = adapter.save({key: {'op': 'set', 'value': 'synthetic-global-value'}}, snapshot['revision'], target)
+            saved = self.save(adapter, {key: {'op': 'set', 'value': 'synthetic-global-value'}}, snapshot['revision'], target)
             changes = {'default_skill_reminders': {'op': 'set', 'value': False}}
             if plugin == 'tikin-social':
                 changes['routing.default'] = {'op': 'set', 'value': 'confirm'}
-            result = adapter.save(changes, saved['revision'], self.target(user / '.config' / plugin / 'settings.json'))
+            result = self.save(adapter, changes, saved['revision'], self.target(user / '.config' / plugin / 'settings.json'))
             values = {f['id']: f['effective']['value'] for f in result['fields']}
             self.assertFalse(values['default_skill_reminders'])
             self.assertEqual(values[key], 'synthetic-global-value')
             if plugin == 'tikin-social':
                 self.assertEqual(values['routing.default'], 'confirm')
-                cleared = adapter.save({'routing.default': {'op': 'unset'}}, result['revision'],
+                cleared = self.save(adapter, {'routing.default': {'op': 'unset'}}, result['revision'],
                                        self.target(user / '.config' / plugin / 'settings.json'))
                 self.assertEqual(self.fields(cleared)['routing.default']['effective']['value'], 'auto')
 
@@ -341,17 +371,17 @@ class Integration(unittest.TestCase):
         self.assertIs(fields['AIHUB_RESULT_CHECK_ENABLED']['effective']['value'], False)
         before = {p: p.read_bytes() for p in [local, global_file]}
         for change in [{'op': 'unset'}, {'op': 'set', 'value': ''}]:
-            preview = adapter.preview({'AIHUB_API_KEY': change}, initial['revision'], self.target(local))
+            preview = self.preview(adapter, {'AIHUB_API_KEY': change}, initial['revision'], self.target(local))
             self.assertEqual(self.fields(preview)['AIHUB_API_KEY']['effective']['source'], self.target(global_file))
             self.assertEqual(self.fields(preview)['AIHUB_API_KEY']['effective']['value'], 'synthetic-global-secret')
             public = json.dumps(public_config(preview))
             self.assertNotIn('synthetic-global-secret', public)
             self.assertNotIn('synthetic-project-secret', public)
         self.assertEqual(before, {p: p.read_bytes() for p in before})
-        low = adapter.save({'AIHUB_API_KEY': {'op': 'set', 'value': 'synthetic-new-global'}},
+        low = self.save(adapter, {'AIHUB_API_KEY': {'op': 'set', 'value': 'synthetic-new-global'}},
                            initial['revision'], self.target(global_file))
         self.assertEqual(self.fields(low)['AIHUB_API_KEY']['effective']['value'], 'synthetic-project-secret')
-        cleared = adapter.save({'AIHUB_API_KEY': {'op': 'unset'}}, low['revision'], self.target(local))
+        cleared = self.save(adapter, {'AIHUB_API_KEY': {'op': 'unset'}}, low['revision'], self.target(local))
         self.assertEqual(self.fields(cleared)['AIHUB_API_KEY']['effective']['value'], 'synthetic-new-global')
 
     def test_all_actual_layers_and_caller_isolation(self):
@@ -397,23 +427,23 @@ class Integration(unittest.TestCase):
                 for path in retired:
                     self.assertNotIn(self.target(path), [layer['id'] for layer in initial['layers']])
                     with self.assertRaises(UIError):
-                        adapter.preview({key: {'op': 'set', 'value': 'new'}}, initial['revision'], self.target(path))
+                        self.preview(adapter, {key: {'op': 'set', 'value': 'new'}}, initial['revision'], self.target(path))
                 self.assertNotIn(self.target(plain), self.fields(initial)[key]['targets'])
                 changes = {key: {'op': 'set', 'value': 'synthetic-plugin-key'}}
-                preview = adapter.preview(changes, initial['revision'], self.target(local))
+                preview = self.preview(adapter, changes, initial['revision'], self.target(local))
                 self.assertFalse(local.exists())
                 self.assertEqual(self.fields(preview)[key]['effective']['source'], self.target(local))
-                saved = adapter.save(changes, initial['revision'], self.target(local))
+                saved = self.save(adapter, changes, initial['revision'], self.target(local))
                 self.assertNotIn('synthetic-plugin-key', json.dumps(public_config(saved)))
                 # The plain Plugin source can repair an existing secret and edit nonsecrets.
                 plain.write_text(key + '=synthetic-plain-key\n')
-                saved = adapter.save({key: {'op': 'set', 'value': 'synthetic-repaired'}},
+                saved = self.save(adapter, {key: {'op': 'set', 'value': 'synthetic-repaired'}},
                                      adapter.snapshot()['revision'], self.target(plain))
                 self.assertEqual(self.fields(saved)[key]['effective']['source'], self.target(local))
                 for caller in (None, skill):
                     adapter.options['skill'] = caller
                     self.assertEqual(self.fields(adapter.snapshot())[key]['effective']['source'], self.target(local))
-                cleared = adapter.save({key: {'op': 'unset'}}, adapter.snapshot()['revision'], self.target(local))
+                cleared = self.save(adapter, {key: {'op': 'unset'}}, adapter.snapshot()['revision'], self.target(local))
                 self.assertEqual(self.fields(cleared)[key]['effective']['value'], 'synthetic-repaired')
                 self.assertEqual(self.fields(cleared)[key]['effective']['source'], self.target(plain))
                 self.assertTrue(all('retired-secret' in p.read_text() for p in retired))
@@ -425,17 +455,17 @@ class Integration(unittest.TestCase):
         adapter = self.adapter('aihub-studio')
         initial = adapter.snapshot()
         with self.assertRaises(UIError):
-            adapter.save({'AIHUB_API_KEY': {'op': 'set', 'value': 'replacement'},
+            self.save(adapter, {'AIHUB_API_KEY': {'op': 'set', 'value': 'replacement'},
                           'AIHUB_IMAGE_MODELS': {'op': 'set', 'value': ['bad model']}},
                          initial['revision'], self.target(file))
         with self.assertRaises(UIError):
-            adapter.save({'AIHUB_API_KEY': {'op': 'set', 'value': 'replacement'}},
+            self.save(adapter, {'AIHUB_API_KEY': {'op': 'set', 'value': 'replacement'}},
                          initial['revision'], '../../outside')
         self.assertEqual(file.read_text(), original)
         (self.project / '.env').write_text('UNKNOWN=added\n')
-        for method in (adapter.save, adapter.preview):
+        for method in (self.save, self.preview):
             with self.assertRaises(UIError) as error:
-                method({'AIHUB_API_KEY': {'op': 'set', 'value': 'replacement'}}, initial['revision'], self.target(file))
+                method(adapter, {'AIHUB_API_KEY': {'op': 'set', 'value': 'replacement'}}, initial['revision'], self.target(file))
             self.assertEqual(error.exception.code, 'conflict')
         self.assertEqual(file.read_text(), original)
 
@@ -446,11 +476,11 @@ class Integration(unittest.TestCase):
             snapshot = adapter.snapshot()
             self.assertEqual(self.fields(snapshot)['AIHUB_API_KEY']['effective']['source'], 'process')
             self.assertNotIn('process', self.fields(snapshot)['AIHUB_API_KEY']['targets'])
-            saved = adapter.save({'AIHUB_API_KEY': {'op': 'set', 'value': 'lower-file'}},
+            saved = self.save(adapter, {'AIHUB_API_KEY': {'op': 'set', 'value': 'lower-file'}},
                                  snapshot['revision'], self.target(self.project / '.env.local'))
             self.assertEqual(self.fields(saved)['AIHUB_API_KEY']['effective']['value'], 'synthetic-environment')
             with self.assertRaises(UIError):
-                adapter.save({'AIHUB_API_KEY': {'op': 'set', 'value': 'cannot-save'}}, saved['revision'], 'process')
+                self.save(adapter, {'AIHUB_API_KEY': {'op': 'set', 'value': 'cannot-save'}}, saved['revision'], 'process')
 
     def test_unreadable_file_and_disabled_globals(self):
         broken = self.project / '.env'
@@ -460,11 +490,11 @@ class Integration(unittest.TestCase):
         self.assertEqual(self.fields(snapshot)['AIHUB_API_KEY']['effective']['status'], 'error')
         self.assertTrue(snapshot['validation_errors'])
         self.assertFalse(any(layer['enabled'] and layer['scope'] == 'global' for layer in snapshot['layers']))
-        preview = adapter.preview({'AIHUB_API_KEY': {'op': 'set', 'value': 'valid-but-unreadable-layer'}},
+        preview = self.preview(adapter, {'AIHUB_API_KEY': {'op': 'set', 'value': 'valid-but-unreadable-layer'}},
                                   snapshot['revision'], self.target(self.project / '.env.local'))
         self.assertTrue(preview['validation_errors'])
         with self.assertRaises(UIError):
-            adapter.save({'AIHUB_API_KEY': {'op': 'set', 'value': 'valid-but-unreadable-layer'}},
+            self.save(adapter, {'AIHUB_API_KEY': {'op': 'set', 'value': 'valid-but-unreadable-layer'}},
                          snapshot['revision'], self.target(self.project / '.env.local'))
 
     def test_partial_write_rolls_back_and_interrupted_transaction_recovers(self):

@@ -1,5 +1,6 @@
 """Marketplace additions around the pinned Skill UI handler; vendored files remain unchanged."""
 import json
+import hmac
 from importlib import import_module
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -12,6 +13,20 @@ CoreHandler = server.Handler
 
 
 class MarketplaceHandler(CoreHandler):
+    def post(self):
+        if urlsplit(self.path).path == '/api/elevenlabs-voices/refresh':
+            self.check_origin(post=True)
+            self.authorized()
+            self.server.lifetime()
+            if not hmac.compare_digest(self.headers.get('X-CSRF-Token', ''), self.server.csrf):
+                raise UIError('csrf', '请重新打开页面。', 403)
+            if self.server.page != 'configuration' or self.server.adapter.plugin != 'aihub-studio':
+                raise UIError('page', '此页面不提供音色库。', 404)
+            self.body()
+            return self.send(200, import_module('plugins.aihub-studio.web').eleven_library.load(
+                self.server.adapter.configuration, refresh=True))
+        return super().post()
+
     def send_header(self, keyword, value):
         if (keyword.lower() == 'content-security-policy' and self.server.page == 'configuration'
                 and self.server.adapter.plugin == 'aihub-studio'):
@@ -20,18 +35,23 @@ class MarketplaceHandler(CoreHandler):
 
     def get(self):
         parsed = urlsplit(self.path)
-        if parsed.path in ('/app.js', '/style.css'):
+        if parsed.path in ('/app.js', '/style.css', '/configuration.css'):
             self.check_origin()
             name = parsed.path[1:]
             original = (server.STATIC / name).read_text(encoding='utf-8')
             extras = ('configuration.js', 'markdown.js', 'artifacts.js') if name.endswith('.js') else ('configuration.css', 'artifacts.css')
+            studio = self.server.adapter.plugin == 'aihub-studio'
+            if studio:
+                extras = ('plugins/aihub-studio/form.js', 'markdown.js', 'artifacts.js') if name.endswith('.js') else ('artifacts.css',)
+            if name == 'configuration.css':
+                extras = ()
             # Prevent the core's single-file shortcut before its bootstrap runs.
             prelude = ("if(!new URL(location.href).searchParams.has('view')){const u=new URL(location.href);u.searchParams.set('view','collection');history.replaceState({},'',u);}\n"
                        if name.endswith('.js') else '')
             if name.endswith('.js'):
                 prelude += 'const marketplaceSaveScope=' + json.dumps(self.server.adapter.options.get('save_scope', 'global')) + ';\n'
             content = prelude + original + '\n' + '\n'.join((ASSETS / file).read_text(encoding='utf-8') for file in extras)
-            if self.server.page == 'configuration' and self.server.adapter.plugin == 'aihub-studio':
+            if self.server.page == 'configuration' and studio and name != 'style.css':
                 content += '\n' + import_module('plugins.aihub-studio.web').assets('js' if name.endswith('.js') else 'css')
             return self.send(200, content.encode(), ('text/javascript' if name.endswith('.js') else 'text/css') + '; charset=utf-8')
         if parsed.path in ('/api/minimax-voices', '/api/elevenlabs-voices'):
