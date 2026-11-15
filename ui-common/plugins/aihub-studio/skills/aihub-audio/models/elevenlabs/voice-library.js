@@ -303,7 +303,7 @@
       const targets=Object.fromEntries(ids.map(id=>[id,this.targetFor(id)]));
       if(!ids.length||!ids.every(key=>this.ui.targets(this.ui.field(key)).some(layer=>layer.id===targets[key]))){this.message('所选范围当前无法保存，请选择另一个位置。',true);return;}
       this.saving=true;this.paintFooter();
-      for(const id of ids)this.ui.requestSwitch(id,targets[id],'input');
+      for(const id of ids)this.ui.requestSwitch(id,targets[id],this.ui.switchIntents[id]?.mode||'input');
       try{
         const result=await this.ui.save(ids);
         if(result?.saved){this.transferVoice=false;this.syncDrafts();const scopes=[...new Set(Object.values(targets).map(target=>this.ui.layer(target).scope==='global'?'全局':'本项目'))];this.message(`已保存到${scopes.join('、')}配置，已核对实际来源。`);}
