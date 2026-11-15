@@ -1,8 +1,8 @@
 ---
 name: aihub-audio
 metadata:
-  version: "6.2.1"
-description: v6.2.1｜通过 AIhub 合成语音和旁白、按台词顺序生成多音色对话、转写录音；支持 ElevenLabs 预置音色库和音色设计。
+  version: "6.3.0"
+description: v6.3.0｜通过 AIhub 合成语音和旁白、按台词顺序生成多音色对话、转写录音；支持 ElevenLabs 预置音色库和音色设计。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 

@@ -1,6 +1,6 @@
 {
   "package": "skill-configuration-and-artifacts-ui",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "files": {
     "contracts.py": "9733a0e5cd289931ba6060fbee09b63456da042cc6993331b802579aab0dc0dc",
     "LICENSE": "5cee4207cdeaee01d3da8de51576ceaa06b24f47dae32294f02c769690e143f5",
