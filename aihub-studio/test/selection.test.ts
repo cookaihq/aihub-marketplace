@@ -111,13 +111,13 @@ test('digital-human defaults construct complete model-specific requests and pres
   assert.equal(explicit.policy, 'off'); assert.equal(explicit.candidates[0]?.params?.prompt, 'Wave');
 });
 
-test('Carbon is the default for every understanding input type without overriding configuration or user models', () => {
+test('Hydrogen is the default for every understanding input type without overriding configuration or user models', () => {
   for (const [input, type] of [['images', 'image_url'], ['audios', 'audio_url'], ['videos', 'video_url'], ['files', 'file_url']]) {
     const url = `https://fixture.invalid/${input}`;
     const request = { operation: 'understanding', original_request: 'Explain this media', prompt: 'Describe the contents', inputs: { [input!]: [url] } };
     const plan = selectionPlan(cfg('aihub-understanding'), request);
     assert.equal(plan.source, 'built-in'); assert.equal(plan.candidates.length, 1);
-    assert.equal(plan.candidates[0]?.model, 'gemini-4-carbon');
+    assert.equal(plan.candidates[0]?.model, 'gemini-4-hydrogen');
     assert.deepEqual(plan.candidates[0]?.params?.content, [{ type, [type!]: { url } }]);
     const configured = selectionPlan(cfg('aihub-understanding', ['gemini-3.1-pro-preview']), request);
     assert.equal(configured.source, 'configuration'); assert.equal(configured.candidates[0]?.model, 'gemini-3.1-pro-preview');

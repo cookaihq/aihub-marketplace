@@ -35,7 +35,7 @@ export const PREFERRED_MODELS = {
         'seedance-2.5-reference-to-video',
     ],
     audio: ['eleven-v4-text-to-speech', 'eleven-v4-text-to-dialogue', 'paraformer-v2', SUNO_DEFAULT_MODEL],
-    understanding: ['gemini-4-carbon'],
+    understanding: ['gemini-4-hydrogen'],
 };
 /** Built-in C1/C2 choices; explicit requests and configured lists take priority. */
 export const VIDEO_DEFAULT_MODELS = {

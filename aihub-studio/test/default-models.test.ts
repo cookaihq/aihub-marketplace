@@ -73,10 +73,10 @@ test('packaged defaults submit the documented video bodies, deliver media, and p
   }
 });
 
-test('Carbon understanding preserves all four media types and fails closed when the registry lacks the model or capability', async () => {
+test('Hydrogen understanding preserves all four media types and fails closed when the registry lacks the model or capability', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'aihub-default-understanding-'));
   const posts: Array<Record<string, unknown>> = [];
-  let registry = [{ id: 'gemini-4-carbon', capabilities: ['vision', 'audio', 'video', 'file'] }];
+  let registry = [{ id: 'gemini-4-hydrogen', capabilities: ['vision', 'audio', 'video', 'file'] }];
   const server = createServer(async (req, res) => {
     const json = (value: unknown, code = 200) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
     if (req.url === '/e/v1/configs/llm_generations_models') return json({ data: registry });
@@ -108,16 +108,16 @@ test('Carbon understanding preserves all four media types and fails closed when 
   };
   try {
     const output = await call();
-    assert.equal(output.status, 'delivered'); assert.equal(output.model, 'gemini-4-carbon');
+    assert.equal(output.status, 'delivered'); assert.equal(output.model, 'gemini-4-hydrogen');
     assert.equal(output.files.length, 1); assert.equal(posts.length, 1);
     assert.equal(await readFile(output.files[0].path, 'utf8'), 'Fixture analysis complete');
-    assert.deepEqual(posts[0], { model: 'gemini-4-carbon', messages: [{ role: 'user', content: [
+    assert.deepEqual(posts[0], { model: 'gemini-4-hydrogen', messages: [{ role: 'user', content: [
       { type: 'text', text: 'Compare the content' },
       { type: 'image_url', image_url: { url: inputs.images[0] } }, { type: 'video_url', video_url: { url: inputs.videos[0] } },
       { type: 'audio_url', audio_url: { url: inputs.audios[0] } }, { type: 'file_url', file_url: { url: inputs.files[0] } },
     ] }] });
     for (const capabilities of [[], ['vision']]) {
-      registry = [{ id: 'gemini-4-carbon', capabilities }];
+      registry = [{ id: 'gemini-4-hydrogen', capabilities }];
       assert.equal((await call()).status, 'no_compatible_model');
     }
     registry = [];

@@ -75,7 +75,7 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 | `music-description` | 音乐构想写入 prompt | Suno description 模式，自动创作歌词并生成歌曲 |
 | `music-lyrics` | 完整歌词原样写入 prompt | Suno custom 人声模式，映射为 lyrics；不默认改写 |
 | `music-instrumental` | 风格、氛围和用途写入 prompt | Suno custom 纯音乐模式，映射为 style |
-| `understanding` | 提示词及至少一种媒体输入 | 默认 `gemini-4-carbon`；从线上 LLM 注册表检查精确 ID 和所需媒体能力；`system_prompt`、`max_tokens`、`temperature` |
+| `understanding` | 提示词及至少一种媒体输入 | 默认 `gemini-4-hydrogen`；从线上 LLM 注册表检查精确 ID 和所需媒体能力；`system_prompt`、`max_tokens`、`temperature` |
 
 Seedance 视频的基础要求为 `duration`、`resolution`、`aspect_ratio`。未指定时固定为 5 秒、720p、9:16，再分别构造候选请求，避免各模型默认值不同。2.0 可额外设置 `seed`、`generate_audio`，但这两个字段不能无依据地传给 2.5。字段的枚举、条件必填和限制继续以 `describe` 及 CLI 校验为准。
 

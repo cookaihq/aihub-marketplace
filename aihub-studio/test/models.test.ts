@@ -162,15 +162,16 @@ test('Fabric availability requires the requested resolution and never infers oth
   ]);
 });
 
-test('understanding model discovery marks only Carbon as the built-in default and preserves live capabilities', async () => {
+test('understanding model discovery marks only Hydrogen as the built-in default and preserves live capabilities', async () => {
   const client = new AihubmaxClient({ apiKey: 'offline-fixture', baseUrl: 'https://example.invalid' });
   client.listLlmModels = async () => [
+    { id: 'gemini-4-hydrogen', capabilities: ['vision', 'audio', 'video', 'file'] },
     { id: 'gemini-4-carbon', capabilities: ['vision', 'audio', 'video', 'file'] },
     { id: 'gemini-3.1-pro-preview', capabilities: ['vision'] },
   ];
   const output = await models(client, 'understanding');
-  assert.deepEqual(output.models.map(row => [row.model, row.default]), [['gemini-4-carbon', true], ['gemini-3.1-pro-preview', false]]);
-  client.listLlmModels = async () => [{ id: 'gemini-3.1-pro-preview', capabilities: ['vision'] }];
+  assert.deepEqual(output.models.map(row => [row.model, row.default]), [['gemini-4-hydrogen', true], ['gemini-4-carbon', false], ['gemini-3.1-pro-preview', false]]);
+  client.listLlmModels = async () => [{ id: 'gemini-4-carbon', capabilities: ['vision', 'audio', 'video', 'file'] }];
   const missing = await models(client, 'understanding');
   assert.equal(missing.models.some(row => row.default), false, 'a missing default must not be invented or silently replaced');
 });
