@@ -1,4 +1,12 @@
-# AIhub Studio Plugin 6.4.1
+# AIhub Studio Plugin 6.4.2
+
+6.4.2 将五个 Skill 共用的内置结果检查模型改为 `gemini-4-hydrogen`，与 Understanding 的主任务默认模型一致。两项设置继续独立生效；已有检查模型配置和已提交的检查任务继续使用原选择。配置中心、CLI 帮助及检查说明同步更新。
+
+本包内置 Image / Video 3.3.1、Audio 6.3.1、Music 5.2.1、Understanding 3.2.2；五个 Skill 的补丁版本包含共用检查默认值变化。
+
+Windows 原生 Codex 开发源显式调用确认五个 Skill 的检查默认值均为 Hydrogen，显式覆盖与独立配置保留，配置中心字段默认值同步。构建、类型、五个 Skill 格式与版本一致性检查通过；配置与检查定向回归首轮 14/20，使用相同代码和原超时单独复测后补齐全部 6 个失败项，20 个用例均有通过记录。真实付费 Hydrogen 检查、Plugin 重新安装、隐式触发和 macOS 尚未验证；本次及同批 Mac 续验按用户确认跳过 WorkBuddy。
+
+以下为 6.4.1 的功能与验收记录。
 
 6.4.1 将图片、音频、视频及文件理解的内置默认模型改为 `gemini-4-hydrogen`，Understanding Skill 升为 3.2.1。本次明确指定的模型、已有模型顺序配置及已保存任务继续使用原选择；其他 Skill 版本保持。
 
@@ -391,7 +399,7 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 
 生成完成后，Agent 会检查实际结果是否符合你的原始需求，给出“符合、不符合、证据不足或无法检查”的结论。文件能打开并不代表内容符合；视频只看过部分帧、没有检查音轨等情况会明确说明。检查失败或内容不符会保留并交付已有文件，由你决定是否修改或重做。
 
-默认先使用当前 Agent 能用的图片、音频、视频或文档工具。缺少必要能力时通过 AIhub 检查，默认检查模型为 `gemini-3.8-flash`；会把结果、需求与必要原素材发送给 AIhub，并额外消耗额度。当前账号没有该模型或所需能力时，会报告无法检查。Jev 不属于本版依赖。
+默认先使用当前 Agent 能用的图片、音频、视频或文档工具。缺少必要能力时通过 AIhub 检查，默认检查模型为 `gemini-4-hydrogen`；会把结果、需求与必要原素材发送给 AIhub，并额外消耗额度。当前账号没有该模型或所需能力时，会报告无法检查。Jev 不属于本版依赖。
 
 **每次完成检查后，Agent 都会提醒你可以通过对话关闭。** 可以说“仅本次关闭结果检查”“以后关闭 AIhub 的结果检查”或“恢复结果检查”。Agent 会按你明确的范围执行；范围不明时会询问。关闭后仍检查文件格式与能否解析。
 
@@ -400,7 +408,7 @@ AIHUB_MODEL_MAX_ATTEMPTS=2
 ```dotenv
 AIHUB_RESULT_CHECK_ENABLED=1
 AIHUB_RESULT_CHECK_PROVIDER=auto
-AIHUB_RESULT_CHECK_MODELS=gemini-3.8-flash
+AIHUB_RESULT_CHECK_MODELS=gemini-4-hydrogen
 ```
 
 开关只接受 `1` 或 `0`。provider 可为 `auto`（上述默认流程）、`host`（只用 Agent 自身能力）或 `aihub`（直接使用 AIhub）。模型可配置逗号分隔的有序列表，程序在提交前选择首个可见且能力匹配的型号；检查失败后不会自动再调用第二个型号。明确要求重新检查时才会提交新检查请求。

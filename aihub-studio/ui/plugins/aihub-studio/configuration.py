@@ -21,7 +21,7 @@ def fields(field):
         field("AIHUB_RESULT_CHECK_PROVIDER", "检查方式", "结果检查", "select", default="auto",
               choices=["auto", "host", "aihub"], depends_on={"AIHUB_RESULT_CHECK_ENABLED": True},
               help="auto 自动选择；host 当前 Agent；aihub 使用服务模型。"),
-        field("AIHUB_RESULT_CHECK_MODELS", "检查模型顺序", "结果检查", "list", default=["gemini-3.8-flash"],
+        field("AIHUB_RESULT_CHECK_MODELS", "检查模型顺序", "结果检查", "list", default=["gemini-4-hydrogen"],
               depends_on={"AIHUB_RESULT_CHECK_ENABLED": True}, advanced=True,
               help="检查需调用 AIhub 时按顺序选择；不改变已有业务授权。"),
         field("AIHUB_ERROR_REPORT_THRESHOLD", "连续失败报告阈值", "排障", "number", default=3, advanced=True,

@@ -10,9 +10,11 @@
 | --- | --- | --- |
 | `AIHUB_RESULT_CHECK_ENABLED` | `1` | `0` 关闭语义检查；原有文件格式与可解析性检查继续运行。只接受 `0`/`1`。 |
 | `AIHUB_RESULT_CHECK_PROVIDER` | `auto` | `auto` 由 Skill 先检查宿主实际媒体能力，能力不足才调用 AIhub；`host` 只用宿主；`aihub` 直接用 AIhub。 |
-| `AIHUB_RESULT_CHECK_MODELS` | `gemini-3.8-flash` | 逗号分隔精确 ID。提交前按当前 LLM 注册表的可见性和媒体能力选择首个适用项，提交后不自动换检查模型。 |
+| `AIHUB_RESULT_CHECK_MODELS` | `gemini-4-hydrogen` | 逗号分隔精确 ID。提交前按当前 LLM 注册表的可见性和媒体能力选择首个适用项，提交后不自动换检查模型。 |
 | `AIHUB_ERROR_REPORT_THRESHOLD` | `3` | 兼容旧配置，仍校验正整数；不再延迟首错报告与当前结果说明。 |
 | `AIHUB_SUPPORT_URL` | 无 | 当前服务管理员的 HTTP(S) 支持入口，不含账号、密码、查询参数或片段。 |
+
+理解主任务模型与结果检查模型分别配置；`AIHUB_UNDERSTANDING_MODELS` 不覆盖 `AIHUB_RESULT_CHECK_MODELS`。
 
 `config-check` 返回这些字段的实际来源和格式错误；`doctor` 同时返回生效的检查与反馈设置。仍只有 `AIHUB_API_KEY` 必填。Jev 未接入，也不需要 TypeSafe 凭证。
 

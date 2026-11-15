@@ -24,9 +24,9 @@ export interface LoadedConfig extends Config {
 export interface ResultCheckConfig {
   enabled: boolean; provider: 'auto' | 'host' | 'aihub'; models: string[]; sources: Record<string, string>;
 }
-export const RESULT_CHECK_DEFAULTS: ResultCheckConfig = { enabled: true, provider: 'auto', models: ['gemini-3.8-flash'], sources: {} };
+export const RESULT_CHECK_DEFAULTS: ResultCheckConfig = { enabled: true, provider: 'auto', models: ['gemini-4-hydrogen'], sources: {} };
 const BEHAVIOR_DEFAULTS: Record<string, string> = {
-  AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: 'gemini-3.8-flash',
+  AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: 'gemini-4-hydrogen',
   AIHUB_ERROR_REPORT_THRESHOLD: '3',
 };
 const BEHAVIOR_KEYS = [...Object.keys(BEHAVIOR_DEFAULTS), 'AIHUB_SUPPORT_URL'];

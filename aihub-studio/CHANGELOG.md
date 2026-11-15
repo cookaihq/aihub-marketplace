@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.4.2 — 2026-11-16
+
+- 五个 Skill 共用的内置结果检查模型由 `gemini-3.8-flash` 改为 `gemini-4-hydrogen`；业务加载器、配置中心默认值、CLI 帮助与随包说明同步。
+- Understanding 主任务模型和结果检查模型继续独立配置；已有显式配置、已提交检查任务和宿主优先的检查策略保留。
+- Image / Video 3.3.1、Audio 6.3.1、Music 5.2.1、Understanding 3.2.2；各 Skill 的补丁包含共用检查默认值变化。
+- Windows 原生 Codex 开发源显式调用、显式覆盖与独立配置、配置中心字段默认值通过；构建、类型及五个 Skill 的格式与版本一致性通过。配置与检查定向回归首轮 14/20，原代码与原超时隔离复测补齐全部 6 个失败项；真实付费 Hydrogen 检查、重新安装、隐式触发及 macOS 待验，本次与同批 Mac 续验跳过 WorkBuddy。
+
 ## 6.4.1 — 2026-11-16
 
 - 图片、音频、视频及文件理解的内置默认模型由 `gemini-4-carbon` 改为 `gemini-4-hydrogen`；Understanding Skill 升为 3.2.1，其他 Skill 版本保持。

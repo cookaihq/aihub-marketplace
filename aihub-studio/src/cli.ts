@@ -72,7 +72,7 @@ Optional model configuration: AIHUB_<IMAGE|VIDEO|AUDIO|MUSIC|UNDERSTANDING>_MODE
 AIHUB_MODEL_MAX_ATTEMPTS (positive integer, includes first model). Only AIHUB_API_KEY is required.
 Result checks: AIHUB_RESULT_CHECK_ENABLED=1|0 (default 1), AIHUB_RESULT_CHECK_PROVIDER=auto|host|aihub
 (default auto: the Skill uses actual host media tools first), AIHUB_RESULT_CHECK_MODELS
-(ordered IDs; default gemini-3.8-flash; preflight selection only, one external review submission).
+(ordered IDs; default gemini-4-hydrogen; preflight selection only, one external review submission).
 Feedback: AIHUB_ERROR_REPORT_THRESHOLD (positive integer, default 3), AIHUB_SUPPORT_URL (optional).
 Review failures never regenerate media. Completed checks include a reminder that users can
 disable checks through conversation. No Issue or administrator message is sent automatically.

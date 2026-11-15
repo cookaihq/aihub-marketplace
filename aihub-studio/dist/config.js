@@ -3,9 +3,9 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { MINIMAX_DEFAULT_VOICE_KEY, ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, validVoiceId } from './speech.js';
-export const RESULT_CHECK_DEFAULTS = { enabled: true, provider: 'auto', models: ['gemini-3.8-flash'], sources: {} };
+export const RESULT_CHECK_DEFAULTS = { enabled: true, provider: 'auto', models: ['gemini-4-hydrogen'], sources: {} };
 const BEHAVIOR_DEFAULTS = {
-    AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: 'gemini-3.8-flash',
+    AIHUB_RESULT_CHECK_ENABLED: '1', AIHUB_RESULT_CHECK_PROVIDER: 'auto', AIHUB_RESULT_CHECK_MODELS: 'gemini-4-hydrogen',
     AIHUB_ERROR_REPORT_THRESHOLD: '3',
 };
 const BEHAVIOR_KEYS = [...Object.keys(BEHAVIOR_DEFAULTS), 'AIHUB_SUPPORT_URL'];

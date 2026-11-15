@@ -13,7 +13,7 @@ import { assertPrivateFile } from './private-permissions.js';
 import { fixtureTransport } from './fixture-transport.js';
 const exec = promisify(execFile);
 const generator = 'gpt-image-2.6-flare';
-const checker = 'gemini-3.8-flash';
+const checker = 'gemini-4-hydrogen';
 
 async function fixture(audio = false) {
   const dir = await mkdtemp(join(tmpdir(), 'aihub-review-'));
@@ -119,7 +119,7 @@ test('disabled semantic checks make no review requests or reminders; optional co
     await writeFile(join(f.dir, '.env.local'), 'AIHUB_API_KEY=synthetic\nAIHUB_RESULT_CHECK_MODELS=other,gemini-3.8-flash\nAIHUB_RESULT_CHECK_ENABLED=0');
     const options = { skill: 'aihub-image', cwd: f.dir, useGlobalConfig: false, env: {} };
     const cfg = loadConfig(options);
-    assert.deepEqual(cfg.resultCheck?.models, ['other', checker]); assert.equal(cfg.resultCheck?.enabled, false);
+    assert.deepEqual(cfg.resultCheck?.models, ['other', 'gemini-3.8-flash']); assert.equal(cfg.resultCheck?.enabled, false);
     assert.equal(inspectConfig(options).fields.AIHUB_RESULT_CHECK_ENABLED?.source, join(f.dir, '.env.local'));
     assert.deepEqual(loadConfig({ ...options, env: { AIHUB_RESULT_CHECK_MODELS: checker } }).resultCheck?.models, [checker]);
     for (const [key, value] of [['AIHUB_RESULT_CHECK_ENABLED', 'true'], ['AIHUB_RESULT_CHECK_PROVIDER', 'fast'], ['AIHUB_RESULT_CHECK_MODELS', 'a,a'], ['AIHUB_ERROR_REPORT_THRESHOLD', '0'], ['AIHUB_SUPPORT_URL', 'https://u:pw@host/']]) {
