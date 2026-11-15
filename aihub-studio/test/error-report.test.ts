@@ -45,6 +45,8 @@ test('first rejected request creates an absolute Markdown report with actual req
     assert.equal(result!.upstream_error_count, 1);
     assert.equal(result!.show_notice, true);
     assert.ok(isAbsolute(String(result!.error_report)));
+    assert.ok(!(result!.user_notice as string).includes(String(result!.error_report)), 'default notice must not repeat evidence paths');
+    assert.ok((result!.artifact_links as string[]).some(link => link.includes('error-report.md')), 'evidence remains available on demand');
     const report = await readFile(String(result!.error_report), 'utf8');
     for (const evidence of ['synthetic private prompt', 'new_provider_error', 'precise synthetic detail', 'synthetic-request-id', '422', '/e/v1/images/generations']) {
       assert.ok(report.includes(evidence), `missing evidence: ${evidence}`);
@@ -95,6 +97,8 @@ test('accepted submission survives a new invocation; query HTTP and provider evi
     const recovered = await feedback(cfg, { status: 'delivered', record }, []);
     assert.equal(recovered!.show_notice, true);
     assert.equal(recovered!.upstream_error_count, 1);
+    assert.match(String(recovered!.user_notice), /图片任务已完成/);
+    assert.doesNotMatch(String(recovered!.user_notice), /执行失败|service_unavailable|diagnostic.json/);
     assert.equal(requests, 3);
   } finally { server.closeAllConnections(); await new Promise<void>(r => server.close(() => r())); await rm(root, { recursive: true, force: true }); }
 });
@@ -169,7 +173,21 @@ test('a later report update failure retains only links to existing artifacts', a
     assert.equal(fallback!.issue_draft, original!.issue_draft);
     assert.equal(fallback!.diagnostic, undefined, 'a directory must not be linked as a readable report');
     assert.match(String(fallback!.user_notice), /更新失败/);
+    assert.ok(!String(fallback!.user_notice).includes(String(original!.error_report)));
   } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('local-only failures and missing reports still have usable feedback without changing the task', async () => {
+  const output = { status: 'partial', files: [{ path: 'already-saved.txt' }] };
+  const before = structuredClone(output);
+  const result = await feedback(config('https://example.invalid'), output, []);
+  assert.match(String(result!.user_notice), /一部分.*保留/);
+  assert.equal(result!.error_report, undefined);
+  assert.equal(result!.upstream_error_count, undefined, 'no invented upstream failures');
+  assert.deepEqual(output, before);
+  const fallback = await existingFeedback({ status: 'delivered' }, 'aihub-music');
+  assert.match(String(fallback!.user_notice), /音乐任务已完成.*报告更新失败/);
+  assert.equal(fallback!.error_report, undefined);
 });
 
 test('all five Skill workflows and native music retain original inputs and one report on terminal failure', async t => {

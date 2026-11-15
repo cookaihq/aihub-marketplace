@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { credentialId } from './config.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord, writePrivateText } from './state.js';
 import { jsonBlock, localLink, redactEvidence, upstreamEvidence } from './diagnosticEvidence.js';
+import { summarizeFeedback } from './userFeedback.js';
 const context = new AsyncLocalStorage();
 export function collectRequestErrors(run) {
     const capture = { events: [], exchanges: [] };
@@ -123,10 +124,14 @@ const PUBLIC_CODES = new Set(['model_unavailable', 'model_not_support_capability
     'service_unavailable', 'network_error', 'ambiguous', 'invalid_response', 'insufficient_quota', 'invalid_api_key',
     'rate_limit_exceeded', 'authentication_error', 'permission_denied']);
 /** An update error must not hide usable files from an earlier observation. Never link a missing file. */
-export async function existingFeedback(output) {
+export async function existingFeedback(output, skill) {
     const c = context.getStore();
+    const summary = summarizeFeedback(output, c?.events ?? [], skill ?? c?.cfg?.skill);
+    const warning = '本轮排障报告更新失败，已有记录可能未包含最新结果；原任务结果仍保留。';
+    const notice = { ...summary, show_notice: true, warning,
+        user_notice: [summary?.user_notice, warning].filter(Boolean).join('') };
     if (!c?.record && ![output.run_record, output.source_record, output.record].some(v => typeof v === 'string'))
-        return;
+        return notice;
     const dir = directory(c, output), artifacts = {};
     for (const [key, name] of [['error_report', 'error-report.md'], ['diagnostic', 'diagnostic.json'],
         ['issue_draft', 'issue-draft.md'], ['request_context', 'request-context.json']]) {
@@ -135,16 +140,15 @@ export async function existingFeedback(output) {
             artifacts[key] = path;
     }
     const links = Object.values(artifacts).map(localLink);
-    if (!links.length)
-        return;
-    return { ...artifacts, show_notice: true, artifact_links: links,
-        user_notice: `本轮报告更新失败；以下为已存在的本地文件，内容可能未包含最新结果：\n\n${links.join('\n\n')}` };
+    return { ...artifacts, ...notice, artifact_links: links };
 }
 export async function feedback(cfg, output, events) {
     const c = context.getStore();
+    const summary = summarizeFeedback(output, events, cfg.skill);
+    const notice = summary ? { ...summary, show_notice: true, ...(c?.warning ? { warning: c.warning } : {}) } : undefined;
     const hasRecord = c?.record || [output.run_record, output.source_record, output.record].some(v => typeof v === 'string');
     if (!events.length && !hasRecord)
-        return;
+        return notice;
     const dir = directory(c, output), path = join(dir, 'diagnostic.json');
     assertOutsideInstallation(path);
     await mkdir(dir, { recursive: true, mode: 0o700 });
@@ -179,7 +183,7 @@ export async function feedback(cfg, output, events) {
                 saved.events[old] = { ...saved.events[old], ...event, at: saved.events[old].at };
         }
         if (!saved.events.length)
-            return;
+            return notice;
         let taskContext = c?.taskContext, exchanges = c?.exchanges ?? [];
         if (!taskContext || !exchanges.length) {
             try {
@@ -206,16 +210,14 @@ export async function feedback(cfg, output, events) {
         const contextPath = join(dir, 'request-context.json');
         const hasContext = await stat(contextPath).then(s => s.isFile()).catch(() => false);
         const links = [reportPath, path, draftPath, ...(hasContext ? [contextPath] : [])].map(localLink);
-        const account = saved.events.some(e => [401, 402, 403].includes(e.http_status ?? 0));
-        const optionsUnavailable = saved.events.some(e => ['requested_options_unavailable', 'unsupported_parameters'].includes(e.code));
-        const advice = optionsUnavailable ? '完整展示错误 message 及 unsupported_parameters / suggested_remove_parameters 的全部项目；让用户选择保留要求稍后处理，或明确修改相关要求后新建请求。不得自动删参、替换音色、切换模型或重新生成；退款只转述服务证据，修改不保证成功。'
-            : account ? '请核对 AIhub API Key、账号权限或余额；不要为生成报告重发请求。'
-                : 'service_unavailable 仅是服务返回的错误分类，不能证明上游宕机。未暴露的供应商状态、路由和内部重试应由管理员按 task_id/request_id 查询后台日志。';
+        const advice = summary?.advice ?? '由 Agent 核对原任务和请求证据，按实际结果继续处理。';
+        const optionsNote = saved.events.some(e => ['requested_options_unavailable', 'unsupported_parameters'].includes(e.code))
+            ? '选项错误处理：完整读取 message、unsupported_parameters 和 suggested_remove_parameters，逐项解释影响并等待用户选择；不得自动删参、替换音色、切换模型或重新生成。退款只转述服务证据，修改不保证成功。\n\n' : '';
         const report = '# AIHub Studio 本地请求与错误汇总\n\n' +
             `首次记录：${saved.created_at}\n\n更新时间：${now}\n\n独立错误数：${saved.events.length}\n\n` +
             '本文件仅保存在本机，含私密需求、提示词及素材定位信息。凭证已脱敏；对外提交前请人工检查。公开 Issue 请使用另附草稿。\n\n' +
             'HTTP 表示客户端实际收到的 AIHub 响应，异步任务状态单独记录。上游字段仅按响应原字段及来源保留；null 表示未知或未记录。客户端耗时不代表供应商执行耗时。\n\n' +
-            `${saved.legacy_note ? saved.legacy_note + '\n\n' : ''}${advice}\n\n` +
+            `${saved.legacy_note ? saved.legacy_note + '\n\n' : ''}${advice}\n\n${optionsNote}` +
             `## 任务与模型切换\n\n${jsonBlock(saved.context)}\n\n## 错误证据\n\n${jsonBlock(saved.events)}\n\n` +
             `## 实际请求 / 响应 JSON（脱敏）\n\n${jsonBlock(saved.exchanges)}\n\n` +
             '上游原始 HTTP / 错误码 / request ID / trace ID / 供应商 / 路由 / 内部耗时 / 内部重试：仅以 upstream.source 及响应正文为准；未出现的字段均为未知。二进制、大型 Base64 与超限内容用明确省略标记表示。\n\n' +
@@ -234,7 +236,7 @@ export async function feedback(cfg, output, events) {
         await writePrivateText(reportPath, report);
         return { upstream_error_count: saved.events.length, report_required: true, show_notice: true,
             error_report: reportPath, diagnostic: path, issue_draft: draftPath, issue_url: ISSUE_URL, artifact_links: links,
-            user_notice: `本地错误汇总（${saved.events.length} 个独立错误；当前状态 ${publicStatus}）：\n\n${links.join('\n\n')}`,
+            user_notice: summary?.user_notice ?? '当前任务结果尚需核对；排障记录已保存在本机。',
             advice, support: redactEvidence(cfg.feedback?.supportUrl ?? '联系当前 AIhub 服务管理员', secrets),
             ...(c?.warning ? { warning: c.warning } : {}),
             privacy_notice: '本地报告含私密请求与定位信息；公开反馈只使用检查后的 issue-draft.md，不自动发送。' };

@@ -1,8 +1,8 @@
 ---
 name: aihub-video
 metadata:
-  version: "3.2.0"
-description: v3.2.0｜通过 AIhub 使用 Seedance 2.5，基于文字、首帧图片或多模态参考素材生成视频；也支持 C1 视频口型同步和 C2 图片加音频数字人。检查各类任务的限制，支持继续已有任务并交付核验后的视频文件。
+  version: "3.2.1"
+description: v3.2.1｜通过 AIhub 使用 Seedance 2.5，基于文字、首帧图片或多模态参考素材生成视频；也支持 C1 视频口型同步和 C2 图片加音频数字人。检查各类任务的限制，支持继续已有任务并交付核验后的视频文件。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
@@ -85,4 +85,4 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" continue --skill aihub-video \
 
 检查开启时，每次完成检查都必须告诉用户：“如果想关闭结果检查，可以直接在对话中告诉我‘关闭结果检查’；也可以说‘仅本次关闭结果检查’。”通过、不符、证据不足或无法检查都要提示，不能只保留在 JSON 中。用户要求关闭时按参考说明执行，沿用已明确作用范围；范围不明再询问。关闭后仍执行文件检查。
 
-每次出现 `feedback` 都按[本地错误报告](../../references/error-reports.md)逐条提供 `artifact_links`，链接文字显示真实完整绝对路径；首次、再次失败、恢复和最终答复均包含。公开只用脱敏草稿，不自动发送。结果不符、检查或报告保存失败不触发重新生成。
+调用异常、结果待确认、部分完成或恢复时，读取并遵守[调用异常反馈与本地报告](../../references/error-reports.md)。先解释当前业务结果、影响、已知原因及下一步，继续可执行的原任务恢复；排障文件按需提供简短入口。以当前成果区分历史错误，保留已有确认与提交保护。

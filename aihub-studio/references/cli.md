@@ -177,7 +177,7 @@ outputs/
 
 新 `run` 默认在调用项目 `data/aihub-studio/20261106143025-任务摘要-run-a1b2c3d4/` 保存 `run.json`；异步候选各自的 `task.json` 和 `files/` 位于其 `attempt-N/aihub-UUID/` 下。原生音乐也保存 run 与返回文件，但没有可查询任务 ID，提交不明时不能自动重发。旧 `native-music` 直接保存返回文件，没有上述任务记录。
 
-交付后的 `review.json`、远端检查的 `review-task/`、首次错误生成的 `error-report.md`、`diagnostic.json`、`issue-draft.md` 和请求证据 `request-context.json` 均放在同一 run 目录。每次存在报告时 `feedback.show_notice=true`；首次/再次失败、恢复及最终总结都须逐条转述 `feedback.artifact_links`，保留完整绝对路径作为链接文字。只有真实存在的文件才提供链接。报告不自动发送，不改变生成或检查状态。证据语义与旧报告说明见 [本地错误报告](error-reports.md)，检查命令见 [结果检查](result-checks.md)。
+交付后的 `review.json`、远端检查的 `review-task/`、首次错误生成的 `error-report.md`、`diagnostic.json`、`issue-draft.md` 和请求证据 `request-context.json` 均放在同一 run 目录。`feedback.user_notice` / `advice` 描述当前结果与下一步；默认按[调用异常反馈](error-reports.md)说明业务影响并继续可执行的原任务恢复。`show_notice=true` 不要求展示全部附件；`artifact_links` 用于定位真实证据，需要排障时提供简短报告入口。仅本地下载等问题可以只有摘要。报告不自动发送，不改变生成或检查状态；检查命令见 [结果检查](result-checks.md)。
 
 程序不自动删除任务目录。用户决定何时归档或删除；删除 `task.json` 会失去该记录提供的恢复入口。任务记录可能含 prompt、输入或结果 URL，应和生成文件一起按用户的访问范围保存。
 

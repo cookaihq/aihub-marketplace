@@ -112,9 +112,12 @@ test('CLI distinguishes authentication rejection from balance, permissions and r
     assert.deepEqual(credentialOutput.layers, JSON.parse(inspected.stdout).layers);
     assert.ok(!credentialInspection.stdout.includes('synthetic-cli-secret'));
     assert.equal(requests, 0);
+    // Windows persists private evidence for every registry retry; allow the CLI to finish before inspecting its response.
+    const modelQueryTimeoutMs = process.platform === 'win32' ? 60_000 : 20_000;
     for (const code of [401, 402, 403, 429]) {
       status = code;
-      await assert.rejects(exec(process.execPath, [cli, 'models', '--skill', 'aihub-image', '--media', 'image'], { cwd: root, env, timeout: 20_000 }), (error: unknown) => {
+      await assert.rejects(exec(process.execPath, [cli, 'models', '--skill', 'aihub-image', '--media', 'image'], { cwd: root, env, timeout: modelQueryTimeoutMs }), (error: unknown) => {
+        assert.ok(!(error as { killed?: boolean }).killed, `HTTP ${code} model query must finish before the fixture timeout`);
         const stdout = (error as { stdout: string }).stdout;
         assert.ok(!stdout.includes('synthetic-cli-secret'));
         const output = JSON.parse(stdout);

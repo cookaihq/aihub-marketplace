@@ -232,7 +232,7 @@ async function mainWithDiagnostics(argv: string[], events: Parameters<typeof fee
       if (diagnostic) output.feedback = diagnostic;
     } catch {
       output.feedback_warning = '无法保存错误报告；保留原任务结果与已知任务 ID。';
-      const existing = await existingFeedback(output);
+      const existing = await existingFeedback(output, cfg.skill);
       if (existing) output.feedback = existing;
     }
     output = sanitized(output, [cfg.apiKey]);

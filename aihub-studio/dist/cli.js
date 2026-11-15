@@ -280,7 +280,7 @@ async function mainWithDiagnostics(argv, events) {
         }
         catch {
             output.feedback_warning = '无法保存错误报告；保留原任务结果与已知任务 ID。';
-            const existing = await existingFeedback(output);
+            const existing = await existingFeedback(output, cfg.skill);
             if (existing)
                 output.feedback = existing;
         }
