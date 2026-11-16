@@ -46,6 +46,8 @@ def main(package, plugin):
     parser.add_argument('--page', choices=('configuration', 'artifacts'), required=True)
     parser.add_argument('--task-dir', type=Path, action='append', default=[])
     parser.add_argument('--skill')
+    if plugin == 'aihub-studio':
+        parser.add_argument('--fields', help='Comma-separated field IDs to focus; the complete form remains available')
     parser.add_argument('--agent', choices=('codex', 'claude-code', 'workbuddy', 'hermes'))
     parser.add_argument('--config-dir', type=Path)
     parser.add_argument('--no-global-config', action='store_true')
@@ -86,6 +88,8 @@ def main(package, plugin):
                 '--page', args.page, '--runtime-dir', str(runtime), '--idle-seconds', str(args.idle_seconds)]
     if args.public_origin:
         sys.argv += ['--public-origin', args.public_origin]
+    if plugin == 'aihub-studio' and args.fields and args.page == 'configuration':
+        sys.argv += ['--fields', args.fields]
     if not args.keep_running:
         return core_main()
     # WorkBuddy reaps a completed tool's child process tree. Keep the original

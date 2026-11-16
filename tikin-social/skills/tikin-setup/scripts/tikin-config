@@ -58,7 +58,8 @@ PLATFORMS = (
 
 
 def config_dir():
-    return Path.home() / ".config" / PLUGIN_NAME
+    from config_directories import global_config_directory
+    return global_config_directory()
 
 
 def check_plugin_identity():
@@ -142,18 +143,20 @@ def parse_env(text):
     return values
 
 
-def configuration_paths(skill_name, global_enabled):
+def configuration_paths(skill_name, global_enabled, directories=None):
     if skill_name is not None and skill_name not in SKILL_NAMES:
         raise SystemExit("--skill must name one of the 17 bundled tikin Skills")
-    cwd = Path.cwd()
+    from config_directories import resolve_directories
+    directories = directories or resolve_directories(global_enabled)
+    cwd = Path(directories['project'])
     paths = [cwd / (".env.local." + PLUGIN_NAME), cwd / (".env." + PLUGIN_NAME),
              cwd / ".env.local", cwd / ".env"]
     if global_enabled:
-        root = config_dir()
+        root = Path(directories['global'])
         if skill_name:
             paths += [root / skill_name / ".env.local", root / skill_name / ".env"]
         paths += [root / ".env.local", root / ".env"]
-        if skill_name:
+        if skill_name and not directories['custom_global']:
             paths.append(Path.home() / ".config" / skill_name / ".env")
     return paths
 
@@ -161,9 +164,11 @@ def configuration_paths(skill_name, global_enabled):
 def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None, file_overrides=None, layer_values=None):
     """Read only fixed sources. Report each file revision and field source, never values."""
     check_plugin_identity()
+    from config_directories import resolve_directories
+    directories = resolve_directories(global_enabled, file_overrides)
     layers = [("environment", os.environ)]
-    files, problems = [], []
-    paths = configuration_paths(skill_name, global_enabled)
+    files, problems = [], list(directories['problems'])
+    paths = configuration_paths(skill_name, global_enabled, directories)
     if deletion:
         target, keys = deletion
         if (not keys or len(set(keys)) != len(keys) or any(key not in CONFIG_KEYS for key in keys)
@@ -189,6 +194,9 @@ def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None,
             continue
         files.append({"path": source, "revision": hashlib.sha256(content).hexdigest()})
         layers.append((source, parsed))
+    for row in directories['layers'][1:]:
+        if not any(file['path'] == row['path'] for file in files):
+            files.append({key: value for key, value in row.items() if key != 'values'})
     values, sources = {}, {}
     for key in CONFIG_KEYS:
         for source, layer in layers:
@@ -219,7 +227,7 @@ def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None,
         "schema": "secret-book.config-inspection/v1",
         "status": "configuration_required" if problems else "ok",
         "consumer": {"kind": "plugin", "name": PLUGIN_NAME},
-        "skill": skill_name, "cwd": str(Path.cwd()), "global_enabled": global_enabled,
+        "skill": skill_name, "cwd": str(Path.cwd()), "global_enabled": global_enabled, "directories": directories,
         "layers": files, "fields": fields, "problems": problems,
         "environment": {key: hashlib.sha256(os.environ[key].encode()).hexdigest()
                         if os.environ.get(key, "").strip() else None for key in CONFIG_KEYS},
@@ -229,7 +237,7 @@ def resolve_config(skill_name="tikin-setup", global_enabled=True, deletion=None,
     if layer_values is not None:
         # Opt-in private UI output. Public config-check stays value-free.
         layer_values.extend([{"path": "environment", "values": {key: os.environ[key] for key in CONFIG_KEYS if key in os.environ}},
-                             *[dict(file, values=dict(layers).get(file["path"], {})) for file in files]])
+                             *[dict(file, values=dict(layers).get(file["path"], {})) for file in files if Path(file['path']) in paths]])
     return values, sources, inspection
 
 
@@ -277,9 +285,8 @@ def run_with_config(skill_name, command, global_enabled=True):
 
 def read_settings():
     path = config_dir() / "settings.json"
-    if not path.is_file():
-        return DEFAULT_SETTINGS
-    settings = json.loads(path.read_text(encoding="utf-8"))
+    from default_skills import read_settings as read_file
+    settings = read_file(path)
     validate_routing(settings)
     return settings
 

@@ -49,7 +49,8 @@ class ServiceLifetime(unittest.TestCase):
                         pass
                     with client.open(origin + '/api/state', timeout=10) as response:
                         state = json.load(response)
-                    self.assertEqual(len(state['config']['fields']), 18)
+                    self.assertEqual(len(state['config']['fields']), 20)
+                    self.assertEqual({f['directory_scope'] for f in state['config']['fields'] if f.get('directory_scope')}, {'global', 'project'})
                     self.assertEqual(state['config']['presentation']['initial_target'], state['config']['default_targets']['project'])
                     self.assertFalse(any(layer['enabled'] for layer in state['config']['layers'] if layer['scope'] == 'global'))
                     self.assertEqual(state['config']['task']['binding'], 'synthetic-binding')

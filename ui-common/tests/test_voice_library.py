@@ -103,16 +103,19 @@ class VoiceLibrary(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=os.environ['TEMP'],prefix='voice-http-') as folder:
             path = Path(folder)
             adapter = SimpleNamespace(plugin=plugin,options={},configuration=object())
-            with patch.object(server,'Handler',MarketplaceHandler):
+            package = MARKET / ('aihub-studio' if plugin == 'aihub-studio' else 'tikin-social/skills/tikin-setup')
+            # One imported handler is reused here; production loads each package's
+            # own module and assets. Match that ownership in the synthetic service.
+            with patch.object(server,'Handler',MarketplaceHandler), patch('web.ASSETS', package / 'ui'):
                 app = server.Server(adapter,path,page,path)
-            thread = threading.Thread(target=app.serve_forever,daemon=True); thread.start()
-            client = build_opener(ProxyHandler({}))
-            def get(route='/api/minimax-voices',auth=True,host=None):
-                headers = {'Cookie':app.cookie_name + '=' + app.cookie} if auth else {}
-                if host: headers['Host']=host
-                return client.open(Request(app.origin + route,headers=headers),timeout=5)
-            try: yield app,get
-            finally: app.shutdown();app.server_close();thread.join(timeout=5)
+                thread = threading.Thread(target=app.serve_forever,daemon=True); thread.start()
+                client = build_opener(ProxyHandler({}))
+                def get(route='/api/minimax-voices',auth=True,host=None):
+                    headers = {'Cookie':app.cookie_name + '=' + app.cookie} if auth else {}
+                    if host: headers['Host']=host
+                    return client.open(Request(app.origin + route,headers=headers),timeout=5)
+                try: yield app,get
+                finally: app.shutdown();app.server_close();thread.join(timeout=5)
 
     def test_auth_origin_lifetime_and_product_boundaries(self):
         with patch.object(library,'load',return_value={'voices':[]}) as load:

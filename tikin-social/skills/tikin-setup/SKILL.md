@@ -1,8 +1,8 @@
 ---
 name: tikin-setup
 metadata:
-  version: "4.1.0"
-description: v4.1.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒，通过本套件配置中心填写、更换或修复接口密钥。
+  version: "4.2.0"
+description: v4.2.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒，通过本套件配置中心填写、更换或修复接口密钥。
 ---
 
 # tikin Setup
@@ -28,6 +28,9 @@ description: v4.1.0｜安装、更新或修复 Tikin 套件，管理平台路由
 Use this entry for the specific installation, credential, routing or update task requested. A credential-only request follows the linked credential flow and returns without the other setup stages.
 
 ## Local state
+
+The paths below are defaults. Resolve `TIKIN_GLOBAL_CONFIG_DIR` from the process or the fixed default global `.env`, and `TIKIN_PROJECT_CONFIG_DIR` from the process or the original cwd `.env.local.tikin-social`, before reading business files. Custom roots include Skill subdirectories and global `settings.json`; an explicit global root disables old global business files and ordinary Skill fallback. Use the loader's actual paths for repair. Directory changes never move files, the working directory, or artifacts; see [configuration](references/credential-setup.md#完整配置目录).
+
 
 Resolve local state through `scripts/tikin-config`; do not parse or print secrets yourself.
 Use `config-check` or `status` for a read-only diagnosis. Run `init` only when initializing

@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { validateSpeechPreferences } from './speech.js';
+import { resolveConfiguration } from './config.js';
 const PLUGIN = 'aihub-studio';
 const AGENTS = ['codex', 'claude-code', 'workbuddy', 'hermes'];
 function canonical(path, depth = 0) {
@@ -114,7 +115,14 @@ export function agentDefaults(options) {
             directory = directory.replace(/%([^%]+)%/g, (original, name) => env[name] ?? original);
     }
     const configDir = canonical(resolve(directory.replace(/^~(?=[/\\]|$)/, userDirectory)));
-    const settingsFile = join(userDirectory, '.config', PLUGIN, 'settings.json');
+    let settingsFile = options.settingsPath;
+    if (!settingsFile) {
+        const configuration = resolveConfiguration({ skill: null, cwd: options.cwd, homeDirectory: userDirectory, env });
+        if (configuration.inspection.problems.some(p => p.reason === 'unreadable' || p.reason === 'expected_absolute_config_directory')) {
+            throw new Error('Cannot read configuration directory settings; run config-check.');
+        }
+        settingsFile = join(configuration.directories.global, 'settings.json');
+    }
     if (!['check', 'preference'].includes(action))
         savePreference(settingsFile, agent, configDir, action === 'enable');
     const preferences = readSettings(settingsFile).default_skill_reminders;

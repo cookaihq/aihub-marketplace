@@ -30,19 +30,19 @@ class MarketplaceAdapter(Adapter):
             if self.plugin == 'aihub-studio':
                 configuration_class = import_module('plugins.aihub-studio.scopes').StudioConfiguration
             else:
-                from configuration import Configuration
-                configuration_class = Configuration
+                from scoped_configuration import ScopedConfiguration
+                configuration_class = ScopedConfiguration
             self._configuration = configuration_class(self.package, self.project, self.options)
         return self._configuration
 
     def config(self):
         return self.configuration.snapshot()
 
-    def preview(self, changes, revision, target):
-        return self.configuration.preview(changes, revision, target)
+    def preview(self, changes, revision):
+        return self.configuration.preview(changes, revision)
 
-    def save(self, changes, revision, target):
-        return self.configuration.save(changes, revision, target)
+    def save(self, changes, revision):
+        return self.configuration.save(changes, revision)
 
     def artifacts(self):
         return self.catalog.snapshot()
@@ -51,15 +51,6 @@ class MarketplaceAdapter(Adapter):
         return self.catalog.resource(resource_id)
 
 
-class StudioAdapter(MarketplaceAdapter):
-    def preview(self, changes, revision):
-        return self.configuration.preview(changes, revision)
-
-    def save(self, changes, revision):
-        return self.configuration.save(changes, revision)
-
-
 def build(project):
     install()
-    options = json.loads(os.environ.get('AIHUB_UI_OPTIONS', '{}'))
-    return (StudioAdapter if options['plugin'] == 'aihub-studio' else MarketplaceAdapter)(project)
+    return MarketplaceAdapter(project)

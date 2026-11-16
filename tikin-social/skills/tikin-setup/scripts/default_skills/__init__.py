@@ -74,7 +74,7 @@ def save_preference(path, agent, config_dir, enabled):
     update_settings(path, change)
 
 
-def run(agent, action="check", config_dir=None, global_enabled=True):
+def run(agent, action="check", config_dir=None, global_enabled=True, settings_path=None):
     if agent not in AGENTS or action not in ("check", "dismiss", "enable", "preference"):
         raise ValueError("Explicit current Agent and a valid reminder action are required.")
     if not global_enabled:
@@ -92,7 +92,8 @@ def run(agent, action="check", config_dir=None, global_enabled=True):
                     if os.name == "nt" else Path.home() / (".hermes" + suffix))
     directory_value = str(config_dir or (configured or "").strip() or fallback)
     directory = Path(os.path.expandvars(directory_value) if agent == "hermes" else directory_value).expanduser().resolve()
-    settings_file = Path.home() / ".config" / PLUGIN / "settings.json"
+    from config_directories import global_config_directory
+    settings_file = Path(settings_path) if settings_path else global_config_directory() / 'settings.json'
     if action not in ("check", "preference"):
         save_preference(settings_file, agent, directory, action == "enable")
     preferences = read_settings(settings_file).get("default_skill_reminders", {"agents": []})

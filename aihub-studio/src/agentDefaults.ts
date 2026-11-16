@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { validateSpeechPreferences } from './speech.js';
+import { resolveConfiguration } from './config.js';
 
 const PLUGIN = 'aihub-studio';
 const AGENTS = ['codex', 'claude-code', 'workbuddy', 'hermes'];
@@ -10,7 +11,7 @@ type Entry = { agent: string; config_dir: string; enabled: boolean };
 type Settings = Record<string, unknown> & { default_skill_reminders?: { version: number; agents: Entry[] } };
 export interface DefaultsOptions {
   agent: string; action?: string; configDir?: string; globalEnabled?: boolean;
-  homeDirectory?: string; env?: NodeJS.ProcessEnv;
+  homeDirectory?: string; env?: NodeJS.ProcessEnv; cwd?: string; settingsPath?: string;
 }
 
 function canonical(path: string, depth = 0): string {
@@ -97,7 +98,14 @@ export function agentDefaults(options: DefaultsOptions): Record<string, unknown>
     if (process.platform === 'win32') directory = directory.replace(/%([^%]+)%/g, (original, name) => env[name] ?? original);
   }
   const configDir = canonical(resolve(directory.replace(/^~(?=[/\\]|$)/, userDirectory)));
-  const settingsFile = join(userDirectory, '.config', PLUGIN, 'settings.json');
+  let settingsFile = options.settingsPath;
+  if (!settingsFile) {
+    const configuration = resolveConfiguration({skill: null, cwd: options.cwd, homeDirectory: userDirectory, env});
+    if (configuration.inspection.problems.some(p => p.reason === 'unreadable' || p.reason === 'expected_absolute_config_directory')) {
+      throw new Error('Cannot read configuration directory settings; run config-check.');
+    }
+    settingsFile = join(configuration.directories.global, 'settings.json');
+  }
   if (!['check', 'preference'].includes(action)) savePreference(settingsFile, agent, configDir, action === 'enable');
   const preferences = readSettings(settingsFile).default_skill_reminders;
   const enabled = preferences?.agents.find(item => item.agent === agent && item.config_dir === configDir)?.enabled ?? true;

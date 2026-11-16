@@ -39,7 +39,7 @@ class MarketplaceHandler(CoreHandler):
             self.check_origin()
             name = parsed.path[1:]
             original = (server.STATIC / name).read_text(encoding='utf-8')
-            extras = ('configuration.js', 'markdown.js', 'artifacts.js') if name.endswith('.js') else ('configuration.css', 'artifacts.css')
+            extras = ('plugins/tikin-social/form.js', 'markdown.js', 'artifacts.js') if name.endswith('.js') else ('artifacts.css',)
             studio = self.server.adapter.plugin == 'aihub-studio'
             if studio:
                 extras = ('plugins/aihub-studio/form.js', 'markdown.js', 'artifacts.js') if name.endswith('.js') else ('artifacts.css',)

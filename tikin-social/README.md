@@ -1,5 +1,9 @@
 # tikin Social
 
+4.2.0 支持自定义完整全局／当前项目配置目录，并接入共用 UI 核心 2.1.0 的逐项范围与统一保存。打开配置中心，在顶部项目路径旁展开“配置文件位置”，目录与业务修改可一起保存；未修改项不复制，恢复默认不删除自定义根内的文件。settings.json 随全局根切换，工作目录与产物位置保持原样。
+
+Windows 两产品共用 UI 回归 54 项通过；实际 Codex 原生发现与正式配置页离线闭环共 64 项、独立浏览器桌面／键盘／390px 检查通过。macOS 待验，WorkBuddy 按本次用户确认跳过；未调用线上或付费业务。
+
 ## 快速打开配置
 
 在 Codex 发送 `$tikin-douyin 配置` 或 `$tikin-douyin 打开设置页面`，可直接取得本 Plugin 统一配置中心的有效链接和实际空闲期限；其余随包 Skill 同样支持。Claude Code 用对应 `/` 入口，WorkBuddy 明确选中该 Skill 后发送相同短语。缺少业务 Key 也能打开，页面保留实际项目、调用方和配置范围；只打开页面不会调用业务接口。
@@ -97,7 +101,7 @@ Choosing “Set as default” authorizes the Agent to write the current Agent’
 
 > Enable tikin-social default-Skill reminders again in this Agent.
 
-The choice is automatically read from `~/.config/tikin-social/settings.json`, separately for each Agent type and actual configuration directory. All 17 Skills and future versions share that Plugin preference; aihub-studio is independent. Existing routing and other settings are preserved. This preference does not come from environment variables or `.env` files. Missing preferences mean reminders are enabled; read-only checks create no files. Only an explicit disable/enable request saves a choice. Running without global configuration also skips this check and refuses preference writes.
+The choice is automatically read from `settings.json` in the selected global configuration root (default `~/.config/tikin-social/settings.json`), separately for each Agent type and actual configuration directory. All 17 Skills and future versions share that Plugin preference; aihub-studio is independent. Existing routing and other settings are preserved. This preference does not come from environment variables or `.env` files. Missing preferences mean reminders are enabled; read-only checks create no files. Only an explicit disable/enable request saves a choice. Running without global configuration also skips this check and refuses preference writes.
 
 The check needs no API key or network. Codex, Claude Code, WorkBuddy and Hermes have rule-entry guidance; Hermes uses the active Profile’s SOUL.md and records reminders separately per HERMES_HOME; unknown hosts or failed checks are reported without blocking the task. The configuration helper now selects Windows `Scripts/python.exe` or POSIX `bin/python`. Linux/WSL use their own runtime user directory and do not read Windows preferences. Real host-session loading and non-credential workflows require separate validation.
 
@@ -144,9 +148,9 @@ automatically.
 
 > 打开 Tikin Social 的配置中心。我会在网页填写 API Key，保存后请检查本机配置，再继续原任务。
 
-无需另装 Setup 即可打开。页面先展示当前生效配置，逐项标出项目覆盖、继承全局或其他来源。点击“编辑”可选择保存范围和具体文件，在保存或移除设置前预览实际生效值及来源；“来源与优先级”显示该项真实的读取顺序。Key 下提供 [Tikin 控制台](https://console.tikin.net) 链接及“或联系团队负责人分配”。页面不展示服务地址；既有地址配置仍按原加载器读取。
+无需另装 Setup 即可打开。页面展示当前生效配置，逐项标出项目或全局来源及准确文件。查看范围不移动草稿；点击该项“使用已有内容”或“保存并使用”才明确切换，差异须选择采用哪份。Key 旁提供 [Tikin 控制台](https://console.tikin.net) 链接及“或联系团队负责人分配”。页面不展示服务地址；既有地址配置仍按原加载器读取。
 
-首次新增默认个人全局 `~/.config/tikin-social/.env`；新增项目密钥默认使用 `.env.local.tikin-social`，也可明确选择普通 `.env.local`，已有密钥可选择原文件修复或移除，环境变量在原注入处修复。每次只保存所选文件，其他文件的草稿继续保留；保存较低优先级的文件时，预览会说明是否仍被上层覆盖。路由与提醒偏好保存在独立的全局 `settings.json`，平台路由可移除后继承默认方式，默认方式移除时重置为 `auto`。密钥直接在浏览器填写，不放入聊天。本页校验本机配置，不验证在线鉴权；受支持的既有文件继续读取，不迁移或删除；4.0.0 退出来源见下文。
+首次新增默认个人全局 `~/.config/tikin-social/.env`；新增项目密钥默认使用 `.env.local.tikin-social`，也可明确选择普通 `.env.local`，已有密钥可选择原文件修复或移除，环境变量在原注入处修复。底栏一次保存本次修改及明确切换的全部字段；单项保存保留其他草稿。预览说明实际来源与必要的高层同项清理，保存使用多文件事务并回读。路由与提醒偏好保存在选定全局根的 `settings.json`，平台路由可移除后继承默认方式，默认方式移除时重置为 `auto`。密钥直接在浏览器填写，不放入聊天。本页校验本机配置，不验证在线鉴权；不自动迁移或删除旧文件；4.0.0 退出来源见下文。
 
 已有 Setup 任务沿用原编号打开同一配置中心，保存后用真实加载器复查，再核对原业务提交状态。已提交或结果不明先查原结果，不重发；没有浏览器或明确选择文件编辑时，沿用[本机配置流程](skills/tikin-setup/references/credential-setup.md)。
 
@@ -158,7 +162,19 @@ automatically.
 
 Ask your Agent to list the old and proposed locations without revealing values, then wait for your migration choice. Use `.env.local.tikin-social` for a shared project key, or the retained Skill subdirectory for a distinct global account. The ordinary `.env.tikin-social` file supports nonsecret settings and repair of an existing key; new project keys use the declared local files and must be untracked and Git-ignored.
 
+### 更改完整配置目录
+
+> 打开 Tikin Social 配置中心的“配置文件位置”。我要分别设置完整的全局和当前项目配置目录，请先展示业务字段的保存目标，保留旧文件。
+
+入口在顶部当前项目路径旁，默认收起。两个绝对目录字段与业务项共用草稿和底部“保存修改”；收起保留输入，“恢复默认”保存后生效。默认全局根为 `~/.config/tikin-social`，默认项目根为实际工作文件夹。
+
+`TIKIN_GLOBAL_CONFIG_DIR` 固定保存在默认全局根 `.env`，`TIKIN_PROJECT_CONFIG_DIR` 固定保存在原工作文件夹 `.env.local.tikin-social`。先从进程环境和固定文件解析目录，再读取选定根内的业务配置、全局 Skill 子目录及 `settings.json`；环境目录优先且只读，`--no-global-config` 继续跳过全局读取与保存。
+
+自定义根替换对应默认业务根；显式自定义全局根还停用普通 Skill `~/.config/<skill-name>/.env` 回退，旧默认文件仅提供目录定位。不自定义时保留下方默认读取链。同次修改目录和业务项只把明确编辑写入新根，不复制未改项；预览显示实际来源与目标，保存核对新旧修订并回读。切换不搬迁、删除文件，不改变工作目录、任务或产物；恢复默认也保留自定义根文件。
+
 ### Configuration sources and repair
+
+The following list describes the default roots. Custom roots replace the corresponding project or Plugin global files; ordinary Skill fallback follows the policy above.
 
 The confirmed default for new shared credentials is the Plugin’s personal `.env` file. Existing
 supported project or Skill-specific choices remain valid. Each field independently uses the first nonempty
@@ -286,7 +302,7 @@ your task and can consume prepaid API balance. For a first real request, provide
 
 ## Routing and common tasks
 
-Routing preferences live separately at `~/.config/tikin-social/settings.json`. The default is
+Routing preferences live in `settings.json` in the selected global root (default `~/.config/tikin-social/settings.json`). The default is
 `auto`, which uses tikin for supported social URLs. `confirm` asks once for the user task; a
 platform-specific setting overrides the default and an explicit instruction in your request
 overrides both. Ask `tikin-setup` to change the policy, for example “Ask before Xiaohongshu

@@ -48,7 +48,7 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" default-skills \
 
 ## 提醒偏好的保存范围
 
-唯一来源是运行用户的 `~/.config/aihub-studio/settings.json`，不从环境变量、项目 `.env*`、普通 Skill 配置、旧 Plugin 别名或安装目录读取这个偏好。文件使用 `default_skill_reminders.version=1`，其 `agents` 列表每条包含 `agent`、解析 symlink 后的实际 `config_dir` 和布尔 `enabled`；无记录时默认开启。
+唯一来源是运行用户所选全局配置根的 `settings.json`（默认 `~/.config/aihub-studio/settings.json`；先解析 `AIHUB_GLOBAL_CONFIG_DIR`，自定义时不补读旧根），不从环境变量、项目 `.env*`、普通 Skill 配置、旧 Plugin 别名或安装目录读取这个偏好。文件使用 `default_skill_reminders.version=1`，其 `agents` 列表每条包含 `agent`、解析 symlink 后的实际 `config_dir` 和布尔 `enabled`；无记录时默认开启。
 
 同一用户、同一 Plugin、同一 Agent 配置目录的全部 Skill 与后续版本共用一条记录；不同 Agent 或配置目录分别保存，另一个 Plugin 独立。设置程序保留未知字段和其他 Agent 的记录；tikin 的已有 `routing` 同样保留。读取无副作用；保存使用文件锁、并发变更检查及原子替换，遇到损坏或未知格式不覆盖。残留锁只在查明没有程序正在保存后才能移除。更新 Plugin 不删除个人设置。
 

@@ -13,25 +13,15 @@ from unittest.mock import patch
 MARKET = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(MARKET / 'aihub-studio/shared'), str(MARKET / 'ui-common')]
 from configuration import Configuration as FileConfiguration
+from scoped_configuration import ScopedConfiguration
 from importlib import import_module, util
 StudioConfiguration = import_module("plugins.aihub-studio.scopes").StudioConfiguration
 from persistence import Transaction, digest, replace
 from catalog import Catalog
-from skill_ui.contracts import UIError, public_config as scoped_public_config
-
-# Tikin keeps its own pinned protocol; exercise its shipped public projection.
-legacy_spec = util.spec_from_file_location('tikin_contracts', MARKET / 'tikin-social/skills/tikin-setup/shared/skill_ui/contracts.py')
-legacy_contracts = util.module_from_spec(legacy_spec)
-legacy_spec.loader.exec_module(legacy_contracts)
-
-
-def public_config(snapshot):
-    return (scoped_public_config if snapshot.get('configuration_protocol') == 'field-scopes-v1'
-            else legacy_contracts.public_config)(snapshot)
-
+from skill_ui.contracts import UIError, public_config
 
 def configuration(package, project, options, environment=None):
-    cls = StudioConfiguration if options['plugin'] == 'aihub-studio' else FileConfiguration
+    cls = StudioConfiguration if options['plugin'] == 'aihub-studio' else ScopedConfiguration
     return cls(package, project, options, environment)
 
 
@@ -46,10 +36,8 @@ class Integration(unittest.TestCase):
         self.addCleanup(self.environment.stop)
 
     def submit(self, adapter, method, changes, revision, target):
-        if adapter.plugin == 'aihub-studio':
-            changes = {'files': {target: changes}, 'switches': {}}
-            return getattr(adapter, method)(changes, revision)
-        return getattr(adapter, method)(changes, revision, target)
+        changes = {'files': {target: changes}, 'switches': {}}
+        return getattr(adapter, method)(changes, revision)
 
     def save(self, adapter, changes, revision, target):
         return self.submit(adapter, 'save', changes, revision, target)
@@ -151,7 +139,7 @@ class Integration(unittest.TestCase):
         for caller in ('aihub-image', 'aihub-audio', 'aihub-video', 'aihub-music', 'aihub-understanding', None):
             adapter.options['skill'] = caller
             fields = self.fields(adapter.snapshot())
-            self.assertEqual(len(fields), 18)
+            self.assertEqual(len(fields), 20)
             self.assertEqual(fields[key]['effective']['value'], 'audio-voice')
             self.assertEqual(fields[key]['effective']['source'], self.target(audio))
             self.assertNotIn(self.target(image), fields[key]['targets'])

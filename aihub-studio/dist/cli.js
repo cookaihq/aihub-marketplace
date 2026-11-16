@@ -53,7 +53,10 @@ Commands:
   resume --record task.json [--wait-seconds 0..600]
   task --task-id ID --media TYPE --output-dir DIR [--wait-seconds 0..600]
   upload --input-file JSON
-Global configuration is read automatically from ~/.config/aihub-studio/, then ~/.config/<skill-name>/.env.
+Global configuration defaults to ~/.config/aihub-studio/, then ~/.config/<skill-name>/.env.
+AIHUB_GLOBAL_CONFIG_DIR in the default global .env and AIHUB_PROJECT_CONFIG_DIR in the original cwd's
+.env.local.aihub-studio select complete roots (including settings.json); environment selectors take priority.
+A custom global root replaces old global business sources and the ordinary Skill fallback. cwd/output stay unchanged.
 Configuration: process environment > project .env.local.aihub-studio > .env.aihub-studio > .env.local > .env
   > Plugin <skill-name>/.env.local > <skill-name>/.env > .env.local > .env
   > standalone ~/.config/<skill-name>/.env (only fills missing or empty fields).

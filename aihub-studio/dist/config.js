@@ -1,6 +1,6 @@
 import { readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, parse, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { MINIMAX_DEFAULT_VOICE_KEY, ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY, validVoiceId } from './speech.js';
 export const RESULT_CHECK_DEFAULTS = { enabled: true, provider: 'auto', models: ['gemini-4-hydrogen'], sources: {} };
@@ -13,7 +13,8 @@ const KEYS = ['AIHUB_API_KEY'];
 export const MODEL_KEYS = Object.fromEntries(['image', 'video', 'audio', 'music', 'understanding'].map(kind => [`aihub-${kind}`, `AIHUB_${kind.toUpperCase()}_MODELS`]));
 const SELECTION_KEYS = ['AIHUB_MODEL_FALLBACK_POLICY', 'AIHUB_MODEL_MAX_ATTEMPTS'];
 export const ELEVEN_PREFERENCE_KEYS = [ELEVEN_DEFAULT_VOICE_KEY, ELEVEN_FAVORITES_KEY];
-const DECLARED_KEYS = new Set([...KEYS, ...Object.values(MODEL_KEYS), ...SELECTION_KEYS, ...BEHAVIOR_KEYS, MINIMAX_DEFAULT_VOICE_KEY, ...ELEVEN_PREFERENCE_KEYS]);
+export const DIRECTORY_KEYS = ['AIHUB_GLOBAL_CONFIG_DIR', 'AIHUB_PROJECT_CONFIG_DIR'];
+const DECLARED_KEYS = new Set([...KEYS, ...DIRECTORY_KEYS, ...Object.values(MODEL_KEYS), ...SELECTION_KEYS, ...BEHAVIOR_KEYS, MINIMAX_DEFAULT_VOICE_KEY, ...ELEVEN_PREFERENCE_KEYS]);
 // Stable Plugin manifest name; independent of the installation directory or host Agent.
 const PLUGIN_NAME = 'aihub-studio';
 // Fixed service identity shared by all Skills; configuration cannot redirect it.
@@ -45,16 +46,6 @@ export function resolveConfiguration(options) {
     const homeDirectory = resolve(options.homeDirectory ?? homedir());
     if (skill !== null && !Object.hasOwn(MODEL_KEYS, skill))
         throw new Error('A valid caller Skill from the bundled Skills or explicit null is required.');
-    const paths = [join(cwd, `.env.local.${PLUGIN_NAME}`), join(cwd, `.env.${PLUGIN_NAME}`),
-        join(cwd, '.env.local'), join(cwd, '.env')];
-    if (useGlobalConfig) {
-        const root = join(homeDirectory, '.config', PLUGIN_NAME);
-        if (skill)
-            paths.push(join(root, skill, '.env.local'), join(root, skill, '.env'));
-        paths.push(join(root, '.env.local'), join(root, '.env'));
-        if (skill)
-            paths.push(join(homeDirectory, '.config', skill, '.env'));
-    }
     const identity = (path) => {
         let target = resolve(path);
         try {
@@ -63,38 +54,83 @@ export function resolveConfiguration(options) {
         catch { /* Missing files still have a lexical identity. */ }
         return process.platform === 'win32' ? target.toLowerCase() : target;
     };
+    const layers = [{ name: 'environment', values: env }];
+    const files = [];
+    const problems = [];
+    const cache = new Map();
+    const readConfig = (path) => {
+        if (cache.has(path))
+            return cache.get(path);
+        let file;
+        try {
+            const replacement = options.fileOverrides?.[path];
+            if (replacement === null) {
+                file = { path, revision: null, values: {} };
+                cache.set(path, file);
+                return file;
+            }
+            const bytes = replacement === undefined ? readFileSync(path) : Buffer.from(replacement, 'utf8');
+            file = { path, revision: createHash('sha256').update(bytes).digest('hex'), values: parseEnv(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) };
+        }
+        catch (error) {
+            const missing = error.code === 'ENOENT';
+            file = { path, revision: null, values: {}, ...(!missing ? { error: 'unreadable' } : {}) };
+            if (!missing)
+                problems.push({ source: path, reason: 'unreadable' });
+        }
+        cache.set(path, file);
+        return file;
+    };
+    const defaultGlobal = join(homeDirectory, '.config', PLUGIN_NAME);
+    const anchors = { AIHUB_GLOBAL_CONFIG_DIR: join(defaultGlobal, '.env'), AIHUB_PROJECT_CONFIG_DIR: join(cwd, `.env.local.${PLUGIN_NAME}`) };
+    const directories = { global: defaultGlobal, project: cwd, default_global: defaultGlobal, default_project: cwd,
+        custom_global: false, anchors, sources: {}, values: {}, layers: [{ path: 'environment', values: {} }] };
+    for (const key of DIRECTORY_KEYS) {
+        if (key === 'AIHUB_GLOBAL_CONFIG_DIR' && !useGlobalConfig)
+            continue;
+        const file = readConfig(anchors[key]);
+        const raw = env[key]?.trim() ? env[key] : file.values[key] ?? '';
+        directories.layers[0].values[key] = env[key];
+        directories.layers.push({ ...file, values: { ...(file.values[key] !== undefined ? { [key]: file.values[key] } : {}) } });
+        if (raw.trim()) {
+            const source = env[key]?.trim() ? 'environment' : anchors[key];
+            directories.sources[key] = source;
+            directories.values[key] = raw;
+            if (!isAbsolute(raw.trim()) || (process.platform === 'win32' && parse(raw.trim()).root.length < 2) || /[\x00-\x1f\x7f\u0085\u2028\u2029]/.test(raw)) {
+                problems.push({ key, source, reason: 'expected_absolute_config_directory' });
+            }
+            else {
+                directories[key === 'AIHUB_GLOBAL_CONFIG_DIR' ? 'global' : 'project'] = resolve(raw.trim());
+                if (key === 'AIHUB_GLOBAL_CONFIG_DIR')
+                    directories.custom_global = true;
+            }
+        }
+    }
+    const projectRoot = directories.project, globalRoot = directories.global;
+    const paths = [join(projectRoot, `.env.local.${PLUGIN_NAME}`), join(projectRoot, `.env.${PLUGIN_NAME}`), join(projectRoot, '.env.local'), join(projectRoot, '.env')];
+    if (useGlobalConfig) {
+        if (skill)
+            paths.push(join(globalRoot, skill, '.env.local'), join(globalRoot, skill, '.env'));
+        paths.push(join(globalRoot, '.env.local'), join(globalRoot, '.env'));
+        if (skill && !directories.custom_global)
+            paths.push(join(homeDirectory, '.config', skill, '.env'));
+    }
     const deletion = options.deletion;
     if (deletion && (!paths.some(path => identity(path) === identity(deletion.path)) || !deletion.fields.length ||
         deletion.fields.some(key => key !== 'AIHUB_API_KEY') || new Set(deletion.fields).size !== deletion.fields.length)) {
         throw new Error('Deletion preview requires a known configuration path and declared credential fields.');
     }
-    const layers = [{ name: 'environment', values: env }];
-    const files = [];
-    const problems = [];
-    const addFile = (path) => {
-        try {
-            const replacement = options.fileOverrides?.[path];
-            if (replacement === null) {
-                files.push({ path, revision: null });
-                return;
-            }
-            const bytes = replacement === undefined ? readFileSync(path) : Buffer.from(replacement, 'utf8');
-            files.push({ path, revision: createHash('sha256').update(bytes).digest('hex') });
-            const parsed = parseEnv(bytes.toString('utf8'));
-            if (deletion && identity(path) === identity(deletion.path))
-                for (const key of deletion.fields)
-                    delete parsed[key];
-            layers.push({ name: path, values: parsed });
-        }
-        catch (error) {
-            const missing = error.code === 'ENOENT';
-            files.push({ path, revision: null, ...(!missing ? { error: 'unreadable' } : {}) });
-            if (!missing)
-                problems.push({ source: path, reason: 'unreadable' });
-        }
-    };
-    for (const path of paths)
-        addFile(path);
+    for (const path of paths) {
+        const file = readConfig(path), parsed = { ...file.values };
+        for (const key of DIRECTORY_KEYS)
+            delete parsed[key];
+        if (deletion && identity(path) === identity(deletion.path))
+            for (const key of deletion.fields)
+                delete parsed[key];
+        layers.push({ name: path, values: parsed });
+    }
+    for (const { values: _values, ...file } of cache.values())
+        files.push(file);
     const values = {};
     const sources = {};
     const selectionSources = {};
@@ -167,7 +203,7 @@ export function resolveConfiguration(options) {
     }
     const inspection = {
         schema: 'secret-book.config-inspection/v1', status: problems.length ? 'configuration_required' : 'ok',
-        consumer: { kind: 'plugin', name: PLUGIN_NAME }, skill, cwd, global_enabled: useGlobalConfig,
+        consumer: { kind: 'plugin', name: PLUGIN_NAME }, skill, cwd, global_enabled: useGlobalConfig, directories,
         layers: files, fields, problems,
         ...(!values.AIHUB_API_KEY ? { next_step: CREDENTIAL_SETUP_HINT } : {}),
         environment: Object.fromEntries([...KEYS, ...BEHAVIOR_KEYS, ...speechKeys].map(key => [key, env[key]?.trim() ? credentialId(env[key]) : null])),
@@ -177,9 +213,9 @@ export function resolveConfiguration(options) {
     // complete process environment through this local pipe.
     const layerValues = [
         { path: 'environment', values: Object.fromEntries([...DECLARED_KEYS].filter(key => env[key] !== undefined).map(key => [key, env[key]])) },
-        ...files.map(file => ({ ...file, values: layers.find(layer => layer.name === file.path)?.values ?? {} })),
+        ...files.filter(file => paths.includes(file.path)).map(file => ({ ...file, values: layers.find(layer => layer.name === file.path)?.values ?? {} })),
     ];
-    return { values, sources, selectionSources, modelKey, inspection, layerValues };
+    return { values, sources, selectionSources, modelKey, inspection, layerValues, directories };
 }
 /** Read the same layers as loadConfig, including failures. Never returns credential values. */
 export function inspectConfig(options, credentialsOnly = false) {

@@ -62,7 +62,7 @@ class Configuration:
                                        owner_path=self.project, extra_lock=extra_lock)
 
     def _private_project_file(self, path):
-        return Path(path) in (self.project / ('.env.local.' + self.plugin), self.project / '.env.local')
+        return Path(path).name in ('.env.local.' + self.plugin, '.env.local')
 
     def _load(self, overrides=None):
         payload = dict(self.options, project=str(self.project), overrides=overrides or {})
@@ -82,13 +82,13 @@ class Configuration:
     def _layer_id(path):
         return 'process' if path == 'environment' else 'file_' + hashlib.sha256(path.encode()).hexdigest()[:20]
 
-    def _layer(self, path, home, enabled=True):
+    def _layer(self, path, home, directories, enabled=True):
         target = Path(path)
         if path == 'environment':
             return dict(id='process', name='进程环境变量', scope='process', scope_label='本次启动注入，只读。',
                         path='进程环境变量', readonly=True, enabled=True, rank=0)
-        plugin_root = home / '.config' / self.plugin
-        if target.parent == self.project:
+        plugin_root = Path(directories['global'])
+        if target.name != 'settings.json' and (target.parent == Path(directories['project']) or path == directories['anchors'][('AIHUB' if self.plugin == 'aihub-studio' else 'TIKIN') + '_PROJECT_CONFIG_DIR']):
             scope, name = 'project', '项目 · ' + target.name
             plugin_file = target.name in ('.env.local.' + self.plugin, '.env.' + self.plugin)
             label = ('仅当前项目的 ' + self.plugin + ' 各 Skill 共用。' if plugin_file
@@ -132,14 +132,15 @@ class Configuration:
     def _state(self, overrides=None):
         data = self._load(overrides)
         shared = data['shared']
+        directories = data['directories']
         loads = [shared, *data.get('models', {}).values()]
         home = Path(data['home_directory'])
         paths = {layer['path']: layer['revision'] for load in loads for layer in load['inspection']['layers']}
-        layers = {self._layer_id(path): self._layer(path, home) for path in ['environment', *paths]}
-        settings_path = data.get('settings_path') or str(home / '.config' / self.plugin / 'settings.json')
+        layers = {self._layer_id(path): self._layer(path, home, directories) for path in ['environment', *paths]}
+        settings_path = data.get('settings_path') or str(Path(directories['global']) / 'settings.json')
         settings_id = self._layer_id(settings_path)
         settings_enabled = bool(self.options['global_enabled'])
-        layers[settings_id] = self._layer(settings_path, home, settings_enabled)
+        layers[settings_id] = self._layer(settings_path, home, directories, settings_enabled)
         if settings_enabled:
             raw = (overrides[settings_path].encode('utf-8') if overrides and settings_path in overrides else read(settings_path))
             paths[settings_path] = digest(raw)
@@ -151,7 +152,35 @@ class Configuration:
             rows = []
             targets = []
             is_settings = field.get('settings_path') or key.startswith('routing.') or key == 'default_skill_reminders'
-            if is_settings:
+            if field.get('directory_scope'):
+                scope = field['directory_scope']
+                anchor = directories['anchors'][key]
+                field.update(default=directories['default_' + scope], anchor=anchor)
+                enabled = scope != 'global' or settings_enabled
+                source = directories['sources'].get(key)
+                effective = dict(source=self._layer_id(source) if source else 'default',
+                                 status='set' if source else 'default', value=directories['values'].get(key, field['default']))
+                own = {self._layer_id(row['path']): row for row in directories['layers'] if row['path'] in ('environment', anchor)}
+                for layer in layers.values():
+                    row = own.get(layer['id'])
+                    present = bool(row and key in row['values'])
+                    raw = row['values'].get(key) if row else None
+                    status = ('skipped' if row is None or not enabled else 'error' if row.get('error') else
+                              'missing' if not present else 'empty' if not raw or not raw.strip() else
+                              'effective' if layer['id'] == effective['source'] else 'shadowed')
+                    rows.append(dict(layer=layer['id'], present=present, status=status, value=raw))
+                    if status == 'error':
+                        effective.update(status='error', message='目录设置文件无法读取，请修复后重新载入。')
+                        errors.append(effective['message'])
+                field['readonly'] = not enabled
+                targets = [self._layer_id(anchor)] if enabled else []
+                if effective['status'] != 'error':
+                    try:
+                        self._validate(field, effective['value'])
+                    except UIError as error:
+                        effective.update(status='invalid', message=error.message)
+                        errors.append(error.message)
+            elif is_settings:
                 settings = data.get('settings', {})
                 explicit = False
                 value = field.get('default')
@@ -240,15 +269,15 @@ class Configuration:
         revision = hmac.new(self.secret, json.dumps(fingerprint, sort_keys=True, ensure_ascii=False).encode(), hashlib.sha256).hexdigest()
         task = self.options.get('task') or {'id': self.plugin + '-configuration', 'binding': str(self.project),
             'continuation': '请在项目 ' + str(self.project) + ' 中重新检查 ' + self.plugin + ' 配置，并继续此前已授权的任务。'}
-        defaults = {'project': self._layer_id(str(self.project / ('.env.local.' + self.plugin)))}
+        defaults = {'project': self._layer_id(str(Path(directories['project']) / ('.env.local.' + self.plugin)))}
         if settings_enabled:
-            defaults['global'] = self._layer_id(str(home / '.config' / self.plugin / '.env'))
+            defaults['global'] = self._layer_id(str(Path(directories['global']) / '.env'))
         snapshot = {'revision': revision, 'layers': sorted(layers.values(), key=lambda layer: (layer['rank'], layer['path'])),
                     'fields': fields, 'default_targets': defaults, 'validation_errors': sorted(set(errors)),
                     'validation': '本地格式、原加载器回读与必需项检查',
                     'note': '按项展示当前生效来源。编辑与保存只作用于所选文件；更高层仍可覆盖它。仅校验本机配置，不验证在线鉴权。' +
                             (' 全局配置本次已关闭。' if not settings_enabled else ''),
-                    'task': task}
+                    'task': task, 'directories': directories}
         return snapshot, data, paths
 
     def snapshot(self):
@@ -265,6 +294,8 @@ class Configuration:
         strings = value if isinstance(value, list) else [value] if isinstance(value, str) else []
         if any(not isinstance(v, str) or any(c in v for c in '\r\n\0\u2028\u2029\x85') or '••••••' in v for v in strings):
             raise UIError('validation', field['label'] + '包含不支持的字符。', 422)
+        if field.get('directory_scope') and value and (not Path(value.strip()).is_absolute() or any(ord(c) < 32 or ord(c) == 127 for c in value)):
+            raise UIError('validation', field['label'] + '请填写完整的绝对路径，或留空使用默认目录。', 422)
         if kind == 'list' and (len(value) > field.get('max_items', 50) or any(not v or (not field.get('value_pattern') and re.search(r'[\s,]', v)) for v in value) or len(set(value)) != len(value)):
             raise UIError('validation', field['label'] + '须为不重复的' + field.get('item_label', '模型 ID') + '，最多 ' + str(field.get('max_items', 50)) + ' 项。', 422)
         if any((field.get('max_length') and len(v) > field['max_length']) or (field.get('trimmed') and v != v.strip()) or
@@ -281,10 +312,10 @@ class Configuration:
         if field.get('required') and (not value or isinstance(value, str) and not value.strip()):
             raise UIError('validation', '请填写 ' + field['label'] + '，或使用“清除”。', 422)
 
-    def _candidate(self, changes, revision, target):
+    def _file_candidate(self, changes, revision, target, overrides=None):
         if not isinstance(changes, dict) or not changes:
             raise UIError('changes', '没有待保存的修改。')
-        current, data, paths = self._state()
+        current, data, paths = self._state(overrides)
         if current['revision'] != revision:
             raise UIError('conflict', '配置已被其他操作修改。草稿仍保留，请重新载入后核对。', 409)
         layer = next((layer for layer in current['layers'] if layer['id'] == target), None)
@@ -349,11 +380,11 @@ class Configuration:
                     value = str(value)
                 updates[key] = value
         path = layer['path']
-        before = read(path)
+        before = overrides[path].encode('utf-8') if overrides and path in overrides else read(path)
         if digest(before) != paths[path]:
             raise UIError('conflict', '配置文件已变化，请重新载入。', 409)
         after = ((json.dumps(settings, ensure_ascii=False, indent=2) + '\n').encode() if settings_changed else dotenv(before, updates))
-        candidate, projected, _ = self._state({path: after.decode('utf-8')})
+        candidate, projected, _ = self._state({**(overrides or {}), path: after.decode('utf-8')})
         errors = list(candidate['validation_errors'])
         values = {f['id']: f['effective']['value'] for f in candidate['fields']}
         for field in candidate['fields']:
@@ -369,13 +400,9 @@ class Configuration:
         candidate['validation_errors'] = sorted(set(errors))
         return candidate, {path: (before, after)}
 
-    def preview(self, changes, revision, target):
-        # No recovery or persistence here: preview is strictly side-effect free.
-        return self._candidate(changes, revision, target)[0]
-
-    def save(self, changes, revision, target):
+    def save(self, changes, revision):
         self.transaction.recover()
-        candidate, modifications = self._candidate(changes, revision, target)
+        candidate, modifications = self._candidate(changes, revision, saving=True)
         if candidate['validation_errors']:
             raise UIError('validation', '；'.join(candidate['validation_errors']), 422)
         def verify(written):
@@ -383,5 +410,9 @@ class Configuration:
             expected = candidate['revision'] if written else revision
             if fresh['revision'] != expected:
                 raise UIError('conflict', '配置已变化或回读与预览不一致；未覆盖外部修改，请重新载入核对。', 409)
+            if not written:
+                projected = self._state({path: after.decode('utf-8') for path, (_, after) in modifications.items()})[0]
+                if projected['revision'] != candidate['revision']:
+                    raise UIError('conflict', '新配置目录中的文件已变化，请重新载入核对。', 409)
             return fresh
         return self.transaction.apply(modifications, verify)

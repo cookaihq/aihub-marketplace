@@ -25,4 +25,9 @@ def definitions(plugin):
                                 clear_help="清除后跟随默认调用方式。"))
     fields.append(field("default_skill_reminders", "提醒设为默认 Skill", "使用偏好", "boolean", default=True,
                         advanced=True, help="只修改当前 Agent 的提醒偏好，不改写宿主规则，也不代表已设为默认。"))
+    prefix = 'AIHUB' if plugin == 'aihub-studio' else 'TIKIN'
+    for scope, label, help in [('global', '全局配置目录', '本插件在所有项目中共用的配置目录。'),
+                                ('project', '当前项目配置目录', '仅用于当前项目，不影响其他项目。')]:
+        fields.append(field(prefix + '_' + scope.upper() + '_CONFIG_DIR', label, '配置文件位置',
+                            directory_scope=scope, advanced=True, help=help))
     return fields
