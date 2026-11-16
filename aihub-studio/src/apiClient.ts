@@ -95,6 +95,8 @@ export interface RequestOptions {
   timeoutMs?: number;
   /** Absolute wall-clock deadline, including all attempts and backoff. */
   deadline?: number;
+  /** Headers from the final, successfully parsed response only. */
+  onResponseHeaders?: (headers: Headers) => void;
 }
 
 const MAX_ATTEMPTS = 3;
@@ -252,6 +254,7 @@ export class AihubmaxClient {
         }
         const evidence = await capture(parsed);
         if (parsed && typeof parsed === 'object') this.evidence.set(parsed, evidence);
+        opts.onResponseHeaders?.(response.headers);
         return parsed;
       }
 

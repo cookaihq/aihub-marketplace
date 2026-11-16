@@ -6,7 +6,6 @@ import { join } from 'node:path';
 import { loadConfig, resolveConfiguration } from '../src/config.js';
 import { selectionPlan } from '../src/selection.js';
 import { elevenPresetVoices, loadVoiceLibrary } from '../src/voiceLibrary.js';
-import { AihubmaxClient } from '../src/apiClient.js';
 
 test('ElevenLabs voice and favorites use audio layers, support explicit empty favorites and keep selection separate from dialogue', async () => {
   const dir=await mkdtemp(join(tmpdir(),'aihub-eleven-voices-')), project=join(dir,'project'), home=join(dir,'home');
@@ -47,13 +46,14 @@ test('ElevenLabs directory keeps stable IDs, multilingual filters, categories an
   const rows=elevenPresetVoices(raw);
   assert.deepEqual(rows[0]?.languages,['en','zh']);assert.deepEqual(rows[0]?.tag_list,['narration']);assert.equal(rows[0]?.voice_name,'Narrator');
   assert.equal(rows[0]?.sample_audio,raw[0]!.preview_url);
-  const request=AihubmaxClient.prototype.request;
+  const fetch=globalThis.fetch;
   const routes:string[]=[];
-  AihubmaxClient.prototype.request=async function<T>(_method:string,path:string):Promise<T>{routes.push(path);return raw as T;};
+  globalThis.fetch=async url=>{routes.push(new URL(String(url)).pathname+new URL(String(url)).search);
+    return new Response(JSON.stringify(raw),{headers:{'X-Total-Count':'1','X-Limit':'100','X-Offset':'0','X-Next-Offset':''}});};
   try {
     const result=await loadVoiceLibrary({cwd:process.cwd(),useGlobalConfig:false,env:{AIHUB_API_KEY:'fixture'}},'elevenlabs');
-    assert.deepEqual(result,rows);assert.deepEqual(routes,['/e/v1/configs/elevenlabs-preset-voice-id']);
-  } finally {AihubmaxClient.prototype.request=request;}
+    assert.deepEqual(result,rows);assert.deepEqual(routes,['/e/v1/configs/elevenlabs-preset-voice-id?limit=100&offset=0']);
+  } finally {globalThis.fetch=fetch;}
 });
 
 test('ElevenLabs full preset directory supports the observed 15450 entries without truncation', () => {

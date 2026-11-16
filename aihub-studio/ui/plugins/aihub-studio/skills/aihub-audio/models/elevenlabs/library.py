@@ -9,6 +9,8 @@ from skill_ui.contracts import UIError
 from skill_ui.storage import atomic_json, file_lock, private_directory
 
 SAMPLE_ORIGINS = ('https://storage.googleapis.com', 'https://api.us.elevenlabs.io')
+# The Node loader shares a five-minute budget across all catalogue pages/retries.
+DOWNLOAD_TIMEOUT_SECONDS = 310
 
 
 def sample_url(value):
@@ -28,7 +30,7 @@ def _request(configuration, operation=None, expected_identity=None):
             input=json.dumps({'project': str(configuration.project), 'global_enabled': configuration.options['global_enabled'],
                               'provider': 'elevenlabs', 'operation': operation, 'expected_identity': expected_identity}),
             cwd=configuration.project, env=configuration.environment, capture_output=True, text=True,
-            encoding='utf-8', timeout=35)
+            encoding='utf-8', timeout=35 if operation == 'cache-identity' else DOWNLOAD_TIMEOUT_SECONDS)
         data = json.loads(result.stdout)
         if data.get('error'):
             raise UIError(data['error'], data['message'], 409 if data['error'] == 'conflict' else 502)

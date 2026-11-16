@@ -46,14 +46,22 @@ test('Scribe preserves nullable and explicit controls, rejects conflicts and nev
 
 test('packaged Relay CLI handles URL and multipart Scribe, full voice catalog, errors and recovery without replay', async () => {
   const exec = promisify(execFile); const dir = await mkdtemp(join(tmpdir(), 'aihub-relay-'));
-  const posts: Record<string, unknown>[] = []; let errorCode: string | undefined; let taskFailure = false;
+  const posts: Record<string, unknown>[] = []; const catalogueOffsets: number[] = [];
+  let errorCode: string | undefined; let taskFailure = false;
   const transcript = { text: 'Hello', words: [{ text: 'Hello', start: 0, end: 0.3, speaker_id: 'speaker_0', type: 'word' }], characters: [{ text: 'H', start: 0, end: 0.05 }] };
   const optionError = () => ({ code: errorCode, type: 'invalid_request_error', message: 'Requested controls are unavailable', unsupported_parameters: ['timestamps', 'clone_strength'], suggested_remove_parameters: ['timestamps'] });
   const server = createServer(async (req, res) => {
     const json = (data: unknown, status = 200) => res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(data));
     assert.equal(req.headers.authorization, 'Bearer offline-relay');
     if (req.url === '/v1/models') return json({ data: ['scribe-v2', 'scribe-v3', 'eleven-v4-text-to-speech', 'eleven-v4-text-to-speech-custom-voice'].map(id => ({ id })) });
-    if (req.url === '/e/v1/configs/elevenlabs-preset-voice-id') return json(Array.from({ length: 15450 }, (_, i) => ({ voice_id: `voice-${i}`, name: `Voice ${i}`, description: 'full metadata', preview_url: 'https://fixtures.invalid/preview.mp3', languages: ['en'], notice_period_days: 730 })));
+    if (req.url?.startsWith('/e/v1/configs/elevenlabs-preset-voice-id?')) {
+      const query = new URL(req.url, 'http://localhost').searchParams;
+      assert.equal(query.get('limit'), '100');
+      const offset = Number(query.get('offset')); catalogueOffsets.push(offset);
+      res.setHeader('X-Total-Count', '15450'); res.setHeader('X-Limit', '100'); res.setHeader('X-Offset', String(offset));
+      res.setHeader('X-Next-Offset', offset + 100 < 15450 ? String(offset + 100) : '');
+      return json(Array.from({ length: Math.min(100, 15450 - offset) }, (_, index) => ({ voice_id: `voice-${offset + index}`, name: `Voice ${offset + index}`, description: 'full metadata', preview_url: 'https://fixtures.invalid/preview.mp3', languages: ['en'], notice_period_days: 730 })));
+    }
     if (req.method === 'POST' && req.url === '/e/v1/audios/generations') {
       const parts: Buffer[] = []; for await (const part of req) parts.push(Buffer.from(part)); const bytes = Buffer.concat(parts);
       let params: Record<string, unknown>;
@@ -78,12 +86,13 @@ test('packaged Relay CLI handles URL and multipart Scribe, full voice catalog, e
   server.listen(0, '127.0.0.1'); await once(server, 'listening'); const address = server.address(); assert(address && typeof address === 'object');
   const call = async (...args: string[]) => {
     try {
-      const { stdout } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', 'aihub-audio', '--no-global-config'], { cwd: dir, env: { ...process.env, ...fixtureTransport(`http://127.0.0.1:${address.port}`), AIHUB_API_KEY: 'offline-relay', AIHUB_RESULT_CHECK_ENABLED: '0', AIHUB_AUDIO_MODELS: 'eleven-v4-text-to-speech,eleven-v4-text-to-speech-custom-voice' }, timeout: 45_000, maxBuffer: 16 * 1024 * 1024 });
+      const { stdout } = await exec(process.execPath, [resolve('scripts/aihub.mjs'), ...args, '--skill', 'aihub-audio', '--no-global-config'], { cwd: dir, env: { ...process.env, ...fixtureTransport(`http://127.0.0.1:${address.port}`), AIHUB_API_KEY: 'offline-relay', AIHUB_RESULT_CHECK_ENABLED: '0', AIHUB_AUDIO_MODELS: 'eleven-v4-text-to-speech,eleven-v4-text-to-speech-custom-voice' }, timeout: args[0] === 'voices' ? 310_000 : 45_000, maxBuffer: 16 * 1024 * 1024 });
       return JSON.parse(stdout);
     } catch (error) { const { stdout } = error as { stdout?: string }; if (!stdout) throw error; return JSON.parse(stdout); }
   };
   try {
     const voices = await call('voices'); assert.equal(voices.voices.length, 15450); assert.equal(voices.voices[15449].notice_period_days, 730); assert.equal(posts.length, 0);
+    assert.deepEqual(catalogueOffsets, Array.from({length: 155}, (_, index) => index * 100));
     const file = join(dir, 'local.wav'); await writeFile(file, 'fixture-audio'); const requestFile = join(dir, 'request.json');
     for (const [model, input] of [['scribe-v2', 'https://fixtures.invalid/a.mp3'], ['scribe-v3', file]]) {
       await writeFile(requestFile, JSON.stringify({ operation: 'audio-transcribe', original_request: 'Transcribe without splitting', model, inputs: { audios: [input] }, requirements: model === 'scribe-v3' ? { keyterms: [], secondary_language_codes: ['en'], no_verbatim: false, temperature: 0, num_speakers: null } : {} }));

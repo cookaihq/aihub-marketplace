@@ -3,6 +3,7 @@ import { loadConfig, inspectConfig, ConfigurationError, CREDENTIAL_SETUP_HINT, r
 import { checkMediaTools } from './download.js';
 import { models, describe } from './models.js';
 import { AihubmaxClient, ApiError } from './apiClient.js';
+import { downloadElevenlabsCatalogue } from './voiceLibrary.js';
 import { generate, createVoice, resume, adoptTask, upload, understand, nativeMusic, TaskPersistenceError, failureInfo } from './workflow.js';
 import { selectionPlan } from './selection.js';
 import { startRun, continueRun } from './runs.js';
@@ -207,7 +208,7 @@ async function mainWithDiagnostics(argv, events) {
             else if (command === 'voices') {
                 if (skill !== 'aihub-audio')
                     throw new Error('--skill must be aihub-audio.');
-                const voices = await new AihubmaxClient(cfg).request('GET', '/e/v1/configs/elevenlabs-preset-voice-id');
+                const voices = await downloadElevenlabsCatalogue(new AihubmaxClient(cfg));
                 if (!Array.isArray(voices) || voices.some(row => !row || typeof row.voice_id !== 'string'))
                     throw new Error('Invalid ElevenLabs voice catalog.');
                 output = { schema_version: 1, status: 'ok', voices };

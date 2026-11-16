@@ -24,6 +24,45 @@ eleven = import_module('plugins.aihub-studio.skills.aihub-audio.models.elevenlab
 
 
 class VoiceLibrary(unittest.TestCase):
+    def test_elevenlabs_replaces_only_a_complete_directory_and_keeps_old_bytes_on_write_failure(self):
+        with tempfile.TemporaryDirectory(dir=os.environ['TEMP'], prefix='eleven-atomic-') as folder:
+            project = Path(folder)
+            cfg = SimpleNamespace(project=project)
+            identity = {'identity': 'b' * 64, 'home_directory': folder}
+            path = project / '.config/aihub-studio/cache/voice-library' / ('b' * 64 + '.json')
+            voices = [{'voice_id': 'old', 'metadata': {'preserve': False}}]
+            def request(configuration, operation=None, expected_identity=None):
+                return identity if operation == 'cache-identity' else {'voices': voices}
+            with patch.object(eleven, '_request', side_effect=request):
+                eleven.load(cfg)
+                previous = path.read_bytes()
+                voices = [{'voice_id': 'new-' + str(index), 'metadata': {'index': index}} for index in range(201)]
+                replace = os.replace
+                def check_then_replace(temporary, destination):
+                    self.assertEqual(Path(destination), path)
+                    self.assertEqual(path.read_bytes(), previous)
+                    self.assertEqual(json.loads(Path(temporary).read_bytes())['voices'], voices)
+                    replace(temporary, destination)
+                with patch('skill_ui.storage.os.replace', side_effect=check_then_replace):
+                    eleven.load(cfg, refresh=True)
+                previous = path.read_bytes()
+                voices = []
+                with patch('skill_ui.storage.os.replace', side_effect=OSError('synthetic replacement failure')):
+                    with self.assertRaises(OSError):
+                        eleven.load(cfg, refresh=True)
+                self.assertEqual(path.read_bytes(), previous)
+                self.assertFalse(list(path.parent.glob('*.tmp')))
+
+    def test_elevenlabs_first_download_failure_creates_no_directory_snapshot(self):
+        with tempfile.TemporaryDirectory(dir=os.environ['TEMP'], prefix='eleven-first-fail-') as folder:
+            identity = {'identity': 'c' * 64, 'home_directory': folder}
+            def request(configuration, operation=None, expected_identity=None):
+                if operation == 'cache-identity': return identity
+                raise UIError('voice_library', 'synthetic incomplete download', 502)
+            with patch.object(eleven, '_request', side_effect=request):
+                with self.assertRaises(UIError): eleven.load(SimpleNamespace(project=Path(folder)))
+            self.assertFalse(list((Path(folder) / '.config/aihub-studio/cache/voice-library').glob('*.json')))
+
     def test_elevenlabs_preview_allowlist_and_directory_failure(self):
         allowed = 'https://storage.googleapis.com/eleven-public/preview.mp3'
         self.assertEqual(eleven.sample_url(allowed), allowed)

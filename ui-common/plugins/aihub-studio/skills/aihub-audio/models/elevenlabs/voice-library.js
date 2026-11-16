@@ -61,7 +61,7 @@
         <div class="el-list" id="el-list" aria-label="音色列表"></div>
         <div class="el-pagination"><span id="el-range"></span><div><button class="el-icon" data-el="previous" aria-label="上一页">${icon('arrow')}</button><span id="el-page">1 / 1</span><button class="el-icon el-next" data-el="next" aria-label="下一页">${icon('arrow')}</button></div><span class="el-page-size">每页 50 个</span></div>
         <footer class="el-footer"><div class="el-save-scope"><span>保存到</span><div role="radiogroup" aria-label="音色保存范围"><button role="radio" data-el-scope="global" aria-checked="true">全局</button><button role="radio" data-el-scope="project" aria-checked="false">本项目</button></div><small id="el-scope-help">多个项目共用</small></div><div class="el-selection" id="el-selection">选择一个音色</div><button class="el-primary" data-el="save" disabled>保存并使用</button></footer>
-        <div class="el-bottom-note"><span>试听使用音色库已有样音，不生成新语音</span><span>关闭后可返回完整配置中心</span></div>`;
+        <div class="el-bottom-note"><span>目录通常低频更新；搜索与筛选在本机完成，需要时可重新下载</span><span>试听使用已有样音，不生成新语音</span></div>`;
       document.body.append(dialog);
       dialog.addEventListener('click',event=>this.click(event));
       dialog.addEventListener('cancel',event=>{event.preventDefault();this.close();});

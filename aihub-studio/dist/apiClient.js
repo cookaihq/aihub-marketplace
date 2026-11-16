@@ -185,6 +185,7 @@ export class AihubmaxClient {
                 const evidence = await capture(parsed);
                 if (parsed && typeof parsed === 'object')
                     this.evidence.set(parsed, evidence);
+                opts.onResponseHeaders?.(response.headers);
                 return parsed;
             }
             // No verified idempotency or rejection guarantee exists for AIhub generation POSTs.

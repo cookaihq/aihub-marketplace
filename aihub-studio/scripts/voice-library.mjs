@@ -1,5 +1,5 @@
 // Private UI pipe: configuration values and remote error bodies never reach the browser.
-import {loadVoiceLibrary, voiceLibraryIdentity} from '../dist/voiceLibrary.js';
+import {loadVoiceLibrary, voiceLibraryIdentity, VoiceCatalogueError} from '../dist/voiceLibrary.js';
 import {ApiError} from '../dist/apiClient.js';
 import {resolveConfiguration} from '../dist/config.js';
 import {homedir} from 'node:os';
@@ -24,6 +24,8 @@ try {
 } catch (error) {
   const status = error instanceof ApiError ? error.status : 0;
   const message = error.message === 'missing_key' ? '请先配置音频 Skill 使用的 AIhub API Key，再重新载入音色库。'
+    : error instanceof VoiceCatalogueError && error.code === 'catalogue_changed' ? '下载期间音色目录发生变化，已有缓存保留；请点击“重新下载”从头获取完整目录。'
+    : error instanceof VoiceCatalogueError ? '音色目录分页响应不完整或进度异常，已有缓存保留；请稍后重新下载。'
     : status === 401 || status === 403 ? '音色库鉴权失败，请检查音频 Skill 使用的 AIhub API Key。'
     : status === 429 ? '音色库暂时限流，请稍后重试。'
     : '音色库暂时无法读取，请稍后重试；仍可手填音色 ID，已有设置与收藏保留。';
