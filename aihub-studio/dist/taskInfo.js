@@ -97,11 +97,11 @@ export async function createTask(outputRoot, skill, kind, recordName, secrets = 
     assertOutsideInstallation(outputRoot);
     const title = taskTitle(skill, secrets), actor = sanitized(execution.getStore()?.actor ?? actorContext(), secrets);
     const project = await realpath(process.cwd());
-    await mkdir(resolve(outputRoot), { recursive: true, mode: 0o700 });
+    await mkdir(resolve(outputRoot), { recursive: true });
     for (let attempt = 0; attempt < 10; attempt++) {
         const id = randomUUID(), root = join(resolve(outputRoot), `${timestamp()}-${title}-run-${id.replaceAll('-', '').slice(0, 8)}`);
         try {
-            await mkdir(root, { mode: 0o700 });
+            await mkdir(root);
         }
         catch (error) {
             if (error.code === 'EEXIST')

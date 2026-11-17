@@ -151,7 +151,7 @@ export async function feedback(cfg, output, events) {
         return notice;
     const dir = directory(c, output), path = join(dir, 'diagnostic.json');
     assertOutsideInstallation(path);
-    await mkdir(dir, { recursive: true, mode: 0o700 });
+    await mkdir(dir, { recursive: true });
     return withJobLock(path, async () => {
         const now = new Date().toISOString();
         let saved = { schema_version: 2, kind: 'aihub-diagnostic', events: [], created_at: now, updated_at: now, context: {}, exchanges: [] };

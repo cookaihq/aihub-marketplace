@@ -5,7 +5,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { TaskResponse } from './apiClient.js';
-import { preparePrivateFile } from './privateFile.js';
+import { createPrivateFile } from './privateFile.js';
 
 export type Media = 'image' | 'video' | 'audio' | 'document' | 'understanding';
 export interface SavedFile { url: string; path: string; bytes: number; mime_type: string }
@@ -58,17 +58,18 @@ export async function writePrivateRecord(path: string, value: unknown): Promise<
 
 export async function writePrivateText(path: string, value: string): Promise<void> {
   assertOutsideInstallation(path);
-  await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+  await mkdir(dirname(path), { recursive: true });
   const temp = `${path}.${randomUUID()}.tmp`;
-  const handle = await open(temp, 'wx', 0o600);
+  let handle: Awaited<ReturnType<typeof open>> | undefined;
   try {
-    await preparePrivateFile(temp);
+    await createPrivateFile(temp);
+    handle = await open(temp, 'r+');
     await handle.writeFile(value);
     await handle.sync();
     await handle.close();
     await rename(temp, path);
   } catch (error) {
-    await handle.close().catch(() => {});
+    await handle?.close().catch(() => {});
     await unlink(temp).catch(() => {});
     throw error;
   }
@@ -93,7 +94,7 @@ export async function withJobLock<T>(path: string, run: () => Promise<T>): Promi
   const lockPath = `${path}.lock`;
   const token = `owner-${process.pid}-${randomUUID()}`;
   const candidate = `${lockPath}-${randomUUID()}`;
-  await mkdir(candidate, { mode: 0o700 });
+  await mkdir(candidate);
   const owner = await open(join(candidate, token), 'wx', 0o600);
   await owner.writeFile(JSON.stringify({ pid: process.pid }));
   await owner.close();

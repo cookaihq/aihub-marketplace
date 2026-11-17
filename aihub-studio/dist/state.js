@@ -4,7 +4,7 @@ import { lstat, mkdir, open, readFile, readdir, rename, unlink, rmdir, rm } from
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import { preparePrivateFile } from './privateFile.js';
+import { createPrivateFile } from './privateFile.js';
 const INSTALL_ROOT = fileURLToPath(new URL('../', import.meta.url));
 const windowsFileBusy = (error) => process.platform === 'win32' &&
     ['EPERM', 'EACCES', 'EBUSY'].includes(error.code || '');
@@ -44,18 +44,19 @@ export async function writePrivateRecord(path, value) {
 }
 export async function writePrivateText(path, value) {
     assertOutsideInstallation(path);
-    await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+    await mkdir(dirname(path), { recursive: true });
     const temp = `${path}.${randomUUID()}.tmp`;
-    const handle = await open(temp, 'wx', 0o600);
+    let handle;
     try {
-        await preparePrivateFile(temp);
+        await createPrivateFile(temp);
+        handle = await open(temp, 'r+');
         await handle.writeFile(value);
         await handle.sync();
         await handle.close();
         await rename(temp, path);
     }
     catch (error) {
-        await handle.close().catch(() => { });
+        await handle?.close().catch(() => { });
         await unlink(temp).catch(() => { });
         throw error;
     }
@@ -79,7 +80,7 @@ export async function withJobLock(path, run) {
     const lockPath = `${path}.lock`;
     const token = `owner-${process.pid}-${randomUUID()}`;
     const candidate = `${lockPath}-${randomUUID()}`;
-    await mkdir(candidate, { mode: 0o700 });
+    await mkdir(candidate);
     const owner = await open(join(candidate, token), 'wx', 0o600);
     await owner.writeFile(JSON.stringify({ pid: process.pid }));
     await owner.close();

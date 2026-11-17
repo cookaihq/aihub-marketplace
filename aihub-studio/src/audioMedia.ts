@@ -1,14 +1,12 @@
-import { execFile } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, open, stat } from 'node:fs/promises';
+import { mkdir, rename, rm, stat } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
-import { promisify } from 'node:util';
-import { preparePrivateFile } from './privateFile.js';
+import { runLocalTool as exec } from './localProcess.js';
+import { createPrivateFile } from './privateFile.js';
 import { assertOutsideInstallation } from './state.js';
 
-const exec = promisify(execFile);
 // This is the shipped base64 adapter's client-side bound, not a model limit.
 export const UPLOAD_MAX_BYTES = 20 * 1024 * 1024;
 export const SOURCE_MAX_BYTES = 8 * 1024 ** 3;
@@ -75,13 +73,15 @@ export async function probeAudio(path: string): Promise<AudioInfo> {
   return { path: resolve(path), bytes: info.size, duration, sample_rate: rate, channels, format, sha256: await audioHash(path) };
 }
 async function emptyPrivateFile(path: string): Promise<void> {
-  const handle = await open(path, 'w', 0o600);
-  await handle.close();
-  await preparePrivateFile(path);
+  const temporary = `${path}.${randomUUID()}.tmp`;
+  try {
+    await createPrivateFile(temporary);
+    await rename(temporary, path);
+  } finally { await rm(temporary, { force: true }); }
 }
 export async function snapshotAudio(input: string, directory: string, index: number): Promise<AudioInfo> {
   assertOutsideInstallation(directory);
-  await mkdir(directory, { recursive: true, mode: 0o700 });
+  await mkdir(directory, { recursive: true });
   const before = await stat(input);
   if (!before.isFile() || before.size <= 0 || before.size > SOURCE_MAX_BYTES) throw new Error('Audio source exceeds the 8 GiB local preparation budget or is empty.');
   const path = join(directory, `source-${index + 1}${extname(input).replace(/[^.a-zA-Z0-9]/g, '').slice(0,16) || '.audio'}`);
@@ -143,7 +143,7 @@ export async function prepareParts(source: AudioInfo, sourceIndex: number, contr
   assertOutsideInstallation(directory);
   if (canSendWhole(source, contract, remote)) return [{ ...source, index: 0, source_index: sourceIndex, start: 0, end: source.duration,
     core_start: 0, core_end: source.duration, boundary: 'whole' }];
-  await mkdir(directory, { recursive: true, mode: 0o700 });
+  await mkdir(directory, { recursive: true });
   const byteBudget = Math.floor(Math.min(contract.max_bytes, contract.upload.max_bytes) * MARGIN);
   const rate = contract.sample_rate ?? source.sample_rate;
   const capacity = Math.min(contract.max_seconds * MARGIN, (byteBudget - 4096) / (rate * source.channels * 2));

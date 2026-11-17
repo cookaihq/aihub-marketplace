@@ -1,12 +1,10 @@
-import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { createWriteStream } from "node:fs";
 import { link, mkdir, open, rm, writeFile } from "node:fs/promises";
 import { basename, extname, join, resolve } from "node:path";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import { promisify } from "node:util";
-const runFile = promisify(execFile);
+import { runLocalTool as runFile } from './localProcess.js';
 const ATTEMPTS = 3;
 // Large generated videos need more than the metadata request timeout. Both the
 // whole asset operation and each transfer remain bounded, including retries.

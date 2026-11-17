@@ -151,7 +151,7 @@ async function save(record, job, cfg) {
 async function finishTextResult(job, record, cfg) {
     if (job.media !== 'understanding' || job.text === undefined || job.submission.state !== 'known' || job.submission.task.status !== 'completed')
         return;
-    await mkdir(job.output_dir, { recursive: true, mode: 0o700 });
+    await mkdir(job.output_dir, { recursive: true });
     const bytes = Buffer.byteLength(job.text, 'utf8');
     const existing = job.files.find(file => file.mime_type === 'text/plain' && file.path.startsWith(resolve(job.output_dir)));
     if (existing) {
@@ -230,7 +230,7 @@ async function finishVoiceResult(job, record, cfg) {
         markdown = '# ElevenLabs 音色已创建\n\n**' + SAVE_VOICE_ID_NOTICE + '**\n\nvoice_id：' + JSON.stringify(body.voice_id) +
             '\n\n后续自定义音色合成请显式选择 Speech / Dialogue 的 custom-voice 模型，并使用此 voice_id。平台任务查询仍可用，但不能替代自行保存。\n';
     }
-    await mkdir(job.output_dir, { recursive: true, mode: 0o700 });
+    await mkdir(job.output_dir, { recursive: true });
     for (const [extension, text, mime] of [['json', JSON.stringify(body, null, 2) + '\n', 'application/json'], ['md', markdown, 'text/markdown']]) {
         const path = join(job.output_dir, `${job.model}-${job.local_id}.${extension}`);
         await writePrivateText(path, text);
@@ -280,7 +280,7 @@ async function finishStructuredAudio(job, record, cfg) {
         downloaded.files.sort((a, b) => urls.indexOf(a.url) - urls.indexOf(b.url));
     }
     else {
-        await mkdir(job.output_dir, { recursive: true, mode: 0o700 });
+        await mkdir(job.output_dir, { recursive: true });
         const path = join(job.output_dir, `transcription-${job.local_id}.json`);
         const body = JSON.stringify(job.submission.task.results ?? [], null, 2) + '\n';
         await writePrivateText(path, body);
@@ -558,7 +558,7 @@ export async function adoptTask(cfg, id, media, outputDir, waitSeconds) {
     assertOutsideInstallation(outputDir);
     const identity = createHash('sha256').update(`${cfg.baseUrl}\0${cfg.skill}\0${credentialId(cfg.apiKey)}\0${id}`).digest('hex');
     const links = join(resolve(outputDir), '.task-links');
-    await mkdir(links, { recursive: true, mode: 0o700 });
+    await mkdir(links, { recursive: true });
     const pointer = join(links, identity + '.json');
     return withJobLock(pointer, async () => {
         let record;

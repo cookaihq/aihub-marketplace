@@ -183,7 +183,7 @@ export async function runTranscription(cfg: LoadedConfig, options: {
         pieces.push({ part, global_start: value.sources[part.source_index]!.global_start, results });
       }
       const merged = mergeTranscripts(pieces);
-      const directory = await outputDirectory(record, join(options.outputDir, 'merged')); await mkdir(directory, { recursive: true, mode: 0o700 });
+      const directory = await outputDirectory(record, join(options.outputDir, 'merged')); await mkdir(directory, { recursive: true });
       const json = join(directory, 'transcript.json'); const text = join(directory, 'transcript.txt');
       await writePrivateRecord(json, { ...merged, sources: value.sources, fragments: value.parts.map(p => ({ ...p, raw_files: p.result?.files })) });
       await writePrivateText(text, merged.text + '\n');
