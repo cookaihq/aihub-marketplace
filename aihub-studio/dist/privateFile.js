@@ -1,5 +1,5 @@
 import { open } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { runCaptured } from './capturedProcess.js';
 const createWindowsFiles = `
 $ErrorActionPreference = 'Stop'
@@ -78,8 +78,10 @@ export async function createPrivateFile(path, secondPath, signal) {
         return;
     }
     const env = { ...process.env, AIHUB_PRIVATE_FILE_PATH: path,
-        AIHUB_PRIVATE_SECOND_FILE_PATH: secondPath ?? '', AIHUB_PRIVATE_PROJECT_PATH: process.cwd(),
-        TEMP: dirname(path), TMP: dirname(path) };
+        AIHUB_PRIVATE_SECOND_FILE_PATH: secondPath ?? '', AIHUB_PRIVATE_PROJECT_PATH: process.cwd() };
+    // PowerShell 5.1 can hang before entering even a one-line script when TEMP
+    // points beyond MAX_PATH. Keep the host's runtime temp environment; target
+    // files (including long paths) still receive their creation-time private ACL.
     // A parent PowerShell 7 module path is not a Windows PowerShell 5.1 runtime.
     delete env.PSModulePath;
     const powershell = join(process.env.SystemRoot || process.env.WINDIR || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');

@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.5.3 — 2026-11-17
+
+- Windows 私有文件 helper 保留宿主 TEMP／TMP，修复深目标父目录被强制用作临时目录时 PowerShell 5.1 在进入脚本前超时；原 10 秒保护预算不变，不改业务路径、ACL 白名单或沙箱。
+- Windows 捕获目录创建和显式子进程 cwd 使用扩展长度路径，覆盖超过 260 字符的中文／空格目录；捕获仍位于原项目目录并在结束后清理，保留输出、退出码和停止契约。
+- 新增真实长路径回归，覆盖私有文件、重复原子记录替换与受保护子进程捕获；Image / Video 3.4.2、Audio 6.4.3、Music 5.3.2、Understanding 3.3.2。
+- Windows 原生 Codex 受限身份九项捕获、五个公开 doctor、390–399 字符中文／空格私有路径、独立 ACL／目录继承及跨进程原子恢复通过；Video 原离线合成 run 经公开 resume 恢复 delivered，上传／生成仍为 1/1，审阅门保留。34 个 Node 测试文件分组覆盖，原总预算停止后补齐组 129/129 通过；构建、类型和五 Skill 规范检查通过。
+- 本批 Windows WorkBuddy 按用户确认跳过，macOS 待接续；不提交真实 ASR 或付费业务。
+
 ## 6.5.2 — 2026-11-17
 
 - Windows 本地媒体工具改用独立的文件句柄捕获 stdout／stderr，修复原生 Codex workspaceWrite／unelevated 身份下的管道 EPERM；覆盖 doctor、音频 probe／快照／转码／分段、媒体测量与下载结果校验。

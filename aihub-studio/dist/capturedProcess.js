@@ -1,6 +1,6 @@
 import { execFile, spawn } from 'node:child_process';
 import { mkdir, mkdtemp, open, rm } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join, resolve, toNamespacedPath } from 'node:path';
 import { promisify } from 'node:util';
 const exec = promisify(execFile);
 function abortError(signal) {
@@ -28,7 +28,9 @@ export async function runCaptured(file, args, options = {}) {
     const handles = [];
     try {
         await mkdir(parent, { recursive: true });
-        directory = await mkdtemp(join(parent, 'capture-'));
+        // mkdtemp needs an extended-length Windows path even when mkdir succeeds
+        // with the same long parent. Preserve the actual project/cwd location.
+        directory = await mkdtemp(join(toNamespacedPath(parent), 'capture-'));
         const paths = [join(directory, 'stdout'), join(directory, 'stderr')];
         await options.prepareCapture?.(...paths, cancellation.signal);
         for (const path of paths)
@@ -37,7 +39,7 @@ export async function runCaptured(file, args, options = {}) {
             throw cancellation.signal.reason;
         const stdoutHandle = handles[0];
         const stderrHandle = handles[1];
-        const child = spawn(file, [...args], { cwd: options.cwd, env: options.env,
+        const child = spawn(file, [...args], { cwd: options.cwd === undefined ? undefined : toNamespacedPath(resolve(options.cwd)), env: options.env,
             windowsHide: options.windowsHide ?? true, stdio: ['ignore', stdoutHandle.fd, stderrHandle.fd] });
         let failure;
         let closed = false;

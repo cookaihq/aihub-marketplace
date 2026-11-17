@@ -13,7 +13,13 @@ async function workspace(run: (cwd: string) => Promise<void>): Promise<void> {
   const cwd = await mkdtemp(join(base, 'case-'));
   try {
     await run(cwd);
-    if (process.platform === 'win32') assert.deepEqual(await readdir(join(cwd, 'tmp/aihub-studio-process')), []);
+    if (process.platform === 'win32') {
+      const entries = await readdir(join(cwd, 'tmp/aihub-studio-process')).catch((error: NodeJS.ErrnoException) => {
+        if (error.code === 'ENOENT') return [];
+        throw error;
+      });
+      assert.deepEqual(entries, []);
+    }
   } finally { await rm(cwd, { recursive: true, force: true }); }
 }
 const nodeArgs = (source: string, ...args: string[]): string[] => ['--preserve-symlinks', '--preserve-symlinks-main', '-e', source, ...args];
@@ -79,6 +85,23 @@ test('private creation refuses existing files; protected captures and atomic rec
   assert.equal(JSON.parse(await readFile(record, 'utf8')).revision, 2);
   const result = await runLocalTool(process.execPath, nodeArgs('process.stdout.write("private output")'), { cwd });
   assert.equal(result.stdout, 'private output');
+}));
+
+test('private files, atomic records and protected captures work in deep Unicode paths', async () => workspace(async cwd => {
+  let deep = cwd;
+  while (deep.length < 310) deep = join(deep, '中文 space deep segment');
+  await mkdir(deep, { recursive: true });
+  const file = join(deep, 'private 文件.json');
+  await createPrivateFile(file);
+  await writeFile(file, 'private');
+  assert.equal(await readFile(file, 'utf8'), 'private');
+  const record = join(deep, 'record.json');
+  await writePrivateRecord(record, { revision: 1 });
+  await writePrivateRecord(record, { revision: 2 });
+  assert.equal(JSON.parse(await readFile(record, 'utf8')).revision, 2);
+  const result = await runLocalTool(process.execPath, nodeArgs('process.stdout.write(process.argv[1])', 'deep 中文 output'), { cwd: deep });
+  assert.equal(result.stdout, 'deep 中文 output');
+  if (process.platform === 'win32') assert.deepEqual(await readdir(join(deep, 'tmp/aihub-studio-process')), []);
 }));
 
 test('Windows time and cancellation budgets include private capture preparation', { skip: process.platform !== 'win32' }, async () => workspace(async cwd => {
