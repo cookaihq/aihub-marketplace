@@ -10,6 +10,7 @@ import { bindDiagnosticRecord } from './diagnostics.js';
 import { runTranscription } from './audioRun.js';
 import { createTask, participate } from './taskInfo.js';
 import { generationModelAvailable } from './models.js';
+import { verifyReviewRecovery } from './reviewRecovery.js';
 
 interface Attempt {
   index: number; model: string; submitted: boolean;
@@ -32,13 +33,28 @@ function canonical(value: unknown): string {
   return JSON.stringify(value);
 }
 function hash(value: unknown): string { return createHash('sha256').update(canonical(value)).digest('hex'); }
-export async function readRun(cfg: LoadedConfig, record: string): Promise<RunRecord> {
+/** Read and validate local metadata; this alone never authorizes a remote action. */
+export async function readRunMetadata(record: string): Promise<RunRecord> {
   assertOutsideInstallation(record);
   const run = JSON.parse(await readFile(record, 'utf8')) as RunRecord;
   if (run.kind !== 'aihub-run' || run.schema_version !== 1 || !run.plan || !Array.isArray(run.attempts) || !Array.isArray(run.approvals) ||
     !Number.isInteger(run.cursor) || run.cursor < 0 || run.cursor > run.plan.candidates.length || run.plan_hash !== hash(run.plan)) throw new Error('Invalid or modified run plan. Create a new request instead of editing an active record.');
+  return run;
+}
+export function assertRunScope(cfg: LoadedConfig, run: RunRecord): void {
   if (run.service_url !== cfg.baseUrl) throw new Error('This run belongs to another service. AIhub Studio uses a fixed service address; continue this run with its original service client.');
-  if (run.skill !== cfg.skill || run.credential_id !== credentialId(cfg.apiKey)) throw new Error('This run belongs to another Skill or credential. Restore its original configuration.');
+  if (run.skill !== cfg.skill) throw new Error('This run belongs to another Skill. Restore its original configuration.');
+}
+export async function readRun(cfg: LoadedConfig, record: string): Promise<RunRecord> {
+  const run = await readRunMetadata(record);
+  assertRunScope(cfg, run);
+  if (run.credential_id !== credentialId(cfg.apiKey)) throw new Error('This run belongs to another Skill or credential. Restore its original configuration.');
+  return run;
+}
+export async function readRunForLocalReview(cfg: LoadedConfig, record: string): Promise<RunRecord> {
+  const run = await readRunMetadata(record);
+  assertRunScope(cfg, run);
+  if (run.credential_id !== credentialId(cfg.apiKey)) await verifyReviewRecovery(cfg, record, run);
   return run;
 }
 async function saveRun(cfg: LoadedConfig, record: string, run: RunRecord): Promise<void> {
@@ -106,7 +122,11 @@ export async function continueRun(cfg: LoadedConfig, recordInput: string, waitSe
   const record = resolve(recordInput);
   assertOutsideInstallation(record);
   return withJobLock(record, async () => {
-    const run = await readRun(cfg, record);
+    const run = await readRunForLocalReview(cfg, record);
+    if (run.credential_id !== credentialId(cfg.apiKey)) {
+      if (confirmation) throw new Error('A review recovery credential cannot approve or resume ASR submission.');
+      return output(run, record); // Verified delivered files only; no original remote task access.
+    }
     await participate(record, [cfg.apiKey]);
     await bindDiagnosticRecord(cfg, record, run.plan.request, true);
     const expectedToken = (index: number) => hash({ plan: run.plan_hash, index, candidate: run.plan.candidates[index] });

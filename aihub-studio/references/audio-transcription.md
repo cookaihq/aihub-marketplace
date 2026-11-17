@@ -58,3 +58,28 @@
 重叠先按实际重叠区间、文字和时间去重；没有可用词时间时仅消除边界精确重复，不能全篇删同句。无法可靠匹配时保留两侧并提示复核，删除记录在 `duplicates`。说话人标识包含源、片段、声道；`speaker_alignment=fragment-local` 表示同号 speaker 不能证明跨片段为同一个人。
 
 结果检查读取完整源快照及产物。转写成功、分片覆盖校验或抽听均不代表全量语义检查通过。`review.sources` 给出原录音路径、哈希和时长；完整覆盖要求实际听过的完整时间区间及 `audio_checked`。AIhub 检查上传器仍有 20 MiB 上限，完整原录音超过时报告 `unavailable`，由宿主检查并披露观察范围。
+
+## 已交付转写更换检查凭证
+
+用户明确选择新凭证继续检查时，先在原业务工作目录通过正常加载器确认当前凭证来源，不显示或复制 Key。使用同一个 `run.json` 执行下列公开流程；不编辑任何身份字段，不创建新转写。原 Key 可以不可得，但原 run、转写记录、已结束的 `review.json`、完整源快照和全部输出必须仍在原位置且可验证。
+
+```powershell
+$aihubPlugin = '<实际 Studio 6.6.0 或兼容新版的完整安装目录>'
+$asrRecord = '<原 run.json 的完整路径>'
+& "$aihubPlugin/scripts/aihub.ps1" review-recover --skill aihub-audio --record $asrRecord --reason '用户已明确选择当前凭证继续检查已交付转写'
+if ($LASTEXITCODE -ne 0) { throw '恢复未获准；保留记录，先处理返回原因。' }
+```
+
+成功返回 `review_recovery_ready`。这一步离线核验并追加 `review-recovery.json`：记录时间、原因、原 ASR 身份与当前检查身份的不可逆标识、run/plan 绑定，以及源、输出和转写记录的哈希；不保存 Key，不替换原 `credential_id`。受阻尝试也追加原因与已读取的身份。审计文件属于私密本地记录，不能直接公开分享。
+
+用户已明确要求新检查且前次确定结束后，再执行：
+
+```powershell
+& "$aihubPlugin/scripts/aihub.ps1" review --skill aihub-audio --record $asrRecord --recheck --provider aihub --wait-seconds 30
+```
+
+该步骤可能上传源录音并产生新的检查费用。旧检查原样保存为 `review-history-*.json`，新检查单独绑定当前凭证；`checking` 时省略 `--recheck`，用 `review` 继续同一检查。结果仍可能为 `mismatched`、`inconclusive` 或 `unavailable`，不得改写转写来制造通过。只读历史结论时不传 `--recheck`。
+
+随后 `continue --skill aihub-audio --record ...` 在每次读取时验证恢复授权和原文件，仅返回已交付的本地 ASR 与适用的检查状态；它不会让新凭证查询、下载或重发旧 ASR，也不接受 ASR 的 `--confirm`。`resume/task` 等远端恢复仍要求原身份。缺失或变化的文件、服务/Skill 不符、ASR 未完成、检查 pending/checking、上传或提交不明均阻断换凭证；这些状态须先按原协议处理。
+
+上层工具还须接受所装 Studio 的版本与本地转写契约；本入口不会自动修改调用方的版本门或业务账本。完整约束见[结果检查恢复](result-checks.md#已交付转写的检查凭证恢复)。

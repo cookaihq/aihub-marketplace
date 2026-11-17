@@ -25,6 +25,16 @@ export interface AudioRunRecord {
 const hash = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const preparationHash = (v: AudioRunRecord) => hash({ sources: v.sources,
   parts: v.parts.map(({ upload: _upload, result: _result, task_record: _task, ...part }) => part) });
+export function assertAudioRunBinding(value: AudioRunRecord, expected: {
+  model: string; params: Record<string, unknown>; inputs: string[]; service_url: string; credential_id: string;
+}): void {
+  const { model, params, inputs } = expected;
+  if (value.binding !== hash({ model, params, inputs }) || value.service_url !== expected.service_url ||
+    value.credential_id !== expected.credential_id || value.model !== model || hash(value.contract) !== hash(audioContract(model))) {
+    throw new Error('Transcription model, contract, inputs or account changed; restore the saved context instead of editing an active run.');
+  }
+  if (value.prepared && value.preparation_hash !== preparationHash(value)) throw new Error('Prepared source/fragment metadata changed; restore the original record.');
+}
 function owned(path: string, root: string): void {
   const sub = relative(root, path);
   if (!isAbsolute(path) || !sub || sub === '..' || sub.startsWith(`..${sep}`) || isAbsolute(sub)) throw new Error('Transcription recovery file is outside this run.');
@@ -88,10 +98,7 @@ export async function runTranscription(cfg: LoadedConfig, options: {
       credential_id: credentialId(cfg.apiKey), contract, sources: [], parts: [], prepared: false, status: 'preparing', files: [] };
     await writePrivateRecord(record, value);
   }
-  if (value.binding !== binding || value.service_url !== cfg.baseUrl || value.credential_id !== credentialId(cfg.apiKey) || hash(value.contract) !== hash(contract)) {
-    throw new Error('Transcription model, contract, inputs or account changed; restore the saved context instead of editing an active run.');
-  }
-  if (value.prepared && value.preparation_hash !== preparationHash(value)) throw new Error('Prepared source/fragment metadata changed; restore the original record.');
+  assertAudioRunBinding(value, { ...options, service_url: cfg.baseUrl, credential_id: credentialId(cfg.apiKey) });
   await options.onRecord(record);
   return withJobLock(record, async () => {
     const save = () => writePrivateRecord(record, sanitized(value, [cfg.apiKey]));

@@ -43,10 +43,13 @@ async function fixture(audio = false) {
       if (req.url === '/e/v1/llm/generations') {
         state.reviewPosts++; state.lastBody = body;
         if (state.errorStatus) { res.setHeader('x-request-id', 'private-review-request'); return json({ error: { code: 'service_unavailable', message: 'fixture-review-secret https://private.invalid/?signature=hidden original prompt' } }, state.errorStatus); }
-        const input = JSON.parse(body.messages[0].content[0].text);
+        const input = JSON.parse(body.messages.find((m: any) => m.role === 'user').content[0].text);
         state.report = reportFor(input, state.reportMode, audio);
+        // llm-custom extracts system instructions from messages, not system_prompt.
+        const instructions = body.messages.find((m: any) => m.role === 'system')?.content;
+        const hasReviewInstructions = typeof instructions === 'string' && instructions.includes('Return only a JSON object');
         return json({ id: 'private-review-task', model: checker, status: state.reviewMode === 'pending' ? 'pending' : 'completed',
-          results: [{ text: state.reviewMode === 'invalid' ? 'not JSON' : JSON.stringify(state.report) }] });
+          results: [{ text: state.reviewMode === 'invalid' || !hasReviewInstructions ? 'ordinary transcription, not a review report' : JSON.stringify(state.report) }] });
       }
       state.generationPosts++;
       if (req.url?.startsWith('/v1beta/')) return json({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'audio/wav', data: bytes.toString('base64') } }] } }] });
@@ -136,6 +139,8 @@ test('AIhub uses the first capable configured reviewer, uploads actual bytes, an
     const done = await f.start(cfg);
     assert.equal(done.result_check.status, 'matched'); notice(done.result_check);
     assert.equal(f.state.lastBody.model, checker); assert.equal(f.state.reviewPosts, 1); assert.equal(f.state.uploads, 1);
+    assert.equal(f.state.lastBody.system_prompt, undefined);
+    assert.match(f.state.lastBody.messages.find((m: any) => m.role === 'system').content, /Return only a JSON object/);
     await f.call(cfg, 'continue', '--record', done.run_record);
     await f.call(cfg, 'review', '--record', done.run_record);
     assert.equal(f.state.reviewPosts, 1);

@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.6.0 — 2026-11-17
+
+- 新增公开 `review-recover`：离线核验已交付本地 ASR 的 run/plan、原身份、转写准备绑定与源/产物哈希，追加成功或受阻审计；保留原 ASR 凭证和全部文件，原 Key 不可得也可显式授权当前凭证检查。
+- 新凭证的 `continue` 仅核验读取原本地 ASR；`resume/task` 和 ASR 确认不开放旧远端任务。明确 `review --recheck` 归档已结束检查，新检查单独绑定当前凭证；pending/checking、上传中、待提交或提交不明不能换绑或重发。
+- 修复 `llm-custom` 的系统指令映射：使用 `messages` 中的 system 消息，移除 Gateway 不读取的顶层 `system_prompt`；检查提示要求核对已有输出、不重新转写，传入已测媒体时长。保留严格 JSON、逐项证据和完整覆盖验证。
+- Image / Video 3.4.3、Audio 6.5.0、Music 5.3.3、Understanding 3.3.3。Windows 原生 Codex 的独立 20 秒真实重检返回有效 JSON 与 mismatched；原 ASR 提交次数、run、源和输出哈希不变，旧 inconclusive 检查归档。原完整业务任务未执行。
+- Windows 原生 Codex 0.169.0 workspaceWrite／unelevated 下两项公开恢复场景通过，含旧 6.5.3 记录兼容；受影响 9 文件 68/68、最终相关回归 14/14、构建、类型与五 Skill 规范检查通过。测试夹具沿用既有文件句柄捕获以适配原生限制，未放宽权限或超时。
+- 本批只运行 Windows/Codex；WorkBuddy、Claude Code、Hermes 未实测，macOS 待验。发布后的正式安装和发现另行核验，不将历史测试记为本版通过。
+
 ## 6.5.3 — 2026-11-17
 
 - Windows 私有文件 helper 保留宿主 TEMP／TMP，修复深目标父目录被强制用作临时目录时 PowerShell 5.1 在进入脚本前超时；原 10 秒保护预算不变，不改业务路径、ACL 白名单或沙箱。

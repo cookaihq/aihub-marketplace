@@ -137,6 +137,8 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" task --skill "${AIHUB_CALLER}" \
 
 `task` 查询已有任务并创建可恢复记录，不提交新生成请求。`resume` 使用记录中的任务信息；不要修改记录来绕过配置身份检查。配置路径变更不改变任务身份；恢复时仍须保持原 Skill、服务地址与密钥。需要本次禁用全局配置时使用 `--no-global-config`。
 
+已交付本地转写需要用新凭证检查时，唯一例外是显式 `review-recover --skill aihub-audio --record <run.json> --reason <实际授权原因>`。成功为 `review_recovery_ready`、退出码 0；它离线保留原 ASR 身份并保存可验证的本地读取授权。另用 `review --recheck` 创建绑定新凭证的检查，原检查归档；进行中或提交不明禁止替换。`continue` 可核验并返回原本地结果，旧 ASR 的远端 `resume/task` 不获得授权。命令必须从原业务 cwd 运行，当前 Key 由正常配置加载器取得。完整条件、费用与 Windows 示例见[已交付转写更换检查凭证](audio-transcription.md#已交付转写更换检查凭证)。
+
 ## 读取结果并决定下一步
 
 程序输出结构化 JSON。`doctor`、`describe`、`plan`、成功的 `models` 和 `upload` 使用 `status: ok`。下表适用于旧单模型入口和新 run 的内层 `result`；新 run 顶层状态见 [多模型状态表](model-selection.md#执行与继续)。应读取 JSON 状态，不仅看进程退出码。

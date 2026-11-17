@@ -563,8 +563,12 @@ export async function understand(cfg: LoadedConfig, options: { model: string; pr
     await save(record, job, cfg);
     throw error;
   }
-  const body: Record<string, unknown> = { model: options.model, messages: [{ role: 'user', content: [{ type: 'text', text: options.prompt }, ...options.content] }] };
-  if (options.systemPrompt) body.system_prompt = options.systemPrompt;
+  // E1 uses llm-custom (OpenAI messages). Its Gemini/Anthropic adapters extract
+  // system messages; a top-level system_prompt belongs to the other protocols.
+  const body: Record<string, unknown> = { model: options.model, messages: [
+    ...(options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : []),
+    { role: 'user', content: [{ type: 'text', text: options.prompt }, ...options.content] },
+  ] };
   if (options.maxTokens !== undefined) body.max_tokens = options.maxTokens;
   if (options.temperature !== undefined) body.temperature = options.temperature;
   job.submission = { state: 'submitting' };

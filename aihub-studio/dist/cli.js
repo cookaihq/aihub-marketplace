@@ -8,7 +8,7 @@ import { generate, createVoice, resume, adoptTask, upload, understand, nativeMus
 import { selectionPlan } from './selection.js';
 import { startRun, continueRun } from './runs.js';
 import { collectRequestErrors, configureDiagnostics, existingFeedback, feedback } from './diagnostics.js';
-import { reviewTask, DISABLE_CHECK_HINT } from './review.js';
+import { reviewTask, recoverReviewCredential, DISABLE_CHECK_HINT } from './review.js';
 import { agentDefaults } from './agentDefaults.js';
 import { artifactWarnings, registerOutputs, touchTask, withArtifactContext } from './taskInfo.js';
 const SKILLS = ['aihub-image', 'aihub-video', 'aihub-audio', 'aihub-music', 'aihub-understanding'];
@@ -28,6 +28,7 @@ const FLAGS = {
     run: ['request-file', 'output-dir', 'wait-seconds'],
     continue: ['record', 'confirm', 'wait-seconds'],
     review: ['record', 'provider', 'wait-seconds', 'recheck'],
+    'review-recover': ['record', 'reason'],
     'review-submit': ['record', 'review-file', 'review-token'],
 };
 const HELP = `AIhub media Plugin CLI
@@ -43,6 +44,8 @@ Commands:
   continue --record run.json [--confirm TOKEN] [--wait-seconds 0..600]
   review --record run.json [--provider host|aihub] [--wait-seconds 0..600] [--recheck]
   review-submit --record run.json --review-file JSON --review-token TOKEN
+  review-recover --record run.json --reason TEXT
+    Explicitly authorize the current credential for delivered local ASR review; offline, audited, no ASR rebinding.
   models [--media image|video|audio|understanding] [--keyword TEXT]
   describe --model ID
   voices --skill aihub-audio (ElevenLabs catalog, authenticated read; no generation)
@@ -196,6 +199,8 @@ async function mainWithDiagnostics(argv, events) {
                 output = await startRun(cfg, await jsonFile(required(flags, 'request-file')), typeof flags['output-dir'] === 'string' ? flags['output-dir'] : 'data/aihub-studio', wait(flags, 0));
             else if (command === 'continue')
                 output = await continueRun(cfg, required(flags, 'record'), wait(flags, 30), flags.confirm);
+            else if (command === 'review-recover')
+                output = await recoverReviewCredential(cfg, required(flags, 'record'), required(flags, 'reason'));
             else if (command === 'review' || command === 'review-submit') {
                 if (flags.provider && !['host', 'aihub'].includes(String(flags.provider)))
                     throw new Error('--provider must be host or aihub.');
@@ -252,7 +257,7 @@ async function mainWithDiagnostics(argv, events) {
             output = sanitized(output, [cfg.apiKey]);
     }
     catch (error) {
-        const recovering = ['resume', 'task', 'continue', 'review', 'review-submit'].includes(parsed?.command ?? '');
+        const recovering = ['resume', 'task', 'continue', 'review', 'review-submit', 'review-recover'].includes(parsed?.command ?? '');
         output = error instanceof TaskPersistenceError ? error.output()
             : { schema_version: 1, status: recovering ? 'recovery_failed' : 'not_submitted',
                 ...(recovering && typeof parsed?.flags.record === 'string' ? { record: parsed.flags.record } : {}),
@@ -308,7 +313,7 @@ async function mainWithDiagnostics(argv, events) {
         return 0;
     if (output.status === 'configuration_required')
         return 3;
-    if (['ok', 'delivered', 'submitted', 'waiting', 'matched', 'mismatched', 'inconclusive', 'unavailable', 'disabled', 'pending', 'checking'].includes(String(output.status)))
+    if (['ok', 'review_recovery_ready', 'delivered', 'submitted', 'waiting', 'matched', 'mismatched', 'inconclusive', 'unavailable', 'disabled', 'pending', 'checking'].includes(String(output.status)))
         return 0;
     if (['not_submitted', 'remote_failed', 'failed', 'no_compatible_model', 'attempt_limit'].includes(String(output.status)))
         return 1;

@@ -1,8 +1,8 @@
 ---
 name: aihub-audio
 metadata:
-  version: "6.4.3"
-description: v6.4.3｜通过 AIhub 合成语音和旁白、按台词顺序生成多音色对话、转写录音；支持 ElevenLabs 预置音色库和音色设计。
+  version: "6.5.0"
+description: v6.5.0｜通过 AIhub 合成语音和旁白、按台词顺序生成多音色对话、转写录音；支持 ElevenLabs 预置音色库和音色设计。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, FFmpeg and ffprobe on PATH for transcription, AIhub API access.
 ---
 
@@ -63,6 +63,8 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" run --skill aihub-audio \
 ## 结果检查与用户提示
 
 新任务与交付前读取 [结果检查与错误反馈](../../references/result-checks.md)。保存原始需求及具体检查项，完成生成后读取 `result_check`：`pending` 时实际查看产物并通过 `review-submit` 提交证据；`auto` 下宿主缺少必要能力才使用 `review --provider aihub`，`host` 下明确报告无法检查。`checking` 查询原检查任务，不提交新请求。
+
+已交付转写因用户明确更换检查凭证而被身份保护拒绝时，读取并遵守[公开凭证恢复](../../references/audio-transcription.md#已交付转写更换检查凭证)，在原业务 cwd 使用 `review-recover` 核验并记录授权；只有用户明确要求新检查且旧检查确定结束，才传 `review --recheck`。保留原 run/plan、ASR 凭证、文件和检查历史；不编辑身份字段，不让新凭证查询或重发旧 ASR，不把普通转写文本包装成检查通过。进行中、结果不明或文件变化必须阻断。
 
 检查开启时，每次完成检查都必须告诉用户：“如果想关闭结果检查，可以直接在对话中告诉我‘关闭结果检查’；也可以说‘仅本次关闭结果检查’。”通过、不符、证据不足或无法检查都要提示，不能只保留在 JSON 中。用户要求关闭时按参考说明执行，沿用已明确作用范围；范围不明再询问。关闭后仍执行文件检查。
 

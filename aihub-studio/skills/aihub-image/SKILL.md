@@ -1,8 +1,8 @@
 ---
 name: aihub-image
 metadata:
-  version: "3.4.2"
-description: v3.4.2｜通过 AIhub 生成或编辑图片，按已配置的模型优先级执行并支持可恢复的模型切换。未配置时，文生图使用 GPT Image 2.6，编辑使用 2.5；速度优先选 Flare，细节优先选 Sunburst。支持继续已有任务并交付核验后的文件。
+  version: "3.4.3"
+description: v3.4.3｜通过 AIhub 生成或编辑图片，按已配置的模型优先级执行并支持可恢复的模型切换。未配置时，文生图使用 GPT Image 2.6，编辑使用 2.5；速度优先选 Flare，细节优先选 Sunburst。支持继续已有任务并交付核验后的文件。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
