@@ -1,8 +1,8 @@
 ---
 name: aihub-image
 metadata:
-  version: "3.4.3"
-description: v3.4.3｜通过 AIhub 生成或编辑图片，按已配置的模型优先级执行并支持可恢复的模型切换。未配置时，文生图使用 GPT Image 2.6，编辑使用 2.5；速度优先选 Flare，细节优先选 Sunburst。支持继续已有任务并交付核验后的文件。
+  version: "3.4.4"
+description: v3.4.4｜通过 AIhub 生成或编辑图片，按已配置的模型优先级执行并支持可恢复的模型切换。未配置时，文生图使用 GPT Image 2.6，编辑使用 2.5；速度优先选 Flare，细节优先选 Sunburst。支持继续已有任务并交付核验后的文件。
 compatibility: Claude Code, Codex, WorkBuddy and Hermes; Node.js 18 or newer, ffprobe on PATH, AIhub API access.
 ---
 
@@ -72,6 +72,6 @@ node "${AIHUB_PLUGIN_DIR}/scripts/aihub.mjs" continue --skill aihub-image \
 
 新任务与交付前读取 [结果检查与错误反馈](../../references/result-checks.md)。保存原始需求及具体检查项，完成生成后读取 `result_check`：`pending` 时实际查看产物并通过 `review-submit` 提交证据；`auto` 下宿主缺少必要能力才使用 `review --provider aihub`，`host` 下明确报告无法检查。`checking` 查询原检查任务，不提交新请求。
 
-检查开启时，每次完成检查都必须告诉用户：“如果想关闭结果检查，可以直接在对话中告诉我‘关闭结果检查’；也可以说‘仅本次关闭结果检查’。”通过、不符、证据不足或无法检查都要提示，不能只保留在 JSON 中。用户要求关闭时按参考说明执行，沿用已明确作用范围；范围不明再询问。关闭后仍执行文件检查。
+检查开启时，每次结束检查都按共用说明向用户解释 **AIhub Studio 的结果内容检查** 的用途、本次状态、实际模型与真实覆盖，并说明自然语言关闭方式、额度消耗及关闭后的影响。通过、不符、证据不足或无法检查都要说明，不能只保留在 JSON 中。关闭范围沿用用户决定，范围不明再询问；文件格式和可解析性检查继续。
 
-调用异常、结果待确认、部分完成或恢复时，读取并遵守[调用异常反馈与本地报告](../../references/error-reports.md)。先解释当前业务结果、影响、已知原因及下一步，继续可执行的原任务恢复；排障文件按需提供简短入口。以当前成果区分历史错误，保留已有确认与提交保护。
+调用异常、结果待确认、部分完成或恢复时，读取并遵守[调用异常反馈与本地报告](../../references/error-reports.md)，包括模型访问问题先核查本次生效 API Key 的流程。说明失败步骤、实际模型或尚未选出／提交、具体错误及业务含义、已有结果与未完成检查、下一步由谁做什么；继续已授权的原任务诊断和恢复，按需提供排障入口，保留已有确认与提交保护。

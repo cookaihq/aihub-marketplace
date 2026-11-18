@@ -244,9 +244,9 @@ export class AihubmaxClient {
         }
         catch { /* A non-JSON rejection still retains its HTTP status. */ }
         const hints = {
-            401: "API Key 无效或缺失，请检查 AIHUB_API_KEY。",
-            402: "余额不足，请检查 AIhub 控制台额度。",
-            403: "当前 API Key 无权执行该操作。",
+            401: "服务拒绝本次凭证认证，请核对生效来源。",
+            402: "服务因付费或额度限制拒绝请求，具体原因需核实。",
+            403: "服务拒绝本次访问，具体权限范围需核实。",
             404: "请求资源不存在。",
             422: "参数或模型不可用，请重新查询模型与参数说明。",
             429: "服务端限流。",

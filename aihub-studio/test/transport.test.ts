@@ -77,6 +77,27 @@ test("authentication failure is terminal, including polling, and the key is reda
   });
 });
 
+test('generic access and payment responses preserve service detail without inventing Key authorization or balance facts', async () => {
+  for (const status of [402, 403]) {
+    let requests = 0;
+    await withGateway((_req, res) => {
+      requests++;
+      res.writeHead(status).end(JSON.stringify({ error: { message: 'Service-specific restriction', code: 'fixture_restriction' } }));
+    }, async client => {
+      await assert.rejects(client.listLlmModels(), (error: unknown) => {
+        assert(error instanceof ApiError); assert.equal(error.status, status);
+        assert.equal(error.code, 'fixture_restriction');
+        assert.equal(error.details?.message, 'Service-specific restriction');
+        assert.match(error.message, /Service-specific restriction/);
+        assert.doesNotMatch(error.message, /当前 API Key 无权|余额不足/);
+        assert.equal(error.ambiguous, false); assert.equal(error.retryable, false);
+        return true;
+      });
+      assert.equal(requests, 1);
+    });
+  }
+});
+
 test("successful HTTP with an unusable submission response preserves ambiguity", async (t) => {
   for (const body of ["<html>portal</html>", "", "{}", '{"id":"t1","status":"unknown"}']) {
     await t.test(body || "empty", async () => {

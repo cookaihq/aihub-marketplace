@@ -15,7 +15,8 @@ test('unknown service failures explain the incomplete operation without inventin
   assert.match(result.user_notice, /素材理解任务.*执行失败/);
   assert.match(result.user_notice, /原因尚未确认/);
   assert.match(result.advice, /Agent.*原任务.*管理员/);
-  for (const raw of ['service_unavailable', 'remote_failed', 'private', 'trace-secret', '<details>', '宕机', '未计费']) {
+  assert.equal(result.context?.error?.code, 'service_unavailable');
+  for (const raw of ['remote_failed', 'private', 'trace-secret', '<details>', '宕机', '未计费']) {
     assert.ok(!result.user_notice.includes(raw), raw);
   }
 });
@@ -90,7 +91,7 @@ test('result checking has its own outcome after generation has succeeded', () =>
   for (const embedded of [false, true]) {
     const review = { status: 'checking', delivery_status: 'delivered', external: { result: { status: 'query_failed', failure: { code: 'timeout' } } } };
     const result = feedback(embedded ? { status: 'delivered', result_check: review } : review);
-    assert.match(result.user_notice, /已有结果.*结果检查尚未完成/);
+    assert.match(result.user_notice, /已有结果.*AIhub Studio.*结果内容检查尚未完成/);
     assert.match(result.advice, /查询原检查任务.*交付已有生成结果/);
     assert.doesNotMatch(result.user_notice, /生成失败|重新生成/);
   }
@@ -100,6 +101,66 @@ test('result checking has its own outcome after generation has succeeded', () =>
   assert.match(mismatch.advice, /说明具体差异.*你决定/);
   const unavailable = feedback({ status: 'delivered', result_check: { status: 'unavailable' } }, [event('invalid_api_key', 'registry', 401)]);
   assert.doesNotMatch(unavailable.user_notice, /认证/);
+});
+
+test('model permission diagnosis starts with the effective Key and preserves concrete current evidence', () => {
+  const result = summarizeFeedback({ status: 'delivered', model: 'generation-model', result_check: {
+    status: 'unavailable', provider: 'aihub', stage: 'submission', external: { model: 'configured-reviewer', state: 'submitted',
+      result: { status: 'not_submitted', failure: { http_status: 403, code: 'permission_denied', ambiguous: false },
+        error: 'This API Key cannot call configured-reviewer. Bearer synthetic-secret https://private.invalid/?token=signed' } },
+  } }, [event('invalid_api_key', 'registry', 401)], 'aihub-video', 'project/.env.local.aihub-studio')!;
+  assert.equal(result.context?.model, 'configured-reviewer');
+  assert.equal(result.context?.model_state, 'planned', 'a rejected request is not an accepted check');
+  assert.equal(result.context?.stage, 'submission');
+  assert.equal(result.context?.key_source, 'project/.env.local.aihub-studio');
+  assert.equal(result.context?.error?.code, 'permission_denied');
+  assert.match(String(result.context?.error?.message), /This API Key cannot call configured-reviewer/);
+  assert.doesNotMatch(JSON.stringify(result), /synthetic-secret|token=signed|generation-model/);
+  assert.match(result.advice, /先核对本次生效.*同一把 Key.*接口错误/);
+  assert.match(result.advice, /无法确认.*AIhub 控制台.*这把 Key.*确认受限后/);
+  assert.doesNotMatch(result.advice, /给.*账号.*开通|联系服务管理员/);
+  assert.match(result.user_notice, /是否涉及.*仍需核实/);
+});
+
+test('checking model states distinguish selection, upload, accepted work and unknown submission', () => {
+  for (const [status, expected] of [['upload_unknown', 'planned'], ['submitted', 'submitted'], ['submission_unknown', 'submission_unknown']] as const) {
+    const result = feedback({ status: 'unavailable', delivery_status: 'delivered', stage: status === 'upload_unknown' ? 'upload' : 'submission',
+      external: { model: 'actual-reviewer', state: status === 'upload_unknown' ? 'preparing' : 'submitted', result: { status } } });
+    assert.equal(result.context?.model, 'actual-reviewer'); assert.equal(result.context?.model_state, expected);
+  }
+  const registry = feedback({ status: 'unavailable', delivery_status: 'delivered', provider: 'aihub', stage: 'registry',
+    failure: { stage: 'registry', http_status: 403, code: 'permission_denied', message: 'Access forbidden' },
+    model_selection: { configured_models: ['candidate-only'] } });
+  assert.equal(registry.context?.model, null); assert.equal(registry.context?.model_state, 'not_selected');
+  assert.equal(registry.context?.stage, 'registry');
+  assert.match(registry.user_notice, /尚未选出模型，未提交模型请求/);
+  assert.doesNotMatch(registry.user_notice, /实际模型 candidate-only|Key 无.*权限/);
+  const local = feedback({ status: 'unavailable', delivery_status: 'delivered', provider: 'host', reason: '只能读字幕，无法听取音轨' });
+  assert.match(local.user_notice, /只能读字幕，无法听取音轨/);
+  assert.equal(local.context?.model_state, 'not_used');
+  const actual = feedback({ status: 'checking', delivery_status: 'delivered', provider: 'aihub', stage: 'query',
+    external: { model: 'planned-alias', state: 'submitted', result: { status: 'query_failed', task_id: 'accepted-task', model: 'service-reported-model' } } });
+  assert.equal(actual.context?.model, 'service-reported-model'); assert.equal(actual.context?.planned_model, 'planned-alias');
+});
+
+test('a healthy check waiting for its result does not inherit errors from generation or earlier registry requests', () => {
+  const result = feedback({ status: 'checking', delivery_status: 'delivered', provider: 'aihub', stage: 'query',
+    external: { model: 'reviewer', state: 'submitted', result: { status: 'submitted', task_id: 'existing-task' } } },
+    [event('permission_denied', 'submission', 403), event('invalid_api_key', 'registry', 401)]);
+  assert.equal(result.context?.error, undefined);
+  assert.equal(result.context?.model_state, 'submitted');
+  assert.doesNotMatch(result.user_notice, /认证|拒绝|权限/);
+});
+
+test('specific quota, capability, content and network evidence is not reclassified as Key authorization by HTTP 403', () => {
+  for (const [code, reason] of [
+    ['insufficient_user_quota', /明确返回可用额度不足/], ['content_policy_violation', /内容规则/],
+    ['unsupported_parameters', /部分选项/], ['model_not_support_capability', /不支持本次所需能力/],
+    ['network_error', /连接未完成/], ['service_unavailable', /具体原因尚未确认/],
+  ] as const) {
+    const result = feedback({ status: 'not_submitted', model: 'fixture-model', failure: { code, http_status: 403, ambiguous: false } });
+    assert.match(result.user_notice, reason); assert.doesNotMatch(result.user_notice, /访问权限|这把 Key 的模型使用权限/);
+  }
 });
 
 test('unsupported options and candidate confirmation keep the user choice intact', () => {

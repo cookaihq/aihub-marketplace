@@ -22,7 +22,8 @@ async function fixture(audio = false) {
     ...(audio ? [] : ['-frames:v', '1']), '-y', file]);
   const bytes = await readFile(file);
   const state = { generationPosts: 0, reviewPosts: 0, uploads: 0, queries: 0, modelQueries: 0,
-    reviewMode: 'complete', reportMode: 'matched', errorStatus: 0, queryFail: false, visible: true,
+    reviewMode: 'complete', reportMode: 'matched', errorStatus: 0, errorCode: 'service_unavailable',
+    registryErrorStatus: 0, registryErrorAfter: 0, capabilities: ['vision', 'audio', 'video', 'file'], queryFail: false, visible: true,
     lastBody: {} as any, report: {} as any };
   let base = '';
   const server = createServer(async (req, res) => {
@@ -30,7 +31,8 @@ async function fixture(audio = false) {
     if (req.url === '/v1/models') return json({ data: [{ id: generator }] });
     if (req.url === '/e/v1/configs/llm_generations_models') {
       state.modelQueries++;
-      return json({ data: [{ id: 'text-only', capabilities: [] }, ...(state.visible ? [{ id: checker, capabilities: ['vision', 'audio', 'video', 'file'] }] : [])] });
+      if (state.registryErrorStatus && state.modelQueries > state.registryErrorAfter) return json({ error: { code: 'permission_denied', message: 'Key-scoped registry request denied' } }, state.registryErrorStatus);
+      return json({ data: [{ id: 'text-only', capabilities: [] }, ...(state.visible ? [{ id: checker, capabilities: state.capabilities }] : [])] });
     }
     if (req.method === 'POST') {
       let raw = ''; for await (const chunk of req) raw += chunk;
@@ -42,7 +44,7 @@ async function fixture(audio = false) {
       }
       if (req.url === '/e/v1/llm/generations') {
         state.reviewPosts++; state.lastBody = body;
-        if (state.errorStatus) { res.setHeader('x-request-id', 'private-review-request'); return json({ error: { code: 'service_unavailable', message: 'fixture-review-secret https://private.invalid/?signature=hidden original prompt' } }, state.errorStatus); }
+        if (state.errorStatus) { res.setHeader('x-request-id', 'private-review-request'); return json({ error: { code: state.errorCode, message: 'fixture-review-secret https://private.invalid/?signature=hidden original prompt' } }, state.errorStatus); }
         const input = JSON.parse(body.messages.find((m: any) => m.role === 'user').content[0].text);
         state.report = reportFor(input, state.reportMode, audio);
         // llm-custom extracts system instructions from messages, not system_prompt.
@@ -91,7 +93,11 @@ async function submit(f: Awaited<ReturnType<typeof fixture>>, result: any, repor
   const path = join(f.dir, 'host-report.json'); await writeFile(path, JSON.stringify(report));
   return f.call({}, 'review-submit', '--record', result.run_record, '--review-token', result.result_check.review_token, '--review-file', path);
 }
-function notice(result: any) { assert.match(result.user_notice, /对话.*关闭结果检查/); }
+function notice(result: any) {
+  assert.match(result.user_notice, /AIhub Studio.*核对成品.*对话.*仅本次关闭 AIhub 结果检查/);
+  assert.match(result.user_notice, /当前项目.*某个 Skill.*长期关闭/);
+  assert.match(result.user_notice, /文件格式和可解析性检查仍继续.*内容需求检查关闭.*额外消耗额度/);
+}
 
 test('default host review preserves Chinese requirements, binds real files and reminds on each completed delivery', async () => {
   const f = await fixture();
@@ -165,6 +171,10 @@ test('review resumes its task after query errors and never submits a second revi
     f.state.queryFail = true;
     const failed = await f.call(cfg, 'review', '--record', done.run_record, '--wait-seconds', '0');
     assert.equal(failed.status, 'checking'); assert.equal(failed.feedback.show_notice, true);
+    assert.equal(failed.feedback.context.model, checker); assert.equal(failed.feedback.context.model_state, 'submitted');
+    assert.equal(failed.feedback.context.stage, 'query'); assert.equal(failed.feedback.context.key_source, 'environment');
+    assert.equal(failed.feedback.context.error.message, 'no access');
+    assert.match(failed.feedback.advice, /先核对本次生效.*同一把 Key/);
     f.state.queryFail = false; f.state.reviewMode = 'complete';
     const complete = await f.call(cfg, 'review', '--record', done.run_record, '--wait-seconds', '0');
     assert.equal(complete.status, 'matched'); notice(complete);
@@ -206,6 +216,70 @@ test('invalid, mismatching and unavailable review results are separate from deli
       notice(review); assert.equal(f.state.generationPosts, 1);
     } finally { await f.close(); }
   }
+});
+
+test('registry failures and missing capabilities retain distinct evidence without claiming Key authorization', async () => {
+  for (const scenario of ['registry-denied', 'unlisted', 'missing-capability', 'second-registry-denied']) {
+    const f = await fixture();
+    try {
+      if (scenario.includes('registry-denied')) {
+        f.state.registryErrorStatus = 403;
+        f.state.registryErrorAfter = scenario === 'second-registry-denied' ? 1 : 0;
+      }
+      if (scenario === 'unlisted') f.state.visible = false;
+      if (scenario === 'missing-capability') f.state.capabilities = ['audio'];
+      const cfg = { AIHUB_RESULT_CHECK_PROVIDER: 'aihub' };
+      const done = await f.start(cfg), check = done.result_check;
+      assert.equal(done.status, 'delivered'); assert.equal(check.status, 'unavailable');
+      assert.equal(check.stage, 'registry'); assert.equal(done.feedback.context.stage, 'registry');
+      assert.equal(done.feedback.context.key_source, 'environment');
+      assert.deepEqual(check.model_selection.configured_models, [checker]);
+      assert.deepEqual(check.model_selection.required_capabilities, ['vision']);
+      if (scenario === 'second-registry-denied') {
+        assert.equal(check.external.model, checker); assert.equal(done.feedback.context.model_state, 'planned');
+      } else {
+        assert.equal(check.external, undefined); assert.equal(done.feedback.context.model, null);
+        assert.equal(done.feedback.context.model_state, 'not_selected');
+      }
+      if (scenario.includes('registry-denied')) {
+        assert.equal(check.failure.http_status, 403);
+        assert.equal(done.feedback.context.error.message, 'Key-scoped registry request denied');
+        const saved = JSON.parse(await readFile(check.review_record, 'utf8'));
+        assert.deepEqual(saved.failure, check.failure);
+        const diagnostic = JSON.parse(await readFile(done.feedback.diagnostic, 'utf8'));
+        assert.equal(diagnostic.context.current_feedback.stage, 'registry');
+        assert.equal(diagnostic.context.current_feedback.model, scenario === 'second-registry-denied' ? checker : null);
+      } else {
+        const candidate = check.model_selection.candidates[0];
+        assert.equal(candidate.model, checker); assert.equal(candidate.listed, scenario !== 'unlisted');
+        assert.deepEqual(candidate.missing_capabilities, ['vision']); assert.equal(check.failure, undefined);
+      }
+      assert.doesNotMatch(done.feedback.user_notice, /这把 Key 没有.*权限|账号.*开通/);
+      await f.call(cfg, 'continue', '--record', done.run_record);
+      assert.equal(f.state.generationPosts, 1); assert.equal(f.state.reviewPosts, 0);
+      assert.equal(f.state.uploads, scenario === 'second-registry-denied' ? 1 : 0);
+      assert.deepEqual(await readFile(done.files[0].path), await readFile(f.file));
+    } finally { await f.close(); }
+  }
+});
+
+test('a rejected review shows the planned checker and concrete error while preserving delivered files and submission counts', async () => {
+  const f = await fixture();
+  try {
+    f.state.errorStatus = 403; f.state.errorCode = 'permission_denied';
+    const cfg = { AIHUB_RESULT_CHECK_PROVIDER: 'aihub' };
+    const done = await f.start(cfg);
+    assert.equal(done.status, 'delivered'); assert.equal(done.result_check.status, 'unavailable');
+    assert.equal(done.feedback.context.model, checker); assert.equal(done.feedback.context.model_state, 'planned');
+    assert.equal(done.feedback.context.error.http_status, 403);
+    assert.equal(done.feedback.context.error.code, 'permission_denied');
+    assert.doesNotMatch(JSON.stringify(done.feedback), /fixture-review-secret|signature=hidden/);
+    assert.match(done.feedback.advice, /先核对本次生效.*同一把 Key.*AIhub 控制台/);
+    const again = await f.call(cfg, 'continue', '--record', done.run_record);
+    assert.equal(again.feedback.context.model, checker);
+    assert.deepEqual(again.files, done.files);
+    assert.equal(f.state.generationPosts, 1); assert.equal(f.state.reviewPosts, 1);
+  } finally { await f.close(); }
 });
 
 test('missing evidence, unknown items, edited requirements and changed files cannot produce a passing report', async () => {

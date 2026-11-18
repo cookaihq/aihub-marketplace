@@ -3,7 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import type { ApiError, TaskResponse } from './apiClient.js';
-import { credentialId, type LoadedConfig } from './config.js';
+import { credentialId, sanitized, type LoadedConfig } from './config.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord, writePrivateText } from './state.js';
 import { jsonBlock, localLink, redactEvidence, upstreamEvidence, type HttpEvidence } from './diagnosticEvidence.js';
 import { summarizeFeedback } from './userFeedback.js';
@@ -74,6 +74,11 @@ function stageFor(method: string, path: string): Stage {
   return path.startsWith('/e/v1/tasks/') ? 'query' : method === 'GET' && (path.includes('/models') || path.includes('/configs/') || path === '/api/pricing') ? 'registry'
     : path.startsWith('/e/v1/files/') ? 'upload' : method === 'POST' ? 'submission' : 'other';
 }
+/** Correlate the caught error with this invocation, never with a saved historical event. */
+export function observedErrorStage(error: ApiError): Stage | undefined {
+  return [...(context.getStore()?.events ?? [])].reverse().find(e => e.code === (error.code ?? 'unknown_error') &&
+    e.message === error.message && e.request_id === (error.requestId ?? null))?.stage;
+}
 export async function observeRequestError(error: ApiError, method: string, path: string, evidence?: HttpEvidence): Promise<void> {
   const c = context.getStore();
   if (!c || error.type === 'validation' || error.code === 'deadline_exceeded') return;
@@ -115,7 +120,7 @@ const PUBLIC_CODES = new Set(['model_unavailable', 'model_not_support_capability
 /** An update error must not hide usable files from an earlier observation. Never link a missing file. */
 export async function existingFeedback(output: Record<string, unknown>, skill?: string): Promise<Record<string, unknown> | undefined> {
   const c = context.getStore();
-  const summary = summarizeFeedback(output, c?.events ?? [], skill ?? c?.cfg?.skill);
+  const summary = sanitized(summarizeFeedback(output, c?.events ?? [], skill ?? c?.cfg?.skill, c?.cfg?.sources.AIHUB_API_KEY), c?.cfg ? [c.cfg.apiKey] : []);
   const warning = '本轮排障报告更新失败，已有记录可能未包含最新结果；原任务结果仍保留。';
   const notice = { ...summary, show_notice: true, warning,
     user_notice: [summary?.user_notice, warning].filter(Boolean).join('') };
@@ -135,7 +140,7 @@ interface Diagnostic {
 }
 export async function feedback(cfg: LoadedConfig, output: Record<string, unknown>, events: FailureEvent[]): Promise<Record<string, unknown> | undefined> {
   const c = context.getStore();
-  const summary = summarizeFeedback(output, events, cfg.skill);
+  const summary = sanitized(summarizeFeedback(output, events, cfg.skill, cfg.sources.AIHUB_API_KEY), [cfg.apiKey]);
   const notice = summary ? { ...summary, show_notice: true, ...(c?.warning ? { warning: c.warning } : {}) } : undefined;
   const hasRecord = c?.record || [output.run_record, output.source_record, output.record].some(v => typeof v === 'string');
   if (!events.length && !hasRecord) return notice;
@@ -179,7 +184,7 @@ export async function feedback(cfg: LoadedConfig, output: Record<string, unknown
       task_status: output.status ?? 'unknown', service_url: cfg.baseUrl, task_context: taskContext ?? saved.context.task_context ?? null,
       attempted_models: output.attempted_models ?? saved.context.attempted_models ?? [], attempts: output.attempts ?? saved.context.attempts ?? [],
       original_request: (taskContext as { original_request?: unknown } | undefined)?.original_request ?? saved.context.original_request ?? null,
-      model: output.model ?? saved.context.model ?? null };
+      model: output.model ?? saved.context.model ?? null, current_feedback: summary?.context ?? null };
     // Each exchange is already bounded. Do not truncate the accumulated history on every save.
     saved.context = redactEvidence(saved.context, secrets) as Record<string, unknown>;
     const reportPath = join(dir, 'error-report.md'), draftPath = join(dir, 'issue-draft.md');
@@ -213,6 +218,7 @@ export async function feedback(cfg: LoadedConfig, output: Record<string, unknown
     return { upstream_error_count: saved.events.length, report_required: true, show_notice: true,
       error_report: reportPath, diagnostic: path, issue_draft: draftPath, issue_url: ISSUE_URL, artifact_links: links,
       user_notice: summary?.user_notice ?? '当前任务结果尚需核对；排障记录已保存在本机。',
+      ...(summary?.context ? { context: summary.context } : {}),
       advice, support: redactEvidence(cfg.feedback?.supportUrl ?? '联系当前 AIhub 服务管理员', secrets),
       ...(c?.warning ? { warning: c.warning } : {}),
       privacy_notice: '本地报告含私密请求与定位信息；公开反馈只使用检查后的 issue-draft.md，不自动发送。' };

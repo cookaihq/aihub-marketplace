@@ -2,17 +2,17 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
-import { AihubmaxClient } from './apiClient.js';
+import { AihubmaxClient, ApiError } from './apiClient.js';
 import { RESULT_CHECK_DEFAULTS, credentialId, sanitized } from './config.js';
 import { measureLocalMedia } from './download.js';
 import { extractDocumentText } from './documentText.js';
 import { readRunForLocalReview, readRunMetadata, assertRunScope } from './runs.js';
 import { appendRecoveryEvent, recoveryRecord, localFileHash, verifyLocalFile } from './reviewRecovery.js';
-import { bindDiagnosticRecord } from './diagnostics.js';
+import { bindDiagnosticRecord, observedErrorStage } from './diagnostics.js';
 import { assertOutsideInstallation, withJobLock, writePrivateRecord } from './state.js';
-import { resume, understand, upload, adoptTask, TaskPersistenceError } from './workflow.js';
+import { resume, understand, upload, adoptTask, failureInfo, TaskPersistenceError } from './workflow.js';
 import { assertAudioRunBinding, readAudioRun } from './audioRun.js';
-export const DISABLE_CHECK_HINT = '如果想关闭结果检查，可以直接在对话中告诉我“关闭结果检查”；也可以说“仅本次关闭结果检查”。';
+export const DISABLE_CHECK_HINT = 'AIhub Studio 的结果内容检查用于核对成品是否满足你的要求。你可以在对话中说“仅本次关闭 AIhub 结果检查”，或明确要求在当前项目、某个 Skill 或五个 AIhub Skill 中长期关闭。关闭后，文件格式和可解析性检查仍继续，额外的内容需求检查关闭；使用外部 AIhub 模型检查会额外消耗额度。';
 const FINAL = new Set(['matched', 'mismatched', 'inconclusive', 'unavailable', 'disabled']);
 function hash(value) { return createHash('sha256').update(JSON.stringify(value)).digest('hex'); }
 async function fileHash(path) {
@@ -40,6 +40,8 @@ function present(cfg, path, review) {
         program_checks: review.program_checks, ...(review.report ? { report: review.report } : {}),
         ...(review.reason ? { reason: review.reason } : {}), ...(review.provider ? { provider: review.provider } : {}),
         ...(review.external ? { external: review.external } : {}),
+        ...(review.stage ? { stage: review.stage } : {}), ...(review.failure ? { failure: review.failure } : {}),
+        ...(review.model_selection ? { model_selection: review.model_selection } : {}),
         ...(enabled && FINAL.has(status) ? { user_notice: DISABLE_CHECK_HINT } : {}),
         ...(enabled && status === 'pending' ? { review_token: review.token,
             next_action: { command: 'review-submit', args: ['--skill', cfg.skill, '--record', review.source_record, '--review-token', review.token, '--review-file', '<实际观察后的报告 JSON>'] },
@@ -136,7 +138,7 @@ async function createReview(run, source, reviewCredential = run.credential_id) {
         original_request: request.original_request, current_request: current,
         requirements: [{ id: 'original-request', text: current, priority: 'required' },
             ...(request.review_requirements ?? []).map(item => ({ ...item, id: `user-${item.id}` }))], artifacts, sources,
-        program_checks: programChecks(run, artifacts), token: '', status: 'pending' };
+        program_checks: programChecks(run, artifacts), token: '', status: 'pending', stage: 'local_inspection' };
     review.token = token(review);
     if (artifacts.some(a => a.issue || !a.sha256)) {
         review.status = 'unavailable';
@@ -237,11 +239,13 @@ const REPORT_INSTRUCTIONS = `Audit the existing result by checking the actual su
 Include every requirement and coverage for each output and required source. Empty evidence cannot pass. Mark incomplete/sampled coverage complete=false. Audio/video coverage needs actual observed time ranges in seconds and audio_checked. If you cannot observe the supplied content, return {"unavailable_reason":"reason"}. Answer observations in the user's language.`;
 async function runExternal(cfg, review, path, waitSeconds) {
     if (review.external?.result?.status === 'persistence_failed' && typeof review.external.result.task_id === 'string') {
+        review.stage = 'query';
         review.external.result = await adoptTask(cfg, review.external.result.task_id, 'understanding', join(dirname(path), 'review-task'), waitSeconds);
         if (typeof review.external.result.record === 'string')
             review.external.task_record = review.external.result.record;
     }
     else if (review.external?.task_record) {
+        review.stage = 'query';
         review.external.result = await resume(cfg, review.external.task_record, waitSeconds);
     }
     else if (review.external) {
@@ -250,6 +254,8 @@ async function runExternal(cfg, review, path, waitSeconds) {
         return;
     }
     else {
+        review.provider = 'aihub';
+        review.stage = 'local_inspection';
         const settings = cfg.resultCheck ?? RESULT_CHECK_DEFAULTS;
         if (review.sources.some(s => s.path && (s.bytes ?? Infinity) > 20 * 1024 * 1024)) {
             review.status = 'unavailable';
@@ -279,15 +285,21 @@ async function runExternal(cfg, review, path, waitSeconds) {
             review.reason = '检查缺少可供核对的原媒体；当前理解接口不提交纯文本请求。';
             return;
         }
+        review.stage = 'registry';
+        review.model_selection = { configured_models: [...settings.models], required_capabilities: [...needed] };
         const models = await new AihubmaxClient(cfg).listLlmModels();
+        review.model_selection.candidates = settings.models.map(id => {
+            const entry = models.find(m => m.id === id);
+            return { model: id, listed: !!entry, missing_capabilities: [...needed].filter(cap => !entry?.capabilities?.includes(cap)) };
+        });
         const model = settings.models.find(id => models.some(m => m.id === id && m.capabilities && [...needed].every(cap => m.capabilities.includes(cap))));
         if (!model) {
             review.status = 'unavailable';
-            review.reason = '配置的检查模型在当前账号不可见，或未声明全部所需媒体能力。';
+            review.reason = '尚未选出检查模型：本次 Key 查询到的清单未收录配置候选，或候选未声明所需媒体能力。逐项依据见 model_selection；清单缺项不能单独证明 Key 无模型调用权限。';
             return;
         }
-        review.provider = 'aihub';
         review.external = { state: 'preparing', model };
+        review.stage = 'upload';
         await save(cfg, path, review); // An interrupted upload/submission must not be replayed.
         await unchanged(review);
         for (const s of review.sources) {
@@ -321,6 +333,7 @@ async function runExternal(cfg, review, path, waitSeconds) {
         }
         await unchanged(review);
         review.external.state = 'ready';
+        review.stage = 'submission';
         await save(cfg, path, review);
         const prompt = JSON.stringify({ request: review.current_request, requirements: review.requirements,
             inputs_in_content_order: [...review.sources.map(s => ({ id: s.id, type: s.type, measurements: s.measurements })), ...review.artifacts.filter(a => /^(image|audio|video)\//.test(a.mime_type)).map(a => ({ id: a.id, measurements: a.measurements }))],
@@ -330,6 +343,8 @@ async function runExternal(cfg, review, path, waitSeconds) {
             onRecord: async (record) => { review.external.task_record = record; review.external.state = 'submitted'; await save(cfg, path, review); } });
     }
     const result = review.external.result;
+    review.stage = ['submitted', 'waiting', 'query_failed'].includes(String(result.status)) ? 'query'
+        : result.status === 'remote_failed' ? 'remote_execution' : result.status === 'delivered' ? 'report' : review.stage;
     if (['submitted', 'waiting', 'query_failed', 'download_failed', 'download_pending'].includes(String(result.status))) {
         review.status = 'checking';
         review.reason = '检查任务已保存；继续查询同一任务，不提交新的检查请求。';
@@ -486,6 +501,7 @@ export async function reviewTask(cfg, sourceInput, options = {}) {
             if (review.status !== 'pending' || !options.reviewToken || options.reviewToken !== review.token)
                 throw new Error('Report token is stale, missing, or this review already finished.');
             review.provider = 'host';
+            review.stage = 'host';
             review.report = parseReport(options.report, review);
             review.status = decide(review, review.report);
             review.reason = review.report.unavailable_reason;
@@ -497,12 +513,20 @@ export async function reviewTask(cfg, sourceInput, options = {}) {
         if (options.provider && settings.provider !== 'auto' && options.provider !== settings.provider)
             throw new Error('Requested provider conflicts with AIHUB_RESULT_CHECK_PROVIDER.');
         if (review.external || options.provider === 'aihub' || settings.provider === 'aihub') {
+            delete review.failure;
             try {
                 await runExternal(cfg, review, path, options.waitSeconds ?? 0);
             }
             catch (error) {
                 if (error instanceof TaskPersistenceError && review.external)
                     review.external.result = error.output();
+                const stage = error instanceof ApiError ? observedErrorStage(error) : undefined;
+                if (stage && stage !== 'other')
+                    review.stage = stage;
+                review.failure = sanitized({ stage: review.stage ?? 'local_inspection',
+                    ...(error instanceof ApiError ? failureInfo(error, cfg) : {}),
+                    message: error instanceof Error ? error.message : String(error),
+                    source: error instanceof ApiError ? 'service_request' : 'local' }, [cfg.apiKey]);
                 review.status = 'unavailable';
                 review.reason = '检查请求或本地读取失败；保留检查记录和已知任务 ID，交付已有产物，不自动重新提交或生成。';
             }
