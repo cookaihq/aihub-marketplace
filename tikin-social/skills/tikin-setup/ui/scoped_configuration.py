@@ -7,6 +7,7 @@ from skill_ui.contracts import UIError
 from skill_ui.scopes import ScopePlanner, annotate_snapshot
 from skill_ui.directories import selector_edits, retarget_request, check_directory_revision, planning_snapshot
 from skill_ui.storage import active
+from skill_ui.batches import dependencies
 
 
 class ScopedConfiguration(Configuration):
@@ -74,18 +75,27 @@ class ScopedConfiguration(Configuration):
             changed.update(changes)
         candidate, projected, _ = self._state({path: after.decode('utf-8')
             for path, (_, after) in modifications.items()})
-        errors = list(candidate['validation_errors'])
+        errors = []
+        graph = dependencies(candidate)
+        related, pending = set(changed), set(changed)
+        while pending:
+            key = pending.pop()
+            additions = graph[key] - related
+            related.update(additions)
+            pending.update(additions)
         values = {field['id']: field['effective']['value'] for field in candidate['fields']}
         for field in candidate['fields']:
             key = field['id']
-            if key not in changed:
+            if key not in related:
                 continue
+            if field['effective']['status'] in ('error', 'invalid'):
+                errors.append(field['effective'].get('message', field['label'] + '无法读取或格式无效。'))
             if field.get('required') and field['effective']['empty']:
                 errors.append('修改后没有可用的 ' + field['label'] + '，请先配置回退值。')
             if any(changes.get(key, {}).get('op') == 'set' for changes in files.values()) and not active(field, values):
                 errors.append(field['label'] + '当前不适用，请核对关联设置。')
         for load in [projected['shared'], *projected.get('models', {}).values()]:
-            if any(problem['reason'] != 'missing' for problem in load['inspection']['problems']):
+            if any(problem['reason'] != 'missing' and problem.get('key') in related for problem in load['inspection']['problems']):
                 errors.append('修改后的配置未通过原加载器校验；请修复配置后保存。')
         candidate['validation_errors'] = sorted(set(errors))
         candidate['directory_targets'] = {key: next(layer['path'] for layer in candidate['layers'] if layer['id'] == target)

@@ -60,7 +60,7 @@
         <div class="el-table-head"><span>音色</span><span>语种 / 声音</span><span>适用场景</span><span>选择音色</span></div>
         <div class="el-list" id="el-list" aria-label="音色列表"></div>
         <div class="el-pagination"><span id="el-range"></span><div><button class="el-icon" data-el="previous" aria-label="上一页">${icon('arrow')}</button><span id="el-page">1 / 1</span><button class="el-icon el-next" data-el="next" aria-label="下一页">${icon('arrow')}</button></div><span class="el-page-size">每页 50 个</span></div>
-        <footer class="el-footer"><div class="el-save-scope"><span>保存到</span><div role="radiogroup" aria-label="音色保存范围"><button role="radio" data-el-scope="global" aria-checked="true">全局</button><button role="radio" data-el-scope="project" aria-checked="false">本项目</button></div><small id="el-scope-help">多个项目共用</small></div><div class="el-selection" id="el-selection">选择一个音色</div><button class="el-primary" data-el="save" disabled>保存并使用</button></footer>
+        <footer class="el-footer"><div class="el-save-scope"><span>保存到</span><div role="radiogroup" aria-label="音色保存范围"><button role="radio" data-el-scope="global" aria-checked="true">全局</button><button role="radio" data-el-scope="project" aria-checked="false">本项目</button></div><small id="el-scope-help">多个项目共用</small></div><div class="el-selection" id="el-selection">选择一个音色</div><button class="el-primary" data-el="save" disabled>完成选择</button></footer>
         <div class="el-bottom-note"><span>目录通常低频更新；搜索与筛选在本机完成，需要时可重新下载</span><span>试听使用已有样音，不生成新语音</span></div>`;
       document.body.append(dialog);
       dialog.addEventListener('click',event=>this.click(event));
@@ -79,10 +79,10 @@
         if(event.target.id==='el-samples')this.samples=event.target.checked;
         if(key||event.target.id==='el-samples'){this.page=1;this.renderRows();}
       });
-      dialog.addEventListener('keydown',event=>{
+      dialog.addEventListener('keydown',async event=>{
         if(event.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName)){event.preventDefault();dialog.querySelector('#el-search').focus();}
         if(['ArrowLeft','ArrowRight'].includes(event.key)&&event.target.closest('[role=radiogroup]')){
-          event.preventDefault();this.setScope(event.key==='ArrowLeft'?'global':'project');dialog.querySelector(`[data-el-scope="${this.scope}"]`).focus();
+          event.preventDefault();await this.setScope(event.key==='ArrowLeft'?'global':'project');dialog.querySelector(`[data-el-scope="${this.scope}"]`).focus();
         }
       });
       this.restoreFilters();dialog.showModal();this.paintFooter();this.paintFeedback();
@@ -192,10 +192,8 @@
       const voice=this.byId.get(this.selected);
       this.dialog.querySelector('#el-selection').innerHTML=voice?`<span class="el-selection-dot el-color-${voice.color}"></span><div><small>已选择</small><strong>${encode(voice.voice_name)}</strong></div>`:'选择一个音色';
       const save=this.dialog.querySelector('[data-el="save"]');save.disabled=this.saving||!this.selected&&!this.favoritesDirty;
-      const transfer=this.prepareTransfer();
-      const pendingSwitch=this.fieldsToSave().some(id=>this.ui.switchIntents[id]&&this.ui.preview?.scope_plans?.[id]?.state!=='ready');
-      save.disabled=locked||pendingSwitch||transfer&&(transfer.loading||transfer.error||transfer.plan?.state!=='ready')||this.fieldsToSave().some(id=>this.ui.needsReview?.[id])||!this.selected&&!this.favoritesDirty;
-      save.textContent=this.saving?'正在保存…':this.fieldsToSave().length===1&&this.fieldsToSave()[0]===FAVORITES?'保存收藏':'保存并使用';
+      save.disabled=locked||!this.selected&&!this.favoritesDirty;
+      save.textContent=this.saving?'正在暂存…':'完成选择';
       for(const button of this.dialog.querySelectorAll('[data-el-select],[data-el-favorite]'))button.disabled=!!locked;
       this.dialog.querySelector('#el-refresh').disabled=!!locked||this.loading;
       if(this.ui.expired)this.audio.pause();
@@ -215,36 +213,21 @@
     targetFor(id) {
       return this.ui.switchIntents[id]?.target||(this.ui.hasFieldDraft(id)?this.ui.fieldTarget(id):this.ui.snapshot.default_targets[this.scope]);
     }
-    prepareTransfer() {
-      // Opening a picker is read-only. Preview an unedited transfer without
-      // creating a main-form switch, so its exact cleanup is visible before saving.
-      if(this.saving)return this.prospectiveTransfer;
-      if(!this.selected||!this.fieldsToSave().includes(VOICE)||this.ui.hasFieldDraft(VOICE)||this.ui.field(VOICE).effective.source===this.targetFor(VOICE)){
-        this.prospectiveTransfer=null;return null;
-      }
-      const intent={target:this.targetFor(VOICE),mode:'input'},revision=this.ui.snapshot.revision;
-      const signature=JSON.stringify([revision,intent]);
-      if(this.prospectiveTransfer?.signature===signature)return this.prospectiveTransfer;
-      const proposal=this.prospectiveTransfer={signature,intent,loading:true},dialog=this.dialog;
-      this.ui.api('/api/preview',{revision,changes:{files:{},switches:{[VOICE]:intent}}}).then(result=>{
-        if(this.dialog!==dialog||this.prospectiveTransfer!==proposal)return;
-        proposal.plan=result.config.scope_plans[VOICE];
-        if(result.config.validation_errors?.length)proposal.error=result.config.validation_errors.join(' ');
-      }).catch(error=>{if(this.prospectiveTransfer===proposal)proposal.error=error.message;}).finally(()=>{
-        if(this.dialog===dialog&&this.prospectiveTransfer===proposal){proposal.loading=false;this.paintFooter();this.paintFeedback();}
-      });
-      return proposal;
-    }
     fieldsToSave() {
       const ids=[VOICE,FAVORITES].filter(id=>this.ui.hasFieldDraft(id));
       if(this.transferVoice&&!ids.includes(VOICE))ids.push(VOICE);
       if(!ids.length&&this.selected)ids.push(VOICE);
       return ids;
     }
-    setScope(scope) {
+    async setScope(scope) {
       if(this.ui.expired||this.ui.uncertain||this.ui.busy||this.saving||!this.allowedScopes.includes(scope))return;
-      this.scope=scope;
-      for(const id of [VOICE,FAVORITES])if(this.ui.hasFieldDraft(id))this.ui.requestSwitch(id,this.ui.snapshot.default_targets[scope],'input');
+      const before=Object.fromEntries(['drafts','inputs','errors','switchIntents','fieldTargets'].map(key=>[key,structuredClone(this.ui[key])]));
+      try{
+        for(const id of [VOICE,FAVORITES])if(this.ui.hasFieldDraft(id)&&!await this.ui.requestSwitch(id,this.ui.snapshot.default_targets[scope],'input')){
+          Object.assign(this.ui,before);this.ui.queuePreview();this.ui.rerender();return;
+        }
+        this.scope=scope;
+      }catch(error){Object.assign(this.ui,before);this.ui.queuePreview();this.message(error.message,true);}
       this.paintFooter();this.paintFeedback();
     }
     syncDrafts() {
@@ -303,11 +286,9 @@
       const targets=Object.fromEntries(ids.map(id=>[id,this.targetFor(id)]));
       if(!ids.length||!ids.every(key=>this.ui.targets(this.ui.field(key)).some(layer=>layer.id===targets[key]))){this.message('所选范围当前无法保存，请选择另一个位置。',true);return;}
       this.saving=true;this.paintFooter();
-      for(const id of ids)this.ui.requestSwitch(id,targets[id],this.ui.switchIntents[id]?.mode||'input');
       try{
-        const result=await this.ui.save(ids);
-        if(result?.saved){this.transferVoice=false;this.syncDrafts();const scopes=[...new Set(Object.values(targets).map(target=>this.ui.layer(target).scope==='global'?'全局':'本项目'))];this.message(`已保存到${scopes.join('、')}配置，已核对实际来源。`);}
-        else this.message(this.ui.error||'请核对上方内容选择，再点击保存。',!!this.ui.error);
+        for(const id of ids)if(!this.ui.switchIntents[id]&&!await this.ui.requestSwitch(id,targets[id],'input'))return;
+        this.saving=false;this.close();this.ui.toast('选择已暂存，点击底部「保存修改」后生效。');
       }catch(error){this.message(error.message+' 选择和收藏保留，可重新核对后保存。',true);}
       finally{this.saving=false;this.paintFooter();this.paintFeedback();}
     }
@@ -328,7 +309,7 @@
       if(action==='close-details'){button.closest('.el-details').remove();return;}
       if(data.elCopy){try{await navigator.clipboard.writeText(data.elCopy);button.textContent='已复制';}catch{this.message('请从详情中选中并复制音色 ID。');}return;}
       if(data.elDetail)return this.details(data.elDetail);
-      if(data.elScope){this.setScope(data.elScope);return;}
+      if(data.elScope){await this.setScope(data.elScope);return;}
       if(data.elPlay){
         if(this.playing===data.elPlay&&!this.audio.paused){this.audio.pause();return;}
         this.playing=data.elPlay;this.audio.src=this.byId.get(data.elPlay)?.sample_audio||'';this.audio.currentTime=0;
@@ -339,10 +320,10 @@
         const id=data.elFavorite;this.favoriteSet.has(id)?this.favoriteSet.delete(id):this.favoriteSet.add(id);
         this.ui.fileEdits?.[this.ui.fieldTarget(FAVORITES)]?.delete(FAVORITES);
         this.ui.stage(FAVORITES,{op:'set',value:[...this.favoriteSet]});
-        this.ui.requestSwitch(FAVORITES,target,'input');
+        try{await this.ui.requestSwitch(FAVORITES,target,'input');}catch(error){this.message(error.message,true);}
         this.favoritesDirty=this.ui.hasFieldDraft(FAVORITES);this.renderRows();this.dialog.querySelector(`[data-el-favorite="${CSS.escape(id)}"]`)?.focus();return;
       }
-      if(data.elSelect){const target=this.targetFor(VOICE);this.selected=data.elSelect;this.transferVoice=true;this.ui.fileEdits?.[this.ui.fieldTarget(VOICE)]?.delete(VOICE);this.ui.stage(VOICE,{op:'set',value:this.selected});this.ui.requestSwitch(VOICE,target,'input');this.message('');this.renderRows();this.dialog.querySelector('[data-el="save"]').focus();return;}
+      if(data.elSelect){const target=this.targetFor(VOICE);this.selected=data.elSelect;this.transferVoice=true;this.ui.fileEdits?.[this.ui.fieldTarget(VOICE)]?.delete(VOICE);this.ui.stage(VOICE,{op:'set',value:this.selected});try{await this.ui.requestSwitch(VOICE,target,'input');this.message('选择已暂存；点击配置中心底部「保存修改」后生效。');}catch(error){this.message(error.message,true);}this.renderRows();this.dialog.querySelector('[data-el="save"]').focus();return;}
       if(data.elTag){this.tag=data.elTag;this.page=1;this.restoreFilters();this.renderRows();return;}
       if(data.elTab||action==='all'){this.tab=data.elTab||'all';this.page=1;this.renderRows();return;}
       if(action==='clear'){

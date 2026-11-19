@@ -31,7 +31,10 @@ class Integration(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(dir=os.environ['TEMP'], prefix='marketplace-ui-')
         self.addCleanup(self.temporary.cleanup)
         self.project = Path(self.temporary.name).resolve()
-        self.environment = patch.dict(os.environ, {key: '' for key in os.environ if key.startswith(('AIHUB_', 'TIKIN_'))})
+        user = self.project / 'isolated-user'
+        user.mkdir()
+        self.environment = patch.dict(os.environ, {**{key: '' for key in os.environ if key.startswith(('AIHUB_', 'TIKIN_'))},
+                                                   'HOME': str(user), 'USERPROFILE': str(user)})
         self.environment.start()
         self.addCleanup(self.environment.stop)
 
@@ -204,8 +207,14 @@ class Integration(unittest.TestCase):
         path = folder / 'settings.json'
         original = '{"audio":{"minimax_speech":{"favorite_voice_ids":["a","a"]}}}'
         path.write_text(original)
+        initial = adapter.snapshot()
+        self.assertEqual(self.fields(initial)['audio.minimax_speech.favorite_voice_ids']['effective']['status'], 'error')
         with self.assertRaises(UIError):
-            adapter.snapshot()
+            self.save(adapter, {'audio.minimax_speech.favorite_voice_ids': {'op': 'set', 'value': ['new']}},
+                      initial['revision'], self.target(path))
+        saved = self.save(adapter, {'AIHUB_API_KEY': {'op': 'set', 'value': 'independent-synthetic'}},
+                          initial['revision'], self.target(folder / '.env'))
+        self.assertEqual(self.fields(saved)['AIHUB_API_KEY']['effective']['value'], 'independent-synthetic')
         self.assertEqual(path.read_text(), original)
 
     def git(self, *args, check=True):
@@ -493,8 +502,9 @@ class Integration(unittest.TestCase):
         def fail_after_write(written):
             if written:
                 raise RuntimeError('synthetic failure')
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(UIError) as failed:
             transaction.apply({str(first): (b'one', b'changed-one'), str(second): (b'two', b'changed-two')}, fail_after_write)
+        self.assertEqual(failed.exception.code, 'write_failed')
         self.assertEqual((first.read_bytes(), second.read_bytes()), (b'one', b'two'))
         replace(first, b'interrupted', digest(b'one'))
         journal = {'version': 1, 'committed': False, 'entries': [

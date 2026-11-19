@@ -1,8 +1,8 @@
 ---
 name: aihub-music
 metadata:
-  version: "5.3.4"
-description: v5.3.4｜通过 AIhub 默认使用 Suno 按描述生成歌曲、为已有歌词谱曲演唱，或生成纯音乐与背景配乐；也支持明确选择 ElevenLabs Music 和 Lyria。
+  version: "5.3.5"
+description: v5.3.5｜通过 AIhub 默认使用 Suno 按描述生成歌曲、为已有歌词谱曲演唱，或生成纯音乐与背景配乐；也支持明确选择 ElevenLabs Music 和 Lyria。
 ---
 
 # AIhub Music

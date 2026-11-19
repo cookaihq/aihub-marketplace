@@ -15,8 +15,10 @@ try{
   }
   if(options.global_enabled){
     all.settings_path=join(shared.directories.global,'settings.json');
-    all.settings=readSettings(all.settings_path,options.overrides?.[all.settings_path]??undefined);
-    if(options.agent)all.reminder={config_dir:agentDefaults({agent:options.agent,configDir:options.config_dir||undefined,action:'preference',settingsPath:all.settings_path}).config_dir};
+    try {
+      all.settings=readSettings(all.settings_path,options.overrides?.[all.settings_path]??undefined);
+      if(options.agent)all.reminder={config_dir:agentDefaults({agent:options.agent,configDir:options.config_dir||undefined,action:'preference',settingsPath:all.settings_path}).config_dir};
+    } catch {all.settings={};all.settings_error=true;}
   }
   process.stdout.write(JSON.stringify(all));
 }catch{process.stdout.write(JSON.stringify({error:'Configuration cannot be read. Check files and caller identity.'}));process.exitCode=1;}

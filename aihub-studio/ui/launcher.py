@@ -77,7 +77,9 @@ def main(package, plugin):
     encoded = json.dumps(options, ensure_ascii=False, sort_keys=True)
     os.environ['AIHUB_UI_OPTIONS'] = encoded
     scope = hashlib.sha256(encoded.encode()).hexdigest()[:16]
-    runtime = (args.runtime_dir or project / 'tmp' / (plugin + '-ui')).resolve() / scope
+    sys.path.insert(0, str(package / 'shared'))
+    from skill_ui.storage import user_state_directory
+    runtime = (args.runtime_dir or user_state_directory(plugin) / 'ui').resolve() / scope
     if runtime.is_relative_to(package):
         parser.error('runtime directory must stay outside the installation')
     if args.command == 'start':

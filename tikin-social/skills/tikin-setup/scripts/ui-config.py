@@ -27,11 +27,15 @@ def main():
     if options['global_enabled']:
         from default_skills import read_settings, run
         path = Path(inspection['directories']['global']) / 'settings.json'
-        settings = read_settings(path, options.get('overrides', {}).get(str(path)))
-        module.validate_routing(settings)
-        result.update(settings=settings, settings_path=str(path))
-        if options.get('agent'):
-            result['reminder'] = {'config_dir': run(options['agent'], 'preference', options.get('config_dir'), settings_path=path)['config_dir']}
+        result['settings_path'] = str(path)
+        try:
+            settings = read_settings(path, options.get('overrides', {}).get(str(path)))
+            module.validate_routing(settings)
+            result['settings'] = settings
+            if options.get('agent'):
+                result['reminder'] = {'config_dir': run(options['agent'], 'preference', options.get('config_dir'), settings_path=path)['config_dir']}
+        except (Exception, SystemExit):
+            result.update(settings={}, settings_error=True)
     return result
 
 

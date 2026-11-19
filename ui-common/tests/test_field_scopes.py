@@ -62,6 +62,16 @@ class FieldScopes(unittest.TestCase):
     def field(self, snapshot, key):
         return next(field for field in snapshot['fields'] if field['id'] == key)
 
+    def approve(self, changes, initial):
+        preview = self.request('/api/preview', {'changes': changes, 'revision': initial['revision']})['config']
+        for key, intent in changes.get('switches', {}).items():
+            plan = preview['scope_plans'][key]
+            if plan.get('cleanup'):
+                intent['cleanup_token'] = plan['cleanup_token']
+        changes['field_revisions'] = {f['id']: f['edit_revision'] for f in initial['fields']}
+        changes['preview_tokens'] = preview.get('preview_tokens', {})
+        return preview
+
     def test_switch_uses_real_loader_and_cleans_all_higher_sources_atomically(self):
         key = 'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID'
         project = self.project / '.env.local.aihub-studio'
@@ -78,6 +88,8 @@ class FieldScopes(unittest.TestCase):
         preview = self.request('/api/preview', {'changes': changes, 'revision': initial['revision']})['config']
         self.assertEqual(preview['scope_plans'][key]['state'], 'ready')
         self.assertIn('project-voice', project.read_text())
+        self.approve(changes, initial)
+        preview = self.request('/api/preview', {'changes': changes, 'revision': initial['revision']})['config']
         saved = self.request('/api/save', {'changes': changes, 'revision': initial['revision']})['config']
         self.assertEqual(self.field(saved, key)['effective']['value'], 'global-voice')
         self.assertEqual(self.field(saved, key)['effective']['source'], target)
@@ -178,22 +190,22 @@ class FieldScopes(unittest.TestCase):
             self.assertNotIn(value, json.dumps(preview))
         changes['switches'][key].update(choice='input', choice_token=plan['choice_token'])
         changes['files'][source][key]['value'] = 'synthetic-entered-D'
-        with self.assertRaises(HTTPError) as error:
-            self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
-        self.assertEqual(error.exception.code, 422)
+        failed = self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
+        self.assertEqual(failed['config']['field_results'][key]['status'], 'failed')
         self.assertIn('synthetic-project-A', project.read_text())
         preview = self.request('/api/preview', {'changes': changes, 'revision': initial['revision']})['config']
         changes['switches'][key]['choice_token'] = preview['scope_plans'][key]['choice_token']
         checked = self.request('/api/preview', {'changes': changes, 'revision': initial['revision']})['config']
         self.assertEqual(checked['scope_plans'][key]['state'], 'ready')
+        self.approve(changes, initial)
+        checked = self.request('/api/preview', {'changes': changes, 'revision': initial['revision']})['config']
         saved = self.request('/api/save', {'changes': changes, 'revision': initial['revision']})['config']
         self.assertEqual(self.field(saved, key)['effective']['source'], target)
         self.assertEqual(project.read_text(), '')
         self.assertIn('synthetic-entered-D', global_file.read_text())
         self.assertEqual(self.field(checked, key)['edit_revision'], self.field(saved, key)['edit_revision'])
-        with self.assertRaises(HTTPError) as error:
-            self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
-        self.assertEqual(error.exception.code, 409)
+        failed = self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
+        self.assertEqual(failed['config']['field_results'][key]['code'], 'conflict')
 
     def test_subset_dependencies_missing_key_and_required_deletion(self):
         project = self.project / '.env.local.aihub-studio'
@@ -204,18 +216,94 @@ class FieldScopes(unittest.TestCase):
             return self.request('/api/save', {'revision': snapshot['revision'],
                 'changes': {'files': {target: edits}, 'switches': {}}})['config']
         provider = {'AIHUB_RESULT_CHECK_PROVIDER': {'op': 'set', 'value': 'host'}}
-        with self.assertRaises(HTTPError) as error:
-            save(provider, initial)
-        self.assertEqual(error.exception.code, 422)
+        self.assertEqual(save(provider, initial)['field_results']['AIHUB_RESULT_CHECK_PROVIDER']['status'], 'failed')
         combined = dict(provider, AIHUB_RESULT_CHECK_ENABLED={'op': 'set', 'value': True})
         saved = save(combined, initial)
         self.assertEqual(self.field(saved, 'AIHUB_RESULT_CHECK_PROVIDER')['effective']['value'], 'host')
         self.assertFalse(self.field(saved, 'AIHUB_API_KEY')['effective']['configured'])
         saved = save({'AIHUB_API_KEY': {'op': 'set', 'value': 'synthetic-only-key'}}, saved)
-        with self.assertRaises(HTTPError) as error:
-            save({'AIHUB_API_KEY': {'op': 'unset'}}, saved)
-        self.assertEqual(error.exception.code, 422)
+        self.assertEqual(save({'AIHUB_API_KEY': {'op': 'unset'}}, saved)['field_results']['AIHUB_API_KEY']['status'], 'failed')
         self.assertIn('synthetic-only-key', project.read_text())
+
+    def test_partial_save_receipt_and_unrelated_concurrent_fields(self):
+        path = self.project / '.env.local.aihub-studio'
+        path.write_text('UNRELATED=keep\n')
+        initial = self.snapshot()
+        target = self.target(initial, path)
+        revisions = {f['id']: f['edit_revision'] for f in initial['fields']}
+        def save(values, request_id):
+            return self.request('/api/save', {'request_id': 'reliability-' + request_id, 'revision': initial['revision'],
+                'changes': {'files': {target: {key: {'op': 'set', 'value': value} for key, value in values.items()}},
+                    'switches': {}, 'field_revisions': revisions}})
+        first = save({'AIHUB_API_KEY': 'synthetic-local-key', 'AIHUB_RESULT_CHECK_PROVIDER': 'invalid'}, 'partial')
+        self.assertEqual(first['config']['field_results']['AIHUB_API_KEY']['status'], 'saved')
+        self.assertEqual(first['config']['field_results']['AIHUB_RESULT_CHECK_PROVIDER']['status'], 'failed')
+        before = path.read_bytes()
+        self.assertEqual(save({'AIHUB_API_KEY': 'synthetic-local-key', 'AIHUB_RESULT_CHECK_PROVIDER': 'invalid'}, 'partial'), first)
+        self.assertEqual(path.read_bytes(), before)
+        second = save({'AIHUB_API_KEY': 'stale-edit', 'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID': 'voice-two'}, 'concurrent')
+        self.assertEqual(second['config']['field_results']['AIHUB_API_KEY']['code'], 'conflict')
+        self.assertEqual(second['config']['field_results']['AIHUB_ELEVENLABS_DEFAULT_VOICE_ID']['status'], 'saved')
+        self.assertIn('UNRELATED=keep', path.read_text())
+        self.assertIn('AIHUB_API_KEY="synthetic-local-key"', path.read_text())
+        self.assertEqual(self.field(self.snapshot(), 'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID')['effective']['value'], 'voice-two')
+
+    def test_first_global_save_ignores_project_write_and_git_availability(self):
+        project = self.project / 'unwritable-project'
+        project.mkdir()
+        self.app.adapter = build(project)
+        initial = self.snapshot()
+        target = self.user / '.config/aihub-studio/.env'
+        self.assertFalse(target.parent.exists())
+        run, mkdir, os_open = subprocess.run, Path.mkdir, os.open
+        def no_git(command, *args, **kwargs):
+            if Path(command[0]).stem.lower() == 'git':
+                raise FileNotFoundError('synthetic missing Git')
+            return run(command, *args, **kwargs)
+        def denied_mkdir(path, *args, **kwargs):
+            if path.is_relative_to(project):
+                raise PermissionError('synthetic project write denial')
+            return mkdir(path, *args, **kwargs)
+        def denied_open(path, flags, *args, **kwargs):
+            if Path(path).is_relative_to(project) and flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT):
+                raise PermissionError('synthetic project write denial')
+            return os_open(path, flags, *args, **kwargs)
+        with patch('subprocess.run', side_effect=no_git), patch.object(Path, 'mkdir', denied_mkdir), patch('os.open', side_effect=denied_open):
+            result = self.request('/api/save', {'revision': initial['revision'], 'changes': {
+                'files': {self.target(initial, target): {'AIHUB_API_KEY': {'op': 'set', 'value': 'synthetic-first-global'}}}, 'switches': {}}})
+        self.assertEqual(result['config']['field_results']['AIHUB_API_KEY']['status'], 'saved')
+        self.assertIn('synthetic-first-global', target.read_text())
+        self.assertEqual(self.field(self.snapshot(), 'AIHUB_API_KEY')['effective']['source'], self.target(initial, target))
+        self.assertEqual(list(project.iterdir()), [])
+
+    def test_two_projects_merge_concurrent_global_fields_under_shared_coordination(self):
+        from concurrent.futures import ThreadPoolExecutor
+        other_project = self.project / 'another-project'
+        other_project.mkdir()
+        adapter = build(other_project)
+        self.assertEqual(self.adapter.configuration.transaction.directory, adapter.configuration.transaction.directory)
+        app = server.Server(adapter, other_project, 'configuration', self.project / 'runtime')
+        thread = threading.Thread(target=app.serve_forever, daemon=True);thread.start()
+        self.addCleanup(lambda: (app.shutdown(), app.server_close(), thread.join(timeout=5)))
+        client = build_opener(ProxyHandler({}), HTTPCookieProcessor(CookieJar()))
+        csrf = None
+        def request(route, body=None):
+            headers = {'Origin': app.origin, 'Content-Type': 'application/json', 'X-CSRF-Token': csrf or ''}
+            with client.open(Request(app.origin + route, data=None if body is None else json.dumps(body).encode(), headers=headers), timeout=30) as response:
+                return json.load(response)
+        csrf = request('/api/session', {'token': app.token})['csrf']
+        first, second = self.snapshot(), request('/api/state')['config']
+        target = self.user / '.config/aihub-studio/.env'
+        def payload(snapshot, key, value):
+            return {'revision': snapshot['revision'], 'changes': {'files': {self.target(snapshot, target): {key: {'op': 'set', 'value': value}}}, 'switches': {}}}
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            jobs = [pool.submit(self.request, '/api/save', payload(first, 'AIHUB_API_KEY', 'synthetic-shared-key')),
+                    pool.submit(request, '/api/save', payload(second, 'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID', 'shared-voice'))]
+            results = [job.result() for job in jobs]
+        self.assertTrue(all(next(iter(result['config']['field_results'].values()))['status'] == 'saved' for result in results))
+        saved = self.snapshot()
+        self.assertTrue(self.field(saved, 'AIHUB_API_KEY')['effective']['configured'])
+        self.assertEqual(self.field(saved, 'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID')['effective']['value'], 'shared-voice')
 
     def test_real_tracked_higher_source_blocks_the_entire_switch(self):
         key = 'AIHUB_ELEVENLABS_DEFAULT_VOICE_ID'
@@ -234,8 +322,9 @@ class FieldScopes(unittest.TestCase):
         before = {path: path.read_bytes() for path in (project, shared, global_file)}
         initial = self.snapshot()
         changes = {'files': {}, 'switches': {key: {'target': self.target(initial, global_file), 'mode': 'existing'}}}
-        with self.assertRaises(HTTPError):
-            self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
+        self.approve(changes, initial)
+        failed = self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
+        self.assertEqual(failed['config']['field_results'][key]['code'], 'tracked')
         self.assertEqual(before, {path: path.read_bytes() for path in before})
         self.assertEqual(index, git('ls-files', '--stage'))
 
@@ -256,9 +345,10 @@ class FieldScopes(unittest.TestCase):
             changes = {'files': {}, 'switches': {key: {'target': self.target(initial, global_file), 'mode': 'existing'}}}
             preview = self.request('/api/preview', {'changes': changes, 'revision': initial['revision']})['config']
             self.assertEqual(preview['scope_plans'][key]['state'], 'blocked')
-            with self.assertRaises(HTTPError):
-                self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
+            failed = self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
+            self.assertEqual(failed['config']['field_results'][key]['status'], 'failed')
         initial = self.snapshot()
+        self.approve(changes, initial)
         replace = persistence.replace
         failures = []
         def fail_second(path, content, expected, *args, **kwargs):
@@ -267,8 +357,8 @@ class FieldScopes(unittest.TestCase):
                 raise PermissionError('synthetic second configuration write failure')
             return replace(path, content, expected, *args, **kwargs)
         with patch.object(persistence, 'replace', side_effect=fail_second):
-            with self.assertRaises(HTTPError):
-                self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
+            failed = self.request('/api/save', {'changes': changes, 'revision': initial['revision']})
+            self.assertEqual(failed['config']['field_results'][key]['status'], 'failed')
         self.assertTrue(failures)
         self.assertEqual(before, {path: path.read_bytes() for path in before})
         self.assertEqual(self.field(self.snapshot(), key)['effective']['value'], 'project-A')

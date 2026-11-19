@@ -137,8 +137,9 @@ class DirectorySaving(unittest.TestCase):
                     if Path(path) == new / '.env':
                         raise OSError('synthetic write failure')
                     return original_replace(path, content, expected, owner_path)
-                with patch.object(persistence, 'replace', fail_new), self.assertRaises(OSError):
+                with patch.object(persistence, 'replace', fail_new), self.assertRaises(UIError) as failed:
                     adapter.save(request, adapter.snapshot()['revision'])
+                self.assertEqual(failed.exception.code, 'write_failed')
                 self.assertEqual(before, old.read_bytes())
                 self.assertFalse((new / '.env').exists())
                 self.assertFalse(adapter.transaction.journal.exists())

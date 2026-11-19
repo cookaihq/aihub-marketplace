@@ -13,7 +13,8 @@ import sys
 from urllib.parse import urlsplit
 
 from skill_ui.contracts import UIError
-from skill_ui.storage import active
+from skill_ui.storage import active, user_state_directory
+from skill_ui.batches import groups
 from definitions import definitions
 from persistence import Transaction, read, digest
 
@@ -58,7 +59,9 @@ class Configuration:
         self.secret = secrets.token_bytes(32)
         extra_lock = (import_module('plugins.aihub-studio.persistence').settings_lock
                       if self.plugin == 'aihub-studio' else None)
-        self.transaction = Transaction(self.project / 'tmp' / (self.plugin + '-config-transactions'),
+        self.legacy_transaction = Transaction(self.project / 'tmp' / (self.plugin + '-config-transactions'),
+                                       owner_path=self.project, extra_lock=extra_lock)
+        self.transaction = Transaction(user_state_directory(self.plugin, environment) / 'config-transactions',
                                        owner_path=self.project, extra_lock=extra_lock)
 
     def _private_project_file(self, path):
@@ -142,8 +145,12 @@ class Configuration:
         settings_enabled = bool(self.options['global_enabled'])
         layers[settings_id] = self._layer(settings_path, home, directories, settings_enabled)
         if settings_enabled:
-            raw = (overrides[settings_path].encode('utf-8') if overrides and settings_path in overrides else read(settings_path))
-            paths[settings_path] = digest(raw)
+            try:
+                raw = (overrides[settings_path].encode('utf-8') if overrides and settings_path in overrides else read(settings_path))
+                paths[settings_path] = digest(raw)
+            except (UIError, OSError):
+                paths[settings_path] = None
+                data['settings_error'] = True
         fields = []
         errors = []
         for definition in self.definitions:
@@ -218,6 +225,11 @@ class Configuration:
                                      value=value if applies and explicit else None,
                                      **({} if applies else {'message': '此文件不参与该偏好的读取。'})))
                 effective = dict(source=settings_id if explicit else 'default', status='set' if explicit else 'default', value=value)
+                if data.get('settings_error'):
+                    effective.update(status='error', message='全局偏好文件无法读取或格式无效；其他独立配置仍可保存。')
+                    for row in rows:
+                        if row['layer'] == settings_id:
+                            row.update(status='error', message=effective['message'])
             else:
                 load = data.get('models', {}).get(key, shared)
                 source = load['sources'].get(key, load.get('selectionSources', {}).get(key, 'missing'))
@@ -281,6 +293,7 @@ class Configuration:
         return snapshot, data, paths
 
     def snapshot(self):
+        self.legacy_transaction.recover()
         self.transaction.recover()
         return self._state()[0]
 
@@ -322,6 +335,8 @@ class Configuration:
         if not layer or layer['readonly'] or layer['path'] not in paths:
             raise UIError('target', '请选择原加载器允许写入的具体配置文件。', 422)
         fields = {f['id']: f for f in current['fields']}
+        if data.get('settings_error') and layer['path'] == data.get('settings_path'):
+            raise UIError('configuration', '偏好文件无法安全解析，请修复该文件后再保存其中的设置。其他配置仍可保存。', 422)
         updates, settings = {}, deepcopy(data.get('settings', {}))
         settings_changed = False
         for key, change in changes.items():
@@ -401,18 +416,35 @@ class Configuration:
         return candidate, {path: (before, after)}
 
     def save(self, changes, revision):
+        self.legacy_transaction.recover()
         self.transaction.recover()
+        baseline = self._state()[0]
         candidate, modifications = self._candidate(changes, revision, saving=True)
         if candidate['validation_errors']:
             raise UIError('validation', '；'.join(candidate['validation_errors']), 422)
         def verify(written):
+            nonlocal candidate
             fresh = self._state()[0]
-            expected = candidate['revision'] if written else revision
-            if fresh['revision'] != expected:
+            relevant = set().union(*(reads for _, reads in groups(baseline, changes)))
+            expected = {field['id']: field['edit_revision'] for field in (candidate if written else baseline)['fields']}
+            if any(field['edit_revision'] != expected[field['id']] for field in fresh['fields'] if field['id'] in relevant):
                 raise UIError('conflict', '配置已变化或回读与预览不一致；未覆盖外部修改，请重新载入核对。', 409)
             if not written:
+                # Once the target locks are held, merge unrelated edits made since
+                # the first projection rather than replacing their old file bytes.
+                if fresh['revision'] != revision:
+                    refreshed = {key: value for key, value in changes.items() if key != 'directory_revision'}
+                    rebuilt, updates = self._candidate(refreshed, fresh['revision'])
+                    approved = {field['id']: field['edit_revision'] for field in candidate['fields']}
+                    if (rebuilt['validation_errors'] or set(updates) != set(modifications) or
+                            any(field['edit_revision'] != approved[field['id']] for field in rebuilt['fields'] if field['id'] in relevant)):
+                        raise UIError('conflict', '关联配置已变化，请重新载入核对。', 409)
+                    candidate = rebuilt
+                    modifications.clear()
+                    modifications.update(updates)
                 projected = self._state({path: after.decode('utf-8') for path, (_, after) in modifications.items()})[0]
-                if projected['revision'] != candidate['revision']:
+                planned = {field['id']: field['edit_revision'] for field in candidate['fields']}
+                if any(field['edit_revision'] != planned[field['id']] for field in projected['fields'] if field['id'] in relevant):
                     raise UIError('conflict', '新配置目录中的文件已变化，请重新载入核对。', 409)
             return fresh
         return self.transaction.apply(modifications, verify)

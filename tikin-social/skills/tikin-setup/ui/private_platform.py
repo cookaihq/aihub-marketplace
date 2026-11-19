@@ -113,6 +113,10 @@ if os.name == "nt":
             raise OSError("Windows 文件权限回读不一致；拒绝写入凭证")
 
     def verify_private_permissions(path, *, directory=False, owner_path=None):
+        if directory:
+            if not path.is_dir():
+                raise OSError('运行位置必须是目录')
+            return
         with _private_descriptor(directory, owner_path) as descriptor:
             _verify_private(path, descriptor)
 
@@ -121,12 +125,20 @@ else:
 
     def verify_private_permissions(path, *, directory=False, owner_path=None):
         import stat
+        if directory:
+            if not path.is_dir():
+                raise OSError('运行位置必须是目录')
+            return
         if stat.S_IMODE(path.stat().st_mode) != (0o700 if directory else 0o600):
             raise OSError("文件权限不是仅当前用户可访问")
 
 
 def private_permissions(path, *, directory=False, fd=None, owner_path=None):
     """Apply and verify permissions before writing any secret bytes."""
+    if directory:
+        if not path.is_dir():
+            raise OSError('运行位置必须是目录')
+        return
     if os.name == "nt":
         with _private_descriptor(directory, owner_path) as descriptor:
             _checked(_security.SetFileSecurityW(str(path), 0x80000004, descriptor))
@@ -138,8 +150,7 @@ def private_permissions(path, *, directory=False, fd=None, owner_path=None):
 
 
 def private_directory(path):
-    path.mkdir(parents=True, exist_ok=True, mode=0o700)
-    private_permissions(path, directory=True)
+    path.mkdir(parents=True, exist_ok=True)
 
 
 @contextlib.contextmanager

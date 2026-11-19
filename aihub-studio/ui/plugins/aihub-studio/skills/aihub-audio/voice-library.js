@@ -32,7 +32,7 @@ class AudioVoiceLibrary {
     this.dialog.id = 'voice-library-dialog'; this.dialog.className = 'speech-library';
     this.dialog.setAttribute('aria-labelledby', 'voice-library-title');
     this.dialog.innerHTML = `<header class="speech-header"><div><small>AIhub Studio / 音频 / ${this.escape(this.provider)}</small><h2 id="voice-library-title">${this.escape(this.libraryTitle)}</h2></div><button data-voice-action="close" aria-label="关闭音色库">✕</button></header>
-      <div class="speech-tools"><div class="speech-tabs"><div role="tablist" aria-label="音色范围"><button role="tab" data-voice-tab="all">全部音色</button><button role="tab" data-voice-tab="favorites">我的收藏</button></div><div class="speech-library-actions"><span id="speech-favorite-count"></span><button data-voice-action="save-favorites" hidden>保存收藏</button></div></div>
+      <div class="speech-tools"><div class="speech-tabs"><div role="tablist" aria-label="音色范围"><button role="tab" data-voice-tab="all">全部音色</button><button role="tab" data-voice-tab="favorites">我的收藏</button></div><div class="speech-library-actions"><span id="speech-favorite-count"></span><button data-voice-action="save-favorites" hidden>完成选择</button></div></div>
       <div class="speech-search"><label class="speech-search-box"><span aria-hidden="true">⌕</span><input id="speech-search" type="search" placeholder="搜索名称、ID、语言或风格" aria-label="搜索名称、ID、语言或风格"></label><label class="speech-sample-filter"><input id="speech-samples" type="checkbox">仅看可试听</label></div>
       <div class="speech-filters"><select id="speech-language" aria-label="语种"><option value="">全部语种</option></select><select id="speech-gender" aria-label="性别"><option value="">全部性别</option></select><select id="speech-tag" aria-label="风格或场景"><option value="">全部风格 / 场景</option></select><button data-voice-action="reset">清除筛选</button></div></div>
       <div class="speech-result-meta" id="speech-result-meta" aria-live="polite"></div><p id="speech-notice" role="status"></p><button class="speech-retry" data-voice-action="retry" hidden>重新载入音色</button><div class="speech-results" id="speech-results"></div>
@@ -159,8 +159,7 @@ class AudioVoiceLibrary {
     if (this.ui.expired || this.ui.uncertain || this.ui.busy) return;
     this.saving = true; this.paintStatus();
     try {
-      const result = await this.ui.save(this.favoritesKey);
-      this.notice = result?.saved ? '收藏已保存。' : this.ui.error || '请回到主表核对收藏草稿。';
+      this.saving=false;this.close();this.ui.toast('收藏已暂存，点击底部「保存修改」后生效。');
     } catch (error) { this.notice = error.message + ' 收藏草稿仍保留。'; }
     finally { this.saving = false; this.ui.paint(); this.renderResults(); this.dialog?.querySelector('#speech-search').focus(); }
   }

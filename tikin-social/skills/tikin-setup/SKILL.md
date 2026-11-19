@@ -1,8 +1,8 @@
 ---
 name: tikin-setup
 metadata:
-  version: "4.2.0"
-description: v4.2.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒，通过本套件配置中心填写、更换或修复接口密钥。
+  version: "4.3.0"
+description: v4.3.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒，通过本套件配置中心填写、更换或修复接口密钥。
 ---
 
 # tikin Setup

@@ -29,12 +29,14 @@ def checked(path):
         except FileNotFoundError:
             continue
         if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
-            raise UIError('path', '保存路径含链接，请在实际配置文件所在位置修复。')
+            if part != target and part.is_dir() and (part.is_symlink() or getattr(part, 'is_junction', lambda: False)()):
+                continue
+            raise UIError('path', f'保存路径含不支持的链接或重定向，请使用实际文件位置：{part}')
         if part != target and not stat.S_ISDIR(info.st_mode):
             raise UIError('path', '配置文件的父目录无效。')
     if target.exists() and (not target.is_file() or target.stat().st_nlink != 1):
         raise UIError('path', '保存目标必须是独立普通文件。')
-    return target
+    return target.parent.resolve() / target.name
 
 
 def read(path):
@@ -88,6 +90,8 @@ def git_safe(path, *, temporary_for=None, private_directory=None, owner_path=Non
     directory = path.parent
     while not directory.exists():
         directory = directory.parent
+    if not any(os.path.lexists(part / '.git') for part in (directory, *directory.parents)):
+        return
     selectors = {'GIT_DIR', 'GIT_COMMON_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_OBJECT_DIRECTORY',
                  'GIT_ALTERNATE_OBJECT_DIRECTORIES', 'GIT_CEILING_DIRECTORIES', 'GIT_DISCOVERY_ACROSS_FILESYSTEM'}
     environment = {key: value for key, value in os.environ.items() if key not in selectors}
@@ -137,8 +141,7 @@ def parents(path, owner_path=None):
         missing.append(parent)
         parent = parent.parent
     for parent in reversed(missing):
-        parent.mkdir(mode=0o700)
-        private_permissions(parent, directory=True, owner_path=owner_path)
+        parent.mkdir()
 
 
 def replace(path, content, expected, owner_path=None):
@@ -264,9 +267,11 @@ class Transaction:
                     result = verify(True)
                     journal['committed'] = True
                     replace(self.journal, encode(), digest(read(self.journal)), self.owner_path)
-                except BaseException:
+                except BaseException as error:
                     self._rollback(entries)
                     self.journal.unlink()
-                    raise
+                    if isinstance(error, UIError) or not isinstance(error, Exception):
+                        raise
+                    raise UIError('write_failed', '本组写入失败，已回读恢复原文件；草稿保留，可修复写入条件后重试。', 422) from None
                 self.journal.unlink()
                 return result
