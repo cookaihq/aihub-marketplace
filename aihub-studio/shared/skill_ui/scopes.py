@@ -5,7 +5,7 @@ import hmac
 import json
 
 from .contracts import UIError
-from .config_groups import groups, check_baseline
+from .config_groups import check_request_baseline
 
 PROTOCOL = 'field-scopes-v1'
 
@@ -71,8 +71,7 @@ class ScopePlanner:
         """
         validate_request(request)
         current = self.current
-        for _, reads in groups(current, request):
-            check_baseline(current, request, revision, reads)
+        check_request_baseline(current, request, revision)
         files = deepcopy(request.get('files', {}))
         switches = request.get('switches', {})
         explicit = request.get('file_edits', {})

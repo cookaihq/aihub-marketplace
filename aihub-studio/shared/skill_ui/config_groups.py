@@ -67,3 +67,11 @@ def check_baseline(snapshot, request, revision, reads):
         raise UIError('conflict', '本项或关联设置已变化。草稿仍保留，请重新载入后核对。', 409)
 
 
+def check_request_baseline(snapshot, request, revision):
+    if 'field_revisions' not in request:
+        check_baseline(snapshot, request, revision, set())
+    else:
+        for _, reads in groups(snapshot, request):
+            check_baseline(snapshot, request, revision, reads)
+
+

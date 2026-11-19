@@ -3,11 +3,11 @@
   "version": "3.0.0",
   "files": {
     "batches.py": "748f78044461ed317b12e69d20416aa0b2b9cf64e37b94970aa8d4abe80c5430",
-    "config_groups.py": "537204009d989aee545b56dee45221aa9577fdbff72dbff66e7748c3e8bde7c7",
+    "config_groups.py": "96c87c0d5b47c884560f4349a740fc2c3078fbc3ebab1c2829a544ecce38db4d",
     "contracts.py": "793535d94b470484579565fafc56c0e53574a75d4f72ec01c187cb66a5efb334",
     "directories.py": "02c1f2bde605cc8829a1800b204db0c3577720749d512bf0117320730198bdf6",
     "LICENSE": "5cee4207cdeaee01d3da8de51576ceaa06b24f47dae32294f02c769690e143f5",
-    "scopes.py": "50aa451c645da73da16a98e61c3e6c67e3fb35df98c0d346a55ef715ff080dd5",
+    "scopes.py": "60c0a07707faa504e50505ff72da8dbe69ea3acb9adb7e612f04b2771ff5b7ea",
     "server.py": "a8fb11c15f8b218d6544b6a45c17d6a9fae82782c3295beebcbc1a49845fc1e0",
     "storage.py": "5af6991350d6b2a9ae8bdf0dd307f5a526377c1066ead0af8006548d9ccae245",
     "transactions.py": "86ac20297efc6bd84c6aed4fc97b9eae8bf399c28e89a5aaddd15979d3ebb7dd",
