@@ -1,8 +1,8 @@
 ---
 name: tikin-xiaohongshu
 metadata:
-  version: "4.2.1"
-description: v4.2.1｜通过 Tikin 处理小红书 / RedNote 链接与数据，获取图文或视频笔记详情、用户资料、已发布笔记，搜索笔记、用户、商品和图片，查询评论及子评论。用户提供小红书链接、分享文本或任务针对小红书时使用；覆盖 Xiaohongshu App-V2 接口。
+  version: "4.2.2"
+description: v4.2.2｜通过 Tikin 处理小红书 / RedNote 链接与数据，获取图文或视频笔记详情、用户资料、已发布笔记，搜索笔记、用户、商品和图片，查询评论及子评论。用户提供小红书链接、分享文本或任务针对小红书时使用；覆盖 Xiaohongshu App-V2 接口。
 ---
 
 # Xiaohongshu / RedNote / 小红书 (via tikin)
@@ -46,7 +46,7 @@ without blocking this task. Before the first tikin API call for the current user
    generic browser fetch. Parse identifiers locally or pass the original URL/share text to tikin.
    Calls to the configured tikin base URL and downloads from final media URLs returned by tikin are
    allowed.
-5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
+5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. Follow that reference for concise failure replies identifying aihub-tikin and at most one “查看错误详情” link; automatic retries stay inside the helper.
 
 If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.

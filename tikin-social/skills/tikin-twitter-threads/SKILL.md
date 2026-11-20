@@ -1,8 +1,8 @@
 ---
 name: tikin-twitter-threads
 metadata:
-  version: "4.2.1"
-description: v4.2.1｜通过 Tikin 处理 Twitter/X 与 Threads 链接和数据，获取帖子详情、用户资料、用户时间线、粉丝与关注列表，搜索时间线、查询评论回复及 X 热门话题。用户提供相关链接或任务针对任一平台时使用；覆盖 Twitter-Web 与 Threads-Web 接口。
+  version: "4.2.2"
+description: v4.2.2｜通过 Tikin 处理 Twitter/X 与 Threads 链接和数据，获取帖子详情、用户资料、用户时间线、粉丝与关注列表，搜索时间线、查询评论回复及 X 热门话题。用户提供相关链接或任务针对任一平台时使用；覆盖 Twitter-Web 与 Threads-Web 接口。
 ---
 
 # Twitter / X & Threads (via tikin)
@@ -47,7 +47,7 @@ without blocking this task. Before the first tikin API call for the current user
    generic browser fetch. Parse identifiers locally or pass the original URL/share text to tikin.
    Calls to the configured tikin base URL and downloads from final media URLs returned by tikin are
    allowed.
-5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
+5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. Follow that reference for concise failure replies identifying aihub-tikin and at most one “查看错误详情” link; automatic retries stay inside the helper.
 
 If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.

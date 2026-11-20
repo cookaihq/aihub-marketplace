@@ -85,7 +85,7 @@ def restrict_private(path: Path) -> None:
 
 
 def atomic_write(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.parent.mkdir(parents=True, exist_ok=True)
     fd: int | None
     fd, name = tempfile.mkstemp(dir=path.parent, prefix='.' + path.name + '.')
     temporary = Path(name)
@@ -113,7 +113,7 @@ def atomic_write(path: Path, text: str) -> None:
 @contextmanager
 def record_lock(path):
     """OS releases the lock when an interrupted process exits; no stale PID guessing."""
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.parent.mkdir(parents=True, exist_ok=True)
     with open(str(path) + '.lock', 'a+b') as stream:
         stream.seek(0)
         if sys.platform == 'win32':
@@ -145,9 +145,9 @@ def upstream_fields(body, path='response.body', depth=0):
     return found
 
 
-def link(path):
+def link(path, label=None):
     text = str(path).replace('\\', '/')
-    label = text.replace('[', r'\[').replace(']', r'\]')
+    label = (label or Path(path).name).replace('[', r'\[').replace(']', r'\]')
     return '[' + label + '](<' + text.replace('%', '%25').replace('#', '%23').replace('?', '%3F').replace('<', '%3C').replace('>', '%3E') + '>)'
 
 
@@ -157,8 +157,58 @@ def json_block(value):
     return fence + 'json\n' + text + '\n' + fence
 
 
-def existing_feedback(record):
-    """Link only real files when updating an earlier report failed."""
+def failure_notice(state):
+    """Summarize observed evidence; the Agent adds the user's task impact and partial results."""
+    status = state.get('status')
+    if status in ('ok', 'waiting', 'task_exists'):
+        return ''
+    if status == 'regression_blocked':
+        return '本地验收授权检查未通过，未继续请求 aihub-tikin。请先核对验收记录。'
+    if status == 'submission_unknown':
+        return 'aihub-tikin 请求的提交结果尚未确定。请先核对已有任务状态，再继续原任务。'
+    latest = next(reversed(state.get('exchanges', [])), {})
+    event = next((item for item in reversed(state.get('events', [])) if item.get('exchange_id') == latest.get('id')), {})
+    if not event and status in ('cooldown', 'poll_budget_exhausted', 'time_budget_exhausted'):
+        return '本轮等待或执行预算已用尽，尚未取得 aihub-tikin 的最终结果。请保留原记录，等待后继续查询。'
+    kind = event.get('failure_kind')
+    reason, action = {
+        'timeout': ('读取 aihub-tikin 响应超时' if event.get('timeout_stage') == 'response_body' else '连接 aihub-tikin 超时',
+                    '可以稍后继续原任务，或提供已有内容继续处理。'),
+        'connection': ('与 aihub-tikin 的连接中断', '可以稍后继续原任务，或提供已有内容继续处理。'),
+        'network': ('连接 aihub-tikin 失败', '请检查网络后继续原任务。'),
+        'certificate': ('连接 aihub-tikin 时证书校验失败', '请检查证书或网络配置后继续。'),
+        'authentication': ('aihub-tikin 返回鉴权错误', '请检查 API Key 后继续。'),
+        'permission': ('aihub-tikin 返回权限错误', '请核对账号和接口权限后继续。'),
+        'balance': ('aihub-tikin 返回余额不足错误', '请核对余额后继续。'),
+        'parameters': ('aihub-tikin 返回参数错误', '请核对输入和接口要求后继续。'),
+        'rate_limited': ('aihub-tikin 暂时限流', '请在冷却结束后继续原记录。'),
+        'service': ('aihub-tikin 返回暂时性服务错误', '可以稍后继续原任务，或提供已有内容继续处理。'),
+        'remote_task': ('aihub-tikin 返回任务错误', '请先检查已有任务记录及可用内容，再决定下一步。'),
+        'response': ('aihub-tikin 未返回可用内容，具体原因尚未确定', '请先检查现有记录，再决定下一步。'),
+    }.get(kind, ('aihub-tikin 返回错误' if latest.get('response', {}).get('http_status') is not None
+                 else 'aihub-tikin 未返回可用内容，具体原因尚未确定',
+                 '请先检查现有记录和输入，再决定下一步。'))
+    attempts = latest.get('attempt', 0)
+    if attempts > 1:
+        reason += f'，已自动尝试 {attempts} 次'
+    if status == 'cooldown':
+        action = '请在冷却结束后继续原记录。'
+    return reason + '，本次请求未完成。' + action
+
+
+def notice_fields(artifacts, state, stale=False):
+    links = [link(path) for path in artifacts.values()]
+    target = next((artifacts[name] for name in ('error_report', 'diagnostic', 'record', 'issue_draft') if name in artifacts), None)
+    details = link(target, '查看错误详情') if target else None
+    notice = failure_notice(state)
+    if notice and stale:
+        notice += '本地报告未能更新，已有详情可能未包含最新结果。'
+    return {'show_notice': bool(notice), 'artifact_links': links, 'details_link': details,
+            'user_notice': notice + ('\n\n' + details if notice and details else '')}
+
+
+def existing_feedback(record, state=None, stale=False):
+    """Keep all available evidence, with one user-facing entry into the details."""
     names = {'error_report': 'error-report.md', 'diagnostic': 'diagnostic.json', 'issue_draft': 'issue-draft.md', 'record': record.name}
     artifacts = {}
     for key, name in names.items():
@@ -167,9 +217,12 @@ def existing_feedback(record):
                 artifacts[key] = str(record.parent / name)
         except OSError:
             pass
-    links = [link(path) for path in artifacts.values()]
-    return {**artifacts, 'show_notice': True, 'artifact_links': links,
-            'user_notice': '本轮报告更新失败；以下已有文件可能未包含最新结果：\n\n' + '\n\n'.join(links)} if links else None
+    if state is None:
+        try:
+            state = json.loads(record.read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            state = {}
+    return {**artifacts, **notice_fields(artifacts, state, stale)} if artifacts else None
 
 
 def feedback(record, state):
@@ -180,7 +233,7 @@ def feedback(record, state):
     links = [link(path) for path in (report, diagnostic, draft, record)]
     summary = {key: state.get(key) for key in ('plugin', 'plugin_version', 'skill', 'created_at', 'updated_at', 'status', 'original_request')}
     summary.update(model=None, model_switches=None, internal_retries=None)
-    content = '# tikin Social 本地请求与错误汇总\n\n'
+    content = '# aihub-tikin 本地请求与错误汇总\n\n'
     content += '本文件仅本地保存，包含私密原始需求、实际参数与素材定位信息。凭证已脱敏；不自动发送或创建 Issue。\n\n'
     content += 'HTTP 是客户端实际收到的 tikin 响应；异步状态单独记录。上游 HTTP、错误、request ID、trace ID、路由、供应商和内部重试仅按响应字段及 source 保留；未返回的字段均未知。null 表示未知或不适用。客户端耗时不代表供应商耗时。\n\n'
     content += f"独立错误数：{len(state['events'])}\n\n"
@@ -197,6 +250,5 @@ def feedback(record, state):
     atomic_write(diagnostic, json.dumps({key: value for key, value in state.items() if key not in ('binding', 'pending_write', 'pending_writes')}, ensure_ascii=False, indent=2) + '\n')
     atomic_write(draft, public)
     atomic_write(report, content)
-    return {'upstream_error_count': len(state['events']), 'show_notice': True,
-            'error_report': str(report), 'diagnostic': str(diagnostic), 'issue_draft': str(draft),
-            'artifact_links': links, 'user_notice': '本地错误汇总：\n\n' + '\n\n'.join(links)}
+    artifacts = {'error_report': str(report), 'diagnostic': str(diagnostic), 'issue_draft': str(draft), 'record': str(record)}
+    return {'upstream_error_count': len(state['events']), **artifacts, **notice_fields(artifacts, state)}

@@ -1,8 +1,8 @@
 ---
 name: tikin-instagram
 metadata:
-  version: "4.2.1"
-description: v4.2.1｜通过 Tikin 处理 Instagram 链接与数据，获取用户资料和帖子，搜索用户、Reels、话题标签、音乐和地点，查询评论、回复及标签内容流。用户提供 Instagram 链接或任务针对该平台时使用；覆盖 Instagram V2 接口。
+  version: "4.2.2"
+description: v4.2.2｜通过 Tikin 处理 Instagram 链接与数据，获取用户资料和帖子，搜索用户、Reels、话题标签、音乐和地点，查询评论、回复及标签内容流。用户提供 Instagram 链接或任务针对该平台时使用；覆盖 Instagram V2 接口。
 ---
 
 # Instagram (via tikin)
@@ -46,7 +46,7 @@ without blocking this task. Before the first tikin API call for the current user
    generic browser fetch. Parse identifiers locally or pass the original URL/share text to tikin.
    Calls to the configured tikin base URL and downloads from final media URLs returned by tikin are
    allowed.
-5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
+5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. Follow that reference for concise failure replies identifying aihub-tikin and at most one “查看错误详情” link; automatic retries stay inside the helper.
 
 If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.

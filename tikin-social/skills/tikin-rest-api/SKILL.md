@@ -1,8 +1,8 @@
 ---
 name: tikin-rest-api
 metadata:
-  version: "4.2.1"
-description: v4.2.1｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
+  version: "4.2.2"
+description: v4.2.2｜通过共享请求工具调用 Tikin REST API，并保存本地错误报告。涵盖服务地址、Bearer 鉴权、/api/v1/{platform}/... 路径、分页、限流、重试、错误处理，以及单次调用费用与余额信息；适用于直接调用 Tikin 数据接口。
 ---
 
 # tikin — REST API
@@ -46,7 +46,7 @@ without blocking this task. Before the first tikin API call for the current user
    generic browser fetch. Parse identifiers locally or pass the original URL/share text to tikin.
    Calls to the configured tikin base URL and downloads from final media URLs returned by tikin are
    allowed.
-5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
+5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. Follow that reference for concise failure replies identifying aihub-tikin and at most one “查看错误详情” link; automatic retries stay inside the helper.
 
 If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.
@@ -138,7 +138,10 @@ The shared helper implements 30-second API requests and a 90-second invocation b
 At most 3 attempts are allowed in a transient failure sequence for verified reads explicitly
 marked `side_effects: false`, using 1s/2s fallback backoff. Valid numeric/date Retry-After
 is honored in full and persists across processes. A wait beyond the time budget returns
-`cooldown` with the next allowed time. Deterministic 4xx stop. Unknown operations and
+`cooldown` with the next allowed time. Temporary connection errors, HTTP 429/5xx and
+recognized temporary JSON business errors share this limit. Parameter, authentication,
+permission, balance, certificate and terminal task failures stop; unknown business
+codes are not assumed retryable. Deterministic 4xx stop. Unknown operations and
 GET calls that may create tasks retain write protection; only DNS failure or connection
 refusal proves nothing was sent. An ambiguous result preserves the original record and
 must not be replayed. Use an existing task's query if available.

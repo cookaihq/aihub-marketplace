@@ -574,8 +574,9 @@ def main():
         except GateError as error:
             output = {"status": "regression_blocked", "reason": error.reason}
         except (OSError, ValueError, KeyError, TypeError) as error:
-            output = {"status": "local_error", "error": "Request or recovery record is invalid/unavailable; no business retry was made.",
-                      "error_type": type(error).__name__}
+            output = {"status": "local_error", "error": "Local request or record processing failed; inspect the existing record before continuing.",
+                      "error_type": type(error).__name__,
+                      "user_notice": "本地请求配置或记录处理失败，暂不能确定 aihub-tikin 的业务结果。请先检查现有记录和配置再继续。"}
         print(json.dumps(output, ensure_ascii=False, indent=2))
         raise SystemExit(0 if output["status"] in ("ok", "waiting", "task_exists") else 1)
     elif args.command == "set-routing":

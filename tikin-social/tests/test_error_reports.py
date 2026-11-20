@@ -3,6 +3,8 @@ import json
 from datetime import datetime
 import os
 from pathlib import Path
+import re
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -87,6 +89,14 @@ class ErrorReportTests(unittest.TestCase):
             self.assertNotIn(private, draft)
         self.assertTrue(all(str(Path(p)).replace('\\', '/') in '\n'.join(feedback['artifact_links'])
                             for p in [feedback['error_report'], feedback['diagnostic'], feedback['issue_draft']]))
+        notice = feedback['user_notice']
+        self.assertIn('aihub-tikin 返回参数错误', notice)
+        self.assertEqual(notice.count('](<'), 1)
+        self.assertIn('[查看错误详情]', notice)
+        self.assertNotIn(str(report).replace('\\', '/'), notice.split('](<')[0])
+        self.assertNotIn('自动尝试', notice)
+        for name in ('diagnostic.json', 'issue-draft.md', 'run.json'):
+            self.assertIn(name, text)  # The report is the entry into all private evidence.
 
     def test_terminal_failure_is_deduplicated_across_processes_and_recovery_keeps_links(self):
         self.status = 200
@@ -99,6 +109,8 @@ class ErrorReportTests(unittest.TestCase):
         recovered = self.request(first['record'])
         self.assertEqual(recovered['status'], 'ok')
         self.assertEqual(recovered['feedback']['error_report'], first['feedback']['error_report'])
+        self.assertFalse(recovered['feedback']['show_notice'])
+        self.assertEqual(recovered['feedback']['user_notice'], '')
         self.assertEqual(len(self.calls), 3)
 
     def test_uncertain_write_is_not_replayed_even_after_a_successful_query(self):
@@ -200,7 +212,113 @@ class ErrorReportTests(unittest.TestCase):
             result = tikin_request.execute(self.env, 'tikin-tiktok', request, output_dir=self.root, task_name='read-posts')
         self.assertEqual(result['status'], 'ok')
         self.assertEqual(result['feedback']['upstream_error_count'], 1)
+        self.assertFalse(result['feedback']['show_notice'])
         self.assertEqual(len(self.calls), 2)
+
+    def read(self, record=None, **options):
+        request = self.root / 'read.json'
+        request.write_text(json.dumps({'original_request': '读取这条笔记的正文和图片',
+                                       'path': '/api/v1/read', 'side_effects': False, **options}), encoding='utf-8')
+        return tikin_request.execute(self.env, 'tikin-xiaohongshu', request, record,
+                                     output_dir=self.root, task_name='笔记整理')
+
+    def test_temporary_json_business_error_recovers_without_a_user_warning(self):
+        temporary = (200, {}, {'error': {'code': 'service_unavailable'}}, None, None)
+        success = (200, {}, {'data': {'text': 'available content'}}, None, None)
+        with patch.object(tikin_request, 'exchange', side_effect=[temporary, success]) as exchange, \
+                patch.object(tikin_request.time, 'sleep'):
+            result = self.read()
+        self.assertEqual(exchange.call_count, 2)
+        self.assertEqual((result['status'], result['attempts']), ('ok', 2))
+        self.assertEqual(result['response']['data']['text'], 'available content')
+        self.assertFalse(result['feedback']['show_notice'])
+        self.assertEqual(result['feedback']['user_notice'], '')
+        self.assertTrue(Path(result['feedback']['error_report']).is_file())
+
+    def test_permanent_json_business_errors_stop_with_the_matching_action(self):
+        cases = [('invalid_api_key', 'API Key'), ('permission_denied', '权限'),
+                 ('insufficient_balance', '余额'), ('invalid_parameters', '输入'),
+                 ('new_unknown_code', '记录')]
+        self.status = 200
+        for code, action in cases:
+            with self.subTest(code=code), patch.object(tikin_request.time, 'sleep') as sleep:
+                before = len(self.calls)
+                self.payload = {'error': {'code': code}}
+                result = self.read()
+                self.assertEqual(len(self.calls) - before, 1)
+                sleep.assert_not_called()
+                self.assertEqual(result['status'], 'failed')
+                self.assertIn(action, result['feedback']['user_notice'])
+                self.assertNotIn('自动尝试', result['feedback']['user_notice'])
+
+    def test_auth_error_is_not_retried_even_inside_a_503_response(self):
+        self.status, self.payload = 503, {'error': {'code': 'invalid_api_key'}}
+        result = self.read()
+        self.assertEqual(len(self.calls), 1)
+        self.assertIn('鉴权错误', result['feedback']['user_notice'])
+
+    def test_timeout_exhaustion_records_actual_attempts_and_resume_does_not_reset_them(self):
+        failure = (None, {}, None, TimeoutError('synthetic timeout'), 'request_before_response_headers')
+        with patch.object(tikin_request, 'exchange', return_value=failure) as exchange, \
+                patch.object(tikin_request.time, 'sleep'):
+            result = self.read()
+            state = json.loads(Path(result['record']).read_text(encoding='utf-8'))
+            state['not_before'] = 0  # Simulate resumption after the saved cooldown.
+            Path(result['record']).write_text(json.dumps(state), encoding='utf-8')
+            exhausted = self.read(result['record'])
+        self.assertEqual(exchange.call_count, 3)
+        self.assertEqual(result['attempts'], 3)
+        self.assertEqual(exhausted['status'], 'retry_exhausted')
+        self.assertIn('连接 aihub-tikin 超时', result['feedback']['user_notice'])
+        self.assertIn('自动尝试 3 次', result['feedback']['user_notice'])
+        self.assertEqual(result['feedback']['user_notice'].count('](<'), 1)
+        evidence = json.loads(Path(result['record']).read_text(encoding='utf-8'))
+        self.assertEqual([item['attempt'] for item in evidence['exchanges']], [1, 2, 3])
+
+    def test_certificate_failure_is_local_to_the_connection_and_not_retried(self):
+        failure = (None, {}, None, ssl.SSLCertVerificationError('synthetic certificate'), None)
+        with patch.object(tikin_request, 'exchange', return_value=failure) as exchange:
+            result = self.read()
+        self.assertEqual(exchange.call_count, 1)
+        self.assertIn('证书校验失败', result['feedback']['user_notice'])
+        self.assertNotIn('返回错误', result['feedback']['user_notice'])
+
+    def test_partial_business_data_survives_a_final_failure(self):
+        self.status = 502
+        media = 'https://media.invalid/file?signature=still-usable'
+        self.payload = {'error': {'code': 'service_unavailable'}, 'data': {'text': '可用正文', 'image': media}}
+        result = self.read(time_budget_seconds=0.1)
+        self.assertEqual(result['response']['data'], self.payload['data'])
+        self.assertEqual(result['status'], 'cooldown')
+        self.assertNotIn('3 次', result['feedback']['user_notice'])
+        self.assertEqual(len(self.calls), 1)
+        diagnostic = json.loads(Path(result['feedback']['diagnostic']).read_text(encoding='utf-8'))
+        self.assertEqual(diagnostic['status'], 'cooldown')
+        self.assertFalse(diagnostic['exchanges'][-1]['retry_scheduled'])
+        self.assertEqual(diagnostic['exchanges'][-1]['retry_blocked_reason'], 'time_budget')
+
+    def test_report_failure_uses_one_real_fallback_and_does_not_cancel_a_safe_retry(self):
+        temporary = (503, {}, {'error': {'code': 'service_unavailable'}}, None, None)
+        success = (200, {}, {'data': []}, None, None)
+        with patch.object(tikin_request, 'exchange', side_effect=[temporary, success]) as exchange, \
+                patch.object(tikin_request, 'feedback', side_effect=OSError('synthetic report failure')), \
+                patch.object(tikin_request.time, 'sleep'):
+            result = self.read()
+        self.assertEqual(exchange.call_count, 2)
+        self.assertEqual(result['status'], 'ok')
+        self.assertIn('feedback_warning', result)
+        self.assertFalse(result['feedback']['show_notice'])
+        self.assertEqual(result['feedback']['details_link'], '[查看错误详情](<' + result['record'].replace('\\', '/') + '>)')
+
+    def test_failure_when_no_report_can_be_saved_still_links_only_the_real_record(self):
+        self.status, self.payload = 422, {'error': {'code': 'invalid_parameters'}}
+        with patch.object(tikin_request, 'feedback', side_effect=OSError('synthetic report failure')):
+            result = self.read()
+        notice = result['feedback']['user_notice']
+        self.assertEqual(notice.count('](<'), 1)
+        self.assertIn('本地报告未能更新', notice)
+        self.assertTrue(Path(re.search(r'\]\(<(.*?)>\)', notice).group(1)).is_file())
+        self.assertNotIn('error-report.md', notice)
 
     def test_retry_after_preserves_full_finite_delays(self):
         for value in ['Infinity', 'NaN', '-Infinity', 'nonsense']:

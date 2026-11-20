@@ -1,8 +1,8 @@
 ---
 name: tikin-setup
 metadata:
-  version: "4.3.0"
-description: v4.3.0｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒，通过本套件配置中心填写、更换或修复接口密钥。
+  version: "4.3.1"
+description: v4.3.1｜安装、更新或修复 Tikin 套件，管理平台路由和默认 Skill 提醒，通过本套件配置中心填写、更换或修复接口密钥。
 ---
 
 # tikin Setup
@@ -91,7 +91,7 @@ Migration is optional and requires an explicit source, target and overwrite deci
 unrelated fields and existing higher-priority settings. Ordinary `~/.config/<skill-name>/.env`
 fallback needs no migration. Never expose credentials in chat, logs or commits.
 
-Before any business API request, read [shared requests and local error reports](references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
+Before any business API request, read [shared requests and local error reports](references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. Follow that reference for concise failure replies identifying aihub-tikin and at most one “查看错误详情” link; automatic retries stay inside the helper.
 
 `run -- <command>` remains a configuration utility; it does not record arbitrary child HTTP traffic.
 

@@ -1,5 +1,6 @@
 """Shared JSON request transport for all tikin Skills. No business request is sent by report code."""
 import hashlib
+from http.client import HTTPException
 from datetime import datetime
 import json
 import math
@@ -28,6 +29,15 @@ DEFAULT_TIMEOUT = 30
 MAX_RESPONSE_BYTES = 32 * 1024 * 1024
 READ_METHODS = {'GET', 'HEAD', 'OPTIONS'}
 DEFAULT_OUTPUT_DIR = 'data/tikin-social'
+PERMANENT_ERRORS = {
+    'authentication': {'401', 'unauthorized', 'invalid_api_key', 'invalid_key', 'invalid_token', 'token_expired', 'authentication_failed', 'authentication_error'},
+    'permission': {'403', 'forbidden', 'permission_denied', 'insufficient_permissions'},
+    'balance': {'402', 'insufficient_balance', 'balance_insufficient', 'insufficient_funds', 'payment_required'},
+    'parameters': {'400', '422', 'invalid_parameter', 'invalid_parameters', 'invalid_input', 'invalid_request', 'validation_error'},
+}
+TRANSIENT_ERRORS = {'429', '500', '502', '503', '504', 'service_unavailable', 'temporarily_unavailable',
+                    'upstream_unavailable', 'upstream_timeout', 'gateway_timeout', 'request_timeout',
+                    'timeout', 'internal_server_error', 'rate_limited', 'too_many_requests'}
 
 
 def task_directory_name(value, secrets):
@@ -50,7 +60,7 @@ def create_record(output_dir, task_name):
     for _ in range(10):
         directory = output_dir / f'{timestamp}-{task_name}-run-{uuid.uuid4().hex[:8]}'
         try:
-            directory.mkdir(mode=0o700)
+            directory.mkdir()
         except FileExistsError:
             continue
         return directory / 'run.json'
@@ -149,6 +159,31 @@ def business_error(body, path=''):
     return None, None
 
 
+def failure_kind(status, error, business, remote_failed):
+    """Only explicit error codes establish a retryable business failure."""
+    code = str(business.get('code', '') if isinstance(business, dict) else business or '').strip().lower()
+    for kind, codes in PERMANENT_ERRORS.items():
+        if str(status) in codes or code in codes:
+            return kind
+    if isinstance(error, ssl.SSLCertVerificationError):
+        return 'certificate'
+    if remote_failed:
+        return 'remote_task'  # Re-querying a terminal task cannot restart its execution.
+    if status is not None and 400 <= status < 500 and status != 429:
+        return 'remote'
+    if isinstance(error, TimeoutError):
+        return 'timeout'
+    if isinstance(error, (ConnectionError, HTTPException, ssl.SSLEOFError)):
+        return 'connection'
+    if isinstance(error, OSError):
+        return 'network'
+    if status == 429 or code in ('429', 'rate_limited', 'too_many_requests'):
+        return 'rate_limited'
+    if (status is not None and status >= 500) or code in TRANSIENT_ERRORS:
+        return 'service'
+    return 'response' if error is not None or status is None else 'remote'
+
+
 def exchange(method, url, headers, body, timeout, body_present=False):
     """Return actual status/body plus a transport error; never guess a provider status."""
     response, status, response_headers = None, None, {}
@@ -183,7 +218,7 @@ def exchange(method, url, headers, body, timeout, body_present=False):
             return status, response_headers, json.loads(text), None, None
         except ValueError:
             return status, response_headers, text, ValueError('invalid_json_response'), None
-    except (URLError, OSError, TimeoutError) as error:
+    except (URLError, OSError, HTTPException) as error:
         reason = error.reason if isinstance(error, URLError) else error
         phase = ('response_body' if status is not None else 'request_before_response_headers') if isinstance(reason, (TimeoutError, socket.timeout)) else None
         return status, response_headers, None, reason, phase
@@ -273,10 +308,11 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
                 output: dict[str, Any] = {'status': 'submission_unknown', 'record': str(record),
                           'error': 'Previous write outcome is unknown; do not replay automatically'}
                 try:
-                    output['feedback'] = feedback(record, state)
+                    output['feedback'] = (feedback(record, {**state, 'status': 'submission_unknown'})
+                                          or existing_feedback(record, {**state, 'status': 'submission_unknown'}))
                 except (OSError, ValueError, subprocess.SubprocessError):
                     output['feedback_warning'] = '无法保存错误报告；先前写入结果仍然未知，不要因此重新提交。'
-                    output['feedback'] = existing_feedback(record)
+                    output['feedback'] = existing_feedback(record, {**state, 'status': 'submission_unknown'}, stale=True)
                 return output
         else:
             state = {'schema_version': 1, 'kind': 'tikin-run', 'plugin': 'tikin-social', 'plugin_version': version,
@@ -292,7 +328,8 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
         state.pop('pending_write', None)
         task_gate = async_tasks.before_send(state, canonical_path, query, fingerprint)
         if task_gate:
-            return {**result_data(task_gate, secrets), 'record': str(record), 'feedback': existing_feedback(record)}
+            return {**result_data(task_gate, secrets), 'record': str(record),
+                    'feedback': existing_feedback(record, {**state, 'status': task_gate['status']})}
         poll_deadline = async_tasks.start_poll(state, canonical_path, query)
         if poll_deadline is not None:
             deadline = min(deadline, time.monotonic() + max(0, poll_deadline - time.time()))
@@ -301,11 +338,13 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
         if remaining_cooldown > 0:
             if remaining_cooldown >= deadline - time.monotonic():
                 return {'status': 'cooldown', 'record': str(record), 'not_before': state['not_before'],
-                        'retry_after_seconds': remaining_cooldown, 'feedback': existing_feedback(record)}
+                        'retry_after_seconds': remaining_cooldown,
+                        'feedback': existing_feedback(record, {**state, 'status': 'cooldown'})}
             time.sleep(remaining_cooldown)
         attempts = state.setdefault('retry_attempts', {}).get(fingerprint, 0)
         if attempts >= MAX_ATTEMPTS:
-            return {'status': 'retry_exhausted', 'record': str(record), 'feedback': existing_feedback(record)}
+            return {'status': 'retry_exhausted', 'record': str(record),
+                    'feedback': existing_feedback(record, {**state, 'status': 'retry_exhausted'})}
         state['pending_writes'] = sorted(pending)
         save()
         warning = None
@@ -315,10 +354,12 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
         for attempt in range(attempts + 1, MAX_ATTEMPTS + 1):
             remaining_time = deadline - time.monotonic()
             if remaining_time <= 0:
-                return {'status': 'time_budget_exhausted', 'record': str(record)}
+                return {'status': 'time_budget_exhausted', 'record': str(record),
+                        'feedback': existing_feedback(record, {**state, 'status': 'time_budget_exhausted'})}
             task_gate = async_tasks.before_send(state, canonical_path, query, fingerprint)
             if task_gate:
-                return {**result_data(task_gate, secrets), 'record': str(record), 'feedback': existing_feedback(record)}
+                return {**result_data(task_gate, secrets), 'record': str(record),
+                        'feedback': existing_feedback(record, {**state, 'status': task_gate['status']})}
             reservation = None
             if regression:
                 try:
@@ -333,7 +374,7 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
                     reservation = regression.reserve(record)
                 except GateError as blocked:
                     return {'status': 'regression_blocked', 'reason': blocked.reason, 'record': str(record),
-                            'feedback': existing_feedback(record)}
+                            'feedback': existing_feedback(record, {**state, 'status': 'regression_blocked'})}
             if not replay_safe:
                 pending.add(fingerprint)
                 state['pending_writes'] = sorted(pending)
@@ -355,12 +396,11 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
             remote_failed = bool(task_id and business) or isinstance(task_body, dict) and task_body.get('status') in ('failed', 'error')
             failed = error is not None or status is None or not 200 <= status < 300 or business is not None
             not_sent = status is None and isinstance(error, (socket.gaierror, ConnectionRefusedError))
-            ambiguous = not replay_safe and not not_sent and (error is not None or status == 429 or (status is not None and status >= 500))
+            kind = failure_kind(status, error, business, remote_failed) if failed else None
+            transient = kind in ('timeout', 'connection', 'network', 'rate_limited', 'service')
+            ambiguous = not replay_safe and not not_sent and (error is not None or transient or (status is not None and status >= 500))
             if regression and not not_sent and error is not None:
                 ambiguous = True
-            deterministic = status is not None and 400 <= status < 500 and status != 429
-            transient = not deterministic and not isinstance(error, ssl.SSLCertVerificationError) and (
-                status == 429 or (status is not None and status >= 500) or isinstance(error, OSError))
             retry = transient and attempt < MAX_ATTEMPTS and (replay_safe or not_sent)
             if regression and ambiguous:
                 retry = False
@@ -376,7 +416,8 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
                                'elapsed_ms': elapsed_ms, 'attempt': attempt, 'max_attempts': MAX_ATTEMPTS,
                                'retry_policy': 'read-only' if replay_safe else 'may-have-side-effects',
                                'retry_scheduled': retry, 'retry_delay_ms': delay * 1000 if delay is not None else None,
-                               'timeout_ms': timeout * 1000, 'timeout_stage': timeout_stage,
+                               'timeout_ms': min(timeout, remaining_time) * 1000, 'timeout_stage': timeout_stage,
+                               'error_type': type(error).__name__ if error else None, 'failure_kind': kind,
                                'request': {'headers': headers, 'body': body, 'body_present': body_present,
                                            'query': {name: [value for key_name, value in query_pairs if key_name == name] for name, _ in query_pairs},
                                            'original_request': spec['original_request'], 'reference_materials': spec.get('reference_materials')},
@@ -396,6 +437,7 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
                                 'http_status': status, 'http_status_source': 'client_response' if status else 'not_received',
                                 'task_id': task_id, 'task_status': task_body.get('status') if remote_failed else None,
                                 'request_id': response_headers.get('x-request-id'), 'ambiguous': ambiguous,
+                                'failure_kind': kind, 'timeout_stage': timeout_stage,
                                 'code': detail.get('code'), 'message': detail.get('message') or (str(error) if error else None),
                                 'exchange_id': evidence['id'], 'upstream': upstream_fields(result_body)}, secrets)
                 prior = next((item for item in state['events'] if item['id'] == event['id']), None)
@@ -417,22 +459,36 @@ def execute(values, skill, request_file, record_input=None, output_dir=DEFAULT_O
                 if regression and reservation:
                     regression.finish(reservation, 'unknown' if ambiguous else 'not_sent' if not_sent else 'received',
                                       status, state.get('not_before', 0))
-                latest_feedback = feedback(record, state)
             except (OSError, ValueError, subprocess.SubprocessError):
-                warning = '无法保存最新错误报告；保留原任务结果与任务 ID，不要因此重新提交。'
-                latest_feedback = existing_feedback(record)
+                warning = '无法保存最新本地记录；保留本次业务结果与任务 ID，先核对现状再继续。'
+                latest_feedback = existing_feedback(record, state, stale=True)
                 retry = False  # Never send another attempt without durable evidence.
+            else:
+                try:
+                    latest_feedback = feedback(record, state)
+                    warning = None
+                except (OSError, ValueError, subprocess.SubprocessError):
+                    warning = '本地错误报告未能更新；保留本次业务结果和原记录，不要因此重新提交。'
+                    latest_feedback = existing_feedback(record, state, stale=True)
             if retry and delay is not None and delay >= deadline - time.monotonic():
                 state['status'] = ('poll_budget_exhausted' if poll_deadline is not None and time.time() >= poll_deadline
                                    else 'cooldown')
-                save()
+                evidence['retry_scheduled'] = False
+                evidence['retry_blocked_reason'] = 'time_budget'
+                try:
+                    save()
+                    latest_feedback = feedback(record, state)
+                    warning = None
+                except (OSError, ValueError, subprocess.SubprocessError):
+                    warning = '本地冷却记录或报告未能更新；保留本次业务结果，先核对原记录再继续。'
+                    latest_feedback = existing_feedback(record, state, stale=True)
                 break
             if not retry or delay is None:
                 break
-            sys.stderr.write(f'[tikin] attempt {attempt}/{MAX_ATTEMPTS} failed; retrying in {delay}s\n')
+            sys.stderr.write(f'[aihub-tikin] attempt {attempt}/{MAX_ATTEMPTS} failed ({kind}); retrying in {delay}s\n')
             time.sleep(delay)
         output = {'schema_version': 1, 'status': state['status'], 'record': str(record),
-                  'http_status': status, 'request_sha256': fingerprint, 'client_base_url': base,
+                  'http_status': status, 'attempts': attempt, 'request_sha256': fingerprint, 'client_base_url': base,
                   'response_headers': {'retry-after': response_headers['retry-after']} if retry_after(response_headers) is not None else {},
                   'response': public_result(result_body, secrets, failed, canonical_path)}
         if task:

@@ -1,8 +1,8 @@
 ---
 name: tikin-social-media-downloader
 metadata:
-  version: "4.2.1"
-description: v4.2.1｜从一个或多个社交媒体链接下载视频、音频或图片，平台支持时获取无水印素材。适用于用户提供 TikTok、抖音、Instagram、YouTube、Twitter/X、小红书链接并要求下载视频、保存无水印素材或提取音频；调用对应平台的 Tikin 接口。
+  version: "4.2.2"
+description: v4.2.2｜从一个或多个社交媒体链接下载视频、音频或图片，平台支持时获取无水印素材。适用于用户提供 TikTok、抖音、Instagram、YouTube、Twitter/X、小红书链接并要求下载视频、保存无水印素材或提取音频；调用对应平台的 Tikin 接口。
 ---
 
 # Social Media Downloader
@@ -42,7 +42,7 @@ without blocking this task. Before the first tikin API call for the current user
    generic browser fetch. Parse identifiers locally or pass the original URL/share text to tikin.
    Calls to the configured tikin base URL and downloads from final media URLs returned by tikin are
    allowed.
-5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
+5. Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. Follow that reference for concise failure replies identifying aihub-tikin and at most one “查看错误详情” link; automatic retries stay inside the helper.
 
 If the loader reports a missing key or there is evidence of a configuration problem, follow the linked credential flow. If the user declines tikin, explain the
 limitation and ask before selecting an alternative; do not silently fetch the original page.

@@ -61,7 +61,10 @@ verified reads, with 1s/2s fallback backoff and the complete valid numeric/date
 `Retry-After`. It never shortens a server cooldown. When the wait exceeds the time
 budget it returns `cooldown`, `not_before` and `retry_after_seconds`; continue with
 the same record after that time. The attempt count and cooldown survive process
-replacement. Deterministic 4xx are not retried. Only DNS failure or connection refusal
+replacement. Timeouts, disconnects, HTTP 429/5xx and explicitly recognized temporary
+JSON business errors are retried only when replay is safe. Parameter, authentication,
+permission, balance and terminal task errors stop without retry; unknown business
+codes are not assumed temporary. Deterministic 4xx are not retried. Only DNS failure or connection refusal
 proves a write was not sent. HTTP 5xx/429, a timeout or disconnect can leave writes,
 including side-effecting GETs, in `submission_unknown`; changing the semantic label
 does not clear their replay protection. Report creation never adds requests.
@@ -90,7 +93,7 @@ successfully but are not final business data; inspect the structured status.
 The same record preserves the bounded query count and deadline, including in-flight
 query time. A query response for another task cannot complete the requested task.
 
-## Every user-facing response
+## User-facing results and failures
 
 Keep the returned `record` path available even on success. For retrospective questions, read
 its `exchanges` in order, then `events` and any asynchronous task state. Distinguish actual
@@ -99,10 +102,39 @@ These files record helper activity, not the Agent's entire analysis or every ext
 If the process stopped before a response was durably saved, do not infer an outcome from
 `in_flight` or a reserved attempt. Redacted/truncated evidence is not a full data export.
 
-When `feedback` exists, copy **every** `feedback.artifact_links` entry into the conversation on first failure, repeated failure/query, recovery and the final response. Each link label must show its **full absolute path** and point at that real saved file. Do not shorten it to a filename, relative path or “same directory”, and do not place links in code fences. `feedback.user_notice` contains ready-to-use Markdown.
+Let the shared helper finish its bounded retries without sending a failure report for
+each attempt. Do not wrap it in another retry loop. If it succeeds, deliver the normal
+result; saved earlier errors do not require a warning or diagnostic links on recovery.
 
-Explain the current result and independent error count. Repeated observations of the same terminal task ID update one failure; real failed HTTP attempts count separately. Recovery keeps and updates the same `error-report.md`. The related `diagnostic.json`, `issue-draft.md` and `run.json` also receive full links. A save warning leaves the business result intact; report it, retain the known task/request ID, and never resubmit to recreate a report.
+After a final failure, briefly state the task result or missing scope, the confirmed
+cause and an actionable next step. Deliver any usable partial content and explain
+what is still missing. Identify **aihub-tikin** as the affected service, using evidence:
+“aihub-tikin 返回错误” for a service response, “连接 aihub-tikin 超时” only for an
+observed connection timeout, or “aihub-tikin 未返回可用内容，具体原因尚未确定” when
+the cause is unknown. Local configuration, validation or report-save errors remain
+local errors; they do not establish a service failure. Do not infer an outage or deleted
+source content. Mention an attempt count only when recorded actual attempts support it.
+
+`feedback.user_notice` is a short evidence-based starting point; adapt its request-level
+impact to the user's actual task. A normal failure reply may include **at most one**
+`feedback.details_link`, labelled “查看错误详情”, targeting a real saved file. Absolute
+paths belong only in the link target. `artifact_links` retains the complete local evidence
+list for inspection; it is not a list to paste into the conversation. Avoid repeating the
+same diagnostic links on repeated observations, recovery and the final reply. Additional
+technical materials are for an explicit troubleshooting request.
+
+Read existing records to resolve questions the evidence can answer before replying.
+“我会核对诊断记录” is a progress update only while actually investigating, not a final
+answer. For an uncertain submission, query an existing task first and preserve its ID;
+do not offer blind resubmission. Respect a saved cooldown before continuing the record.
+
+Recovery updates the same `error-report.md`, with links from that report to
+`diagnostic.json`, `issue-draft.md` and `run.json`. Repeated terminal task observations
+update one error; actual failed attempts remain separate in the private evidence. A
+report-save warning leaves the business result intact. If available, the single details
+link falls back to an existing diagnostic or record and notes that it may be stale;
+never resubmit a business request just to recreate a report.
 
 Local reports include original requirements, actual parameters and sanitized request/response JSON. Credentials, Authorization, Cookie and signed URL query values are redacted; binary/Base64 and oversized content have explicit omission markers. `http_status` means the client-to-tikin response, not the supplier's status. API-exposed upstream fields retain their source; missing provider, route, trace, internal timing or retry information is unknown. `service_unavailable` alone does not prove an outage. An administrator can use the local task/request ID to inspect backend logs.
 
-Reports stay local. They can contain private queries and source identifiers. The public Issue draft deliberately excludes private prompts, URLs, paths, raw IDs and responses. Provide its full link for review, and send it only after an explicit user instruction. Never upload the local diagnostic automatically.
+Reports stay local. They can contain private queries and source identifiers. The public Issue draft deliberately excludes private prompts, URLs, paths, raw IDs and responses. Link to that draft when the user asks to review or submit feedback, and send it only after an explicit user instruction. Never upload the local diagnostic automatically.

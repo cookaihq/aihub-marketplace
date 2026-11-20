@@ -1,5 +1,13 @@
 # tikin Social
 
+## 4.3.1 错误反馈与自动重试
+
+失败回复会点明 aihub-tikin，简短说明任务影响、已确认原因和下一步，最多附一个“查看错误详情”链接。正文不会再被诊断文件的完整路径占满；完整证据继续保存在本机，已有可用内容会先交付。
+
+网络超时、断连及明确的暂时性服务错误由共享请求层有限重试，最多尝试三次，并遵守完整冷却时间和总预算；恢复成功后直接交付结果。鉴权、权限、余额及参数错误直接提示处理，任务创建结果不明先核对已有任务。
+
+Windows 原生脚本回归及 Codex 0.170.0 的 17 个开发源 Skill 加载、九项合成结果答复和私有记录读取已通过。未重新安装现用 Plugin，未调用线上或付费业务；本批用户确认跳过 WorkBuddy，macOS 待验。
+
 ## 4.3.0 配置保存
 
 配置项和来源选择统一保留草稿。独立有效项可部分成功；全局保存使用用户本地协调目录，不依赖项目可写。所有配置编辑均在底部点击「保存修改」后写入。失败项会保留草稿；结果待确认时先核对原操作，不直接重复保存。
@@ -69,7 +77,7 @@ posts, profiles, comments, search results and trends, download media, and analyz
 TikTok, Douyin, Instagram, YouTube, Twitter/X, Threads, Xiaohongshu and more through
 [tikin](https://tikin.net). The `tikin-social` Plugin includes 17 `tikin-*` Skills.
 
-Plugin version: **4.1.0**. `tikin-setup` and the 15 other business Skills are **4.1.0**; `tikin-endpoint-discovery` is **3.1.0**. All 17 entries support the configuration shortcut and continue to ship as one Plugin.
+Plugin version: **4.3.1**. `tikin-setup` is **4.3.1**, the 15 other business Skills are **4.2.2**, and `tikin-endpoint-discovery` is **3.2.2**. All 17 entries support the configuration shortcut and continue to ship as one Plugin.
 
 New API runs require the Agent to supply a concise task name; existing records resume by their saved paths. The retained second-batch catalog contains 1029 operations and the first-batch catalog contains 919. Neither catalog is evidence of live availability.
 
@@ -364,8 +372,12 @@ information, sanitized request/response JSON, timing, retries and observed error
 Follow-up requests and pagination reuse that task's record. Repeated observations of the same
 failed task do not inflate the error count; recovery updates the same report.
 
-Every failure, repeat, recovery and final reply includes clickable links labelled with the complete
-absolute paths to the report, `diagnostic.json`, `issue-draft.md` and `run.json`. You can ask:
+Temporary network and service errors are retried automatically within a fixed limit and
+time budget. Recovery returns the normal result. If the request still fails, the Agent
+briefly identifies **aihub-tikin**, explains what could not be completed and gives a next step.
+Usable partial content is delivered with its missing scope. The reply may include one
+**查看错误详情** link; related diagnostic files remain accessible from that local report.
+The same paths are not repeated on every update. You can ask:
 
 > Open this task's local error report, explain the observed failure and unknown fields, and
 > continue from its existing record without repeating an uncertain submission.
@@ -378,7 +390,8 @@ Nothing is sent to an administrator or issue tracker automatically.
 Client HTTP status, asynchronous task status and API-exposed provider evidence are separate.
 Missing upstream status, provider, routing or internal retries remain unknown; `service_unavailable`
 does not prove an upstream outage. An administrator can locate backend logs using the local IDs.
-Report saving never changes retry decisions; a save warning preserves the original request outcome.
+An error-report save warning preserves the original request outcome. A readable existing
+record can serve as the details entry; creating another business request is not a report repair.
 The shared [request reference](skills/tikin-setup/references/requests.md) describes recovery and
 how the Agent supplies these links.
 

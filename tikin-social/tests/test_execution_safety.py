@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from email.utils import format_datetime
 import os
 from pathlib import Path
+import socket
 import subprocess
 import sys
 import tempfile
@@ -49,15 +50,20 @@ class ExecutionSafetyTests(unittest.TestCase):
                 owner.received.set()
                 owner.release.wait(10)
                 status, headers, payload = owner.responses[min(len(owner.calls) - 1, len(owner.responses) - 1)]
-                self.send_response(status)
-                if owner.guard_binding:
-                    self.send_header('X-Tikin-Regression-Binding', owner.guard_binding)
-                for name, value in headers.items():
-                    self.send_header(name, value)
-                self.end_headers()
+                if status is None:
+                    self.close_connection = True
+                    self.connection.shutdown(socket.SHUT_RDWR)
+                    self.connection.close()
+                    return
                 try:
+                    self.send_response(status)
+                    if owner.guard_binding:
+                        self.send_header('X-Tikin-Regression-Binding', owner.guard_binding)
+                    for name, value in headers.items():
+                        self.send_header(name, value)
+                    self.end_headers()
                     self.wfile.write(payload if isinstance(payload, bytes) else json.dumps(payload).encode())
-                except (BrokenPipeError, ConnectionResetError):
+                except ConnectionError:
                     pass
 
             do_POST = do_GET
@@ -150,6 +156,65 @@ class ExecutionSafetyTests(unittest.TestCase):
         self.assertEqual(result['status'], 'cooldown')
         self.assertGreater(result['retry_after_seconds'], 290)
         self.assertEqual(result['response_headers']['retry-after'], date)
+        self.assertEqual(len(self.calls), 1)
+
+    def test_disconnect_before_headers_is_retried_and_recovers_through_the_cli(self):
+        self.responses = [(None, {}, None), (200, {}, {'data': {'text': 'available'}})]
+        result = self.request({'side_effects': False})
+        self.assertEqual((result['status'], result['attempts']), ('ok', 2))
+        self.assertEqual(result['response']['data']['text'], 'available')
+        self.assertFalse(result['feedback']['show_notice'])
+        record = json.loads(Path(result['record']).read_text())
+        self.assertEqual(record['exchanges'][0]['error_type'], 'RemoteDisconnected')
+        self.assertEqual(len(self.calls), 2)
+
+    def test_truncated_chunked_response_is_retried_through_the_cli(self):
+        self.responses = [(200, {'Transfer-Encoding': 'chunked'}, b'10\r\nshort'),
+                          (200, {}, {'data': []})]
+        result = self.request({'side_effects': False})
+        self.assertEqual((result['status'], result['attempts']), ('ok', 2))
+        record = json.loads(Path(result['record']).read_text())
+        self.assertEqual(record['exchanges'][0]['error_type'], 'IncompleteRead')
+        self.assertEqual(len(self.calls), 2)
+
+    def test_service_error_exhausts_three_actual_attempts_with_one_details_link(self):
+        self.responses = [(503, {'Retry-After': '0'}, {'error': {'code': 'service_unavailable'}})]
+        result = self.request({'side_effects': False})
+        self.assertEqual((result['status'], result['attempts']), ('failed', 3))
+        self.assertEqual(len(self.calls), 3)
+        self.assertIn('aihub-tikin 返回', result['feedback']['user_notice'])
+        self.assertIn('自动尝试 3 次', result['feedback']['user_notice'])
+        self.assertEqual(result['feedback']['user_notice'].count('](<'), 1)
+        again = self.request({'side_effects': False}, result['record'])
+        self.assertEqual(again['status'], 'retry_exhausted')
+        self.assertEqual(len(self.calls), 3)
+
+    def test_read_timeouts_retry_but_uncertain_writes_do_not(self):
+        self.release.clear()
+        try:
+            result = self.request({'side_effects': False, 'timeout_seconds': 0.05, 'time_budget_seconds': 5})
+        finally:
+            self.release.set()
+        self.assertEqual(result['attempts'], 3)
+        self.assertEqual(len(self.calls), 3)
+        self.assertIn('连接 aihub-tikin 超时', result['feedback']['user_notice'])
+        self.release.clear()
+        try:
+            write = self.request({'method': 'POST', 'timeout_seconds': 0.05})
+        finally:
+            self.release.set()
+        self.assertEqual(write['status'], 'submission_unknown')
+        self.assertEqual(len(self.calls), 4)
+        self.assertIn('先核对已有任务状态', write['feedback']['user_notice'])
+        self.assertNotIn('自动尝试 3 次', write['feedback']['user_notice'])
+
+    def test_temporary_json_error_never_replays_a_task_creation(self):
+        self.responses = [(200, {}, {'error': {'code': 'service_unavailable'}})]
+        spec = {'method': 'POST'}
+        first = self.request(spec)
+        self.assertEqual(first['status'], 'submission_unknown')
+        second = self.request(spec, first['record'])
+        self.assertEqual(second['status'], 'submission_unknown')
         self.assertEqual(len(self.calls), 1)
 
     def test_paid_attempt_count_stops_even_when_dollars_remain(self):

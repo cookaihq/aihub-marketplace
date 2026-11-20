@@ -1,8 +1,8 @@
 ---
 name: tikin-endpoint-discovery
 metadata:
-  version: "3.2.1"
-description: v3.2.1｜从 Tikin 支持的平台接口中查找合适的数据接口。适用于已知目标但不清楚接口路径，或 LinkedIn、Reddit、哔哩哔哩、微博、微信、快手、知乎、Lemon8 等没有专属 Skill 的平台；检索随包索引并对应到 REST 调用。
+  version: "3.2.2"
+description: v3.2.2｜从 Tikin 支持的平台接口中查找合适的数据接口。适用于已知目标但不清楚接口路径，或 LinkedIn、Reddit、哔哩哔哩、微博、微信、快手、知乎、Lemon8 等没有专属 Skill 的平台；检索随包索引并对应到 REST 调用。
 ---
 
 # tikin — Endpoint Discovery
@@ -45,7 +45,7 @@ Never request the user-provided social-media content page with `curl`, WebFetch,
 browser fetch. Parse identifiers locally or pass the original URL/share text to the selected tikin
 endpoint. Before calling an endpoint, resolve and require the key:
 
-Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. On every failure, recovery and final reply, copy all `feedback.artifact_links` with full absolute paths as link labels.
+Before any business API request, read [shared requests and local error reports](../tikin-setup/references/requests.md). Use `tikin-config request` with this Skill as caller and reuse the returned `--record` for the same task. Follow that reference for concise failure replies identifying aihub-tikin and at most one “查看错误详情” link; automatic retries stay inside the helper.
 
 ## Use the bundled search CLI
 
